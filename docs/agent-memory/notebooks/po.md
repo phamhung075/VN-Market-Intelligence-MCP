@@ -1,31 +1,25 @@
 # PO Notebook
 
-## 2026-08-24T20:53Z — 16-envelope Step 0-SIG: 3 mints, 8 folds, 1 dedup-close, inbox 16→0
+## 2026-08-24T21:24Z — dashboard Layer-B re-report: 1 mint (col 2), 1 documented no-op (col 3), 0 new rows for Layer-A health
 
-Prior 18:33Z section dropped whole (OVERWRITE class, preamble+1 section, ≤50L). Full reasoning: `docs/agent-memory/decisions/triage-20260824T2030Z-po.md`.
+Prior 20:53Z section dropped whole (OVERWRITE class, preamble+1 section, ≤50L). Full reasoning: `docs/agent-memory/decisions/triage-20260824T2124Z-po.md`.
 
-### The caller's inbox inventory was wrong, and the missing envelope was the useful one
-Spawn prompt said 2x sweep-guard / 2x cowork-fire and never mentioned an `architecture_brief`. Live read: **4** sweep-guard, **3** cowork-fire, and one `agents-architect` brief that closed `review[24]` — a row whose `next_agent` was **`po`**, i.e. work already waiting on me. Acting on the handed list would have dropped it. **The self-read is not ceremony; it is the only reason that row moved.**
+### The shipped row's own out-of-scope clause was the missing follow-up
+User re-reported ("i dont see status is update") the same section a sibling row had just closed. `FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL` (DONE_VERIFIED, `4b4bfea7a`) fixed **column 1 of the 3 the user originally named**, and its own `=== EXPLICITLY OUT OF SCOPE ===` clause says so verbatim, ending "file a SPIKE — do not attempt it here". Nobody filed it. **A DONE_VERIFIED row whose desc contains an out-of-scope clause is an unfiled follow-up until proven otherwise — grep the shipped row's text, not just its status.** The row was already cold-evicted to `archive/2026-08.json`, so a live-board-only dedup would have missed the provenance entirely.
 
-### Two caller premises refused, both falsified at source
-1. **"The incident lane runs FIRST each tick; the fast lane is idle."** It has no caller. `grep -o "devteam-backlog-claim-[a-z0-9-]*\.jq" docs/agents/dev-team/flow/main.md | sort -u` → 4 of 5 scripts on disk; incident-lane-consumer is absent, and `grep INCIDENT_CAP|po_expedited` on main.md returns nothing. RLC refuses the field by design. So the lane is idle for lack of a **caller**, not marked rows — and the real unblock is `ready[53]` `FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW` (P0, deps satisfied, RLC position **2 of 76**, unmoved 10 days).
-2. **"T3 shares the CCATO P0's `files[]`."** It does not — neither `narrativeTruthProbeAdapters.ts` nor `verdictClassifier.ts` is listed. And that P0's AC-4 rejects rows whose value **matches** a null marker; T3 is a value matching **none**. Opposite directions, not two halves. Minted separately.
+### Two columns, two different classes — the useful call was refusing to mint for one
+Col 2 (`Dự kiến lần tới` = "—") is a real gap: `computeExpectedFires()` in `cronStatusCompute.ts` is **pure** (cron-parser + clock, zero DB/telemetry/session) and feeds Layer-A's 89/89. Layer-B carries `cron_expr` on 23/23. Withheld by a literal-`null` type, not impossibility. → minted.
+Col 3 (`Trạng thái` = "Phiên làm việc") is a **category** label, honest, and pinned by BA NFR-7:260 / AC-19:362 + two tests. Its only honest enrichment is real session-cron liveness — already owned by `ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG` (P1, 2026-07-22). → **ruled no-op, recorded in the minted row's desc so the ruling is greppable.** Minting there would have reversed a deliberate architectural decision and duplicated a P1.
 
-### Measure the queue with the consumer's own predicate, not the array index
-Caller: "positions 99 and 100 of 111". Replaying RLC's actual eligibility chain: **67 and 68 of 76 eligible** (35 of the 111 fail eligibility). Same conclusion, wrong number — and the wrong number is the kind that gets quoted back later as fact.
+### Checked the fix's own feasibility instead of forwarding the caller's premise
+Caller framed frontend-only as the clean single-zone path. It is single-zone, but `apps/frontend/package.json` has **no cron dependency at all** (mcp-server has `cron-parser ^5.6.1`), so option (b) means adding a dep or hand-rolling cron parsing. Wrote that cost into AC-8 rather than letting architect discover it mid-build. Also confirmed the Remix `loader` (L308) is server-side, so NFR-2's server-clock rule survives option (b) — that one *helps* it.
 
-### `orch-apply` returned OK and threw my note away
-Fold note via zsh single-quoted var → `jq --arg`: exit 0, conservation clean, `occurrence_count` landed **2**, note field landed **empty** (`LEN=0`). Every green signal was green. Only a **content** readback caught it. Same root cause as the CLEAR block, which also failed verbatim today (`control characters U+0000–U+001F`, inbox untouched at 16, and the block ends `|| true` so exit status was 0). Switched all prose writes to `jq --rawfile` from a file. **Generalisable: for any write carrying agent-authored prose, the exit code, the lane counts and the conservation check are all blind — read back the field.**
-
-### Re-measured a breach before minting for it, and there was nothing left to mint
-`context_bloat_breach` said `unified-agent.md` = 106L/17956B over a 12000B cap. Live: **31L/6876B, under both caps.** The routing table's happy path would have produced a CHORE for a condition that no longer exists. But it resolved by DESTROYING content: git shows 86L/11936B@`69afa5d12` → 31L/6876B@`4fbd578cb`, **55L/5060B gone in one pass**. New finding for the AC-6 row — **overshoot**: overage was 5956B, the pruner shed 11080B by eating three sections in sequence instead of stopping at the first drop that cleared the cap. Fix must re-check the cap after EACH drop. Recoverable via `git show 69afa5d12:…`.
-
-### The prose ceiling blocked triage actuation three times, for two different reasons
-(a) manual-dispatch-sweep's Step-2 stamp on its own #1 candidate — already tracked, folded as occurrence 2, and the wedge is now **confirmed deterministic across sessions** (two runs, same pick, same abort, no state change; starvation set 106→127 in 9h with zero rows stamped). (b) A genuine 3295B fold on an 11321B row. Applied that row's own AC-4 by hand — fell through to the next stampable candidate rather than ending with nothing actuated.
+### Secondary triage: 17 unhealthy Layer-A rows, 0 new rows needed
+All 17 map to existing backlog rows. The 5 STALE `*/N 2-8 * * 1-5` crons last fired 08:45–08:55Z today at the **end of their market-hours window** and it is now 21:19Z — they are correctly idle, not stale, which is exactly `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL`'s thesis. **Read the cron expression before believing a STALE badge.** The other 2 STALE + 1 MISSED + 9 NEVER_FIRED each have a named owner row. Annotated the 9-pair row with live re-corroboration (still 9, membership stable, `foreignFlowFetch` at `*/1 * * * *` with `last_fire=null` is not plausible) since it still reads `medium`.
 
 ### Carry-over
-- **3 mints all in `backlog[]` at 540/541/542** — `dev-mcp-server`, `developer`, `qa`. None is dispatchable by being minted; state real queue positions, never "unblocked".
-- **`ready[53]` is the highest-leverage row on the board right now.** It is 1 file (`docs/agents/dev-team/flow/main.md`), P0, deps satisfied, RLC position 2 — and until it lands, every `po_expedited_at` I write is inert.
-- The 2 Tier-1 expedite stamps are **pre-loading**, not dispatching. Do not report them as an unblock.
-- `VERIFY-CCATO-MCP-TRUTHGATE-REALDATA` AC-2 forbids running DoD (e) against the live board — 108 `ntg-*` rows are open-P0 evidence and an extra append contaminates the count.
-- Did NOT push, did NOT re-arm `com.vn-market.fleet-push` (not-loaded is intended), did NOT dispatch the existing BATCH of 6 individually, did NOT touch `.head` (idle, left idle).
+- **`FIX-DASH-CRON-LAYERB-NEXTFIRE-INERT-DASH` is `backlog[543]`, `next_agent=architect`** — minted, not dispatched. It is one row among 543; state that, never "unblocked".
+- Routed to **architect not a developer on purpose**: the (a)-backend/(b)-frontend fork is a design call, and (a) collides with a live peer in `apps/mcp-server/`. Zone reads `apps/frontend/` as the collision-free default, **not** because the design is settled — AC-8 says re-zone to `multi` if (a) wins.
+- AC-2 is a **hard testable AC, not prose advice**: on this exact table a qualifier has already been lost once between BA:364 → brief:127 → implementation. That is what caused the bug just fixed.
+- Did NOT touch `.head` (held by live peer `FIX-ORCHAPPLY-CAS-BASELINE-...`, dev-team 20:49Z) — appended to `backlog[]` only, head verified unchanged after the write.
+- **Did NOT clear `pending_triage_inbox` (22 envelopes) and did NOT process them.** Router-direct targeted dispatch, narrow intent lock; the flow's unconditional-CLEAR step would have destroyed 22 unprocessed rows. Deferred to a real triage tick, flagged in RETURN.
