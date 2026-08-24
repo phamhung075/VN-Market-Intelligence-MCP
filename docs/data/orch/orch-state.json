@@ -23945,7 +23945,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T15:19:33Z",
+    "_updated_at": "2026-08-24T15:45:41Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24301,6 +24301,29 @@
         },
         "createdAt": "2026-08-24T15:15:30Z",
         "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "10f4ff46bf842b55aec5587a9a4f1bbee720f95d93e2aee62fdc07c520e480c5",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/claim-truth-gate/SKILL.md",
+          "line_count": 182,
+          "cap": 200,
+          "byte_count": 12973,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 973,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-24T15:24:50Z",
+        "drained_at": "2026-08-24T15:45:41Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
