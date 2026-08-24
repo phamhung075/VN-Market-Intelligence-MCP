@@ -156,25 +156,26 @@ Move > adaptive sigma_threshold | volume spike > volume_multiplier | VaR breach 
 
 Real-time alert flows must not block indefinitely on narrative contradictions. Invoke the gate on each composed alert narrative (title + detail) before posting to alert-commander.
 
-Invoke (per each anomaly to be signaled):
+Invoke (Path A — MCP-native, this agent's default per SKILL.md; per each anomaly to be signaled):
 ```
-GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
-  post_body = <composed alert text: title + detail>
-  agent_id  = "market-watcher"
-  cache     = <this cycle's tool-call results, or null>
+GATE_VERDICT = call_tool(server="vn-market", tool="narrative_truth_gate", arguments={
+  post_body: <composed alert text: title + detail>,
+  agent_id:  "market-watcher",
+  cache:     <this cycle's tool-call results, or null>
+})
 ```
 
-**Exit-code handling (time-sensitivity override per brief §4.6):**
-- `0` = PASS → proceed to post_agent_signal dispatch for this anomaly.
-- `1` = FAIL — contradiction detected; signal emitted to `po`. Self-correct:
+**Verdict handling (time-sensitivity override per brief §4.6; `GATE_VERDICT` = first line of the tool response text — see SKILL.md Verdict contract):**
+- `PASS` → proceed to post_agent_signal dispatch for this anomaly.
+- `FAIL (N contradiction(s))` — contradiction detected; signal emitted server-side to `po`. Self-correct:
   1. Call the named tool directly.
   2. Rewrite the offending sentence (title/detail) using real returned values.
   3. Re-run this skill.
   4. Second-pass PASS → proceed to post_agent_signal.
   5. **Second-pass FAIL (tool genuinely errors) → write honest gap in detail and PROCEED to post_agent_signal anyway** (time-sensitivity override: real-time flow must alert promptly; do NOT hold).
-- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[market-watcher] claim-truth-gate CONFIG ERROR")` and EXIT.
+- `CONFIG_ERROR: <reason>` (`isError:true` on response) → fail-loud: `send_telegram(channel="bug", message="[market-watcher] claim-truth-gate CONFIG ERROR")` and EXIT.
 
-**Signal:** Script fires `narrative_contradiction` on FAIL (first pass only).
+**Signal:** Tool fires `narrative_contradiction` server-side on FAIL (first pass only).
 
 ```
 call_tool(server="vn-market", tool="post_agent_signal", arguments={

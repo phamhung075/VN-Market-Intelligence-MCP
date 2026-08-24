@@ -8,25 +8,26 @@
 
 Real-time alert flow: before dispatching each alert to MARKET, run the gate to detect narrative contradictions. On FAIL, emit `narrative_contradiction` signal but do NOT hard-block the dispatch.
 
-Invoke (per each pending alert):
+Invoke (Path A — MCP-native, this agent's default per SKILL.md; per each pending alert):
 ```
-GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
-  post_body = <composed alert text>
-  agent_id  = "alert-commander"
-  cache     = <this cycle's tool-call results, or null>
+GATE_VERDICT = call_tool(server="vn-market", tool="narrative_truth_gate", arguments={
+  post_body: <composed alert text>,
+  agent_id:  "alert-commander",
+  cache:     <this cycle's tool-call results, or null>
+})
 ```
 
-**Exit-code handling (time-sensitivity override):**
-- `0` = PASS → proceed to Step 4a MARKET send.
-- `1` = FAIL — contradiction detected; signal emitted to `po` by script. Self-correct:
+**Verdict handling (time-sensitivity override; `GATE_VERDICT` = first line of the tool response text — see SKILL.md Verdict contract):**
+- `PASS` → proceed to Step 4a MARKET send.
+- `FAIL (N contradiction(s))` — contradiction detected; signal emitted server-side to `po`. Self-correct:
   1. Call the named tool directly.
   2. Rewrite the offending sentence using real returned values.
   3. Re-run this skill.
   4. Second-pass PASS → proceed to dispatch.
   5. **Second-pass FAIL → write honest gap and proceed to dispatch anyway** (time-sensitivity: real-time alerts must fire promptly).
-- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[alert-commander] claim-truth-gate CONFIG ERROR")` and EXIT.
+- `CONFIG_ERROR: <reason>` (`isError:true` on response) → fail-loud: `send_telegram(channel="bug", message="[alert-commander] claim-truth-gate CONFIG ERROR")` and EXIT.
 
-**Signal:** Script emits `narrative_contradiction` on FAIL (first pass); record it in session log with alert ID and ticker.
+**Signal:** Tool emits `narrative_contradiction` server-side on FAIL (first pass); record it in session log with alert ID and ticker.
 
 ---
 

@@ -456,26 +456,27 @@ This self-check is NOT optional. Bypassing it is a flow violation equivalent to 
 
 Before constructing EITHER Block A or Block B `send_telegram` call, invoke the claim-truth-gate on the composed narrative to detect CCATO (Claim Contradicts Authorized Tool Output).
 
-Invoke (choose Block A or Block B text accordingly):
+Invoke (Path A — MCP-native, this agent's default per SKILL.md; choose Block A or Block B text accordingly):
 ```
-GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
-  post_body = <composed Block A or Block B text>
-  agent_id  = "unified-agent"
-  cache     = <this cycle's tool-call results, or null>
+GATE_VERDICT = call_tool(server="vn-market", tool="narrative_truth_gate", arguments={
+  post_body: <composed Block A or Block B text>,
+  agent_id:  "unified-agent",
+  cache:     <this cycle's tool-call results, or null>
+})
 ```
 
-**Exit-code handling:**
-- `0` = PASS → proceed to `send_telegram` call(s).
-- `1` = FAIL — contradiction detected; signal emitted to `po`. Self-correct:
-  1. Read stdout: `[FAIL] dimension=... tool=... ticker=...`
+**Verdict handling** (`GATE_VERDICT` = first line of the tool response text; see SKILL.md Verdict contract):
+- `PASS` → proceed to `send_telegram` call(s).
+- `FAIL (N contradiction(s))` — contradiction detected; signal emitted server-side to `po`. Self-correct:
+  1. Read the response text: `[FAIL] dimension=... tool=... ticker=...`
   2. Call the named tool directly.
   3. Rewrite the offending sentence using real returned values.
   4. Re-run this skill with corrected text.
   5. Second-pass PASS → proceed to `send_telegram`.
   6. Second-pass FAIL → write honest gap (e.g. "công cụ chưa trả được <dimension>") and proceed to send (no hard block for CHEF because the message must publish).
-- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[unified-agent] claim-truth-gate CONFIG ERROR")` and EXIT.
+- `CONFIG_ERROR: <reason>` (`isError:true` on response) → fail-loud: `send_telegram(channel="bug", message="[unified-agent] claim-truth-gate CONFIG ERROR")` and EXIT.
 
-**Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.
+**Signal:** Tool fires `narrative_contradiction` server-side on FAIL. Do NOT suppress it.
 
 **Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
 uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to

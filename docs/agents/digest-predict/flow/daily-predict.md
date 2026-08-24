@@ -82,25 +82,26 @@ Horizon:
 
 Before any `create_prediction_claim()` persists a claim, run the gate on each `claim_text` to detect CCATO (Claim Contradicts Authorized Tool Output).
 
-Invoke (per each candidate claim):
+Invoke (Path A — MCP-native, this agent's default per SKILL.md; per each candidate claim):
 ```
-GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
-  post_body = <claim_text for this ticker>
-  agent_id  = "digest-predict"
-  cache     = <this cycle's tool-call results, or null>
+GATE_VERDICT = call_tool(server="vn-market", tool="narrative_truth_gate", arguments={
+  post_body: <claim_text for this ticker>,
+  agent_id:  "digest-predict",
+  cache:     <this cycle's tool-call results, or null>
+})
 ```
 
-**Exit-code handling:**
-- `0` = PASS → proceed to create_prediction_claim call for this ticker.
-- `1` = FAIL — contradiction detected; signal emitted to `po`. Self-correct:
+**Verdict handling** (`GATE_VERDICT` = first line of the tool response text; see SKILL.md Verdict contract):
+- `PASS` → proceed to create_prediction_claim call for this ticker.
+- `FAIL (N contradiction(s))` — contradiction detected; signal emitted server-side to `po`. Self-correct:
   1. Call the named tool directly.
   2. Rewrite `claim_text` using real returned values.
   3. Re-run this skill on the rewritten claim_text.
   4. Second-pass PASS → proceed to create_prediction_claim.
   5. Second-pass FAIL (rewritten `claim_text` still classified NON_NULL/contradiction by the gate — this covers BOTH a genuine tool error and a live tool response that simply doesn't match a `tool_null_markers` string, e.g. "PDF downloaded but not yet extracted" — confirmed live 2026-08-22, SHB/compare_financials) → DROP this ticker from P-5 (do not file a claim built on a false negation, and do not attempt a 3rd rewrite to dodge the negation-lexicon match); write honest gap note in digest and continue to next ticker.
-- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT.
+- `CONFIG_ERROR: <reason>` (`isError:true` on response) → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT.
 
-**Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.
+**Signal:** Tool fires `narrative_contradiction` server-side on FAIL. Do NOT suppress it.
 
 **P-5a — Published-marker gate (Phase 2 — commit point, MANDATORY) →**
 skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=digest-predict).
