@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T00:01:59Z",
-    "updated_by": "dev-team (WF-1b terminal-lane head reset)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T6-TOOL-REGISTRATION — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-24T02:25:39Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18607,22 +18608,6 @@
         }
       },
       {
-        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
-        "depends": [
-          "CCATO-MCP-T5-USECASE"
-        ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-17T04:53:14ZZ",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
-      },
-      {
         "id": "CCATO-MCP-T7-SKILL-DUAL-PATH",
         "type": "IMPL-XS",
         "status": "READY",
@@ -21435,17 +21420,20 @@
       {
         "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
         "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
-        "status": "REVIEW",
+        "status": "BLOCKED",
         "type": "FIX",
         "priority": "P2",
         "size": "S",
         "zone": "apps/mcp-server/",
         "po_goahead_20260815T055435": "po 2026-08-15T05:54:35Z - ratified the PLAN, not code. At source not on relay: PLAN-ONLY honored, spec covers both live prefixes, and I re-derived the load-bearing refutation myself (tasksMdJanitorJob.ts:632 iterates survivingLocks, blame e109f49f81) - it holds. Authorized conditional on AC-5/6/7. Trail: spec_doc section 8.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
-        "updated_at": "2026-08-24T01:58:13Z",
+        "updated_at": "2026-08-24T02:25:59Z",
         "secondary_claimed_at": "2026-08-24T01:58:13Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "dev-mcp-server"
+        "secondary_dispatch_target": "dev-mcp-server",
+        "next_agent": "agent-father",
+        "blocked_reason": "Code+data+tests DONE (commit db0ed7c02): AC-1/2/3/5/6/7 all satisfied - SSOT promoted to system-map.json .project.coordination.known_legit_lock_prefixes (bare array, AC-5), re-read per janitor cycle via refreshKnownLegitPrefixes() (AC-7), AC-6 sentinel+positive-path tests added, both live prefixes (data-quality-anomaly:/bctc-dataquality:) covered, negative control still trips D4 (verified). NOT satisfied: base acceptance item \"both doc lists byte-identical\" - docs/agents/system-auditor/{handlers,audit-dimensions}.md (spec section 5c/5d, verbatim diffs already drafted there) are agent-fathers exclusive zone (docs/agents/**), out of dev-mcp-servers authority. Full closeout + evidence: spec_doc section 9.",
+        "dev_mcp_server_close_20260824T0224Z": "Verified live: bun test FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts 34/34 pass (was 27, +7 new incl AC-6 SSOT-canary tests). Full apps/mcp-server suite 52 fail/17 files vs documented baseline ~50/15 - zero overlap with tasksMdJanitor/D4/system-map/coordination; delta is pre-existing 5000ms-timeout network-dependent tests unrelated to this change. bun tsc --noEmit clean. Commit db0ed7c0297cf60a128825614b3928edc2107c2c, pathspec: apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts, apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts, docs/data/system-map.json, docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md. Held escalation locks (esc-deepdive:FPT:Q1-2026:ESC-5, esc-datacov:HPG:Q1-2026:ESC-3, esc-datacov:FPT:Q1-2026:ESC-3) NOT released, per DO NOT RELEASE."
       },
       {
         "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
@@ -22181,6 +22169,25 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
+      },
+      {
+        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+        "type": "IMPL-XS",
+        "status": "IN_PROGRESS",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
+        "depends": [
+          "CCATO-MCP-T5-USECASE"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-08-24T02:25:39Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-24T02:25:39Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
@@ -22202,7 +22209,7 @@
         "last_served_tick": "2026-08-24T01:55:22Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-23T22:28:52Z"
+        "last_served_tick": "2026-08-24T02:25:24Z"
       },
       "drs": {
         "last_served_tick": "2026-08-23T23:03:48Z"
@@ -22214,7 +22221,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T02:23:59Z",
+    "_updated_at": "2026-08-24T02:25:24Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
