@@ -24528,7 +24528,7 @@
         "last_served_tick": "2026-08-24T16:54:07Z"
       }
     },
-    "_updated_at": "2026-08-24T18:48:22Z",
+    "_updated_at": "2026-08-24T19:46:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24541,6 +24541,30 @@
         "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c1007 · 2026-08-24T18:32Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
         "createdAt": "2026-08-24T18:37:06Z",
         "drained_at": "2026-08-24T18:46:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5e6fec0762cb8531849ec08871d97e8ebfa47c285fa9056a37969162e53ca146",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/dev-frontend.md — retained section '## Session: 2026-07-31 (FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT — P0 dev-team S3 hand-dispatch)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-24T19:17:52Z",
+        "drained_at": "2026-08-24T19:46:05Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c5142439277544f1da09dd9ed081eba0574836405bc6cf3728e3c2916fcdf568",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "architecture_brief",
+        "priority": "normal",
+        "payload": "docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md — FIX-CADENCE-COWORK-DUP-MARKET-WATCHER investigated and found to be a duplicate of already-shipped, already-DONE_VERIFIED work (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC commit 5918c55fe + FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING commit 662d1fcc3, both 2026-08-14, both archived docs/data/orch/archive/2026-08.json). Live production evidence confirmed today (2026-08-24 16:00Z tick): market-watcher-eod fired alone, market-watcher-offhours correctly dropped by the supersede-mutex, no notebook clobber. Recommend dedup-close this row rather than dispatching new implementation work. One non-blocking loose end flagged for agent-father: stale INERT wording in cowork-schedule.json market-watcher-eod._note (brief §3).",
+        "createdAt": "2026-08-24T19:25:40Z",
+        "drained_at": "2026-08-24T19:46:05Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
