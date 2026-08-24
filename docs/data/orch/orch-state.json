@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T17:42:38Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-24T17:52:27Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23528,7 +23529,10 @@
           "FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES"
         ],
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION",
-        "updated_at": "2026-08-23T00:21:38Z"
+        "updated_at": "2026-08-24T17:50:56Z",
+        "secondary_claimed_at": "2026-08-24T17:50:55Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "pm"
       },
       {
         "id": "TASK-COWORK-MUTEX-001",
@@ -23895,40 +23899,6 @@
         "dispatch_lane": "architect",
         "ba_spec_ref": "docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md",
         "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec."
-      },
-      {
-        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
-        "type": "CLEAN",
-        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "qa",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
-        "files": [
-          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
-          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
-          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
-        ],
-        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).\n[dev-mcp-server] Implementation Record (salvage-only, worktree NOT removed per standing user instruction): copied file CONTENTS (never checked out the worktree branch in the main tree) for the 5 modified + 1 new file the status_note flagged for salvage. Verified before copying: worktree base commit 4a6d2174c is an ancestor of current main HEAD, and main's pre-salvage content for all 5 modified files was byte-identical to that base — so the copy is exactly equivalent to a conflict-free rebase, no manual merge needed. Excluded per status_note, confirmed live: (a) ` D apps/mcp-server/data` — re-probed in main tree, still a tracked symlink (mode 120000, blob e67b455909149dffe457ead0f8cb08bfb2504376) -> ../../data; never propagated the deletion. (b) docs/agent-memory/modules/tool-usage-stats.json — diff confirmed it zeroes toolCounts (15 entries -> {}) at 2026-08-12T17:47:15Z, stale rolling-telemetry churn; left untouched. AC-4 (any other worktree carrying the same hidden-diff shape): `git worktree list` shows exactly one worktree besides main (agent-ae9ed2cd6f04b3686) — no other instances found.\nTests: targeted run on the 3 salvaged/new test files (BEQ-SECTION-GUARD.test.ts, LF-SERVE-REFLOW.test.ts, FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) = 32 pass/0 fail/138 expect() calls. Full suite (cd apps/mcp-server && bun test, captured to file not tail-piped, so exit code is real): 15456 pass/40 skip/50 fail/48943 expect() calls across 1284 files [506.02s]. Failing-file-set extracted programmatically (awk state-machine over file-header + (fail) lines) = {1113-vps-proxy-health, 1146-get-insider-transactions, 1193-push-prices-persist, 1405b-bctc-vps-fixes, 1518-get-foreign-flow-ohlcv-source, 1844-backtest-retrieval, 1858c-logvpspush-fix, 1875c-record-signal-outcome-routing, 1892a-pushNewsHandler, 235-telegram-send-merge, 251-mcp-tools, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, RAPID-B2-get-market-cap-tool, TSU-DEV-U5-foreign-flow-null-holding-ratio, VPT-1-vps-proxy-health-endpoint} — byte-identical (15/15, zero extra, zero missing) to the documented baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline, most-recently reconfirmed 2026-08-24T03:46Z QA verify on the board). Zero new regressions. bun tsc --noEmit: clean, 0 errors. Server boot (PORT=3099, isolated from any live container on :3000): /health returned toolCount=184, zero import errors, clean SIGTERM shutdown (WAL checkpoint flushed). Tool count 184 / cron job count 88 unchanged from pre-task baseline — no new tool registered (backfillBctcScalarsTool.ts is an existing registered tool, only its handler body changed), so this is expected not a regression.\nCommit 28f8509fc351d73694319ae505909b4c43941cf5 (pathspec: apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts, apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts, apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) — 6 files changed, 578 insertions(+), 8 deletions(-). Not pushed (local main stays ahead of origin per session policy).\nNOT DONE (explicitly out of this task's stated scope, \"SALVAGE ONLY\"): worktree removal (AC-3 of the original status_note) — deliberately deferred, standing user instruction protects .claude/worktrees/agent-ae9ed2cd6f04b3686 from pruning, and removal is destructive/irreversible pending separate user sign-off. Also did not act on AC-2 (advancing the separate FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG row currently in ready[]/next_agent=ba to review/qa or re-scoping it) — that is a distinct board row this task's brief did not authorize touching; flagging it for whoever owns that row next: the salvaged commit above already implements it end-to-end with passing tests, so a fresh ba re-plan-from-scratch would be duplicate work.\nNEXT: qa — verify commit 28f8509fc via direct-commit review (RAW-verify against live git, not this status_note's prose).\n",
-        "updated_at": "2026-08-24T17:42:38Z",
-        "updated_by": "dev-mcp-server",
-        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted.",
-        "promoted_at": "2026-08-24T17:18:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-24T17:18:57Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "commit": "28f8509fc351d73694319ae505909b4c43941cf5"
       }
     ],
     "qa": [
@@ -24092,6 +24062,41 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
+      },
+      {
+        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
+        "type": "CLEAN",
+        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
+        "status": "QA",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
+        "files": [
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
+          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
+          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
+        ],
+        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).\n[dev-mcp-server] Implementation Record (salvage-only, worktree NOT removed per standing user instruction): copied file CONTENTS (never checked out the worktree branch in the main tree) for the 5 modified + 1 new file the status_note flagged for salvage. Verified before copying: worktree base commit 4a6d2174c is an ancestor of current main HEAD, and main's pre-salvage content for all 5 modified files was byte-identical to that base — so the copy is exactly equivalent to a conflict-free rebase, no manual merge needed. Excluded per status_note, confirmed live: (a) ` D apps/mcp-server/data` — re-probed in main tree, still a tracked symlink (mode 120000, blob e67b455909149dffe457ead0f8cb08bfb2504376) -> ../../data; never propagated the deletion. (b) docs/agent-memory/modules/tool-usage-stats.json — diff confirmed it zeroes toolCounts (15 entries -> {}) at 2026-08-12T17:47:15Z, stale rolling-telemetry churn; left untouched. AC-4 (any other worktree carrying the same hidden-diff shape): `git worktree list` shows exactly one worktree besides main (agent-ae9ed2cd6f04b3686) — no other instances found.\nTests: targeted run on the 3 salvaged/new test files (BEQ-SECTION-GUARD.test.ts, LF-SERVE-REFLOW.test.ts, FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) = 32 pass/0 fail/138 expect() calls. Full suite (cd apps/mcp-server && bun test, captured to file not tail-piped, so exit code is real): 15456 pass/40 skip/50 fail/48943 expect() calls across 1284 files [506.02s]. Failing-file-set extracted programmatically (awk state-machine over file-header + (fail) lines) = {1113-vps-proxy-health, 1146-get-insider-transactions, 1193-push-prices-persist, 1405b-bctc-vps-fixes, 1518-get-foreign-flow-ohlcv-source, 1844-backtest-retrieval, 1858c-logvpspush-fix, 1875c-record-signal-outcome-routing, 1892a-pushNewsHandler, 235-telegram-send-merge, 251-mcp-tools, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, RAPID-B2-get-market-cap-tool, TSU-DEV-U5-foreign-flow-null-holding-ratio, VPT-1-vps-proxy-health-endpoint} — byte-identical (15/15, zero extra, zero missing) to the documented baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline, most-recently reconfirmed 2026-08-24T03:46Z QA verify on the board). Zero new regressions. bun tsc --noEmit: clean, 0 errors. Server boot (PORT=3099, isolated from any live container on :3000): /health returned toolCount=184, zero import errors, clean SIGTERM shutdown (WAL checkpoint flushed). Tool count 184 / cron job count 88 unchanged from pre-task baseline — no new tool registered (backfillBctcScalarsTool.ts is an existing registered tool, only its handler body changed), so this is expected not a regression.\nCommit 28f8509fc351d73694319ae505909b4c43941cf5 (pathspec: apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts, apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts, apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) — 6 files changed, 578 insertions(+), 8 deletions(-). Not pushed (local main stays ahead of origin per session policy).\nNOT DONE (explicitly out of this task's stated scope, \"SALVAGE ONLY\"): worktree removal (AC-3 of the original status_note) — deliberately deferred, standing user instruction protects .claude/worktrees/agent-ae9ed2cd6f04b3686 from pruning, and removal is destructive/irreversible pending separate user sign-off. Also did not act on AC-2 (advancing the separate FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG row currently in ready[]/next_agent=ba to review/qa or re-scoping it) — that is a distinct board row this task's brief did not authorize touching; flagging it for whoever owns that row next: the salvaged commit above already implements it end-to-end with passing tests, so a fresh ba re-plan-from-scratch would be duplicate work.\nNEXT: qa — verify commit 28f8509fc via direct-commit review (RAW-verify against live git, not this status_note's prose).\n",
+        "updated_at": "2026-08-24T17:52:27Z",
+        "updated_by": "dev-mcp-server",
+        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted.",
+        "promoted_at": "2026-08-24T17:18:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-24T17:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit": "28f8509fc351d73694319ae505909b4c43941cf5",
+        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -24129,7 +24134,7 @@
         "last_served_tick": "2026-08-24T17:17:53Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-24T14:52:03Z"
+        "last_served_tick": "2026-08-24T17:47:42Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-24T15:19:33Z"
@@ -24144,7 +24149,7 @@
         "last_served_tick": "2026-08-24T16:54:07Z"
       }
     },
-    "_updated_at": "2026-08-24T17:17:53Z",
+    "_updated_at": "2026-08-24T17:47:42Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24807,6 +24812,157 @@
         },
         "createdAt": "2026-08-24T16:39:33Z",
         "drained_at": "2026-08-24T17:16:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "64e49d534dc62186ce8219603b08cebb1ebeaba22a39fb1bc5f425e74b789b53",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/claim-truth-gate/SKILL.md",
+          "line_count": 182,
+          "cap": 200,
+          "byte_count": 13177,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1177,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-24T17:45:19Z",
+        "drained_at": "2026-08-24T17:47:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "06123aba3ee215314efa03df48366ee59b93df6a750a77a0e3f5c843e8bd8b53",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 67,
+          "cap": 200,
+          "byte_count": 40756,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 28756,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-24T17:42:37Z",
+        "drained_at": "2026-08-24T17:47:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "797669788acbc26f4e4a8fa0a73576a9b20e12a988e805ca37a8d5c392e486d6",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "normal",
+        "payload": {
+          "fire_time": "2026-08-24T17:35:56Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "closed",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-24T17:34:17Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 32,
+          "container_vm_headroom_mb": 3177,
+          "fanout_gate": {
+            "degraded": false,
+            "max_parallel": 4,
+            "batches": 1
+          },
+          "note": "DE-STAMP RESERVE: digest-daily prior last_fired was 2026-08-23T17:33:38Z — revert target if the deferred Step 5.3 detector scores MARKER_HITS>=2 against the real return text (never to null, BLOCKER-3). SIGNAL DRAIN HELD BACK: 6 NEW rows, all to=po type=narrative_contradiction from the CCATO emitter (ntg-20260824T000000Z-technical_indicators-VNM-*), deliberately NOT marked READ. All six reproduce the emitter's three documented defects — no dedup_key field (hence six rows for one finding), ts 2026-08-24T00:00:00Z is local CEST midnight mislabelled as Zulu, and the verdict is inverted against its own payload (summary accuses chef of falsely claiming absence of VNM technical data while payload.returned_value is 'not found in database', i.e. chef was correct). Marking to=po rows READ delivers them nowhere — PO selects on NEW and there is no po cowork slot — and READ cold-evicts at 24h; 60 CCATO rows have already gone that way. Emitter fix already tracked by SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (active) and FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (backlog), so no duplicate filed. Queue census this tick: 84 of 109 signal_queue rows are CCATO (NEW 6 / READ 60 / RETRACTED 13 / triaged 5); only 22 of 109 rows carry a dedup_key at all. CARRIED DEFECTS RE-CONFIRMED: Step 4.7 snapshot landed as cycle-snapshot-17:33.json against nominal 17:30 (FIFTH confirmation of wall-clock vs nominal-tick naming), and cycle_snapshot_promoted came back false again with cycle-snapshot-latest.json still at 2026-08-23T00:07:50Z (~41.5h stale) — one defect and its consequence, not two. regime_status/volatility_level absent at every snapshot path (only macro_snapshot.data.signals.carry.regime exists), so 'unknown' passed honestly per the spec's own else-branch. Locale load parse: raw 'load averages: 8,04 5,61 4,21' truncated to 8 by awk -F',' — non-binding at this load. calendar_status recorded as 'closed' by derivation (17:30Z is outside the VN 02:00-08:59Z session), NOT read from the server this tick — it is server-computed since FR-A4 and absent from the snapshot. PRE-SPAWN REPAIR: committed 377e52aec first — digest-predict.md carried 5 uncommitted lines from the 2026-08-23T17:42Z cycle (1d stranded, mtime 17:44Z) recording a legitimate cross-session claim race; landed ahead of the fire so this cycle could not clobber it. Slot lock claimed and released with released=1 verified on the field, not on ok. Consistency check passed: trigger_prompt line 1 resolves to docs/agents/digest-predict/flow/main.md == flow_path, and main.md:21 carries Step pre-D DAILY-PREDICT DEDUP GATE — this is the exact slot whose flow_path/trigger_prompt divergence motivated FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE, now consistent. ps-probe for slot=digest-daily clean before spawn (digest-daily is guaranteed:true, so the guaranteed-slot firer is a live double-fire path with no cross-mechanism guard)."
+        },
+        "createdAt": "2026-08-24T17:35:56Z",
+        "drained_at": "2026-08-24T17:47:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3b226f131bdc4ace9b657b70ae28f19eee9fa7330325469f92bec5a499d95028",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 53,
+          "cap": 200,
+          "byte_count": 39131,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-24T17:42:35Z",
+        "drained_at": "2026-08-24T17:47:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8d2e0479a05d3c34981e3f4dfca89612d34b0f129458496f9aea0dfe4a36bda5",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 53,
+          "cap": 200,
+          "byte_count": 39131,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-24T17:42:51Z",
+        "drained_at": "2026-08-24T17:47:02Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

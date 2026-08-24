@@ -134,5 +134,13 @@
   "doc_hygiene:orch-state-active-sprints:size-cap-query-aborts": {
     "ts": "2026-08-24T03:07:52Z",
     "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-24T00:00Z": {
+    "ts": "2026-08-24T04:10:52Z",
+    "sev": 2
+  },
+  "auditor-cycle-missing:tier2:2026-08-24T12:00Z": {
+    "ts": "2026-08-24T13:51:27Z",
+    "sev": 2
   }
 }

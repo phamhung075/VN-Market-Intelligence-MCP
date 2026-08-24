@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-24T17:45:19Z",
+  "payload": {
+    "file": ".claude/skills/claim-truth-gate/SKILL.md",
+    "line_count": 182,
+    "cap": 200,
+    "byte_count": 13177,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 1177,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "64e49d534dc62186ce8219603b08cebb1ebeaba22a39fb1bc5f425e74b789b53",
+    "processedAt": "2026-08-24T17:47:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
