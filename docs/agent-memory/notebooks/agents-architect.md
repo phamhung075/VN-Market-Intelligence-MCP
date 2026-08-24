@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-23T11:01:46Z
-
-**Task:** `FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR` (P0, dev-team Design-Router Sweep dispatch) — no new brief authored (`po_scope_note` on the row: design already fully specified in `desc`, one-hop signal only; independently re-verified before honoring that ruling).
-
-Re-verified live at source: `docs/agents/qa/flow/main.md` vc-approved/vc-changes Direct-Commit-Verify exits (L189/L198 per the row, L205/L214 in current file) are both still prose-only board mutations, no `orch-apply.sh` pipe — matches desc verbatim, in-file WF-1 block (L30-33) already shows a working local precedent. Dropped signal `docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json` → agent-father with copy-executable jq+orch-apply.sh patches for AC-1/AC-2 (test-executed against synthetic fixtures, both pass) + AC-3 self-verify shape, mirroring the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR template (commit 3ce726a6e); flagged AC-4/AC-5 as outside agent-father's commit_zone (`scripts/`) — same split as that precedent, hand to a developer-owned row. Flagged, not folded in: AC-2's qa[]→review[] move crosses into a `scripts/orch-row-prose-ceiling-check.mjs` guarded lane from an unguarded one — same D3 defect already tracked separately (`FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS`, ready[], next_agent=developer). Routed the task_board row `next_agent`/`owner` → `po` (not `agent-father` directly — off the DRS allowlist, unreachable by automated dispatch, precedent `FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT`); `.head` idle-reset in the same write.
-
-**Signal dropped:** `docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json` → agent-father
-
----
-
 ## 2026-08-23T14:04:55Z
 
 **Brief:** `docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md`
@@ -49,3 +39,13 @@ Corrected the row's risk framing in both directions: the hook always `exit 0`, i
 Ruled (a)+(b) and explicitly **not a new mechanism**: port the live code-plane sibling (`size-lint-justification.sh` + `size-lint-baseline.json`, 648 grandfathered entries, ±10%/min-5 tolerance, wholesale `--update`, zero tolerance for new offenders). Rejected (c) and (d) with reasons. Did **not** retune `cap:120` — measured p50=102L, the line cap is right; the miscalibrated knob is BC-1's hardcoded 60 B/line (measured p50=54, p90=88, max=1190). 3 rows, order load-bearing R1→R2→R3 so the glob flips last: byte-dimension header (preserves TE-T24's intent rather than reversing it — an explicit reviewable byte figure is not a free pass), then the doc-plane baseline seeded from the 63, then the one-character glob. Reported not fixed: **272 of 445** `docs/agents/**/*.md` match no cap pattern at all (68 over 120L) — flow files are the smaller ungoverned half.
 
 **Signal dropped:** `docs/signals/fix-filesizecaps-flowfile-glob-rollout-2026-08-23T14:30:00Z.json` → po
+
+---
+
+## 2026-08-24T19:25:40Z
+
+**Brief:** `docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md`
+
+Row `FIX-CADENCE-COWORK-DUP-MARKET-WATCHER` (P1, cross-service) — investigated, found this row is a duplicate of already-shipped, already-DONE_VERIFIED work from my own 2026-08-14 brief (`docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md`): commits `662d1fcc3` (supersede-mutex script + wiring into `cowork-match-slots.js` `finish()`) + `5918c55fe` (schedule `supersedes` field + pathspec fixes), both QA `DONE_VERIFIED` 2026-08-14T17:38-39Z, cold-evicted to `docs/data/orch/archive/2026-08.json` before this row was promoted 2026-08-15T00:40Z off the identical incident. Re-verified live this cycle (not cited from either prior artifact): cron values unchanged (still structurally colliding by construction), test suite re-run 32/0 pass, and independently confirmed working on TODAY's real 16:00Z tick — `market-watcher-eod` fired alone (commit `3c3f18bc6`), `market-watcher-offhours.last_fired` stayed at `12:04:50Z` (did not advance), two independent planes (git notebook history + schedule file bookkeeping) agree. Recommended remedy: none new — the shipped declarative same-tick supersede-mutex already IS the correct primary (achieves de-overlap's goal with zero cron-timing change; per-slot notebook split re-rejected, 4 `fb-market-poster` files still read `market-watcher.md` by fixed path, re-confirmed live). One non-blocking loose end flagged for agent-father: stale "Field is INERT..." wording in `cowork-schedule.json` `market-watcher-eod._note`.
+
+**Signal dropped:** `docs/signals/fix-cadence-cowork-dup-market-watcher-dedup-review.json` → po

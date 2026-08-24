@@ -1,0 +1,8 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md — FIX-CADENCE-COWORK-DUP-MARKET-WATCHER investigated and found to be a duplicate of already-shipped, already-DONE_VERIFIED work (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC commit 5918c55fe + FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING commit 662d1fcc3, both 2026-08-14, both archived docs/data/orch/archive/2026-08.json). Live production evidence confirmed today (2026-08-24 16:00Z tick): market-watcher-eod fired alone, market-watcher-offhours correctly dropped by the supersede-mutex, no notebook clobber. Recommend dedup-close this row rather than dispatching new implementation work. One non-blocking loose end flagged for agent-father: stale INERT wording in cowork-schedule.json market-watcher-eod._note (brief §3).",
+  "priority": "normal",
+  "createdAt": "2026-08-24T19:25:40Z"
+}
