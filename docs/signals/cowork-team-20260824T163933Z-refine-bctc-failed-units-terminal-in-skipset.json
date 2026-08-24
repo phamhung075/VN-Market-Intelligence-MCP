@@ -1,0 +1,52 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "bug",
+  "priority": "high",
+  "createdAt": "2026-08-24T16:39:33Z",
+  "payload": {
+    "title": "refine_bctc_md skip-set has no status filter — FAILED units are terminal, 15/24 pages of VIC Q1-2026 permanently unrecoverable; and image-blind units still ship DONE with row-shifted numbers",
+    "zone": "docs/agents/refine_bctc_md/",
+    "suggested_next_agent": "agent-father",
+    "detected_by": "router Step 5.3 deferred reconciliation, cowork tick 2026-08-24T16:30Z, slot refine-bctc-slot-4 — verified against live DB via get_bctc_refined, not against the agent's RETURN",
+    "summary": "Two independent defects on report 1f53ef33-8f50-489b-8505-689740692ab0 (VIC Q1-2026). D1: the resume skip-set is keyed on unit_id with no window_status filter, so a unit pushed FAILED with empty markdown is excluded from every future chunk forever — there is no retry path in any layer. 12 units failed this fire and are now terminal; with 3 from the morning fire that is 15 of 24 pushed units permanently empty, covering pages 20-50 (the entire notes section). finalize_bctc_refine will still mark the report complete. D2: the inverse and arguably worse — units flagged image_unavailable + garbled_ocr_layout shipped as DONE at confidence 0.65-0.75 carrying visibly row-shifted numbers, which downstream consumers will treat as trustworthy.",
+    "defect_1_primary": {
+      "id": "D1-SKIPSET-NO-STATUS-FILTER",
+      "site": "docs/agents/refine_bctc_md/flow/main.md:71 and :78",
+      "code": "pushed_ids = Set(units.map(u => u.unit_id))  /  chunk = windows.filter(w => !pushed_ids.has(w.unit_id))",
+      "mechanism": "window_status is read exactly once in the flow — at :74-77 for the RESET-GUARD has_done_units check — and never for skip-set eligibility. Membership in pushed_ids is by unit_id alone. A FAILED push is therefore indistinguishable from a DONE push to the resume path.",
+      "consequence": "The mechanism that makes this agent safely resumable is the same mechanism that makes a batch failure permanent. No retry, no backlog, no signal — the pages simply never come back.",
+      "blast_radius_this_report": "units 0000, 0001, 0007 (morning fire 09:03-09:05Z) + units 0012-0023 (this fire 16:33-16:34Z) = 15 of 24 pushed units, markdown empty, confidence 0. Pages 1, 2, 11, 20-50.",
+      "candidate_fix": "filter the skip-set on window_status === 'DONE', with a bounded per-unit retry counter so a genuinely unextractable page cannot loop forever. Needs a companion decision on what finalize_bctc_refine should do when any unit is still FAILED at finalize time — today it finalizes regardless."
+    },
+    "defect_2_secondary": {
+      "id": "D2-DONE-WITHOUT-IMAGE-LEG",
+      "mechanism": "FR-13's contract is numbers<-OCR, structure<-image. Units 0004, 0005, 0006 carry the agent's own flags image_unavailable / image_unavailable:pages6-8 / garbled_ocr_layout — the structure leg provably did not run — yet all three shipped window_status DONE at confidence 0.65-0.75 with full number tables.",
+      "evidence_of_corruption_in_unit_0005": [
+        "Nguyen gia (gross cost) row carries a parenthesized negative (33.020.984) — gross cost is never negative",
+        "Du phong ton that dau tu (impairment provision) carries positive 44.670.551 / 35.916.035 while every other provision row in the same table is parenthesized negative — (1.583.814), (3.556.570), (35.946.240)",
+        "Dau tu nam giu den ngay dao han dai han carries negative (3.436.252) where the prior-period column is positive 16.567.029",
+        "Gia tri hao mon luy ke moves (160.683.471) -> (73.936.379), i.e. accumulated depreciation halving year-on-year on a growing asset base",
+        "Net: values are shifted relative to their labels — exactly what the unit's own garbled_ocr_layout flag says — and it still shipped DONE"
+      ],
+      "why_this_is_worse_than_D1": "A FAILED unit with empty markdown is loud and self-describing. A DONE unit at 0.65 confidence with plausibly-magnituded but row-shifted numbers passes every null check and every non-zero plausibility check downstream. TONG CONG TAI SAN 1.178.694.748 trieu VND is a believable figure for VIC, so nothing flags it.",
+      "candidate_fix": "block DONE when image_unavailable is present (the FR-13 structure leg cannot have run), or gate DONE behind a confidence floor. Root cause of the image unavailability itself is likely dev-pdf-extractor, not the flow doc — po to route the two halves separately.",
+      "related_known": "backlog.509 bctc-imgdeg (strict === at line 67); feedback_nonzero_values_need_plausibility_check"
+    },
+    "evidence": {
+      "verification_method": "get_bctc_refined via gateway against report_id 1f53ef33-8f50-489b-8505-689740692ab0, read directly rather than trusting the agent RETURN",
+      "total_units_pushed": 24,
+      "done": 9,
+      "failed": 15,
+      "this_fire_units": "unit-0012 through unit-0023, all 12 FAILED, refined_at 2026-08-24 16:33:21 to 16:34:17",
+      "timing_anomaly": "units 0014,0015,0016,0018,0019,0020,0021,0023 all landed within 16:34:09-16:34:17 — eight units in eight seconds, one per second, all carrying the byte-identical flag string content_mismatch:prose_expected_continuation. The other four this fire (0012,0013,0017,0022) are spaced ~13s apart and carry varied specific flags. The 1/sec cluster is a template emission, not twelve per-unit judgements — worth a look independently of D1/D2.",
+      "morning_fire_contrast": "units 0000-0011 at 09:03-09:05Z were 9 DONE / 3 FAILED with 5-30s per-unit spacing. Same report, same pipeline, 75% success in the morning and 0% in the afternoon — a cliff, not a gradient."
+    },
+    "return_vs_ground_truth": {
+      "verified_true": "12 windows this chunk (unit-0012..0023) — confirmed; all 12 FAILED — confirmed; 24 total pushed — confirmed; NO_FILESYSTEM_OUTPUT true — confirmed, docs/refine-output/ does not exist and nothing landed",
+      "internal_contradiction": "the RETURN says both '16 windows remain for next fire' and 'remaining 28 windows (unit-0024 through unit-0039)'. The named range is 16 units, and 40-24=16, so 28 is the outlier of three statements about one quantity. Benign here — the DB confirms the actual work — but it is the same narrated-summary-drifts / read-back-fields-hold shape seen in the market-watcher EOD case filed earlier today.",
+      "agent_framing_was_incomplete": "the RETURN attributes everything to upstream partitioning or OCR quality, which points at pdf-extractor. That is at most half of it: the durability defect (D1) is in this agent's own flow doc, and D2 is the opposite of what was reported — the problem is the chunk that succeeded, not the chunk that failed."
+    },
+    "context": "Dispatch itself was healthy: slot matched, claimed, spawned, returned normally, Step 5.3 detector 0/6 markers, last_fired stamp stands at 2026-08-24T16:32:38Z. This is a payload-quality and durability finding, not a scheduling one."
+  }
+}
