@@ -2074,3 +2074,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · priceUpdateWatchdog cron STALE
+**Severity:** WARN | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** cron/layer-a
+**Details:** priceUpdateWatchdog last fired 2026-08-24 08:50, 13.7 hours overdue (expected 0.3h cadence)
+**Impact:** Price update watchdog may not be processing data fetches correctly
+**Root cause:** Service may be stuck or experiencing processing delays
+**Zone owner:** ops
+**Last reported:** 2026-08-24T22:35:48Z (signal sys-20260824T223526-2ee1, system-auditor -> po, dedup_key=auditor-a29-fire-gap:priceUpdateWatchdog, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
