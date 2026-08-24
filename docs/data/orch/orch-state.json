@@ -23975,7 +23975,7 @@
         "last_served_tick": "2026-08-24T04:26:48Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-24T01:55:22Z"
+        "last_served_tick": "2026-08-24T14:52:03Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-24T02:25:24Z"
@@ -23990,8 +23990,8 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T14:38:25Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-24T14:52:03Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
