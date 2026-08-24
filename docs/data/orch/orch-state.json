@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T07:15:54Z",
-    "updated_by": "po (ruling-20260824T0716Z stale-head unpin)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "CCATO-MCP-T7-SKILL-DUAL-PATH",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T7-SKILL-DUAL-PATH — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-24T15:19:45Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20267,22 +20268,6 @@
         }
       },
       {
-        "id": "CCATO-MCP-T7-SKILL-DUAL-PATH",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "Update .claude/skills/claim-truth-gate/SKILL.md + 5 flow-file invocation swaps",
-        "depends": [
-          "CCATO-MCP-T6-TOOL-REGISTRATION"
-        ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-17T04:53:14ZZ",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
-      },
-      {
         "id": "CCATO-MCP-T8-DOD-HARNESS",
         "type": "IMPL-XS",
         "status": "READY",
@@ -23936,7 +23921,27 @@
     },
     "last_triaged_at": "2026-08-24T14:05:00Z",
     "last_triaged_by": "po",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "CCATO-MCP-T7-SKILL-DUAL-PATH",
+        "type": "IMPL-XS",
+        "status": "IN_PROGRESS",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Update .claude/skills/claim-truth-gate/SKILL.md + 5 flow-file invocation swaps",
+        "depends": [
+          "CCATO-MCP-T6-TOOL-REGISTRATION"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-08-24T15:19:45Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-24T15:19:44Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -23956,7 +23961,7 @@
         "last_served_tick": "2026-08-24T14:52:03Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-24T02:25:24Z"
+        "last_served_tick": "2026-08-24T15:19:33Z"
       },
       "drs": {
         "last_served_tick": "2026-08-24T03:01:50Z"
@@ -23968,7 +23973,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T15:17:43Z",
+    "_updated_at": "2026-08-24T15:19:33Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
