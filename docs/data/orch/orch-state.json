@@ -14869,9 +14869,9 @@
           "AC-3 DONE only when `git rev-list --count origin/main..HEAD` returns to a small number after a real push — i.e. the fleet backlog actually drains. Reporting the gate green while ahead stays at 46 is a false green.",
           "AC-4 DO NOT close this as covered by FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. That row is a DIFFERENT defect (the gate scans the working tree instead of `git diff @{u}..HEAD`, so a live peer's uncommitted mid-edit can block everyone). Its fix would NOT unblock tonight's push: tonight's offender is already COMMITTED and therefore already inside the @{u}..HEAD range. Both rows are real; neither subsumes the other."
         ],
-        "status_note": "PREMISE RE-MEASURED BY PO THIS TICK (2026-08-23T21:08:06Z), not taken from the envelope: the two auto-push-abort envelopes carried ahead=24 and ahead=43 snapshots, both stale; live is ahead=46 behind=0. FALSIFIED SIBLINGS — do not dispatch either as a fix for this: (1) FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE (backlog, ops) blames launchd log rotation; (2) an EXCONFIG/plist-ExitConfig theory that is no longer carried by any live lane row. Neither would move this push. CONVERGING EVIDENCE, all this tick: auto-push-abort x2 (fleet-worktree-push, reason=push-fail, dedup_key auto-push-abort:push-fail); bug-escalation from alert-commander 20:10:16Z naming this exact file and the exact 228/252/250 numbers; tran-ngoc-bau c133 audit findings table, severity HIGH, BUG telegram 5477. CI on origin/main also stays RED until a push advances origin/main, so this row gates the CI-green verification of every other CI row currently open. || PREMISE RE-MEASURED AGAIN BY PO 2026-08-24 (Step 0-SIG, 5 more auto-push-abort envelopes, all reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 95 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelopes' own ahead snapshots (49/58/73/82/92) were all stale as the routing row warns. docs/agent-memory/sessions/fleet-push.log confirms the SAME gate on all 4 most recent attempts: tsc passes, then `[size-lint] FAIL — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts — baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)` -> `[pre-push] BLOCKED`. Backlog has grown 46 -> 95 unpushed commits since this row was minted; still P0, still one 2-line trim or baseline bump, and it now also gates every CI-green verification on the board. || PREMISE RE-MEASURED A THIRD TIME BY PO 2026-08-24T00:12:36Z (Step 0-SIG; 1 more auto-push-abort envelope c733a9e1, reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 101 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelope's own snapshot said ahead=97 — stale on arrival, as this row's routing rule predicts. `wc -l apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` = 252, unchanged; baseline 228, ceiling 250. Trajectory of unpushed commits since mint: 46 -> 95 -> 97 -> 101. Still P0, still a 2-line trim or a baseline bump, and it still gates every CI-green verification on this board. PO did NOT push (router constraint) and did NOT repoint the gateway URL.",
-        "updated_at": "2026-08-24T00:12:36Z",
-        "occurrence_count": 1,
+        "status_note": "PREMISE RE-MEASURED BY PO THIS TICK (2026-08-23T21:08:06Z), not taken from the envelope: the two auto-push-abort envelopes carried ahead=24 and ahead=43 snapshots, both stale; live is ahead=46 behind=0. FALSIFIED SIBLINGS — do not dispatch either as a fix for this: (1) FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE (backlog, ops) blames launchd log rotation; (2) an EXCONFIG/plist-ExitConfig theory that is no longer carried by any live lane row. Neither would move this push. CONVERGING EVIDENCE, all this tick: auto-push-abort x2 (fleet-worktree-push, reason=push-fail, dedup_key auto-push-abort:push-fail); bug-escalation from alert-commander 20:10:16Z naming this exact file and the exact 228/252/250 numbers; tran-ngoc-bau c133 audit findings table, severity HIGH, BUG telegram 5477. CI on origin/main also stays RED until a push advances origin/main, so this row gates the CI-green verification of every other CI row currently open. || PREMISE RE-MEASURED AGAIN BY PO 2026-08-24 (Step 0-SIG, 5 more auto-push-abort envelopes, all reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 95 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelopes' own ahead snapshots (49/58/73/82/92) were all stale as the routing row warns. docs/agent-memory/sessions/fleet-push.log confirms the SAME gate on all 4 most recent attempts: tsc passes, then `[size-lint] FAIL — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts — baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)` -> `[pre-push] BLOCKED`. Backlog has grown 46 -> 95 unpushed commits since this row was minted; still P0, still one 2-line trim or baseline bump, and it now also gates every CI-green verification on the board. || PREMISE RE-MEASURED A THIRD TIME BY PO 2026-08-24T00:12:36Z (Step 0-SIG; 1 more auto-push-abort envelope c733a9e1, reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 101 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelope's own snapshot said ahead=97 — stale on arrival, as this row's routing rule predicts. `wc -l apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` = 252, unchanged; baseline 228, ceiling 250. Trajectory of unpushed commits since mint: 46 -> 95 -> 97 -> 101. Still P0, still a 2-line trim or a baseline bump, and it still gates every CI-green verification on this board. PO did NOT push (router constraint) and did NOT repoint the gateway URL. || PO triage 2026-08-24 — FOLD of 2 inbox envelopes (bug-escalation from alert-commander 84f7a97d, auto-push-abort push-fail d43ad035); dedup_key auto-push-abort:push-fail. Premise RE-MEASURED live (envelope ahead=103 was stale): git rev-list --count origin/main..HEAD = 105, behind = 0 — still diverging, condition holds. CORRECTION to the alert-commander payload: it claims commit 5d5d33a86 was a lane-move to review[] marked DONE_VERIFIED — resolved at source, that commit touches docs/agent-memory/notebooks/qa.md ONLY (1 file, 6+/12-), contains NO orch-state.json write and NO code fix. There was never a false board close; it is the prose-actuation/narrated-not-landed class. Its cited sprint UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES resolves in NEITHER active_sprints[] NOR closed_sprints[] — dangling sprint id, same class as the held sprint_registry_dangling_ids envelope 9fbfb401. Row correctly OPEN at P0/next_agent=dev-mcp-server. NOT DISPATCHED this tick: repairing the pre-push size-lint gate would let the launchd fleet-push job flush 105 unpushed commits to origin/main unattended while PUSH-AUTONOMY-1 is unsatisfied — pending USER decision, deliberately left blocked.",
+        "updated_at": "2026-08-24T00:36:33Z",
+        "occurrence_count": 3,
         "updated_by": "po"
       },
       {
@@ -15742,31 +15742,6 @@
         "secondary_claimed_at": "2026-08-23T13:39:19Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "po"
-      },
-      {
-        "id": "UC-CCA-P2-SKILL-GW-GATE",
-        "type": "TASK",
-        "title": "gateway-availability-gate SKILL: DMS-2 ladder + DEFER templates + terminology-parity",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "developer",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          ".claude/skills/gateway-availability-gate/SKILL.md"
-        ],
-        "note": "FR-1/FR-2: Restructure Step 0-GW with DMS-2 escalation ladder. Classify probe error (CONFIRMED-BLIND vs TRANSIENT) → 30s backoff → PROBE_2 → SIBLING_RECENT corroboration (hours_back=0.25 exactly) → suppress (DEFER notebook+clean EXIT, no signal/bug) or escalate (append payload suffix '2x probe failure + no sibling success in 15-min'). Add DEFER templates (distinct from BLOCKED, same OVERWRITE/APPEND split). Reuse cycle-bootstrap/SKILL.md trigger-text signature exactly (no second definition). Estimated ~171-176L post-edit inside AC-1 ≤200L cap. Verify send_telegram never appears in confirmed-down path (FR-2 invariant).",
-        "created_at": "2026-08-14T12:21:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:40:05Z",
-        "updated_by": "developer",
-        "commit_sha": "98da23dcb0cc80d9355c9373f28ff65f6381b4ab",
-        "completed_at": "2026-08-14T12:40:04Z",
-        "completed_by": "developer",
-        "status_note": "FR-1/FR-2 shipped per architect ratified design (UC-CCA-P2-BA-spec.md). gateway-availability-gate/SKILL.md restructured 101L->169L: Step 0-GW now runs a DMS-2 ladder (classify CONFIRMED-BLIND/TRANSIENT using cycle-bootstrap/SKILL.md exact trigger-text signature -> 30s backoff -> PROBE_2 -> SIBLING_RECENT via get_agent_signals(hours_back=0.25) -> suppress via new DEFER notebook template or escalate via existing a/b/c actions with additive payload suffix). Verified zero send_telegram anywhere in ladder/confirmed-down paths (grep, FR-2 invariant). Within AC-1 <=200L cap. AC-6 news-scout inheritance re-checked, no file edit needed. Leaf subtask of UC-CCA-P2 -- 9 sibling flow-file insertions (FR-3/4/5) are separate PM-decomposed rows, not in this scope. Commit 98da23dcb."
       },
       {
         "id": "UC-CCA-P2-ALERT-COMMANDER",
@@ -18388,6 +18363,54 @@
           }
         },
         "status_note": "\n[QA] Review Record (direct-commit verify): Direct-commit verify: commit 18e20a438 (main ancestor) touches runNarrativeTruthGate.ts/Types.ts/Findings.ts/test+claimToolMapTypes.ts/claimToolMapValidator.ts+4 docs. CCATO-MCP-T5-USECASE.test.ts 15 pass/0 fail/37 expect (matches testing.md doc). tsc --noEmit 0 errors. DDD scan clean (domain zero infra imports; app->infra is correct per DDD Layer Rules). Security scan clean. mock-guard PASS. Full suite 15427 pass/51 fail/1 error/1282 files -- failing file-set = baseline-15 + 1 unrelated VPS-fetcher timeout flake, zero overlap with T5 files. Deps T1-T4 all DONE_VERIFIED. Not OOM-class."
+      },
+      {
+        "id": "UC-CCA-P2-SKILL-GW-GATE",
+        "type": "TASK",
+        "title": "gateway-availability-gate SKILL: DMS-2 ladder + DEFER templates + terminology-parity",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "developer",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          ".claude/skills/gateway-availability-gate/SKILL.md"
+        ],
+        "note": "FR-1/FR-2: Restructure Step 0-GW with DMS-2 escalation ladder. Classify probe error (CONFIRMED-BLIND vs TRANSIENT) → 30s backoff → PROBE_2 → SIBLING_RECENT corroboration (hours_back=0.25 exactly) → suppress (DEFER notebook+clean EXIT, no signal/bug) or escalate (append payload suffix '2x probe failure + no sibling success in 15-min'). Add DEFER templates (distinct from BLOCKED, same OVERWRITE/APPEND split). Reuse cycle-bootstrap/SKILL.md trigger-text signature exactly (no second definition). Estimated ~171-176L post-edit inside AC-1 ≤200L cap. Verify send_telegram never appears in confirmed-down path (FR-2 invariant).",
+        "created_at": "2026-08-14T12:21:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T00:36:33Z",
+        "updated_by": "po",
+        "commit_sha": "98da23dcb0cc80d9355c9373f28ff65f6381b4ab",
+        "completed_at": "2026-08-14T12:40:04Z",
+        "completed_by": "developer",
+        "status_note": "FR-1/FR-2 shipped per architect ratified design (UC-CCA-P2-BA-spec.md). gateway-availability-gate/SKILL.md restructured 101L->169L: Step 0-GW now runs a DMS-2 ladder (classify CONFIRMED-BLIND/TRANSIENT using cycle-bootstrap/SKILL.md exact trigger-text signature -> 30s backoff -> PROBE_2 -> SIBLING_RECENT via get_agent_signals(hours_back=0.25) -> suppress via new DEFER notebook template or escalate via existing a/b/c actions with additive payload suffix). Verified zero send_telegram anywhere in ladder/confirmed-down paths (grep, FR-2 invariant). Within AC-1 <=200L cap. AC-6 news-scout inheritance re-checked, no file edit needed. Leaf subtask of UC-CCA-P2 -- 9 sibling flow-file insertions (FR-3/4/5) are separate PM-decomposed rows, not in this scope. Commit 98da23dcb.",
+        "reviewed_at": "2026-08-24T00:36:32Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "wc -l .claude/skills/gateway-availability-gate/SKILL.md + grep -c send_telegram <same file> + grep -n trigger-text list in .claude/skills/cycle-bootstrap/SKILL.md",
+            "args": ".claude/skills/gateway-availability-gate/SKILL.md",
+            "live_value_observed": {
+              "file_lines": 169,
+              "ac1_cap": 200,
+              "ac1_pass": true,
+              "send_telegram_hits": 0,
+              "ac2_pass": true,
+              "ac5_trigger_list_byte_identical_vs_cycle_bootstrap_line_109": true,
+              "gw_gate_pointer_count_across_9_consumer_flows": 9,
+              "commits_on_file_since_ship": 1,
+              "worktree_clean": true
+            },
+            "observed_at": "2026-08-24T00:36:32Z",
+            "evidence_commit": "98da23dcb0cc80d9355c9373f28ff65f6381b4ab",
+            "verdict": "PASS"
+          }
+        },
+        "verification_note": "PO DONE_VERIFIED 2026-08-24 (SECONDARY-drain done[]-origin sign-off; shipped 2026-08-14, 10d unsigned). Verified AT SOURCE, not from status_note prose. AC-1 wc -l=169 <=200. AC-2/FR-2 zero literal send_telegram; only Telegram mention is the explicit prohibition at :155-158. AC-5 terminology parity: 3-string trigger list byte-identical, gw-gate:35 vs cycle-bootstrap/SKILL.md:109. AC-6 news-scout inheritance: news-scout/flow/cycle.md:15 exactly 1 pointer, APPEND-class DEFER template :139-144 coherent, correctly no file edit. R1 payload SUFFIX branch survived un-collapsed at :85-86. R2 PROBE_2 non-reclassification preserved at :42-44. AC-3 structural: exactly 1 probe declaration site (market-watcher/flow/main.md:61, covers cycle.md AND eod.md); zero surviving inline SIBLING_RECENT/PROBE_2 ladders in any live flow file (remaining hits are historical decisions/briefs/handoffs). Drift: 98da23dcb is the ONLY commit on this file since ship, worktree clean. HONEST GAP: AC-3 live-cycle WORK-ping observation NOT reproducible (market-watcher notebook is OVERWRITE-class, success path logs [GATEWAY] to console not notebook) — non-blocking, that live surface is created by the FR-3/4/5 sibling rows, out of this row scope. Bonus read-only sweep: all 9 consumer flow files carry exactly 1 gw-gate pointer each (AC-4 satisfied cohort-wide)."
       }
     ],
     "head": {
@@ -22094,14 +22117,14 @@
         "last_served_tick": "2026-08-23T23:03:48Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-23T20:24:03Z"
+        "last_served_tick": "2026-08-24T00:27:26Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-24T00:24:09Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-24T00:36:51Z",
+    "_updated_by": "po",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -22190,392 +22213,6 @@
         "payload": "Auditor blind-spot: cannot detect launchd failures tier-1 probe checks for",
         "createdAt": "2026-08-23T22:49:24Z",
         "drained_at": "2026-08-23T22:58:03Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "84f7a97d9e367ac23d4ece5670ac3cea9dd7514ae3e7e12633b7a4b217c94dc2",
-        "source": "file",
-        "from": "alert-commander",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[alert-commander] commit-mutex: git push origin main BLOCKED again by pre-push size-lint gate — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L, wc -l verified live 2026-08-24T00:08Z). Recurrence of the SAME offender first escalated 2026-08-23T20:10:16Z (docs/signals/processed/alert-commander-20260823T201016Z.json, routed-to-po, tracked as FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH). File is STILL 252L despite a dev-mcp-server notebook entry (commit ec0bd2ace) and a lane-move to review[] marked DONE_VERIFIED (commit 5d5d33a86) under sprint UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES — the DONE_VERIFIED claim did not land an actual line-count fix/baseline-bump on this file; verify before closing that row. Not a non-fast-forward conflict (local commit 9538287c8 chore(memory/alert-commander): notebook 2026-08-24 c199 silent-exit landed local-only cleanly on top of origin/main). Fleet-wide: ALL pushes to main remain blocked until this offender is fixed/re-baselined.",
-        "createdAt": "2026-08-24T00:08:43Z",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9183d2bf438a6ef7ecc5c4c422cee7713ebc1170073e1c49aaefc2521db11e77",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "DXG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Real estate development — residential projects (HCMC metro area, Long An, satellite provinces)",
-          "customer": "Retail homebuyers and investors in mid-tier residential segment",
-          "ops": "get_bctc_full(DXG) still returns \"Chưa có dữ liệu BCTC\" — 36th+ consecutive cycle with zero extracted data despite DXG_2026_Q2.pdf on file since 2026-08-01 (and Q1-2026/Q3-2025/Q4-2025 PDFs also on file, unextracted); no income statement / balance sheet figures available this cycle",
-          "mgmt": "Cannot assess management execution without extracted BCTC data; sector-comparison shows PE=66.5x (premium +312% vs sector median 16.1x) driven by depressed trailing earnings, and ROE=1.9% deeply below sector median 7.3%",
-          "ey_spread_pct": -3.5,
-          "valuation_verdict": "AVOID",
-          "pe": 66.5,
-          "pb": 1.2,
-          "roe_sector_comparison_pct": 1.9,
-          "kinhdich": {
-            "que": "Di (27)",
-            "xu_huong": "TRUNG TINH",
-            "tin_hieu": "BAN",
-            "do_tin_cay_pct": 29
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL",
-          "esc_results": {
-            "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
-            "ESC-2": "N/A — no BCTC data extracted this cycle",
-            "ESC-3": "N/A — no cash-flow data extracted this cycle",
-            "ESC-4": "N/A — no P&L data extracted this cycle",
-            "ESC-5": "N/A — no report_id extractable, no BCTC data"
-          },
-          "escalation_status": "NONE",
-          "evidence_fragment_ids": [
-            1432,
-            1433,
-            1434
-          ],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none flagged",
-          "data_quality_note": "Persistent extraction gap (36th+ cycle). Prior cash-flow-anomaly signal (c162, bctc-analyst-20260813T001500Z.json) still pending dev-team pickup — carried over, not re-emitted this cycle to avoid duplicate dispatch.",
-          "generated_at": "2026-08-24T00:15:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "39539c3adb132bf911facd31315d4c8bae9c0e378929f43aada960d6b09fd077",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "FPT",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "IT services, software exports, telecom (FPT Telecom, now equity-method not consolidated), education (FPT Edu)",
-          "customer": "Enterprise IT buyers (VN + offshore, incl. Europe/Japan), SME telecom subscribers, tuition-paying students",
-          "ops": "Q1-2026 net revenue 12,480 tỷ VND (gross margin 34.0%, operating margin 22.0%); headline -22.3% YoY is a consolidation-method artifact (FTEL switched full-consolidation → equity-method from 01/2026) — like-for-like adjusted revenue +8.7% YoY, adjusted PBT +16.3% YoY",
-          "mgmt": "FY2026 execution on track; net profit +13.8% YoY on FTEL-adjusted comparable basis; no insider selling flagged; balance sheet check PASSED (assets=liabilities+equity exact)",
-          "ey_spread_pct": 2.25,
-          "valuation_verdict": "FAIR",
-          "pe": 13.8,
-          "pb": 3.6,
-          "roe_sector_comparison_pct": 28.3,
-          "kinhdich": {
-            "que": "Hoan (59)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 100
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL",
-          "esc_results": {
-            "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
-            "ESC-2": {
-              "result": false,
-              "imbalance_pct": 0
-            },
-            "ESC-3": {
-              "result": "DATA-COVERAGE-LIMITED",
-              "quarters_returned": 3,
-              "coverage_guard_held": true,
-              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
-            },
-            "ESC-4": {
-              "result": false,
-              "non_operating_share_pct": 2
-            },
-            "ESC-5": {
-              "result": true,
-              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-              "low_confidence_unit_ids": [
-                "unit-0008",
-                "unit-0009",
-                "unit-0010",
-                "unit-0011",
-                "unit-0012",
-                "unit-0013",
-                "unit-0014"
-              ],
-              "min_confidence": 0.45
-            }
-          },
-          "escalation_status": "GUARD-HELD",
-          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-          "evidence_fragment_ids": [
-            1426,
-            1427
-          ],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none flagged",
-          "data_quality_note": "Q2-2026 PDF on file (FPT_2026_Q2.pdf, since 2026-08-01) but not yet extracted — ~23-24d extraction lag; Q1-2026 remains latest available.",
-          "generated_at": "2026-08-24T00:15:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "29fbcdd861245857084de2bd7cb4cba145af8620be8510b2a69f0928f5adbef1",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "HPG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Steel manufacturing — construction steel (rebar), hot-rolled coil (HRC), galvanized steel products",
-          "customer": "Construction contractors and distributors (domestic), export markets for HRC/galvanized products",
-          "ops": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; operating_profit field returns 0 (source-data corruption, 32nd+ consecutive cycle unresolved) while net_profit (9,056 tỷ, 17.1% margin) and profit_before_tax (10,762 tỷ) remain populated — internally inconsistent line item, not a genuine zero-margin event",
-          "mgmt": "No insider signals flagged; capacity expansion (Dung Quat 2) ongoing per prior cycles' context; sector-comparison ROE 12.7% vs sector median 2.9% (above median)",
-          "ey_spread_pct": 2.04,
-          "valuation_verdict": "FAIR",
-          "pe": 14.2,
-          "pb": 1.7,
-          "roe_sector_comparison_pct": 12.7,
-          "kinhdich": {
-            "que": "Tan (35)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 63
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL",
-          "esc_results": {
-            "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
-            "ESC-2": {
-              "result": false,
-              "imbalance_pct": 0
-            },
-            "ESC-3": {
-              "result": "DATA-COVERAGE-LIMITED",
-              "quarters_returned": 3,
-              "coverage_guard_held": true,
-              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
-            },
-            "ESC-4": {
-              "result": "DISCARDED",
-              "reason": "operating_profit=0 corrupt source field, formula unevaluable (32nd+ cycle)"
-            },
-            "ESC-5": {
-              "result": false,
-              "report_id": null,
-              "existing_refine_status": "PARTIAL"
-            }
-          },
-          "escalation_status": "NONE",
-          "evidence_fragment_ids": [
-            1428,
-            1429
-          ],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none flagged",
-          "data_quality_note": "Q2-2026 PDF on file (HPG_2026_Q2.pdf, since 2026-08-01) but not yet extracted — ~23-24d extraction lag; Q1-2026 remains latest available.",
-          "generated_at": "2026-08-24T00:15:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "29ac99e67cbf00e78323ab1dc202385e2628a32663e4b1f884476dd21481b3db",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "VCB",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Commercial banking — corporate & retail lending, trade finance, treasury/FX, bancassurance",
-          "customer": "Corporate borrowers (incl. SOE relationship banking), retail depositors and mortgage borrowers",
-          "ops": "Q1-2026 net interest income 17,421 tỷ VND; operating profit 14,089 tỷ (80.9% margin); net profit 9,462 tỷ (54.3% margin); OCF/NI ratio 1.37 (healthy, no accrual red flag)",
-          "mgmt": "Sector-comparison ROE 16.7% trails sector median 17.6% (below median) despite trading at PE/PB premium (+57%/+45% vs peers); no insider or legal-risk flags this cycle",
-          "ey_spread_pct": 2.09,
-          "valuation_verdict": "FAIR",
-          "pe": 14.1,
-          "pb": 2.2,
-          "roe_sector_comparison_pct": 16.7,
-          "kinhdich": {
-            "que": "Quan (20)",
-            "xu_huong": "TRUNG TINH",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 38
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL",
-          "esc_results": {
-            "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
-            "ESC-2": {
-              "result": false,
-              "imbalance_pct": 0.37
-            },
-            "ESC-3": {
-              "result": false,
-              "ocf_total": 12944932,
-              "net_profit_total": 9462095,
-              "divergence_ratio": 0.368,
-              "quarters_returned": 4
-            },
-            "ESC-4": {
-              "result": "N/A",
-              "reason": "bank — non-operating-share heuristic not applicable to bank P&L structure"
-            },
-            "ESC-5": {
-              "result": false,
-              "report_id": null,
-              "existing_refine_status": "PARTIAL"
-            }
-          },
-          "escalation_status": "NONE",
-          "evidence_fragment_ids": [
-            1430,
-            1431
-          ],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none flagged",
-          "data_quality_note": "Q2-2026 PDF on file (VCB_2026_Q2.pdf, since 2026-08-01) but not yet extracted — ~23-24d extraction lag; Q1-2026 remains latest available.",
-          "generated_at": "2026-08-24T00:15:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "2b986000ffa8e6a0b024e06281b42cac85865be42ffe1d1373f7570f235dd69d",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-27.md",
-          "line_count": 208,
-          "cap": 600,
-          "byte_count": 47763,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 11763,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T00:00:19Z",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4788ca72afe04f20d6db972528bf702f806a500d36a2e69761c35da725b787ea",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-24T00:04:55Z",
-          "matched_slots": [
-            "bctc-analyst-slot-4",
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "won_slots": [
-            "bctc-analyst-slot-4",
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/bctc-analyst/flow/main.md",
-            "docs/agents/news-scout/flow/main.md",
-            "docs/agents/market-watcher/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "bctc-analyst-slot-4": "cron",
-            "news-scout-offhours": "cadence",
-            "market-watcher-offhours": "cadence",
-            "alert-commander-critical": "cron"
-          },
-          "cadence_minutes": {
-            "bctc-analyst-slot-4": null,
-            "news-scout-offhours": 30,
-            "market-watcher-offhours": 30,
-            "alert-commander-critical": null
-          },
-          "last_fired_timestamp": "2026-08-24T00:03:26Z",
-          "last_fired_slots": [
-            "bctc-analyst-slot-4",
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "00:00",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 32,
-          "note": "4-slot fan-out, MAX_PARALLEL=4 single batch. Step 4.7 wrote cycle-snapshot-00:01.json (wall clock) but emit_pressure_state looked up cycle-snapshot-00:00.json (nominal tick) — found YESTERDAY file created_at 2026-08-23T00:07:50Z, 24h old, refused by 4h freshness gate => cycle_snapshot_promoted=false AND stale_warning=true, which forces the NEXT tick to legacy cadence mode per pressure-read.md AC-P1-6-3."
-        },
-        "createdAt": "2026-08-24T00:04:55Z",
-        "drained_at": "2026-08-24T00:24:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d43ad0350f3d3e63a32af07627c9336514015fd3a1c8c9bbfde682599853a3a0",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "103",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-24T00:21:37Z",
-        "drained_at": "2026-08-24T00:24:09Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
