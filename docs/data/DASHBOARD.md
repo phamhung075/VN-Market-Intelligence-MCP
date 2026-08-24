@@ -2026,3 +2026,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: DOC-AUDIT-2 · system-map.json cron catalog undercounts live registrations (70 vs 88)
+**Severity:** WARN | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** docs/data/system-map.json .project.microservices[mcp-server].crons + docs/data/cron-registry.json
+**Details:** 26 live crons absent from the catalog; 5 catalog entries no longer exist as crons (2 collapsed into alertScanParallelJob, 1 phantom, 2 not crons at all)
+**Impact:** system-map.json is the CLAUDE.md-designated never-hardcode SSOT every agent queries; A-29-family joins, dashboards and docs all read an inventory that is 20% short
+**Root cause:** New crons are shipped to schedulerJobTable.ts without the documented 3-doc registration step (cron-registry.json + system-map.json + cron-jobs.md); no mechanical guard enforces parity with gen-project-stats cronJobCount
+**Zone owner:** developer
+**Last reported:** 2026-08-24T03:06:07Z (signal sys-20260824T030556-6dc3, system-auditor -> po, dedup_key=doc_hygiene:system-map-cron-catalog:count-drift, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
