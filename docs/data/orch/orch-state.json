@@ -24899,7 +24899,7 @@
         "last_served_tick": "2026-08-24T20:24:01Z"
       }
     },
-    "_updated_at": "2026-08-24T23:15:15Z",
+    "_updated_at": "2026-08-24T23:40:41Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24958,6 +24958,29 @@
         },
         "createdAt": "2026-08-24T23:09:02Z",
         "drained_at": "2026-08-24T23:13:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "780d175bf2b2371c9c85f54f4fdf4fd79b1ca39b388b78a41da459b453806b46",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/notebook-write/SKILL.md",
+          "line_count": 262,
+          "cap": 200,
+          "byte_count": 16499,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "byte-cap",
+          "overage": 62,
+          "byte_overage": 4499,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-24T23:30:59Z",
+        "drained_at": "2026-08-24T23:40:41Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
