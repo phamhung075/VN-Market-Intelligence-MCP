@@ -1,87 +1,62 @@
 """
 infrastructure/ocr_gateway.py — FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT
 
-The ONE OCR gateway: one process-global concurrency bound, subprocess lifetime
+THE OCR gateway: one process-global concurrency bound, subprocess lifetime
 bound to a wall-clock deadline, bookkeeping published alongside OS ground
-truth. See docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md.
-
-Root cause this closes (verified 2026-07-28, ground truth in the task handoff):
-    POST /extract -> domain/services.py -> infrastructure/extraction_engine.py:63
-    `await asyncio.to_thread(self._extract_text_ocr_sync, pdf_bytes)` -> :173
-    `pytesseract.image_to_string(...)` with NO timeout= and NO concurrency guard.
-    The bound observed in production (10) was CPython's *default* asyncio
-    executor size (min(32, os.cpu_count()+4)) — an accident, not a guard.
-    Worse: a client abort (mcp-server's AbortSignal.timeout(120_000)) does not
-    stop server-side OCR (asyncio.to_thread is not cancellable), so every
-    abandoned request permanently consumed one of those 10 slots — a ratchet
-    that never recovers.
+truth. Full root cause + design rationale (NOT duplicated here — this
+docstring is a pointer, not the source of truth):
+    docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md
+    (§5 = the design this module implements; §CORRECTION 2026-08-24 = the
+    inflight-mismatch-grace follow-up below).
 
 This module is the single authority. DDD layer: infrastructure (owns
 pytesseract, subprocess, /proc). No imports from application/ or interface/
-(Fence-A, matching generic_md_table/extractor.py:61).
+(Fence-A, matching generic_md_table/extractor.py:61). Env-driven config
+(PDFX_OCR_MAX_CONCURRENCY and friends) lives in
+infrastructure/ocr_gateway_config.py — imported below into THIS module's
+namespace on purpose: every function that reads a constant stays in this
+file, so `monkeypatch.setattr(ocr_gateway, "PDFX_OCR_QUEUE_WAIT_S", 0.2)`
+(__tests__/test_ocr_concurrency_invariant.py) keeps working unchanged.
 
-Design (brief §5):
-    _OCR_SLOTS   threading.BoundedSemaphore(N) — module-level, process-global.
-                 N = PDFX_OCR_MAX_CONCURRENCY (default 1 — the value the code
-                 has claimed since PDFX-SINGLE-WORKER-BLOCKING).
-    _OCR_POOL    ThreadPoolExecutor(max_workers=N) — gateway-owned. OCR never
-                 again touches the shared asyncio default executor, so it
-                 cannot head-of-line-block push clients / repositories that
-                 legitimately use asyncio.to_thread() for fast I/O.
-    run_image()  async — the primary entry point for callers already on the
-                 event loop's own coroutine (extraction_engine.py's hot path).
-    run_image_sync()  sync entry point for callers nested inside an
-                 already-offloaded thread (pek_engine_adapter's own
-                 ThreadPoolExecutor(1), ocr_adapter.py, generic_md_table/unit_ocr.py) —
-                 none of the six historical call sites actually run ON the
-                 event loop thread; a sync entry point avoids nested-loop
-                 gymnastics while still funnelling every call through the
-                 same semaphore + private pool.
+API (brief §5):
+    _OCR_SLOTS / _OCR_POOL   module-global BoundedSemaphore(N) + private
+                 ThreadPoolExecutor(N) — OCR never touches the shared asyncio
+                 default executor, so it cannot head-of-line-block clients
+                 that legitimately use asyncio.to_thread() for fast I/O.
+    run_image()  async entry point — extraction_engine.py's hot /extract
+                 path (the only caller already on the event loop thread).
+    run_image_sync()  sync entry point — the other five historical call
+                 sites, all already inside an offloaded thread
+                 (asyncio.to_thread / ProcessPoolExecutor / PekEngineAdapter's
+                 own ThreadPoolExecutor(1)).
     slot() / slot_async()  contextmanagers for callers that run OCR OUT OF
-                 PROCESS (ExtractTablesUseCase -> ProcessPoolExecutor path).
+                 PROCESS (ExtractTablesUseCase's ProcessPoolExecutor path).
                  Acquired in the PARENT before dispatch, so the cross-process
                  bound composes with this in-process one instead of living in
                  two places where they provably cannot (brief §5.4).
     OcrCapacityExceededError / OcrDeadlineExceededError (domain/errors.py,
-                 imported here — infra->domain is a valid DDD direction) —
-                 429 (queue-wait elapsed) / bounded-deadline-hit respectively.
+                 imported here — infra->domain is a valid DDD direction).
     inflight() / reap_orphans()  observability + shutdown reaper (brief §5.2).
 
-Env vars (no rebuild needed to retune — brief §8):
-    PDFX_OCR_MAX_CONCURRENCY   default 1
-    PDFX_OCR_QUEUE_WAIT_S      default 5   (bounded wait before 429)
-    PDFX_OCR_PAGE_TIMEOUT_S    default 600 (10 min outer backstop per call)
-
-Scope note (honesty — see task close-out report for the full accounting):
-    All SIX historical pytesseract call sites are documented in the design
-    brief §5.3. This fix rewires the ones that are safe to rewire without an
-    unbounded blast radius on a P0 memory-pressure row:
-        infrastructure/extraction_engine.py   (THE live defect — 100% of load)
-        infrastructure/ocr_backends.py        (TesseractVieBackend — /pek-extract)
-        infrastructure/ocr_adapter.py         (/extract-tables — 0 live traffic)
-        infrastructure/generic_md_table/unit_ocr.py (/extract-layout-first)
-    Two are deliberately NOT rewired (both already documented exceptions, not
-    silent omissions):
-        infrastructure/ocr_worker.py — runs INSIDE a ProcessPoolExecutor CHILD
-            process (main.py:154). It cannot see this module's in-memory
-            semaphore (separate address space) — the bound is composed at the
-            PARENT via slot_async() in extract_tables_usecase.py instead.
-        infrastructure/generic_md_table/extractor.py — `_process_page` takes
-            `pytesseract`/`Output` as explicit parameters and is used as a
-            direct test seam by ~40 tests in
-            __tests__/unit/test_generic_md_table_extractor.py. Rewiring it
-            safely is a real, separate follow-up (recommend PO mint it) —
-            not done here to keep this P0 fix's blast radius bounded.
+Scope note (full accounting — see the brief's "Scope note" + task close-out
+report): four of six historical pytesseract call sites are rewired through
+this gateway (extraction_engine.py, ocr_backends.py, ocr_adapter.py,
+generic_md_table/unit_ocr.py). Two are deliberately NOT rewired — documented
+exceptions, not silent omissions:
+    ocr_worker.py runs INSIDE a ProcessPoolExecutor CHILD process and cannot
+        see this module's in-memory semaphore — the bound is composed at the
+        PARENT via slot_async() in extract_tables_usecase.py instead.
+    generic_md_table/extractor.py's `_process_page` takes pytesseract/Output
+        as explicit params, a direct test seam for ~40 tests — rewiring it
+        is a separate follow-up (recommend PO mint it), not done here.
 
 Follow-up (2026-08-24, FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH):
-    inflight()'s ERROR-level mismatch alarm was firing on an expected,
-    momentary setup/teardown skew (not a leak — refuted by code inspection
-    + live traffic evidence, see PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S and
-    inflight() below). A persistence grace window now gates the ERROR level;
-    the dangerous direction (an untracked OS child, held=0) still gets zero
-    grace. reap_orphans()/_reap_oldest_tesseract_child_best_effort() and the
-    acquire/release bracketing in run_image()/run_image_sync() are
-    unchanged — this fix is scoped to the observability/alarm layer only.
+inflight()'s ERROR-level mismatch alarm now gates on
+PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S (rationale: ocr_gateway_config.py, next
+to that constant) instead of firing on every momentary setup/teardown skew;
+full root-cause + live evidence in the brief's §CORRECTION, not repeated
+here. reap_orphans()/_reap_oldest_tesseract_child_best_effort() and the
+acquire/release bracketing in run_image()/run_image_sync() are unchanged.
 """
 
 from __future__ import annotations
@@ -99,81 +74,27 @@ from contextlib import asynccontextmanager, contextmanager
 from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
 from domain.errors import OcrCapacityExceededError, OcrDeadlineExceededError
+from infrastructure.ocr_gateway_config import (
+    OUTPUT_DATAFRAME,
+    OUTPUT_DICT,
+    PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S,
+    PDFX_OCR_MAX_CONCURRENCY,
+    PDFX_OCR_PAGE_TIMEOUT_S,
+    PDFX_OCR_QUEUE_WAIT_S,
+    _BACKSTOP_GRACE_S,
+)
 from infrastructure.tesseract_config import TESSERACT_LANG, TESSERACT_PSM6_CONFIG
 
 logger = logging.getLogger(__name__)
 
-
-# ---------------------------------------------------------------------------
-# Env-driven config — read once at import time; tests may monkeypatch the
-# module-level names directly (e.g. ocr_gateway.PDFX_OCR_QUEUE_WAIT_S = 0.2).
-# ---------------------------------------------------------------------------
-
-
-def _read_int_env(name: str, default: int) -> int:
-    try:
-        return int(os.environ.get(name, default))
-    except (TypeError, ValueError):
-        logger.warning("ocr_gateway: invalid int env %s — using default %s", name, default)
-        return default
-
-
-def _read_float_env(name: str, default: float) -> float:
-    try:
-        return float(os.environ.get(name, default))
-    except (TypeError, ValueError):
-        logger.warning("ocr_gateway: invalid float env %s — using default %s", name, default)
-        return default
-
-
-PDFX_OCR_MAX_CONCURRENCY: int = _read_int_env("PDFX_OCR_MAX_CONCURRENCY", 1)
-PDFX_OCR_QUEUE_WAIT_S: float = _read_float_env("PDFX_OCR_QUEUE_WAIT_S", 5.0)
-PDFX_OCR_PAGE_TIMEOUT_S: int = _read_int_env("PDFX_OCR_PAGE_TIMEOUT_S", 600)
-
-# FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (2026-08-24): grace
-# window before a semaphore/os_children mismatch is logged as an ERROR.
-#
-# Root-caused live (task close-out): NOT a leaked acquire — every acquire in
-# run_image()/run_image_sync() is unconditionally released in a `finally`
-# (confirmed by code inspection of both), and this refutation is corroborated
-# by 24h of live traffic: a real leak would permanently wedge the semaphore
-# at capacity (every subsequent call 429s forever); instead traffic kept
-# flowing normally after each mismatch. The mismatch is instead an EXPECTED,
-# momentary skew: `held` (semaphore + _inflight_calls) spans the FULL
-# Python-level OCR call — image serialization to a temp file BEFORE
-# pytesseract spawns the tesseract subprocess, and output-file parsing/
-# cleanup AFTER it exits — while `os_children` is a single-instant /proc
-# snapshot of only the subprocess-alive sub-window strictly inside that
-# span. A frequent /health poller (measured live: ~4490 polls/24h, ~1 every
-# 19s combined across 2 poll sources) samples that narrow setup/teardown gap
-# often enough to explain the observed count with NO leak required — and
-# live evidence backs this directly: all 20 mismatches in a 24h capture
-# landed in the container's first ~5h15m (cold disk cache + concurrent PEK
-# model-loading CPU contention slow the non-subprocess I/O around each
-# tesseract call), then ZERO in the following ~7.5h at unchanged /extract
-# traffic. A leak does not self-heal like that; a sampling artifact does.
-#
-# This grace window keeps the alarm for what actually matters — a mismatch
-# that PERSISTS past the time a call should reasonably have shown (or
-# cleared) its OS child — while dropping the false alarm for a normal,
-# short-lived setup/teardown gap. The dangerous direction (an OS child with
-# NO tracked call at all, held=0) gets ZERO grace: see inflight() below.
-PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S: float = _read_float_env(
-    "PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S", 5.0
-)
-
-# Grace added on top of PDFX_OCR_PAGE_TIMEOUT_S for the OUTER backstop wait
-# (future.result(timeout=...)). Normally pytesseract's OWN internal
-# `timeout=` kwarg fires first (it kills the tesseract subprocess directly —
-# see pytesseract.pytesseract.timeout_manager). This backstop only fires if
-# something hangs BEFORE that inner wait (e.g. temp-file save, image prep).
-_BACKSTOP_GRACE_S: float = 30.0
-
-# Output-type sentinels — callers select these instead of importing
-# pytesseract.Output directly, so `import pytesseract` never has to appear
-# outside this module for the four rewired call sites.
-OUTPUT_DICT: str = "dict"
-OUTPUT_DATAFRAME: str = "dataframe"
+# NOTE: the five names imported above are deliberately kept as plain
+# top-level bindings in THIS module's namespace (not read via
+# `ocr_gateway_config.NAME`) — every function below that consumes one of
+# them (run_image, run_image_sync, inflight, _acquire_slot_blocking, ...)
+# resolves the bare name via ocr_gateway.py's own globals, which is exactly
+# what `monkeypatch.setattr(ocr_gateway, "PDFX_OCR_PAGE_TIMEOUT_S", 0)` in
+# __tests__/test_ocr_concurrency_invariant.py patches. See
+# infrastructure/ocr_gateway_config.py's own docstring for the full rule.
 
 # ---------------------------------------------------------------------------
 # THE single process-global bound (brief §5.1)
