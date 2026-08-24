@@ -134,6 +134,7 @@ import { register52WProximityTools } from "./market-data/52wProximityTools.js"; 
 import { registerForeignAccumRankTools } from "./market-data/foreignAccumRankTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
 import { registerMoneyRadarTools } from "./market-data/moneyRadarTools.js"; // MONEY-RADAR-P0-T2-COMPOSITE: get_money_radar_composite (#185)
 import { registerGetBctcReportIdTool } from "./financial-reports/getBctcReportIdTool.js"; // BCTC-REPORT-ID-LOOKUP-TOOL: get_bctc_report_id (#186)
+import { registerNarrativeTruthGateTool } from "./system/narrativeTruthGateTool.js"; // CCATO-MCP-T6-TOOL-REGISTRATION: narrative_truth_gate (#187)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -272,4 +273,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerForeignAccumRankTools,        // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
   registerMoneyRadarTools,              // MONEY-RADAR-P0-T2-COMPOSITE: get_money_radar_composite (#185)
   registerGetBctcReportIdTool,          // BCTC-REPORT-ID-LOOKUP-TOOL: get_bctc_report_id (#186)
+  registerNarrativeTruthGateTool,       // CCATO-MCP-T6-TOOL-REGISTRATION: narrative_truth_gate (#187)
 ];
