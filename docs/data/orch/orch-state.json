@@ -1492,6 +1492,34 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T04:00Z",
         "dedup_key": "auditor_coverage_gap:launchd_dimension:tier1"
+      },
+      {
+        "id": "sys-20260824T004111-4a12",
+        "ts": "2026-08-24T00:41:11Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 9h (cadence 4h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T00:00Z"
+      },
+      {
+        "id": "sys-20260824T004114-17b3",
+        "ts": "2026-08-24T00:41:14Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 3h (cadence 0.5h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier1:2026-08-24T00:30Z"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
