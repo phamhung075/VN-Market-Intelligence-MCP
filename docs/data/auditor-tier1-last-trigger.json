@@ -1,8 +1,8 @@
 {
-  "written_at": "2026-08-24T02:35:38Z",
-  "fire_tick": "2026-08-24T02:30Z",
+  "written_at": "2026-08-24T03:09:18Z",
+  "fire_tick": "2026-08-24T03:00Z",
   "verdict": "FAILURE",
-  "detail": "mem_creep: mem >= 85% threshold (A-30 WARN boundary, mem-creep gate): vn-market-intelligence-mcp-pdf-extractor-1(85.11%) ; ",
+  "detail": "mem_creep: mem >= 85% threshold (A-30 WARN boundary, mem-creep gate): vn-market-intelligence-mcp-pdf-extractor-1(87.06%) ; ",
   "checks": {
     "docker_ps": "PASS",
     "health_3000": "PASS",
