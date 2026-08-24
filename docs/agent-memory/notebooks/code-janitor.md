@@ -1,8 +1,11 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-08-23 (scan-61)
+**Last updated:** 2026-08-24 (scan-63)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
+
+## 2026-08-24T22:32Z Scan 63
+- Checks: Pre-check gate (0 src/ changes), 3 sweeps (memory-prune, notebook-linecap, cold-archive) | Findings: 0 new DRY violations | Action: shipped 0 | backlog 0 | clean | memory-prune signal routed (cj-20260824T223242), 4 notebooks safe-fail over byte-cap (ba.md 18749B, digest-predict.md 39860B, tran-ngoc-bau.md 30902B, dev-rag-service.md 27694B)
 
 ## 2026-08-23T22:32Z Scan 62
 - Checks: Pre-check gate (0 src/ changes), 3 sweeps (memory-prune, notebook-linecap, cold-archive) | Findings: 0 new DRY violations | Action: shipped 0 | backlog 0 | clean | memory-prune signal routed, signal row appended (cj-20260823T223004)
