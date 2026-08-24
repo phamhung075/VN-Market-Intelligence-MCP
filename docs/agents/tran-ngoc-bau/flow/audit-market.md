@@ -42,7 +42,7 @@ For each `[CHEF-DETAIL]`-equivalent entry (one per dish — Morning / EOD / Even
 For each MARKET alert about a specific ticker:
 1. `get_market_snapshot()` → verify current price
 2. Check if alert price diverges >5% from current → flag as STALE
-3. If alert claims earnings beat/miss → `compare_financials(codes=[ticker])` to verify
+3. If alert claims earnings beat/miss → `compare_financials(actionCode=ticker, period1={year,quarter}, period2={year,quarter})` to verify (SELF-HEAL 2026-08-24, c134: prior `codes=[ticker]` shape does not match the live zod schema — `actionCode` is a single string, not an array, and both `period1`/`period2` are REQUIRED; confirmed live 400 on the old shape)
 4. If alert claims price anomaly → `get_price_history(code=ticker, days=5)` to verify sigma
 5. If alert claims sector move → `get_sector_comparison(code=ticker)` to verify
 
