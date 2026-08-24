@@ -27,6 +27,15 @@ below) — never a direct write to that filename. Full contract: `docs/policies/
 `CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER`; incident history + the matching restatement in the parent
 flow: `main.md` §Tier-1 — Runtime Ping.
 
+**Per-signature spawn debounce affects CADENCE only — every check below still runs at full fidelity**
+(FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT, 2026-08-24). A spawned Tier-1 cycle, by
+construction, already passed the pre-gate with `scripts/agents-flow/auditor-tier1-probe.sh`'s
+`spawn_decision:"SPAWN"` — `.claude/skills/cron-detect-loop/register.md` Job 2 suppresses only the
+SPAWN on a repeated `signature` inside its debounce window, never the `verdict` (AC-3, architecture
+brief `docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md`). No functional change
+to any A-xx check in this file, and none to `main.md`'s Tier Dispatch either — the pre-gate JSON's
+`spawn_decision`/`signature` fields are read only by the cron prompt, never by this file or `main.md`.
+
 ---
 
 ## PROBE STEP — Run ONCE, paste verbatim

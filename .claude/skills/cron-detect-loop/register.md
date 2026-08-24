@@ -75,13 +75,23 @@ CronCreate(
 > full by the subagent whenever it is spawned. This diverges from `cron-system-auditor.md`'s plain
 > Tier-1 form — that file stays the simple manual/ad-hoc reference (see Step 2 SSOT note above).
 
+> FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT (2026-08-24): the FAILURE branch's old
+> unconditional `verdict=FAILURE -> spawn` OR-clause is REPLACED by a mandatory read of THIS tick's
+> own `spawn_decision`/`signature` fields (emitted by `auditor-tier1-probe.sh`'s per-signature
+> ledger, `docs/data/auditor-tier1-spawn-debounce.json` — see that script's "SPAWN DEBOUNCE" header
+> section, commit `820b52759`). The ALL_GREEN passive-health-masking guard above is UNCHANGED —
+> debounce affects the FAILURE branch's spawn decision only, never the ALL_GREEN freshness check,
+> and never the verdict itself (a debounced tick still reports `verdict=FAILURE`). Fail-open is
+> explicit: `spawn_decision` missing/unparseable spawns, same as an unreadable probe today. Design:
+> `docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md` §5.
+
 ```
 CronCreate(
   description : "system-auditor Tier-1 runtime ping",
   cron        : "*/30 * * * *",
   recurring   : true,
   durable     : true,
-  prompt      : "Run: bash scripts/agents-flow/auditor-tier1-probe.sh and read its one-line JSON verdict (fields: verdict, detail, last_healthy_at). Passive-health-masking guard (check every tick, even after ALL_GREEN — stale green is not green): read docs/data/auditor-tier1-last-healthy.json's .last_healthy_at (jq -r), compute its age in minutes against the current UTC time. If verdict=ALL_GREEN AND heartbeat age <= 60min (~2 tick periods): done, log '[cron-detect-loop] T1 ALL_GREEN (heartbeat fresh)', do NOT spawn a subagent. Otherwise (verdict=FAILURE, OR verdict=ALL_GREEN but heartbeat age > 60min, OR the script/heartbeat file is unreadable): Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=1\nMCP: https://zenmidi.com/vn-market/mcp"
+  prompt      : "Run: bash scripts/agents-flow/auditor-tier1-probe.sh and read its one-line JSON verdict (fields: verdict, detail, last_healthy_at, spawn_decision, signature). Passive-health-masking guard (check every tick, even after ALL_GREEN — stale green is not green): read docs/data/auditor-tier1-last-healthy.json's .last_healthy_at (jq -r), compute its age in minutes against the current UTC time. If verdict=ALL_GREEN AND heartbeat age <= 60min (~2 tick periods): done, log '[cron-detect-loop] T1 ALL_GREEN (heartbeat fresh)', do NOT spawn a subagent. If verdict=ALL_GREEN but heartbeat age > 60min, OR the script/heartbeat file is unreadable: spawn (unchanged arm from today — this path never reads spawn_decision). Else (verdict=FAILURE): read spawn_decision from THIS tick's own JSON directly, do not re-derive it. spawn_decision=DEBOUNCED -> done, log '[cron-detect-loop] T1 FAILURE DEBOUNCED (signature=<signature>)', do NOT spawn a subagent. spawn_decision=SPAWN, or spawn_decision missing/unparseable (fail-open — an older probe-script version or a read fault must never silently suppress) -> Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=1\nMCP: https://zenmidi.com/vn-market/mcp"
 )
 ```
 
