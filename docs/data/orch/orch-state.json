@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-24T03:54:52Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -140,7 +140,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -161,7 +161,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -182,7 +182,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -203,7 +203,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -224,7 +224,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -245,7 +245,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -22769,7 +22769,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T03:30:56Z",
+    "_updated_at": "2026-08-24T03:55:24Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23601,6 +23601,244 @@
         },
         "createdAt": "2026-08-24T03:27:18Z",
         "drained_at": "2026-08-24T03:27:30Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T03:54:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T03:54:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T03:54:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T03:54:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T03:54:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T03:54:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "40204bc2a384539459dfee8fd1b73e891117dc9275dadbfbf7c92ec0aa3d94fa",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-24T03:30Z",
+          "silent": false,
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "degraded": false,
+          "max_parallel": 4,
+          "headroom_mb": 3012,
+          "load_1min": 2.87,
+          "cores": 12,
+          "headroom_series": [
+            3225,
+            3027,
+            2615,
+            3023,
+            3152,
+            3012
+          ],
+          "queue_status_census": {
+            "OPEN": 6,
+            "READ": 85,
+            "RETRACTED": 7,
+            "new": 1,
+            "triaged": 12,
+            "total": 111
+          },
+          "held_rows_swept_by_peer_drain": [
+            "sys-20260824T030458-5510",
+            "sys-20260824T030524-5850",
+            "sys-20260824T030556-6dc3",
+            "sys-20260824T030752-699e"
+          ],
+          "sweeping_commit": "26cc9e3e2",
+          "snapshot_written": "docs/data/cycle-snapshot-03:31.json",
+          "snapshot_lookup_tally": {
+            "hits": 1,
+            "misses": 2
+          },
+          "commits_ahead": 150,
+          "note": "Tick 2026-08-24T03:30Z WORK. 1 slot matched (alert-commander-market), spawned background, token claimed+released, last_fired stamped 03:32:22Z, pressure emitted.\n\nFINDING 1 (THIRD confirmation, now a pattern not an incident): the 4 system-auditor WARN rows I deliberately held at status=NEW on the 03:15Z tick were all swept to READ by commit 26cc9e3e2 (drain + prune 2026-08-24T03:28Z) within 13 minutes. Same mechanism as the 02:37Z sweep of the ragFtsRebuildCron CRITICAL row. Holding NEW is not a defence: two independent drains write the same status field with opposite intents and neither is aware of the other. The disk-pressure row (sys-20260824T030524-5850, 2.36GB stale market.db forensic copies on a 94-percent-full volume) is now on a 24h cold-eviction clock with no human having triaged it.\n\nFINDING 2 (carried, unresolved): the lowercase status value new on row po-decision-bug5468-2026-08-23T15:27:38Z is still lowercase after 3 drains passed over it. Every drain uses a case-sensitive selector, so the row is invisible to the sweep as well as to PO. It has now been unreachable for roughly 12 hours and carries live operational guidance addressed to ops. A case-normaliser at the signal write path fixes the class; hand-fixing this row does not.\n\nFINDING 3 (snapshot lookup, tally now 1 hit / 2 misses): wrote docs/data/cycle-snapshot-03:31.json. The prior tick wrote 03:16 and the spawned agent at 03:17 would have sought 03:17. Minute-exact lookup keyed off two different wall-clock reads.\n\nFINDING 4 (new, low severity): task_claim rejects an object-typed payload with a Zod invalid_type error and requires a JSON string. This is the known FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING defect, still live on the cowork-slot claim path. Costs one wasted round-trip per slot per tick. Worked around by stringifying.\n\nFINDING 5 (progress, worth recording): commit b11fadb2a moved UC-SDF-P2 from in_progress to review with next_agent=architect and released the head. That row had been unstarted since 07-07 and owns the snapshot-promotion defect.\n\nBoard state: 111 signal rows (OPEN 6, READ 85, RETRACTED 7, lowercase-new 1, triaged 12). 150 commits ahead of origin.\n"
+        },
+        "createdAt": "20260824T033252Z",
+        "drained_at": "2026-08-24T03:55:24Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ef7e4b205af37c5427659f27fcabdfb400749319a54eda70e407662b0ff61296",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-24T03:45Z",
+          "silent": false,
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "degraded": false,
+          "max_parallel": 4,
+          "headroom_mb": 3099,
+          "load_1min": 5.07,
+          "cores": 12,
+          "headroom_series": [
+            3225,
+            3027,
+            2615,
+            3023,
+            3152,
+            3012,
+            3099
+          ],
+          "queue_status_census": {
+            "NEW": 6,
+            "OPEN": 6,
+            "READ": 85,
+            "RETRACTED": 7,
+            "new": 1,
+            "triaged": 12,
+            "total": 117
+          },
+          "ccato_total_rows": 72,
+          "ccato_multiplicities": {
+            "60": 12,
+            "61": 24,
+            "62.1": 24,
+            "not found in database": 12
+          },
+          "ccato_unit_size": 6,
+          "ccato_units_emitted": 12,
+          "ccato_live_probe": "get_technical_indicators(VNM,60) returned full indicator set at 2026-08-24T03:46:18Z — gate verdict CORRECT, returned_value evidence field is the defective part",
+          "ccato_prior_characterisation_retracted": "inverted verdict",
+          "snapshot_written": "docs/data/cycle-snapshot-03:47.json",
+          "commits_ahead": 152,
+          "note": "Tick 2026-08-24T03:45Z WORK. 1 slot (alert-commander-market) spawned background; token claimed+released; last_fired 03:47:19Z; pressure emitted.\n\nFINDING 1 — CCATO emitter fired again: 66 to 72 rows, 6 new, all status=NEW, all to=po, all ts=2026-08-24T00:00:00Z frozen, all dedup_key ABSENT. Multiplicity census is now 12/24/24/12 against returned_value 60 / 61 / 62.1 / not-found-in-database. Prior census was 11/22/22/11 and before that 4/8/8/4. The ratio 1:2:2:1 is EXACTLY preserved at every observation, which means the unit of emission is 6 rows carrying 4 distinct findings, and the counter has now reached 12 units. Growth is linear at 6 rows per emission, not doubling as an earlier note of mine implied.\n\nFINDING 2 — CORRECTION to my own earlier characterisation of these rows. I previously recorded the 11-then-12 not-found-in-database rows as INVERTED VERDICTS, meaning the gate reached the wrong conclusion. That is wrong and I am retracting it. I probed live this tick: get_technical_indicators(VNM, 60d) returns a full indicator set (MA5 63380 / MA20 61465 / MA50 58877, RSI14 69.4, MACD line +1355 signal +1135 hist +219, BB 58365-64565, price 63900). So VNM demonstrably HAS technical data, the chef claim quoted in the row (VNM khong co du lieu ky thuat phien nay) is demonstrably FALSE, and the gate summary (chef claimed absence but the tool returned non-null data) is CORRECT. What is defective is the evidence field only: returned_value is populated with the string not-found-in-database, which contradicts the summary sitting beside it in the same row. The verdict is right; the evidence capture is broken. That is a materially different bug from an inverted verdict and points at a different code path.\n\nFINDING 3 — the 6 new rows are to=po and will be swept to READ by the peer drain within roughly 15 minutes, exactly as the previous two cohorts were. I am not holding them. Holding has now failed twice and holding a known-duplicate cohort has no upside.\n\nFINDING 4 — snapshot named cycle-snapshot-03:47.json for nominal tick 03:45. Wall-clock naming, unchanged.\n\nMarket at fire time: VN-Index 1790.43 +1.26 pct, breadth 204 up / 89 down, turnover 7813 bn down 57.4 pct day-on-day, gold 4704.70 rising, oil 93.21 easing, USDVND 25950 flat.\n\nBoard: 117 rows (NEW 6, OPEN 6, READ 85, RETRACTED 7, lowercase-new 1, triaged 12). 152 commits ahead.\n"
+        },
+        "createdAt": "20260824T034749Z",
+        "drained_at": "2026-08-24T03:55:24Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

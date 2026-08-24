@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T033252Z",
+  "payload": {
+    "tick": "2026-08-24T03:30Z",
+    "silent": false,
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "degraded": false,
+    "max_parallel": 4,
+    "headroom_mb": 3012,
+    "load_1min": 2.87,
+    "cores": 12,
+    "headroom_series": [
+      3225,
+      3027,
+      2615,
+      3023,
+      3152,
+      3012
+    ],
+    "queue_status_census": {
+      "OPEN": 6,
+      "READ": 85,
+      "RETRACTED": 7,
+      "new": 1,
+      "triaged": 12,
+      "total": 111
+    },
+    "held_rows_swept_by_peer_drain": [
+      "sys-20260824T030458-5510",
+      "sys-20260824T030524-5850",
+      "sys-20260824T030556-6dc3",
+      "sys-20260824T030752-699e"
+    ],
+    "sweeping_commit": "26cc9e3e2",
+    "snapshot_written": "docs/data/cycle-snapshot-03:31.json",
+    "snapshot_lookup_tally": {
+      "hits": 1,
+      "misses": 2
+    },
+    "commits_ahead": 150,
+    "note": "Tick 2026-08-24T03:30Z WORK. 1 slot matched (alert-commander-market), spawned background, token claimed+released, last_fired stamped 03:32:22Z, pressure emitted.\n\nFINDING 1 (THIRD confirmation, now a pattern not an incident): the 4 system-auditor WARN rows I deliberately held at status=NEW on the 03:15Z tick were all swept to READ by commit 26cc9e3e2 (drain + prune 2026-08-24T03:28Z) within 13 minutes. Same mechanism as the 02:37Z sweep of the ragFtsRebuildCron CRITICAL row. Holding NEW is not a defence: two independent drains write the same status field with opposite intents and neither is aware of the other. The disk-pressure row (sys-20260824T030524-5850, 2.36GB stale market.db forensic copies on a 94-percent-full volume) is now on a 24h cold-eviction clock with no human having triaged it.\n\nFINDING 2 (carried, unresolved): the lowercase status value new on row po-decision-bug5468-2026-08-23T15:27:38Z is still lowercase after 3 drains passed over it. Every drain uses a case-sensitive selector, so the row is invisible to the sweep as well as to PO. It has now been unreachable for roughly 12 hours and carries live operational guidance addressed to ops. A case-normaliser at the signal write path fixes the class; hand-fixing this row does not.\n\nFINDING 3 (snapshot lookup, tally now 1 hit / 2 misses): wrote docs/data/cycle-snapshot-03:31.json. The prior tick wrote 03:16 and the spawned agent at 03:17 would have sought 03:17. Minute-exact lookup keyed off two different wall-clock reads.\n\nFINDING 4 (new, low severity): task_claim rejects an object-typed payload with a Zod invalid_type error and requires a JSON string. This is the known FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING defect, still live on the cowork-slot claim path. Costs one wasted round-trip per slot per tick. Worked around by stringifying.\n\nFINDING 5 (progress, worth recording): commit b11fadb2a moved UC-SDF-P2 from in_progress to review with next_agent=architect and released the head. That row had been unstarted since 07-07 and owns the snapshot-promotion defect.\n\nBoard state: 111 signal rows (OPEN 6, READ 85, RETRACTED 7, lowercase-new 1, triaged 12). 150 commits ahead of origin.\n"
+  },
+  "_processed": {
+    "fingerprint": "40204bc2a384539459dfee8fd1b73e891117dc9275dadbfbf7c92ec0aa3d94fa",
+    "processedAt": "2026-08-24T03:55:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
