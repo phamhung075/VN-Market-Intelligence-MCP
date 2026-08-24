@@ -13,5 +13,11 @@
     "sentinel_section_count": 2,
     "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
     "action_required": "review_dropped_section"
+  },
+  "_processed": {
+    "fingerprint": "b4e3ec3702ebff50e3213e95ab1a19b71c3d6f3e6e9dc67993511bde281f8c01",
+    "processedAt": "2026-08-24T22:44:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
