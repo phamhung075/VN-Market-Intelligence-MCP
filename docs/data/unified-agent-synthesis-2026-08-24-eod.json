@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-08-24T08:45:00Z",
+    "dish_type": "eod",
+    "date_vn": "2026-08-24",
+    "timestamp_utc": "2026-08-24T08:52:35Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (partial) — [gap:L3_VN_macro_incomplete] [gap:business_context_absent]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "carry-unwind",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "US manufacturing resilience (PMI tracking neutral zone) supports expansion phase. Fed funds 3.63%, EFFR-IORB spreads moderate. Global risk sentiment affected by China property crisis creating safe-haven demand (gold +0.4%). Geopolitical risk-off backdrop stabilizing.",
+    "vn_macro_layer": "USD/VND at 25,950 (above 25,500 resistance, bearish for VND carry). Macro snapshot shows gold bullish (4,690/oz), oil neutral (93.26/bbl). Carry spread 1.37pp balanced. [gap:CPI_unavailable] [gap:VIRA_unavailable]",
+    "valuation_layer": "Banking sector: M2 neutral, costs rising (EFFR-IORB spread), earnings mixed (NIM pressure despite volume growth), valuation premium justified by scale. Real estate: valuations stretched (VHM PE 2.37% move on funding hopes, VIC rally driven by fund flows), earnings under pressure. Securities: riding FII wave (FTSE boost), valuations attractive on sector basis. Investment phase: transition (mixed pillar alignment)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "VCB under foreign selling pressure from USD/VND carry unwind (25,950 level); ROE 16.7% attractive but NIM compression concerns warrant caution",
+      "business_context_cited": {
+        "field": "mgmt",
+        "text": "No insider selling flagged; balance sheet check PASSED",
+        "source": "bctc_signal_VCB_20260824_routine.json"
+      },
+      "valuation_gate": {
+        "verdict": "FAIR",
+        "note": null,
+        "override_engaged": false,
+        "override_rationale": null
+      }
+    },
+    {
+      "ticker": "SSI",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "SSI benefits from FTSE index boost driving 4B USD fund inflow; securities sector momentum strong despite sector-wide price dip (mean reversion opportunity)",
+      "business_context_cited": null,
+      "valuation_gate": null
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:business_context_absent]",
+    "[L6-gap: single-pillar thesis — banking sector 2/4 pillars aligned]",
+    "[L6-gap: gold >4,300 active — regime-drift risk]"
+  ],
+  "causal_chains": [
+    "China property crisis → safe-haven demand (gold +0.4%) → risk-off sentiment → FII rebalancing via FTSE boost (+4B USD inflow) → banking sector net-sell while securities accumulate"
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": [
+      "VCB",
+      "SSI"
+    ],
+    "sectors_covered": [
+      "banking",
+      "securities"
+    ]
+  }
+}
