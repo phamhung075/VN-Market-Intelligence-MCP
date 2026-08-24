@@ -24289,6 +24289,30 @@
         "updated_at": "2026-08-24T19:19:14Z",
         "updated_by": "dev-frontend",
         "review_note": "dev-frontend DONE-CODE: AC-1/AC-2/AC-3 — last-fire cell now checks row.layer===\"cli-session\" FIRST, renders new named exports CRON_LAYER_B_LAST_FIRE_LABEL(\"Không theo dõi\")/_HINT (visible not tooltip-only VN copy) instead of falling into the Layer-A \"Chưa từng chạy\" ternary (untouched for server rows). AC-4 guard verified: normalizeCronRowB still force-nulls all 4 fire fields, unchanged. AC-5 (non-blocking, done): dropped redundant per-row Lớp column — CronRecheckTable already splits Layer-A/Layer-B into 2 header-labelled sub-tables (AC-18 pre-existing); confirmed both pinned tests (CRON_STATUS_LABELS.SESSION_SCOPED test:287, cronLayerLabel(\"cli-session\") test:337) are pure-function tests unaffected by DOM column removal. AC-6: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 corrected to restore Layer-A qualifier + name the Layer-B branch. AC-7: TASK-DASH-CRON-2-cron-recheck-table.test.ts predicate made layer-aware, +5 net new tests, line 286 CRON_STATUS_LABELS.NEVER_FIRED assertion untouched. Evidence: tsc --noEmit clean; full vitest 2188 pass/2 fail (same pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich schema fails, confirmed unrelated via direct code read, zero import overlap — NOT via git stash, notebook flags stash unsafe in this shared-main tree); targeted TASK-DASH-CRON-2-cron-recheck-table.test.ts 46/46 pass; G12 Playwright render-check.spec.ts 3/3 PASS (live docker :3001). Full multi-spec playwright test also surfaced 2 pre-existing unrelated live-data-content fails in quality-audit-lastverified.spec.ts (zero file overlap with this diff — unrelated route, live SLA-breach description text happens to contain substring 'stale'). Simplicity gate: PASS (Q1 scope clean/Q2 no single-use abstractions/Q3 senior-test clean/Q4 <50% overhead). Doc-review: docs/architecture/microservice/frontend/domain-model.md addendum added (interface-layer route change). Commits: 4b4bfea7a (code+test+briefs+doc), 2550edfce (memory). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S5."
+      },
+      {
+        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "priority": "high",
+        "status": "REVIEW",
+        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
+        "type": "SPRINT-S",
+        "zone": "cross-service/",
+        "detail_ref": "docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md",
+        "verify_note": "prior_status=TODO",
+        "next_agent": "po",
+        "owner": "agents-architect",
+        "updated_by": "agents-architect",
+        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
+        "updated_at": "2026-08-24T19:29:06Z",
+        "promoted_at": "2026-08-23T19:56:22Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect",
+        "claimed_at": "2026-08-24T19:21:01Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "commit": "bb47fea31",
+        "signal_ref": "docs/signals/fix-cadence-cowork-dup-market-watcher-dedup-review.json",
+        "review_note": "Investigated live: DUPLICATE of already-shipped, DONE_VERIFIED work — FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC (commit 5918c55fe) + FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING (commit 662d1fcc3), both DONE_VERIFIED 2026-08-14T17:38-39Z, archived docs/data/orch/archive/2026-08.json. This row was PO-promoted 2026-08-15T00:40Z off the same incident AFTER that fix already shipped same-day. Re-verified live this cycle: cron values unchanged (0 16 * * 1-5 / 0 */4 * * *, still structurally colliding by construction), supersede-mutex test suite re-run 32/0 pass, and confirmed working on TODAY (2026-08-24) real 16:00Z tick (market-watcher-eod fired alone commit 3c3f18bc6, market-watcher-offhours.last_fired stayed 12:04:50Z, did not advance). Recommend PO dedup-close citing the two DONE_VERIFIED rows rather than dispatch new implementation. One non-blocking loose end flagged for agent-father (optional fast-follow, not blocking): stale INERT wording in cowork-schedule.json market-watcher-eod._note (brief §3)."
       }
     ],
     "qa": [
@@ -24472,29 +24496,7 @@
     },
     "last_triaged_at": "2026-08-24T19:21:01Z",
     "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": [
-      {
-        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
-        "type": "SPRINT-S",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "verify_note": "prior_status=TODO",
-        "next_agent": "agents-architect",
-        "owner": "agents-architect",
-        "updated_by": "po",
-        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
-        "updated_at": "2026-08-24T19:21:03Z",
-        "promoted_at": "2026-08-23T19:56:22Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "agents-architect",
-        "claimed_at": "2026-08-24T19:21:01Z",
-        "claimed_by": "dev-team (design-router sweep)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
