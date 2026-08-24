@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T18:34:36Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "CCATO-MCP-T8-DOD-HARNESS",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T8-DOD-HARNESS — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-24T18:48:43Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20814,23 +20815,6 @@
         }
       },
       {
-        "id": "CCATO-MCP-T8-DOD-HARNESS",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "Integration test suite replaying §5.2 (a)-(e)",
-        "depends": [
-          "CCATO-MCP-T5-USECASE",
-          "CCATO-MCP-T6-TOOL-REGISTRATION"
-        ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-17T04:53:14ZZ",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
-      },
-      {
         "id": "SYSREMAKE-P2-T3-UNIT-TESTS",
         "type": "IMPL-XS",
         "status": "READY",
@@ -24355,7 +24339,28 @@
     },
     "last_triaged_at": "2026-08-24T17:18:09Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "CCATO-MCP-T8-DOD-HARNESS",
+        "type": "IMPL-XS",
+        "status": "IN_PROGRESS",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Integration test suite replaying §5.2 (a)-(e)",
+        "depends": [
+          "CCATO-MCP-T5-USECASE",
+          "CCATO-MCP-T6-TOOL-REGISTRATION"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-08-24T18:48:43Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-24T18:48:42Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -24375,7 +24380,7 @@
         "last_served_tick": "2026-08-24T17:47:42Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-24T15:19:33Z"
+        "last_served_tick": "2026-08-24T18:48:22Z"
       },
       "drs": {
         "last_served_tick": "2026-08-24T15:46:31Z"
@@ -24387,7 +24392,7 @@
         "last_served_tick": "2026-08-24T16:54:07Z"
       }
     },
-    "_updated_at": "2026-08-24T18:46:34Z",
+    "_updated_at": "2026-08-24T18:48:22Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
