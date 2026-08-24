@@ -36,4 +36,14 @@
 **why-decision:** Root cause measured, not inferred: the FIX-DEPSSATISFIED referential eviction guard (`orch-cold-evict.sh:214-229`, applied `:467`/`:491`) holds 30/30 `done_verified[]` ids and 4/4 rank-eligible `done[]` ids. Zero evictable is STRUCTURAL. The gate's thresholds are right; its remediation tool cannot reach them.
 **why-change:** Prior three pm cycles logged this as "deferred, peer-write hazard". That framing was incomplete — at least this cycle it was not deferrable, it was impossible, and no mechanism existed to record the difference. Hence the row.
 
+### STEP pm-S15 · pm · 2026-08-24T17:59:13Z
+**task-id:** FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION
+**what-done:** Review-lane triage: row was `plan_only`, architect brief complete, zero implementation trace anywhere in the tree, parked in review[] by mistake since 2026-08-12. Decomposed into 2 children (developer: Step 5.3 two-arm rewrite; agent-father: delivery_proof schema) per the brief's own explicit routing, closed parent to done[] with `children[]`.
+**what-considered:**
+- Sign off DONE_VERIFIED as-is — REJECTED: commit=null, branch=null, plan_only=true, zero grep hits for delivery_proof/Arm2/artifact-delta anywhere live. Nothing to verify.
+- Leave in review[], just reassign next_agent — REJECTED: review[] means "awaiting sign-off on landed work"; this row never had an implementation phase, so no next_agent value fixes the lane mismatch.
+- Decompose now vs park for a later cycle — chose now: dependency (FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES) re-verified live as DONE_VERIFIED, brief is fully specified, row stuck since 2026-08-12 per its own po_starvation notes.
+**why-decision:** Brief §7/§8 names the exact 2-way split (developer vs agent-father, per cowork-schedule.json's own `_maintained_by` stamp) and explicitly says PM should not wait on the sibling epic. Both children are immediately actionable (dep satisfied) → BACKLOG lane, matching the FIX-A21-PREDBOUND-1/2 precedent shape.
+**why-change:** No change from the architect's design. PM's only addition is carrying the SHADOW-MODE-first constraint into child 1's handoff as a hard constraint, not just a brief footnote.
+
 ---

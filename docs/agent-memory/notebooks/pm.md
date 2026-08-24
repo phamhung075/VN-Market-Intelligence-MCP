@@ -1,5 +1,17 @@
 # PM — Notebook
 
+## Session 2026-08-24T17:59Z — Review-lane secondary-drain triage: FIX-COWORK-DELIVERY-PROOF-GATE mis-parked, decomposed
+
+**Dispatched by:** dev-team Review-Lane SECONDARY-Drain (oldest review[] row, next_agent≠qa).
+
+**Finding:** row sat in `review[]` with `commit: null`, `branch: null`, `plan_only: true`, no review_note. Read the detail record: architect's design pass completed 2026-08-12 (full brief at `docs/architecture-briefs/2026-08-12-fix-cowork-delivery-proof-gate-artifact-conjunction-design.md`), but repo-wide search for `delivery_proof`/`Arm 2`/`artifact-delta` found ZERO implementation trace — spawn-fanout.md Step 5.3 has evolved since (2-distinct-marker requirement, identity preamble) but none of it is this design's Arm 2. This was a plan-only design row parked in `review[]` by mistake, never implemented — not a landed-but-unstamped commit.
+
+**Action:** closed parent to `done[]` (children[]-bearing closeout), minted 2 children to `backlog[]` per the brief's own explicit ownership split: `FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE` (developer — spawn-fanout.md two-arm rewrite + new probe script) and `FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA` (agent-father — cowork-schedule.json `delivery_proof` for 23 slots, per that file's own `_maintained_by` stamp). Both handoff files carry the SHADOW-MODE-first constraint and the conjunction-not-disjunction lesson (occurrence 7: a single-plane check false-PASSed a genuine partial write) as hard constraints, not footnotes.
+
+**`.head`:** live at dispatch time (`CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-...`, peer session's active qa-drain claim), never named this row — left untouched by construction, verified byte-identical after the write.
+
+**Session:** 7fd9c60a-9854-4589-9e98-e4c5e7e9168d
+
 ## Session 2026-08-23T15:26:08Z — TASK-BCTC-INSPECT-LABEL-FIX closeout (HSC-6 eviction)
 
 **Handoff received from QA:** Row moved from `review[]` to `done_verified[]` (commit dde17428d). QA completed direct-commit verify; all checks passed (bun test 49/49, 4 sibling regressions 60/60, tsc clean, mock-guard PASS, DDD/security clean).
