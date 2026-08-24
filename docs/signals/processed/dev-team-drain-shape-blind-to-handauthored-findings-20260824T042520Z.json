@@ -1,0 +1,52 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "severity": "MED",
+  "ts": "2026-08-24T04:25:20Z",
+  "payload": {
+    "check_id": "DRAIN-SHAPE-BLIND-TO-HANDAUTHORED-FINDINGS",
+    "detected_by": "dev-team router tick 2026-08-24T04:07Z, Step 0a-A drain",
+    "finding": "scripts/agents-flow/drain-signals.js isDrainableShape() requires one of from/source/type/signal_type. 14 hand-authored finding files in docs/signals/ carry a rich self-invented schema (event/evidence/hypothesis/impact_severity/recommendation, or detected_at/detected_by/finding_N) but NONE of those four keys, so they are classified as litter identically to dispatcher tick telemetry. They have never been drained, are absent from signals.db, and are invisible to --count-drainable (so the MANDATORY PERSIST GUARD reads the inbox as near-empty).",
+    "evidence": {
+      "straggler_files_total": 26,
+      "class_a_handauthored_findings": 14,
+      "class_b_tick_telemetry_correctly_litter": 12,
+      "in_signals_db": 0,
+      "drainable_count_reported": 2,
+      "date_span": "2026-07-28 .. 2026-08-13",
+      "oldest_age_days": 27,
+      "predicate_ref": "scripts/agents-flow/drain-signals.js:84 isDrainableShape()"
+    },
+    "notable_stranded_findings": [
+      "refine_bctc_md corrupts Vietnamese diacritics ABOVE the 0.50 ESC-5 auto-escalation threshold with empty flags[] (2 reports, 07-29)",
+      "chef-eod-router-race-nearmiss (07-29)",
+      "alert-commander no Bash grant, 4th consecutive commit backlog (07-29)",
+      "orphan-adoption.md has no terminal-status guard before re-adoption, P2 (08-06)",
+      "bounded1 no S2-visible lock (08-06)"
+    ],
+    "stranded_files": [
+      "cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json",
+      "cowork-signal-2026-07-29T0813Z-pressure-headroom-field-stale-container.json",
+      "cowork-team-2026-07-29T0858Z-chef-eod-router-race-nearmiss.json",
+      "cowork-team-2026-07-29T0912Z-refine-bctc-diacritic-corruption.json",
+      "cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json",
+      "cowork-team-2026-07-29T1611Z-pressure-headroom-field-rename-not-deployed.json",
+      "cowork-team-2026-07-29T1616Z-alert-commander-no-bash-tool-grant-4th-consecutive-commit-backlog.json",
+      "cowork-team-2026-07-30T002605Z-step0a-po-row-unlocked-consume.json",
+      "cowork-tick-snapshot-regime-mismatch-20260813T083022Z.json",
+      "dev-team-bounded1-no-s2-visible-lock-20260806T111900Z.json",
+      "dev-team-orphan-adoption-terminal-guard-and-release-ownership-gap-20260806T111500Z.json",
+      "stranded-state-sweep-scripts-pointer-20260806T105540Z.json",
+      "stranded-state-sweep-unknown-20260728T171505Z.json",
+      "stranded-state-sweep-unknown-20260806T105540Z.json"
+    ],
+    "recommendation": "Producers must stamp from/type on hand-authored findings, OR isDrainableShape() must recognise the finding schema (event|finding|finding_1|detected_by) as routable. Do NOT widen the predicate to accept any object — that would sweep the 12 telemetry files in too. price_anomaly_* is a separate DELIBERATE by-path family (BY_PATH_CONSUMER_FAMILIES) and is NOT part of this finding."
+  },
+  "_processed": {
+    "fingerprint": "ad6fafbce8b276cd9046620c845ea3706eb1fa82c325b5316117c58de159d05b",
+    "processedAt": "2026-08-24T04:25:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

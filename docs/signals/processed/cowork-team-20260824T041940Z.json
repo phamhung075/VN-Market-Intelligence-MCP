@@ -1,0 +1,84 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T041940Z",
+  "silent": false,
+  "tick": "2026-08-24T04:15Z",
+  "drift_min": 0,
+  "pressure_mode": "adaptive",
+  "new_signals": 1,
+  "spawned": [
+    {
+      "slot_id": "chef-intraday",
+      "agent": "unified-agent",
+      "scheduled_utc": "2026-08-24T04:13:00.000Z",
+      "flow_path": "docs/agents/unified-agent/flow/chef.md"
+    },
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "scheduled_utc": "2026-08-24T04:15:00.000Z",
+      "flow_path": "docs/agents/alert-commander/flow/main.md"
+    }
+  ],
+  "errors": [],
+  "batch": {
+    "degraded": false,
+    "max_parallel": 4,
+    "cores": 12,
+    "load_1min": 2.85,
+    "container_vm_headroom_mb": 3055,
+    "batches": 1
+  },
+  "queue_status_census": {
+    "NEW": 1,
+    "OPEN": 6,
+    "READ": 91,
+    "RETRACTED": 7,
+    "new": 1,
+    "triaged": 12,
+    "total": 118
+  },
+  "commits_ahead": 164,
+  "snapshot": {
+    "written": "docs/data/cycle-snapshot-04:17.json",
+    "lookup_tally": {
+      "hits": 2,
+      "misses": 3
+    }
+  },
+  "findings": [
+    {
+      "tag": "CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H",
+      "severity": "HIGH",
+      "detail": "chef-intraday cron is [13 2-8 * * 1-5] (hourly at :13) but policy chef-intraday/open resolves interval_minutes=60 for BOTH volatility tiers (no tier variance). Execution drift pushes last_fired past the nominal minute (02:13 nominal -> 02:19:14 actual), so the NEXT hourly cron tick falls only ~54 min after last_fired, fails the 60-min cadence floor, and is suppressed. 03:13 was skipped for exactly this reason. This tick fired at 04:18:40 (nominal 04:13, drift +5:40), so 05:13 will be 54.3 min later and WILL be suppressed too. Self-perpetuating: an hourly cron gated by a 60-min minimum runs every 2h forever once any drift exists. Not surfaced as a miss anywhere because the cadence gate suppresses it correctly. Fix: cadence floor must be < cron period (e.g. 45-50), or compare against nominal scheduled_utc_time instead of actual last_fired."
+    },
+    {
+      "tag": "NON-CANONICAL-MCP-URL-IN-SPAWN-PROMPT",
+      "severity": "MEDIUM",
+      "detail": "cowork-schedule.json slot chef-intraday trigger_prompt line 2 is [MCP: https://zenmidi.com/vn-market/mcp]. Canonical per CLAUDE.md is https://zenmidi.com/gateway/mcp. Step 5.2 consistency check validates only line 1 against flow_path, so the bad URL passes into the spawn prompt verbatim every fire. Passed through unmodified this tick (no router-side patch) — behaviour likely unaffected since the agent tool grant governs transport, but the schedule entry is wrong. Only slot with extra_lines>0."
+    },
+    {
+      "tag": "SIGNAL-ROW-SCHEMA-VARIANCE",
+      "severity": "LOW",
+      "detail": "New row sys-20260824T041052-44c9 (system-auditor -> po, auditor_cycle_loss, WARN, dedup_key auditor-cycle-loss:2026-08-24T00:00Z) uses fields ts/summary/payload_ref. Other rows use created_at/createdAt/payload. Consumers keying on one shape read null for the other. Row itself well-formed and correctly deduped."
+    },
+    {
+      "tag": "LOWERCASE-STATUS-SURVIVOR",
+      "severity": "MEDIUM",
+      "detail": "po-decision-bug5468-2026-08-23T15:27:38Z still status=new (lowercase) after a 5th drain. ~13h unreachable to pickers (which select on NEW) and immune to cold-eviction (which keys on READ)."
+    },
+    {
+      "tag": "NO-COLLISION-THIS-TICK",
+      "severity": "INFO",
+      "detail": "2 slots, 2 distinct agents (unified-agent, alert-commander). Step 4b WARN not triggered. The alert-commander 2-slot collision seen at 04:00 recurs only when the [0 */4] critical slot lands on a [*/15] market tick — next at 08:00 weekday."
+    }
+  ],
+  "_processed": {
+    "fingerprint": "33720ca3f6f2323d3e9442ab855e5d3ece114e04cfa473a5743f1b0c3c3a4722",
+    "processedAt": "2026-08-24T04:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
