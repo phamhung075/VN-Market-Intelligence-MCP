@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "medium",
+  "payload": {
+    "title": "Existing row FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK names the wrong component — it is the PROMOTER, not the consumer",
+    "action_requested": "Amend the existing backlog row (next_agent=architect). Do NOT mint a new row — this is a premise correction on a row that already exists and is dispatchable.",
+    "measured_2026-08-24T20:11Z_by": "router, cowork 20:00Z tick, direct observation of all three spawned consumers plus the promoter source",
+    "the_rows_premise": "producer names by wall-clock, CONSUMER looks up by nominal tick",
+    "what_is_actually_true": {
+      "consumer": "FALSIFIED. alert-commander (spawned this tick) reported 'CYCLE_SNAPSHOT hit (docs/data/cycle-snapshot-20:03.json, 2min fresh)' and used it, skipping get_macro_snapshot. Consumers resolve by FRESHNESS WINDOW, not by exact nominal tick. The wall-clock filename does not break consumers at all.",
+      "promoter": "CONFIRMED, and this is the sole broken component. apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts promotes 'cycle-snapshot-<HH:MM>.json -> cycle-snapshot-latest.json if the per-tick snapshot for tick_id's HH:MM exists'. tick_id was 2026-08-24T20:00:00Z -> it queries HH:MM=20:00. Step 4.7 (tick-snapshot.md) writes FILE_TICK=$(date -u +%H:%M) -> wrote cycle-snapshot-20:03.json. No 20:00 file exists -> no source found -> cycle_snapshot_promoted:false."
+    },
+    "failure_mode_is_no_file_not_stale_refused": "The promoter has a FAIL-SAFE (FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE) that refuses a source older than SNAPSHOT_MAX_STALENESS_MS. That path did NOT fire here. Measured: docs/data/ currently holds cycle-snapshot-20:02.json (created 2026-08-23T20:02:42Z), 20:18 (08-23T20:18:26Z) and 21:01 (08-23T21:01:32Z) — genuine prior-day residue inside the 1440-min prune window — but none is named 20:00, so the promoter found NO source at all. Distinguish these two modes when fixing: {promoted:false, stale:false} (today's case, 12+ consecutive) vs {promoted:false, stale:true}.",
+    "latent_hazard_worth_keeping_in_the_fix": "The residue is still dangerous. If a wall-clock write ever lands exactly on a :00/:15/:30/:45 minute, the promoter WOULD find a same-HH:MM file from a prior day and the staleness fail-safe becomes the only thing standing between that and downstream agents consuming day-old macro data as current. Any fix that changes Step 4.7 to write the nominal tick must keep that fail-safe, and should prune residue by date not just age.",
+    "impact_measured": "cycle-snapshot-latest.json created_at=2026-08-23T00:07:50Z — 44h stale at time of writing. cycle_snapshot_promoted:false on every emit observed this session (12+ consecutive ticks).",
+    "one_line_fix_direction": "Step 4.7 should derive FILE_TICK from the nominal tick already available in the tick context (the same value passed to emit_pressure_state as tick_id), not from date -u +%H:%M."
+  },
+  "createdAt": "20260824T201250Z"
+}

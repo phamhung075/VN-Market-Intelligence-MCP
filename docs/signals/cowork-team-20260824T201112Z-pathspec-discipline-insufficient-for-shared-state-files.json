@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "payload": {
+    "title": "commit-sweep-guard only inspects BARE commits — explicit-pathspec commits silently absorb peer writes to shared mutable state files",
+    "detected_by": "router (cowork 20:00Z post-tick), self-observed on its own commit",
+    "evidence": {
+      "own_commit": "bf85211c3",
+      "described_in_message": "3 market-watcher coverage stamps (KBC/NVL/PDR, 20:07:23Z)",
+      "actually_contained": "3 market-watcher stamps + 34 news-scout stamps (20:08:49Z) = 37",
+      "pathspec_used": "git commit ... -- docs/signals/<envelope>.json docs/data/coverage-state.json",
+      "guard_fired": false,
+      "peer_guard_artifact_same_window": "docs/signals/commit-sweep-guard-2026-08-24T200746Z-44631.json (actor ca9c65e5, BARE commit, 1 file, warn) — fired on the BARE case, silent on this one"
+    },
+    "mechanism": "An explicit trailing pathspec bounds WHICH FILES a commit touches. It does not bound WHOSE CONTENT within those files. `git add <path>` stages the file as of add-time, not as of the last time the committer read it. On docs/data/coverage-state.json — a shared mutable state file written concurrently by news-scout, market-watcher and alert-commander — the window between a pre-commit `git diff --stat` (observed 5 insertions/5 deletions) and the `git add` 20s later (76 changed lines) was enough for a peer agent's full 34-ticker write to land and be absorbed silently.",
+    "why_this_matters": "The standing fleet rule 'commits must carry an explicit trailing pathspec and must NEVER use -a/-am' is correct but is being relied on as if it were sufficient. It is sufficient for agent-owned single-writer files (notebooks). It gives ZERO protection for multi-writer state files. Every agent that commits docs/data/coverage-state.json is exposed, and the guard that exists to catch exactly this class does not look at pathspec commits at all.",
+    "proposed_fix": "Extend commit-sweep-guard to inspect explicit-pathspec commits too: for each staged path, compare the staged blob against the actor's own last-known-read revision (or simply flag any staged path in a declared MULTI_WRITER set — coverage-state.json, orch-state.json, cowork-schedule.json — whose diff exceeds what the actor declares). Cheaper interim: have agents stamp coverage-state via a compare-and-swap helper (mirroring scripts/orch-apply.sh's CAS contract for orch-state.json) instead of a plain write-then-commit.",
+    "related_open_row": "the RULE 2.5 coverage-state durable fix (extend agent trailing pathspec to include docs/data/coverage-state.json) — NOTE: that fix as currently scoped would make this exposure WORSE, not better, by putting more agents on the same shared-file commit path. Sequence the CAS helper first.",
+    "severity_note": "No data was lost or corrupted in the observed instance — the 34 absorbed stamps were real, correct, and needed committing. The defect is that the commit message misdescribes its own contents, and that the same mechanism could just as easily absorb a peer's half-written or wrong value under an unrelated commit message."
+  },
+  "createdAt": "20260824T201112Z"
+}
