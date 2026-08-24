@@ -1,5 +1,31 @@
 # System Auditor — Tier-1 Notebook
 
+## Tier-DATA — DB Integrity Sweep (2026-08-24T22:34:30Z)
+
+DB data-anomaly sweep completed. Pre-gate verdict: SPAWN (7 tables changed).
+
+### Deterministic Counts (db-integrity-counts.sh)
+- ohlc_violations: 336 rows across 20 distinct dates (historical residue, no fresh violations in last 48h)
+- scale_gt100x: 0
+- vnindex_cache_rows: 1
+- low_confidence_reports: 52
+
+### Findings
+
+**High-value tables checked:** daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, price_alerts, alert_engine_records, agent_signals, signal_outcomes, financial_reports, macro_indicators, sbv_rates, fred_series_daily, deep_fetch_queue, deep_fetch_stats, cron_job_runs, scheduler_locks (17 tables total).
+
+**New anomalies: 0**
+- deep_fetch_stats: 0 rows (class a, already-open: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD)
+- deep_fetch_queue: 30 pending rows queued since 2026-08-18 (already-open: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD)
+- daily_ohlcv: 336 OHLC violations (already-open: LINT-OHLCV-WRITE-BYPASS)
+
+All findings matched existing task board entries (dedup pre-gate success).
+
+**Freshness check:** market_prices updated 2026-08-24T21:30:03Z (fresh). Cron jobs: 3157 successful in last 24h. No recent regressions.
+
+### History Entry
+Entry appended to docs/data/db-integrity-history.json. Scan timestamp: 2026-08-24T22:34:42Z. History length: 200 (capped).
+
 ## c1008 · 2026-08-24T20:00Z
 ### Audit Run Tier-1 (19:31–20:19 UTC 2026-08-24)
 - Tier: 1 | Fire tick: 2026-08-24T20:00Z | Pre-gate verdict: FAILURE (launchd_agents) | Spawn decision: SPAWN
