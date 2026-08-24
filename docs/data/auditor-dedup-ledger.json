@@ -94,5 +94,17 @@
   "auditor-cycle-missing:tier1:2026-08-24T00:30Z": {
     "ts": "2026-08-24T00:41:14Z",
     "sev": 2
+  },
+  "auditor-a29-fire-gap:ragFtsRebuildCron": {
+    "ts": "2026-08-24T02:43:18Z",
+    "sev": 3
+  },
+  "auditor-a29-fire-gap:vnstockTradingStatsRefresh": {
+    "ts": "2026-08-24T02:43:28Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:monthlySignalQualityAudit": {
+    "ts": "2026-08-24T02:43:33Z",
+    "sev": 2
   }
 }
