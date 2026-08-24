@@ -1,8 +1,8 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-08-23T14:11:40Z",
-  "count": 468,
+  "updated_at": "2026-08-24T14:35:39Z",
+  "count": 472,
   "items": [
     {
       "baseline_pass": true,
@@ -10556,6 +10556,32 @@
       "po_evidence_20260824T1405": "PO 2026-08-24T14:05Z - LIVE CORROBORATION on the A-29 family, and the explanation for a dedup_skipped=0 self-report.\n\nA tier-2 system-auditor cycle (tag cron:auditor-t2:2026-08-24T12:00Z) self-reported dedup_skipped=0 while 10 overlapping cron_fire_gap rows (all status READ, 2026-08-23T14:41:44Z .. 2026-08-24T02:48:34Z) and 7 owning board rows already existed. docs/data/auditor-dedup-ledger.json shows exactly the failure THIS row describes: ELEVEN distinct keys for the ONE A-29 fire-gap condition, in THREE mutually incompatible grammars.\n\n  per-job bare:            auditor-a29-fire-gap:breadthHistoryPersister\n                           auditor-a29-fire-gap:brokerSanctionsSweep\n                           auditor-a29-fire-gap:monthlySignalQualityAudit\n                           auditor-a29-fire-gap:ohlcvStalenessCheck\n                           auditor-a29-fire-gap:ragFtsRebuildCron\n                           auditor-a29-fire-gap:vnstockTradingStatsRefresh\n                           auditor-a29-fire-gap:morningBriefing\n  per-job with :A-29 tail: auditor-a29-fire-gap:alertDigest:A-29\n                           auditor-a29-fire-gap:morningBriefing:A-29\n  aggregate bucket:        auditor-a29-fire-gap:missed-crons\n                           auditor-a29-fire-gap:stale-crons\n\nTHE DECISIVE OBSERVATION: morningBriefing is present under TWO grammars simultaneously (bare AND :A-29-suffixed), so that one job provably never dedups against itself - two ledger entries, one condition. The aggregate buckets (:missed-crons, :stale-crons) additionally cannot dedup against ANY per-job key, so the same cron gap is counted once per-job and once in aggregate.\n\nSAME DOUBLE-GRAMMAR ON A-29b: auditor-a29-unresolved-join:marketClose:A-29b and auditor-a29-unresolved-join:marketOpen:A-29b.\n\nThis is the mechanism behind dedup_skipped=0 - the caller free-texts a new key shape, so the 7-day window has nothing to match. Per the triage that recorded this: NO separate dedup row is warranted, this row already owns the defect. Filed here as occurrence evidence only.\n\nPROVENANCE: recorded here rather than inline because this row is over ORCH_ROW_PROSE_CEILING_BYTES (live 12191B); scripts/orch-apply.sh's row-prose-ceiling check refuses inline growth and names detail_ref as the sanctioned destination.",
       "_cold_written_at": "2026-08-24T14:05:00Z",
       "_cold_written_by": "po"
+    },
+    {
+      "id": "FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID",
+      "created_at": "2026-08-24T14:35:39Z",
+      "created_by": "po",
+      "baseline_pass": true,
+      "size": "M",
+      "sprint": null,
+      "status": "BACKLOG",
+      "type": "FIX",
+      "zone": "apps/mcp-server/",
+      "title": "detail_ref overflow - SECOND non-chef producer of dedup_key-less signal_queue rows (code-janitor)",
+      "desc": "[po 2026-08-24T14:35:39Z] EVIDENCE FOLD, offloaded here because the hot row is already over the 12000B prose ceiling (12475B) and any inline growth hard-rejects the whole atomic write; detail_ref is the sanctioned escape hatch. FINDING: this row currently reads as a chef/narrative-truth-gate-specific incident, but its own stated root cause -- signal_queue.rows[] has NO writer authentication and NO dedup_key -- has a SECOND, independent producer that is neither chef nor the NTG engine. Live proof from this tick: .signal_queue rows cj-20260823T163141 (16:31:41Z) and cj-20260823T223004 (22:30:04Z), both from=code-janitor to=po, are the SAME escalation (team-tool-recheck writer dead since 06-23, replace-vs-retire decision) emitted twice ~6h apart. Both carry NO dedup_key field at all. Their summaries differ ONLY by an ASCII hyphen vs an em-dash, so a naive content-hash dedup would ALSO have missed the pair -- the fix must key on a normalised/structural dedup_key, never on summary bytes. MEASUREMENT this tick: 82 of 112 hot signal_queue rows carry no dedup_key, split from=chef 78, code-janitor 2, system-auditor 1, tran-ngoc-bau 1 -- FOUR distinct producers, so a chef-only or NTG-only fix leaves the hole open. This strengthens (does not contradict) the row's own conclusion that dedup_key is the top fix and that the gap lives in signal_queue's write path rather than in any single agent. The PO decision arising from the duplicated escalation itself is separately carried by task_board.backlog[] DECIDE-TEAM-TOOL-RECHECK-WRITER-DEAD-SINCE-06-23-RETIRE-NOT-REPLACE (RETIRE, do not replace)."
+    },
+    {
+      "id": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
+      "created_at": "2026-08-24T14:35:39Z",
+      "created_by": "po",
+      "baseline_pass": true,
+      "size": "S",
+      "sprint": null,
+      "status": "READY",
+      "type": "FIX",
+      "zone": "cross-service/",
+      "title": "detail_ref overflow - occurrences 30 and 31, a second coordinating session reaches escalated=true",
+      "desc": "[po 2026-08-24T14:35:39Z] OCCURRENCE FOLD (occurrence_count 29 -> 31), offloaded here because the hot row is already over the 12000B prose ceiling (12502B) and inline growth would hard-reject the atomic write. Two NEW fires of this exact payload class arrived in pending_triage_inbox this tick, from a DIFFERENT coordinating session than the one this row is named after. Verbatim (1) 2026-08-24T12:51:41Z: \"[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/orch/orch-state.json. actor=7fd9c60a-9854-4589-9e98-e4c5e7e9168d mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked.\" Verbatim (2) 2026-08-24T13:21:55Z: same actor, 4 staged files (docs/agent-memory/decisions/sprint-board-corrections-20260824-po.md, docs/agent-memory/notebooks/po.md, docs/data/auditor-launchd-ack.json, docs/data/orch/orch-state.json), prior_warns=5 threshold=3 escalated=true outcome=blocked. Per triage-signals.md this payload class is a TRUE POSITIVE BY CONSTRUCTION (pre-commit exits 0 silently on mode=SCOPED before the signal write is reached, so the signal existing at all IS the mechanism proof), and escalated=true selects the REPEAT-OFFENDER-AFTER-BLOCK branch, which directs open-OR-APPEND against the FIX-COMMIT-SWEEP-GUARD-* family -- appended here, deliberately NOT minted as a new row. WIDENING: this row's title pins the finding to actor 632721c2-41e4-4aff-8d06-a47cf80dc0d7 at prior_warns=20; actor 7fd9c60a is a second, concurrent coordinating session independently crossing the same threshold, so the defect is NOT session-specific and the warn budget is POOLED per coordination session, not per agent. Both of this actor's blocked attempts were afterwards retried correctly with an explicit pathspec and landed (e.g. 7957f4362), so the hook's block is working as designed; what remains unfixed is that agents keep reaching for a bare `git commit` first."
     }
   ]
 }

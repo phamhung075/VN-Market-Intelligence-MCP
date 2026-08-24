@@ -1,56 +1,33 @@
 # PO Notebook
 
-## 2026-08-24T14:05Z — auditor cycle residue: 1 CRITICAL refuted at source, 3 mints, 3 rows fed
+## 2026-08-24T14:40Z — pre-evict triage of 11 READ signal rows + 22-envelope inbox; 2 mints, 1 self-retraction
 
-Router escalation after a tier-2 system-auditor cycle claimed **2 new anomalies + `dedup_skipped=0`**. Neither anomaly survived verification. **9 cited row ids resolved by jq path with a `task_board.` prefix — all 9 real and all 9 genuinely about their subject.**
+Prior 14:05Z section dropped whole (AC-2a: cap pressure → drop, never rewrite a retained section).
 
-### Ruling — the "CRITICAL cron fire-gaps" cluster is neither a cron death nor an outage
-Five crons ~5h overdue to within 0.1h. The escalation read this as ONE host-suspension window. **Measured instead, and both readings are wrong.** In `cron_job_runs` (live `market.db` via `docker exec`, not the host `data/` copy) all four resolvable jobs completed their **full normal daily complement** on 08-24 — vnIndexRefreshJob 84, vpsProxyWatchdogJob 42, alertScanParallelJob 28, taAlertNotifierJob 28, **identical to 08-12/13/14**. Envelope is `first=02:00 last=08:45–08:55 UTC` = the VN session (09:00–15:55 ICT). These are **market-hours-scoped** jobs: between close and next open they are *always* 5–17h "overdue" on a raw age ladder. It is the **designed daily state**, so it is a permanent daily false-CRITICAL — a weekday widening of `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL`, not the outage row.
-- 5th name `priceUpdateWatchdog` has **zero** rows under any `%priceUpdate%` — A-29b join gap, already backlog[436].
-- The **real** outage is 08-19/20/21 (no rows) + 08-17/18 truncated (42/154 vs ~3150). It **ended**: 08-22 1215, 08-23 2589, 08-24 2098.
+### The 11 pre-evict rows: 0 uncovered, but 1 citation was wrong
+All 11 already had owner rows in git HEAD from the 13:20Z tick, so **nothing was lost to the 14:41:44Z evict**. Re-resolved every claim as a `task_board.`-prefixed jq path.
+- **Mis-citation found (rows 1-4, A-29/A-29b):** the 13:20Z note named `FIX-CRONS-FIVE-STALE-...-RAGFTSREBUILD-35-DAYS` as owner. Its title enumerates **six other jobs** and names none of morningBriefing/alertDigest/marketOpen/marketClose. True owners: `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL` (A-29b unresolved-join **is** its "enumerates CRONS config table not the registered scheduler table" defect) + `FIX-A29-CRON-GAP-NO-OUTAGE-WINDOW-DISCRIMINATOR`, plus `FIX-CRON-NONRECOVERY-...-TIER3-MORNINGBRIEFING-BACKTESTRUNS` for morningBriefing.
+- alertDigest coverage **was** real but lived in bespoke key `po_scope_extension_20260824T1320Z` — invisible to every conventional reader. Folded into `status_note`.
+- Flipped all 11 READ→`triaged` only after confirming `triaged` sits in `TERMINAL_SIGNAL_STATUSES` (orch-cold-evict.sh:181) exactly like READ — no stranding. Added target-row-id back-pointers to `disposition`.
 
-### Found that the brief did not ask for
-- **Outage-vs-stand-down cannot be separated by age** — identical in both. The separator that worked is a **completed-complement test** (did the job finish its normal daily run *count*). Written onto the discriminator row as the recommended primitive, with a 3rd class added.
-- **Sweep-guard is at 6 warns, not 2**, against threshold 3 (`.git/sweep-guard.log`, this session, baseline 07-31). Already **past escalation** — next bare commit is ESCALATED REJECT, not a warning.
-- **Violations file has no dedup key** — `_record_violation_durable` appends unconditionally. V1 fired 5x in 80s under one tag; V3 twice per cycle. Every frequency count read off that file is inflated.
-- **`dedup_skipped=0` explained**: ledger holds **11 keys for 1 condition in 3 grammars**; `morningBriefing` exists under two at once, so it cannot dedup against itself. Recorded on the owning row, no new row minted.
+### Bespoke-field sweep — the anti-pattern is fleet-wide, not a slip
+Deleted `po_triage_20260824T1320Z` from **83** signal rows (folded into `po_triage_note`), plus `po_ruling_20260824T1405`, `po_fold_...`, `po_close_evidence_...`, `po_correction_...`, `po_measurement_...`, `po_occ_...`, `po_scope_extension_...` on 5 board rows. Three agents minted these today; nothing reads any of them.
 
-### Minted (3) — all `cross-service/`
-`FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO` (P1) · `FIX-BROAD-GITADD-LEAVES-STAGED-RESIDUE-DESPITE-CORRECT-COMMIT-PATHSPEC` (P1) · `CLEAN-GITIGNORE-MISSING-TICKVERDICT-REFINEPROBE-EPHEMERAL-PATTERNS` (P3)
+### I published a false claim at 14:31Z and retracted it at 14:34Z
+Folding the 6 `auto-push-abort` envelopes I wrote into two review rows that they are "the two live size-lint blockers" — **taken from their stale titles without re-measuring**. Then measured:
+- `pushBctcLayoutHandler.ts` **85L** (not 252L; fix landed `079471317`) · `tasksMdJanitorJob.ts` **472L** (not 1012L, cap 906) · `ocr_gateway.py` **515L** (not 594L, cap 527 — only 12L slack, likeliest to re-breach).
+- `size-lint --check` → **EXIT 0, 0 unjustified offenders**. `task-claim-lint` → EXIT 0. `tool-registry-parity` → 17 pass/0 fail. **All three doc-shaped pre-push gates are GREEN.**
+So the standing "a red pre-push gate strands the fleet" story is **stale**. Retracted in-row rather than deleted, so the error stays auditable. Lesson: I re-verified that my *writes landed* but not that my *claim was true* — those are different checks.
 
-V1 is a **null-field** defect, not a lost write: row `sys-20260824T135127-56bd` carries `audit_cycle_tag:null` and the check joins on exact equality (`audit-output-contract.sh:549-550`), so the join returns 0 by construction. **Refused to assert a root cause** — tested and rejected the provenance hypothesis (`detector` = 23 tagged vs 5 null).
+### Minted (2) — everything else folded
+- `FIX-PO-TRIAGE-BUGESCALATION-HEARTBEAT-GUARD-PAYLOAD-CLASS-UNROUTED` — triage-signals.md enumerates 4 `bug-escalation` payload classes; `[heartbeat-guard]` is a live 5th with **0 grep hits in both the table and the long-tail sibling**. It is the *only* class that HARD-BLOCKS a commit, and it is the one with no rule.
+- `CLEAN-CTXBLOAT-CRON-DETECT-LOOP-REGISTER-12349B-OVER-12000B-BYTECAP` — byte-cap only (173L/200L fine). 6 rows mention the filename; all 6 incidental, none about size.
+- Folded, not minted: notebook-prune 8th+9th → `...AC6-SIGNAL-HEREDOC...` (occ=9; the "Nth CONSECUTIVE" naming **is** the bug); 2 sweep-guard `escalated=true` → occ 29→31; cj dupe pair → CCATO row.
 
-### Mechanical note — prose ceiling blocked the first write
-`orch-apply.sh` aborted the atomic 7-mutation write: 2 co-mutated rows already exceed `ORCH_ROW_PROSE_CEILING_BYTES=12000`. Re-routed their evidence to the **cold** store and touched hot with `detail_ref`/`updated_at`/`updated_by` only (all in `STRUCTURAL_FIELDS`) → zero prose growth, write landed. Under-ceiling rows kept their evidence inline.
-
-### Carry-over
-- **Do not re-mint the A-29 cluster.** Any future ~5h five-cron gap after 08:55Z is the session stand-down. Check the daily run *count* first.
-- V1 row's AC-5 asks the specialist to name the null-tag emit sites — deliberately unresolved, do not let it be answered by assumption.
-- NOT pushed (232+ ahead, deliberate). Board committed by me this tick.
-
-## 2026-08-24T13:21:23Z — board corrections: tier-1 half-stale P0, orphan-signal class, ack ledger, 86-row READ backlog
-
-Router dispatch: 5 findings + 2 mid-task escalations. **3 of 7 router readings corrected at source.**
-
-### Corrections issued (evidence, not opinion)
-1. **FINDING 1 "split or supersede the P0"** — REFUSED. Architect already split it 07:41:35Z; row carries `children[]`, `depends[]` and "DO NOT IMPLEMENT AGAINST THIS ROW". The "NEW, not in the row" wiring gap *is* child 2. Executing as written would have minted duplicates of live work. Cause of misread: the row TITLE is a mint-time diagnosis never rewritten as children land.
-2. **FINDING 2 "commit the file, but its value is also wrong"** — half REFUSED. `auditor-tier1-last-healthy.json` = 08:42:12Z is **correct by contract** (sole writer `_write_heartbeat()` on ALL_GREEN; last-trigger.json shows verdict=FAILURE at 12:45:14Z). Hand-refreshing it is the class already at 4 fires. Also: 5 files stranded, not 1, and there is **no pathspec to restore** — `grep -c 'git commit|git add'` on the probe = **0**. No committer exists at all.
-3. **FINDING 4 "PO cited a nonexistent row"** — REFUTED. `FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE` was real and OPEN when cited (15:27:38Z, review[] HELD); it reached done_verified at 2571bd92c ~5h later and cold-evicted. Correct-when-written, stale after — **not** the known cited-id defect, needs a different fix.
-4. **"permanent cold-eviction / rows die"** — eviction is **ARCHIVAL** to `archive/2026-08.json .signal_rows[]` (493 already there). Harm is discoverability, not data loss.
-
-### Found that nobody reported
-- **ready[20] would have REVERTED child 2.** Router called it "dispatchable NOW". Its AC-1 demands the Job-2 spawn decision be "verdict-only" — exactly what child 2 deletes — and deletes the freshness wording child 2 requires byte-preserved. Authored 2026-07-21, 34d pre-debounce. Triple-gated (backlog + depends + supervised) using **structural fields only**: the row is 15216B, already over the prose ceiling, so it may not grow by one byte.
-- **Size-lint fully GREEN** (`--check` exit 0, 0 offenders/1431 files). All 3 P0 rows falsified; one held the **only** in_progress slot on a 252L premise for a file now 85L.
-- **fleet-push disarm is NON-DURABLE (P0).** `diff` of repo vs installed plist = exactly one line, `> "Disabled" => 1`. Repo copy still RunAtLoad=1/StartInterval=1800. Any re-install silently re-arms an unattended **224**-commit push, and both pre-push gates are now green. Trap: installed plist is **binary** — `grep -i disabled` reads as absent; I hit that false negative before re-checking with `plutil -p`.
-- **A-30's "stable VmHWM" refuted.** 14:12Z signal: VmHWM **pinned at the cgroup limit**, 15min before the 14:27:11Z OOM kill.
-
-### Rulings
-- Ack ledger: signature now false; **not** retargeted (forbidden), **not** removed yet — ship child 2 first to bound churn, then remove per STALENESS RULE. That is the ledger's own protocol from `expiry_hazard_20260824T0716Z`, not a new one. Caveat 111→**224** corrected.
-- to=ops: 3 rows rerouted to=po with provenance; bug5468's standing mitigation **rehoused into a task row** (signals are transport, rows are durable) — that is what made it safe to close.
-- 86 READ rows: content rehoused, dispositions written, archive-out now a decision.
+### Two over-ceiling rows forced `detail_ref`
+CCATO row (12475B) and sweep-guard row (12502B) reject any inline growth, so evidence went to `backlog-detail.json`. Fixed its `count`/`items` drift while there: **468→472**, `updated_at` unfrozen.
 
 ### Carry-over
-- **Dispatch child 2 (`FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT`, ready[], P0, agent-father)** — it unblocks the ack removal, the freshness row, and stops the 30min respawn loop.
-- QA: do **not** close the pushBctcLayoutHandler row before child 2 ships (ack auto-un-suppresses on DONE_VERIFIED → ~48 respawns/day).
-- Could not verify `reconcile_attempts` — **no SQL tool in the 184-tool registry**. Structural limit, recorded on the owning row.
-- NOT pushed. origin/main stays ab5087296.
+- **`triage-signals.md:52-53` CLEAR block is broken under zsh** — `echo "$json" | jq` mangles `\n`. Hit it live; it **fail-loud aborts** (not the "SILENT-NOOP" its row title claims). Cleared with `printf '%s'`. Row `...ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP` wants renaming.
+- 82/112 signal rows still carry **no `dedup_key`** across **4** producers (chef 78, code-janitor 2, auditor 1, tnb 1) — a chef-only fix leaves it open.
+- `ocr_gateway.py` at 515L/527L is 12L from re-breaching.
