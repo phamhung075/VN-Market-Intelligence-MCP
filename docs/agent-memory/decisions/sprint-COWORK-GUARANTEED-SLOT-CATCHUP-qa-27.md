@@ -206,3 +206,5 @@
 - flag application->infrastructure import as a DDD violation per the pipeline's literal `grep -r "from.*infrastructure"` line — rejected: that grep is written for domain-layer files; dev-standards.md's own DDD Layer Rules table names "Orchestrating multiple services" as application's job and only states the golden rule against `domain/` importing `infrastructure/`.
 **why-decision:** every AC in usecases.md/testing.md independently reproduced against real command output (not the row's own prose, which didn't exist here) — commit real+on-main+file-match, tests green at the documented count, tsc clean, DDD/security/mock-guard clean, no regression in the full-suite delta.
 **why-change:** no change from plan — row predated the drain (missing `commit`/`files[]`/`owner`/`status_note`), used the documented Fallback derivation path; verdict `vc-approved`.
+
+### CAP-REACHED · 2026-08-24T03:45:33Z
