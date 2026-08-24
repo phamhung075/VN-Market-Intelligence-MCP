@@ -18391,54 +18391,6 @@
           }
         },
         "status_note": "\n[QA] Review Record (direct-commit verify): Direct-commit verify: commit 18e20a438 (main ancestor) touches runNarrativeTruthGate.ts/Types.ts/Findings.ts/test+claimToolMapTypes.ts/claimToolMapValidator.ts+4 docs. CCATO-MCP-T5-USECASE.test.ts 15 pass/0 fail/37 expect (matches testing.md doc). tsc --noEmit 0 errors. DDD scan clean (domain zero infra imports; app->infra is correct per DDD Layer Rules). Security scan clean. mock-guard PASS. Full suite 15427 pass/51 fail/1 error/1282 files -- failing file-set = baseline-15 + 1 unrelated VPS-fetcher timeout flake, zero overlap with T5 files. Deps T1-T4 all DONE_VERIFIED. Not OOM-class."
-      },
-      {
-        "id": "UC-CCA-P2-SKILL-GW-GATE",
-        "type": "TASK",
-        "title": "gateway-availability-gate SKILL: DMS-2 ladder + DEFER templates + terminology-parity",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "developer",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          ".claude/skills/gateway-availability-gate/SKILL.md"
-        ],
-        "note": "FR-1/FR-2: Restructure Step 0-GW with DMS-2 escalation ladder. Classify probe error (CONFIRMED-BLIND vs TRANSIENT) → 30s backoff → PROBE_2 → SIBLING_RECENT corroboration (hours_back=0.25 exactly) → suppress (DEFER notebook+clean EXIT, no signal/bug) or escalate (append payload suffix '2x probe failure + no sibling success in 15-min'). Add DEFER templates (distinct from BLOCKED, same OVERWRITE/APPEND split). Reuse cycle-bootstrap/SKILL.md trigger-text signature exactly (no second definition). Estimated ~171-176L post-edit inside AC-1 ≤200L cap. Verify send_telegram never appears in confirmed-down path (FR-2 invariant).",
-        "created_at": "2026-08-14T12:21:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-24T00:36:33Z",
-        "updated_by": "po",
-        "commit_sha": "98da23dcb0cc80d9355c9373f28ff65f6381b4ab",
-        "completed_at": "2026-08-14T12:40:04Z",
-        "completed_by": "developer",
-        "status_note": "FR-1/FR-2 shipped per architect ratified design (UC-CCA-P2-BA-spec.md). gateway-availability-gate/SKILL.md restructured 101L->169L: Step 0-GW now runs a DMS-2 ladder (classify CONFIRMED-BLIND/TRANSIENT using cycle-bootstrap/SKILL.md exact trigger-text signature -> 30s backoff -> PROBE_2 -> SIBLING_RECENT via get_agent_signals(hours_back=0.25) -> suppress via new DEFER notebook template or escalate via existing a/b/c actions with additive payload suffix). Verified zero send_telegram anywhere in ladder/confirmed-down paths (grep, FR-2 invariant). Within AC-1 <=200L cap. AC-6 news-scout inheritance re-checked, no file edit needed. Leaf subtask of UC-CCA-P2 -- 9 sibling flow-file insertions (FR-3/4/5) are separate PM-decomposed rows, not in this scope. Commit 98da23dcb.",
-        "reviewed_at": "2026-08-24T00:36:32Z",
-        "reviewed_by": "po",
-        "verification": {
-          "raw_probe": {
-            "tool": "wc -l .claude/skills/gateway-availability-gate/SKILL.md + grep -c send_telegram <same file> + grep -n trigger-text list in .claude/skills/cycle-bootstrap/SKILL.md",
-            "args": ".claude/skills/gateway-availability-gate/SKILL.md",
-            "live_value_observed": {
-              "file_lines": 169,
-              "ac1_cap": 200,
-              "ac1_pass": true,
-              "send_telegram_hits": 0,
-              "ac2_pass": true,
-              "ac5_trigger_list_byte_identical_vs_cycle_bootstrap_line_109": true,
-              "gw_gate_pointer_count_across_9_consumer_flows": 9,
-              "commits_on_file_since_ship": 1,
-              "worktree_clean": true
-            },
-            "observed_at": "2026-08-24T00:36:32Z",
-            "evidence_commit": "98da23dcb0cc80d9355c9373f28ff65f6381b4ab",
-            "verdict": "PASS"
-          }
-        },
-        "verification_note": "PO DONE_VERIFIED 2026-08-24 (SECONDARY-drain done[]-origin sign-off; shipped 2026-08-14, 10d unsigned). Verified AT SOURCE, not from status_note prose. AC-1 wc -l=169 <=200. AC-2/FR-2 zero literal send_telegram; only Telegram mention is the explicit prohibition at :155-158. AC-5 terminology parity: 3-string trigger list byte-identical, gw-gate:35 vs cycle-bootstrap/SKILL.md:109. AC-6 news-scout inheritance: news-scout/flow/cycle.md:15 exactly 1 pointer, APPEND-class DEFER template :139-144 coherent, correctly no file edit. R1 payload SUFFIX branch survived un-collapsed at :85-86. R2 PROBE_2 non-reclassification preserved at :42-44. AC-3 structural: exactly 1 probe declaration site (market-watcher/flow/main.md:61, covers cycle.md AND eod.md); zero surviving inline SIBLING_RECENT/PROBE_2 ladders in any live flow file (remaining hits are historical decisions/briefs/handoffs). Drift: 98da23dcb is the ONLY commit on this file since ship, worktree clean. HONEST GAP: AC-3 live-cycle WORK-ping observation NOT reproducible (market-watcher notebook is OVERWRITE-class, success path logs [GATEWAY] to console not notebook) — non-blocking, that live surface is created by the FR-3/4/5 sibling rows, out of this row scope. Bonus read-only sweep: all 9 consumer flow files carry exactly 1 gw-gate pointer each (AC-4 satisfied cohort-wide)."
       }
     ],
     "head": {
