@@ -1,0 +1,68 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T031740Z",
+  "payload": {
+    "classification": "FIRE",
+    "tick": "2026-08-24T03:15Z",
+    "drift_min": 0,
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "alert-commander"
+    ],
+    "errors": [],
+    "silent": false,
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "chef_mutex_applied": false,
+    "new_signals_seen": 4,
+    "new_signals_marked_read": 0,
+    "new_signals_held": 4,
+    "held_rows": [
+      "sys-20260824T030458-5510",
+      "sys-20260824T030524-5850",
+      "sys-20260824T030556-6dc3",
+      "sys-20260824T030752-699e"
+    ],
+    "disk_verified": {
+      "volume": "/System/Volumes/Data",
+      "capacity_pct": 94,
+      "used": "193Gi",
+      "avail": "14Gi",
+      "size": "233Gi",
+      "auditor_claim_accurate": true
+    },
+    "pressure_mode": "adaptive",
+    "pressure_age_min": 13.07,
+    "container_vm_headroom_mb": 3152,
+    "headroom_series": [
+      3225,
+      3027,
+      2615,
+      3023,
+      3152
+    ],
+    "load_1min": 3.18,
+    "cores": 12,
+    "degraded": false,
+    "max_parallel": 4,
+    "cycle_snapshot_promoted": false,
+    "snapshot_file": "docs/data/cycle-snapshot-03:16.json",
+    "snapshot_lookup_tally": {
+      "hits": 1,
+      "misses": 1,
+      "mechanism": "minute-exact filename, not glob"
+    },
+    "note": "Tick 03:15Z, single-slot fan-out (alert-commander-market). 4 new signals seen, ALL HELD NEW, 0 marked READ.\n\n1. DISK PRESSURE IS REAL AND INDEPENDENTLY CONFIRMED — HIGHEST-VALUE ROW THIS TICK.\nAuditor row sys-20260824T030524-5850 (WARN, dk=db_integrity_breach:live_data_dir:stale-forensic-db-copies)\nclaims \"2.36GB of stale market.db forensic copies on a 95%-full volume\". Router verified against the\nhost independently: `df -h` shows /System/Volumes/Data at 94% capacity, 193Gi used of 233Gi, 14Gi\navailable. The auditor claim is accurate. The 2.36GB of forensic copies is roughly 17% of ALL remaining\nfree space on that volume, and it is dead weight. This fleet has a prior ENOSPC incident on record\n(memory project_enospc_blocker). Recommend this be triaged AHEAD of the other three rows: it is the only\none of the four whose failure mode takes down every service at once, and it is the only one whose fix\n(delete stale forensic copies) is both trivial and immediately reversible in impact.\n\n2. ALL FOUR ROWS HELD NEW, DELIBERATELY — AND THAT HOLD IS KNOWN TO BE UNRELIABLE.\nAll 4 are from=system-auditor, to=po, well-formed (real clock-read ts, real dedup_key, no CCATO\npathology). All 4 recipients are in the cowork recipient set. They are held NEW rather than marked READ\nbecause PO selects on NEW and there is no po cowork slot, so mark-READ-without-delivery is silent loss.\nCAVEAT LEARNED LAST TICK: holding does NOT actually protect them. At 02:45Z this dispatcher held 28 rows\nNEW for exactly this reason and the dev-team 02:37Z drain (commit 8deaf19bd) marked the entire cohort\nREAD about eight minutes later, including a CRITICAL row (ragFtsRebuildCron stale 35 days). So the hold\nis the correct local action and is also not a defence. Two independent drains write the same field with\nopposite intents and neither is aware of the other. That is the durable defect, not the marking policy.\n\n3. CHEF-INTRADAY SUPPRESSED BY CADENCE THIS TICK. First observation of a non-empty suppressed_cadence[]\nin this session: [\"chef-intraday\"], with chef_mutex_applied=false. Resolved inside evaluateCadence() per\nthe cadence-policy.json per-policy table, not by the superseded blanket weekend/holiday rule. Recorded as\na normal-operation datapoint, not a defect.\n\n4. SNAPSHOT MINUTE-ALIGNMENT: SECOND OBSERVATION PENDING. Wrote docs/data/cycle-snapshot-03:16.json at\nwall-clock 03:16 against nominal tick 03:15. Last tick the dispatcher wrote 03:02 and the spawned agent\nlooked up 03:03 and missed by one minute; the tick before, 02:47 was written and hit. The lookup is\nminute-EXACT, not a glob, so a hit depends on whether the spawn starts inside the same wall-clock minute\nthe write finished. Running tally: 1 hit, 1 miss. Same root cause as UC-SDF-P2 (P1, next=ba,\ntickHHMM-vs-FILE_TICK filename divergence, promotion dead since 2026-07-07) — NOT filed as new.\nDeliberately did NOT write a duplicate file under the next minute's name: that would mask the defect.\n\n5. HEADROOM SAWTOOTH CONFIRMED, TREND CLAIM STAYS WITHDRAWN. container_vm_headroom_mb across five ticks:\n3225 -> 3027 -> 2615 -> 3023 -> 3152. An earlier tick projected a DEGRADED trip within 3-5 ticks from the\nfirst three points; that projection was wrong and is withdrawn. This is oscillation. DEGRADED=false with\nwide margin (floor 1500, load 3.18 against a limit of 24 on 12 cores).\n"
+  },
+  "_processed": {
+    "fingerprint": "9fc575924938c6c6077a1e5c10646b5d70ab4931acb72df9da2ef9d8acf5bb43",
+    "processedAt": "2026-08-24T03:27:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

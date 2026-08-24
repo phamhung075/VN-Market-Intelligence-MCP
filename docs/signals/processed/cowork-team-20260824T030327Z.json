@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T030327Z",
+  "payload": {
+    "classification": "FIRE",
+    "tick": "2026-08-24T03:00Z",
+    "drift_min": 0,
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "alert-commander"
+    ],
+    "errors": [],
+    "silent": false,
+    "new_signals_seen": 0,
+    "new_signals_marked_read": 0,
+    "new_signals_held": 0,
+    "queue_status_census": {
+      "OPEN": 6,
+      "READ": 81,
+      "RETRACTED": 7,
+      "triaged": 12,
+      "new": 1
+    },
+    "ccato_rows": 66,
+    "ccato_distinct_payloads": 4,
+    "ccato_multiplicities": [
+      11,
+      22,
+      22,
+      11
+    ],
+    "ccato_dedup_key_absent": 66,
+    "ccato_retracted": 7,
+    "ccato_inverted_cohort": 11,
+    "pressure_mode": "adaptive",
+    "pressure_age_min": 13.73,
+    "container_vm_headroom_mb": 3023,
+    "load_1min": 2.5,
+    "cores": 12,
+    "degraded": false,
+    "max_parallel": 4,
+    "cycle_snapshot_promoted": false,
+    "snapshot_file": "docs/data/cycle-snapshot-03:02.json",
+    "note": "Tick 03:00Z, single-slot fan-out (alert-commander-market). Findings this tick:\n\n1. SIGNAL QUEUE FULLY DRAINED BY A PEER. new_signals=0; zero rows in status NEW. The dev-team 02:37Z tick (commit 8deaf19bd, \"0a-D queue drain\") marked the whole NEW cohort READ, including the CRITICAL row sys-20260824T024318-584b (ragFtsRebuildCron stale 822.5h / 35 days, last run 2026-07-20). The cowork dispatcher deliberately held that row NEW at 02:45Z precisely so PO would select it; a peer drain moved it to READ ~8 min later. PO selects on NEW, so that CRITICAL finding is now only reachable by an explicit READ sweep, and it starts cold-evicting on the 24h clock. This is the to=po drain trap firing on its worst possible input.\n\n2. CCATO EMITTER STILL GROWING: 12 -> 24 -> 66 rows across three ticks. Still only 4 distinct payloads, multiplicities now [11,22,22,11] (was [4,8,8,4], before that [2,4,4,2]). Growth is not a clean doubling. dedup_key ABSENT on all 66. All 66 share the identical frozen ts 2026-08-24T00:00:00Z, so the 24h prune cannot reach any of them until 2026-08-25T00:00Z. 7 rows now carry status RETRACTED with no _retracted_by / _retraction_note / _updated_by attribution.\n\n3. CCATO INVERSION IS A MINORITY COHORT, NOT THE WHOLE SET. Correcting an earlier over-generalisation: of the 4 distinct payloads, three carry real indicator values (returned_value 60, 61, 62.1 - 55 rows) and are correctly shaped findings, merely duplicated. Only the fourth payload (returned_value \"not found in database\", 11 rows) contradicts its own summary line, which asserts the tool \"returned non-null data\". So the inversion affects 11 of 66, not the population.\n\n4. LOWERCASE status:\"new\" ROW IS INVISIBLE TO EVERY SELECTOR. Row po-decision-bug5468-2026-08-23T15:27:38Z (from=po, to=ops, type=system-issue, dedup_key po-decision:bug5468:pdfx-reconcile-pause) carries status \"new\" in lowercase. Every drain/selector in the fleet matches status==\"NEW\" exactly, so this row has been structurally unreachable since 2026-08-23T15:27Z (~11.6h). It is not noise: it is a PO DECISION addressed to ops carrying concrete mitigation guidance (reset reconcile_attempts on any cohort row approaching 6-7 rather than pausing the scheduler). Nobody has seen it. Recommend a case-insensitive status normaliser at the write path, not a hand-fix of this one row.\n\n5. HEADROOM TREND CALL WITHDRAWN. Earlier ticks reported container_vm_headroom_mb sliding 3225 -> 3027 -> 2615 and projected a DEGRADED trip within 3-5 ticks. It read 3023 this tick. That is oscillation (GC sawtooth), not a monotone slide, and the projection was drawn from three points. No trend claim stands; DEGRADED remains false with wide margin.\n\n6. Snapshot promotion still false, and that is already tracked - UC-SDF-P2 (P1, next_agent=ba) names the exact root cause (tickHHMM-vs-FILE_TICK filename divergence, promotion dead since 2026-07-07), alongside SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED, DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS and FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT. Not re-reported as a per-tick finding. Per-tick snapshot files ARE consumed successfully by wall-clock glob; only latest-dependent consumers are dark, which is why last_regime/last_volatility_level go out as \"unknown\".\n"
+  },
+  "_processed": {
+    "fingerprint": "6be3389f2e5a431056f5d1e13bb830959f4b0fa5f6c60065860d5d2ef0b2f0be",
+    "processedAt": "2026-08-24T03:27:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

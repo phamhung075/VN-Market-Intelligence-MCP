@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T02:59:57Z",
+    "_updated_at": "2026-08-24T03:26:37Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -2152,7 +2152,7 @@
         "type": "db_integrity_breach",
         "summary": "bctc_vps_queue check C-16 failed (actual=1 pending >72h, expected=0)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t3:2026-08-24T02:00Z",
@@ -2166,7 +2166,7 @@
         "type": "db_integrity_breach",
         "summary": "live data dir carries 2.36GB of stale market.db forensic copies on a 95%-full volume",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t3:2026-08-24T02:00Z",
@@ -2180,7 +2180,7 @@
         "type": "system_issue",
         "summary": "system-map.json cron catalog lists 70 crons, live mcp-server registers 88 (26 names absent)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t3:2026-08-24T02:00Z",
@@ -2194,7 +2194,7 @@
         "type": "system_issue",
         "summary": "Tier-3 size-cap check unexecutable: its jq query aborts exit=5 on 2 tasks-less active_sprints rows",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t3:2026-08-24T02:00Z",
@@ -22634,7 +22634,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T03:01:50Z",
+    "_updated_at": "2026-08-24T03:27:30Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23246,6 +23246,226 @@
         "payload": "breadthHistoryPersister stale (check A-29)",
         "createdAt": "2026-08-24T02:48:34Z",
         "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "68cdcb23290996f89dd0d8608a62ffc338e81db6b5c720902c47259da17264ba",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "priority": "WARN",
+        "payload": "bctc_vps_queue check C-16 failed (actual=1 pending >72h, expected=0)",
+        "createdAt": "2026-08-24T03:04:58Z",
+        "drained_at": "2026-08-24T03:26:37Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "92b4e84a7d350f0996fd7651f72d33e7ccce55c481d746b9e62328155b425e8b",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "priority": "WARN",
+        "payload": "live data dir carries 2.36GB of stale market.db forensic copies on a 95%-full volume",
+        "createdAt": "2026-08-24T03:05:24Z",
+        "drained_at": "2026-08-24T03:26:37Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "7acde49edb05750bc95f77a221ad927a23732c6e7e178091117b206b9ee30d0b",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "priority": "WARN",
+        "payload": "system-map.json cron catalog lists 70 crons, live mcp-server registers 88 (26 names absent)",
+        "createdAt": "2026-08-24T03:05:56Z",
+        "drained_at": "2026-08-24T03:26:37Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "412fbb41d0c64fc42617e15d9ec3f34dcd92807b2268517e489a43a29cf38070",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "priority": "WARN",
+        "payload": "Tier-3 size-cap check unexecutable: its jq query aborts exit=5 on 2 tasks-less active_sprints rows",
+        "createdAt": "2026-08-24T03:07:52Z",
+        "drained_at": "2026-08-24T03:26:37Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "6be3389f2e5a431056f5d1e13bb830959f4b0fa5f6c60065860d5d2ef0b2f0be",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "classification": "FIRE",
+          "tick": "2026-08-24T03:00Z",
+          "drift_min": 0,
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "alert-commander"
+          ],
+          "errors": [],
+          "silent": false,
+          "new_signals_seen": 0,
+          "new_signals_marked_read": 0,
+          "new_signals_held": 0,
+          "queue_status_census": {
+            "OPEN": 6,
+            "READ": 81,
+            "RETRACTED": 7,
+            "triaged": 12,
+            "new": 1
+          },
+          "ccato_rows": 66,
+          "ccato_distinct_payloads": 4,
+          "ccato_multiplicities": [
+            11,
+            22,
+            22,
+            11
+          ],
+          "ccato_dedup_key_absent": 66,
+          "ccato_retracted": 7,
+          "ccato_inverted_cohort": 11,
+          "pressure_mode": "adaptive",
+          "pressure_age_min": 13.73,
+          "container_vm_headroom_mb": 3023,
+          "load_1min": 2.5,
+          "cores": 12,
+          "degraded": false,
+          "max_parallel": 4,
+          "cycle_snapshot_promoted": false,
+          "snapshot_file": "docs/data/cycle-snapshot-03:02.json",
+          "note": "Tick 03:00Z, single-slot fan-out (alert-commander-market). Findings this tick:\n\n1. SIGNAL QUEUE FULLY DRAINED BY A PEER. new_signals=0; zero rows in status NEW. The dev-team 02:37Z tick (commit 8deaf19bd, \"0a-D queue drain\") marked the whole NEW cohort READ, including the CRITICAL row sys-20260824T024318-584b (ragFtsRebuildCron stale 822.5h / 35 days, last run 2026-07-20). The cowork dispatcher deliberately held that row NEW at 02:45Z precisely so PO would select it; a peer drain moved it to READ ~8 min later. PO selects on NEW, so that CRITICAL finding is now only reachable by an explicit READ sweep, and it starts cold-evicting on the 24h clock. This is the to=po drain trap firing on its worst possible input.\n\n2. CCATO EMITTER STILL GROWING: 12 -> 24 -> 66 rows across three ticks. Still only 4 distinct payloads, multiplicities now [11,22,22,11] (was [4,8,8,4], before that [2,4,4,2]). Growth is not a clean doubling. dedup_key ABSENT on all 66. All 66 share the identical frozen ts 2026-08-24T00:00:00Z, so the 24h prune cannot reach any of them until 2026-08-25T00:00Z. 7 rows now carry status RETRACTED with no _retracted_by / _retraction_note / _updated_by attribution.\n\n3. CCATO INVERSION IS A MINORITY COHORT, NOT THE WHOLE SET. Correcting an earlier over-generalisation: of the 4 distinct payloads, three carry real indicator values (returned_value 60, 61, 62.1 - 55 rows) and are correctly shaped findings, merely duplicated. Only the fourth payload (returned_value \"not found in database\", 11 rows) contradicts its own summary line, which asserts the tool \"returned non-null data\". So the inversion affects 11 of 66, not the population.\n\n4. LOWERCASE status:\"new\" ROW IS INVISIBLE TO EVERY SELECTOR. Row po-decision-bug5468-2026-08-23T15:27:38Z (from=po, to=ops, type=system-issue, dedup_key po-decision:bug5468:pdfx-reconcile-pause) carries status \"new\" in lowercase. Every drain/selector in the fleet matches status==\"NEW\" exactly, so this row has been structurally unreachable since 2026-08-23T15:27Z (~11.6h). It is not noise: it is a PO DECISION addressed to ops carrying concrete mitigation guidance (reset reconcile_attempts on any cohort row approaching 6-7 rather than pausing the scheduler). Nobody has seen it. Recommend a case-insensitive status normaliser at the write path, not a hand-fix of this one row.\n\n5. HEADROOM TREND CALL WITHDRAWN. Earlier ticks reported container_vm_headroom_mb sliding 3225 -> 3027 -> 2615 and projected a DEGRADED trip within 3-5 ticks. It read 3023 this tick. That is oscillation (GC sawtooth), not a monotone slide, and the projection was drawn from three points. No trend claim stands; DEGRADED remains false with wide margin.\n\n6. Snapshot promotion still false, and that is already tracked - UC-SDF-P2 (P1, next_agent=ba) names the exact root cause (tickHHMM-vs-FILE_TICK filename divergence, promotion dead since 2026-07-07), alongside SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED, DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS and FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT. Not re-reported as a per-tick finding. Per-tick snapshot files ARE consumed successfully by wall-clock glob; only latest-dependent consumers are dark, which is why last_regime/last_volatility_level go out as \"unknown\".\n"
+        },
+        "createdAt": "20260824T030327Z",
+        "drained_at": "2026-08-24T03:27:30Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2661e3dbfa40fdd89c155c7397b02584f89727b55148da0b31935539f19e79cf",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "classification": "CORRECTION",
+          "severity": "HIGH",
+          "file": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+          "head_lines": 1012,
+          "worktree_lines": 1012,
+          "cap_lines": 996,
+          "growth_commit": "db0ed7c02",
+          "prior_measurement": "HEAD=906L worktree=1012L at 2026-08-24T02:13Z",
+          "board_row_exists": false,
+          "related_rows": [
+            "FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH",
+            "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE"
+          ],
+          "superseded_note": "docs/signals/processed/cowork-team-20260824T021305Z.json",
+          "suppression_observed_count": 2,
+          "unpushed_commits": 144,
+          "action_required": "mint board row for tasksMdJanitorJob.ts 1012L/996L AND widen the P0 sizelint sprint to cover both files (serial offenders are now concurrent; a one-file fix cannot clear the gate)",
+          "note": "SECOND SERIAL SIZE-LINT OFFENDER IS NOW REAL, COMMITTED, AND UNTRACKED — and a stale note was suppressing it.\n\nMEASURED 2026-08-24T03:15Z:\n  git show HEAD:apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts | wc -l  -> 1012\n  wc -l < apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts                -> 1012\n  cap 996L. HEAD and worktree AGREE. Commit db0ed7c02 landed the 106L growth (preceded by 86b31eccd, e109f49f8).\n\nAt 02:13Z this file measured HEAD=906L / worktree=1012L, i.e. a working-tree-only phantom, correctly\ndiagnosed as a live reproduction of FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1) and\ncorrectly NOT filed. That diagnosis is now void. The growth is committed and inside the push range.\n\nNO BOARD ROW EXISTS. Verified by jq across the live board: the only size-lint rows are\nFIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (P0, next=dev-mcp-server) which is a\nDIFFERENT file, and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, next=developer) which\nis the scanning-mechanism defect. Neither covers tasksMdJanitorJob.ts.\n\nFLEET PUSH IS BLOCKED BY BOTH FILES AT ONCE, ahead=144 commits. Fixing only pushBctcLayoutHandler.ts\n(the P0) will NOT unblock the fleet — the next push will trip immediately on tasksMdJanitorJob.ts.\nThis is the serial-offender pattern, but with a new twist: the two offenders are now CONCURRENT, not\nsequential, so a one-file sprint cannot clear the gate. Whoever takes the P0 needs both in scope.\n\nSUPPRESSION HAZARD, now corrected. The 02:13Z conclusion was written into\ndocs/signals/processed/cowork-team-20260824T021305Z.json as a do-not-file instruction. It was read and\nobeyed at least twice after it went stale (alert-commander c203 and c204 both declined to file). That\nfile has now been amended in place with a CORRECTION block plus superseded_at / superseded_reason /\nre-measured head_vs_worktree fields.\n\nDURABLE FIX, demonstrated twice now. Correct behaviour was gated on a prose note in a prunable\ndirectory that nothing re-validates; it went stale within ~62 minutes and kept being obeyed. The\nescalation step should run `git show HEAD:<path> | wc -l` itself and compare against the cap before\nreporting or suppressing a size-lint offender. Owner: agent-father (escalation-step change), with the\nboard row for tasksMdJanitorJob.ts to be minted by po/pm.\n"
+        },
+        "createdAt": "20260824T031339Z",
+        "drained_at": "2026-08-24T03:27:30Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9fc575924938c6c6077a1e5c10646b5d70ab4931acb72df9da2ef9d8acf5bb43",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "classification": "FIRE",
+          "tick": "2026-08-24T03:15Z",
+          "drift_min": 0,
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "alert-commander"
+          ],
+          "errors": [],
+          "silent": false,
+          "suppressed_cadence": [
+            "chef-intraday"
+          ],
+          "chef_mutex_applied": false,
+          "new_signals_seen": 4,
+          "new_signals_marked_read": 0,
+          "new_signals_held": 4,
+          "held_rows": [
+            "sys-20260824T030458-5510",
+            "sys-20260824T030524-5850",
+            "sys-20260824T030556-6dc3",
+            "sys-20260824T030752-699e"
+          ],
+          "disk_verified": {
+            "volume": "/System/Volumes/Data",
+            "capacity_pct": 94,
+            "used": "193Gi",
+            "avail": "14Gi",
+            "size": "233Gi",
+            "auditor_claim_accurate": true
+          },
+          "pressure_mode": "adaptive",
+          "pressure_age_min": 13.07,
+          "container_vm_headroom_mb": 3152,
+          "headroom_series": [
+            3225,
+            3027,
+            2615,
+            3023,
+            3152
+          ],
+          "load_1min": 3.18,
+          "cores": 12,
+          "degraded": false,
+          "max_parallel": 4,
+          "cycle_snapshot_promoted": false,
+          "snapshot_file": "docs/data/cycle-snapshot-03:16.json",
+          "snapshot_lookup_tally": {
+            "hits": 1,
+            "misses": 1,
+            "mechanism": "minute-exact filename, not glob"
+          },
+          "note": "Tick 03:15Z, single-slot fan-out (alert-commander-market). 4 new signals seen, ALL HELD NEW, 0 marked READ.\n\n1. DISK PRESSURE IS REAL AND INDEPENDENTLY CONFIRMED — HIGHEST-VALUE ROW THIS TICK.\nAuditor row sys-20260824T030524-5850 (WARN, dk=db_integrity_breach:live_data_dir:stale-forensic-db-copies)\nclaims \"2.36GB of stale market.db forensic copies on a 95%-full volume\". Router verified against the\nhost independently: `df -h` shows /System/Volumes/Data at 94% capacity, 193Gi used of 233Gi, 14Gi\navailable. The auditor claim is accurate. The 2.36GB of forensic copies is roughly 17% of ALL remaining\nfree space on that volume, and it is dead weight. This fleet has a prior ENOSPC incident on record\n(memory project_enospc_blocker). Recommend this be triaged AHEAD of the other three rows: it is the only\none of the four whose failure mode takes down every service at once, and it is the only one whose fix\n(delete stale forensic copies) is both trivial and immediately reversible in impact.\n\n2. ALL FOUR ROWS HELD NEW, DELIBERATELY — AND THAT HOLD IS KNOWN TO BE UNRELIABLE.\nAll 4 are from=system-auditor, to=po, well-formed (real clock-read ts, real dedup_key, no CCATO\npathology). All 4 recipients are in the cowork recipient set. They are held NEW rather than marked READ\nbecause PO selects on NEW and there is no po cowork slot, so mark-READ-without-delivery is silent loss.\nCAVEAT LEARNED LAST TICK: holding does NOT actually protect them. At 02:45Z this dispatcher held 28 rows\nNEW for exactly this reason and the dev-team 02:37Z drain (commit 8deaf19bd) marked the entire cohort\nREAD about eight minutes later, including a CRITICAL row (ragFtsRebuildCron stale 35 days). So the hold\nis the correct local action and is also not a defence. Two independent drains write the same field with\nopposite intents and neither is aware of the other. That is the durable defect, not the marking policy.\n\n3. CHEF-INTRADAY SUPPRESSED BY CADENCE THIS TICK. First observation of a non-empty suppressed_cadence[]\nin this session: [\"chef-intraday\"], with chef_mutex_applied=false. Resolved inside evaluateCadence() per\nthe cadence-policy.json per-policy table, not by the superseded blanket weekend/holiday rule. Recorded as\na normal-operation datapoint, not a defect.\n\n4. SNAPSHOT MINUTE-ALIGNMENT: SECOND OBSERVATION PENDING. Wrote docs/data/cycle-snapshot-03:16.json at\nwall-clock 03:16 against nominal tick 03:15. Last tick the dispatcher wrote 03:02 and the spawned agent\nlooked up 03:03 and missed by one minute; the tick before, 02:47 was written and hit. The lookup is\nminute-EXACT, not a glob, so a hit depends on whether the spawn starts inside the same wall-clock minute\nthe write finished. Running tally: 1 hit, 1 miss. Same root cause as UC-SDF-P2 (P1, next=ba,\ntickHHMM-vs-FILE_TICK filename divergence, promotion dead since 2026-07-07) — NOT filed as new.\nDeliberately did NOT write a duplicate file under the next minute's name: that would mask the defect.\n\n5. HEADROOM SAWTOOTH CONFIRMED, TREND CLAIM STAYS WITHDRAWN. container_vm_headroom_mb across five ticks:\n3225 -> 3027 -> 2615 -> 3023 -> 3152. An earlier tick projected a DEGRADED trip within 3-5 ticks from the\nfirst three points; that projection was wrong and is withdrawn. This is oscillation. DEGRADED=false with\nwide margin (floor 1500, load 3.18 against a limit of 24 on 12 cores).\n"
+        },
+        "createdAt": "20260824T031740Z",
+        "drained_at": "2026-08-24T03:27:30Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a31d3636ddfcbbb5d18c0ec91ebcebc3640a1d21c014bcdc85721b4bd3fe5f4d",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "149",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T03:27:18Z",
+        "drained_at": "2026-08-24T03:27:30Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

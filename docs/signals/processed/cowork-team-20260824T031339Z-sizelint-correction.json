@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "createdAt": "20260824T031339Z",
+  "payload": {
+    "classification": "CORRECTION",
+    "severity": "HIGH",
+    "file": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+    "head_lines": 1012,
+    "worktree_lines": 1012,
+    "cap_lines": 996,
+    "growth_commit": "db0ed7c02",
+    "prior_measurement": "HEAD=906L worktree=1012L at 2026-08-24T02:13Z",
+    "board_row_exists": false,
+    "related_rows": [
+      "FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH",
+      "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE"
+    ],
+    "superseded_note": "docs/signals/processed/cowork-team-20260824T021305Z.json",
+    "suppression_observed_count": 2,
+    "unpushed_commits": 144,
+    "action_required": "mint board row for tasksMdJanitorJob.ts 1012L/996L AND widen the P0 sizelint sprint to cover both files (serial offenders are now concurrent; a one-file fix cannot clear the gate)",
+    "note": "SECOND SERIAL SIZE-LINT OFFENDER IS NOW REAL, COMMITTED, AND UNTRACKED — and a stale note was suppressing it.\n\nMEASURED 2026-08-24T03:15Z:\n  git show HEAD:apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts | wc -l  -> 1012\n  wc -l < apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts                -> 1012\n  cap 996L. HEAD and worktree AGREE. Commit db0ed7c02 landed the 106L growth (preceded by 86b31eccd, e109f49f8).\n\nAt 02:13Z this file measured HEAD=906L / worktree=1012L, i.e. a working-tree-only phantom, correctly\ndiagnosed as a live reproduction of FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1) and\ncorrectly NOT filed. That diagnosis is now void. The growth is committed and inside the push range.\n\nNO BOARD ROW EXISTS. Verified by jq across the live board: the only size-lint rows are\nFIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (P0, next=dev-mcp-server) which is a\nDIFFERENT file, and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, next=developer) which\nis the scanning-mechanism defect. Neither covers tasksMdJanitorJob.ts.\n\nFLEET PUSH IS BLOCKED BY BOTH FILES AT ONCE, ahead=144 commits. Fixing only pushBctcLayoutHandler.ts\n(the P0) will NOT unblock the fleet — the next push will trip immediately on tasksMdJanitorJob.ts.\nThis is the serial-offender pattern, but with a new twist: the two offenders are now CONCURRENT, not\nsequential, so a one-file sprint cannot clear the gate. Whoever takes the P0 needs both in scope.\n\nSUPPRESSION HAZARD, now corrected. The 02:13Z conclusion was written into\ndocs/signals/processed/cowork-team-20260824T021305Z.json as a do-not-file instruction. It was read and\nobeyed at least twice after it went stale (alert-commander c203 and c204 both declined to file). That\nfile has now been amended in place with a CORRECTION block plus superseded_at / superseded_reason /\nre-measured head_vs_worktree fields.\n\nDURABLE FIX, demonstrated twice now. Correct behaviour was gated on a prose note in a prunable\ndirectory that nothing re-validates; it went stale within ~62 minutes and kept being obeyed. The\nescalation step should run `git show HEAD:<path> | wc -l` itself and compare against the cap before\nreporting or suppressing a size-lint offender. Owner: agent-father (escalation-step change), with the\nboard row for tasksMdJanitorJob.ts to be minted by po/pm.\n"
+  },
+  "_processed": {
+    "fingerprint": "2661e3dbfa40fdd89c155c7397b02584f89727b55148da0b31935539f19e79cf",
+    "processedAt": "2026-08-24T03:27:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
