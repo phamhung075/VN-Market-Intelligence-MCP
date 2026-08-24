@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "medium",
+  "createdAt": "2026-08-24T15:15:30Z",
+  "payload": {
+    "title": "bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json filename has no time component — 4 daily cycles collide, drain overwrites the processed/ record",
+    "detected_by": "cowork-team dispatcher, reconciling the 2026-08-24T15:00Z bctc-analyst-slot-1 return",
+    "mechanism": [
+      "bctc-analyst fires 4x/day (cron 0 15,18,21,0 UTC), all in mode=routine.",
+      "Filename template docs/agents/bctc-analyst/init.md:85 (also :16, :149, flow/stage-analyze.md:114, flow/stage-consolidate.md:64) is bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json — date only, no HHMMSS.",
+      "All 4 daily cycles therefore write the SAME basename per ticker.",
+      "scripts/agents-flow/drain-signals.js:260 sets dest = path.join(PROC, base) with no collision guard. The -replay.json suffix at :257 applies ONLY on a duplicate FINGERPRINT (sha256 over from+type+payload+createdAt); content differs every cycle, so that branch is never taken.",
+      "Result: each drain overwrites the prior cycle-of-the-day processed/ record in place, including its own _processed provenance block."
+    ],
+    "observed_not_inferred": {
+      "docs/signals/processed/bctc_signal_VCB_20260823_routine.json": "4 commits on 2026-08-23 (47d74a8eb 00:17Z, a8fae8137 15:07Z, c4ac9c5d0, f13fa173a 21:07Z) — one per cycle, same path rewritten each time",
+      "docs/signals/processed/bctc_signal_VCB_20260822_routine.json": "2 commits (e98049c69 18:17Z, 9aef86e43 21:37Z)",
+      "replay_files_present": 0
+    },
+    "blast_radius": "Bounded. The SQLite signals_processed row survives per fingerprint (drain-signals.js:304) and the pending_triage_inbox batch is durable, so ROUTING is not lost. What is lost is the on-disk forensic copy: docs/signals/processed/ shows only the last cycle of each day, and any reader treating that directory as the day record sees 1 of 4 cycles. Prior versions are recoverable from git history only.",
+    "fix": "Add a time component to the routine filename, matching what bctc-analyst ALREADY does for its escalation signals (docs/signals/bctc-analyst-20260812T180708Z.json). Suggested: bctc_signal_{TICKER}_{YYYYMMDDTHHMMSSZ}_{mode}.json. Purely a template change in the 5 doc sites listed above.",
+    "zone": "docs/agents/bctc-analyst/",
+    "suggested_next_agent": "agent-father",
+    "notes": "signal_type=bctc_signal IS routed (docs/agents/po/flow/triage-signals.md:23), so this is NOT a signal-type-coverage gap and will not red guard-signal-type-coverage.sh. A defensive collision guard in drain-signals.js (dest exists -> suffix) is a separate, optional second layer in scripts/ zone; the filename fix alone closes this."
+  }
+}
