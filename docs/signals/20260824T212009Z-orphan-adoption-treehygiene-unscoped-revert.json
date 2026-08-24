@@ -1,0 +1,23 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "recurring-bug",
+  "severity": "HIGH",
+  "ts": "2026-08-24T21:20:09Z",
+  "payload": {
+    "module": "docs/agents/dev-team/flow/orphan-adoption.md",
+    "defect": "DoD-P15-1 tree-hygiene gate has no fallback when task_zone is unresolvable, so it degrades to a REPO-WIDE destructive revert.",
+    "mechanism": "task_zone = signal.payload.zone ?? infer_from_task_id(original_task_id). For an orphan whose task_id carries no code zone (observed live: task:po-triage-20260824, payload={site:S3,spawning:po}, no zone field), task_zone resolves empty. The gate then runs `git status --porcelain -- <empty>` (= whole repo) and `git checkout -- <file>` on every ^[ M]M line.",
+    "observed_at": "dev-team tick 2026-08-24T21:07Z, session 036ceaf1",
+    "would_have_reverted": [
+      "docs/data/dev-team-idle-widen-state.json (age 449s — written by THIS tick own preflight)",
+      "docs/data/auditor-tier1-last-trigger.json (age 2099s — live Tier-1 auditor cron ledger)",
+      "docs/data/auditor-tier1-spawn-debounce.json (age 2099s — live Tier-1 auditor cron ledger)",
+      "docs/agent-memory/modules/tool-usage-stats.json (age 4546s — peer session)"
+    ],
+    "why_premise_false_here": "The gate premise is `a dead worker uncommitted edits are LIVE in the shared working tree`. None of the 4 dirty files belonged to the dead session 7fd9c60a — they are live peer/current-tick writes. The dead session own triage output had already been recovered and committed by ce35319c5.",
+    "action_taken_this_tick": "Gate SKIPPED deliberately; no revert run; no file touched. Adoption claim taken then released after the Phase B intent:po:triage collision blocked the spawn.",
+    "proposed_fix": "Make the gate fail-closed on an unresolvable zone: if task_zone is null/empty -> do NOT run git status/checkout at all; log + escalate instead. Never allow an empty pathspec to widen the revert scope. Optionally also restrict the revert to files whose last-writer can be attributed to the dead session.",
+    "related_memory": "feedback_dead_worker_uncommitted_live_file_revert"
+  }
+}
