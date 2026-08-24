@@ -1,0 +1,62 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Commercial banking — corporate & retail lending, trade finance, treasury/FX, bancassurance",
+  "customer": "Corporate borrowers (incl. SOE relationship banking), retail depositors and mortgage borrowers",
+  "ops": "Q1-2026 net interest income 17,421 tỷ VND; operating profit 14,089 tỷ (80.9% margin); net profit 9,462 tỷ (54.3% margin); OCF/NI ratio 1.37 (healthy, no accrual red flag)",
+  "mgmt": "Sector-comparison ROE 16.7% trails sector median 17.6% (below median) despite trading at PE/PB premium (+57%/+45% vs peers); no insider or legal-risk flags this cycle",
+  "ey_spread_pct": 2.09,
+  "valuation_verdict": "FAIR",
+  "pe": 14.1,
+  "pb": 2.2,
+  "roe_sector_comparison_pct": 16.7,
+  "kinhdich": {
+    "que": "Quan (20)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 38
+  },
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "esc_results": {
+    "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
+    "ESC-2": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "ESC-3": {
+      "result": false,
+      "ocf_total": 12944932,
+      "net_profit_total": 9462095,
+      "divergence_ratio": 0.368,
+      "quarters_returned": 4
+    },
+    "ESC-4": {
+      "result": "N/A",
+      "reason": "bank — non-operating-share heuristic not applicable to bank P&L structure"
+    },
+    "ESC-5": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
+  },
+  "escalation_status": "NONE",
+  "evidence_fragment_ids": [
+    1430,
+    1431
+  ],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none flagged",
+  "data_quality_note": "Q2-2026 PDF on file (VCB_2026_Q2.pdf, since 2026-08-01) but not yet extracted — ~23-24d extraction lag; Q1-2026 remains latest available.",
+  "generated_at": "2026-08-24T00:15:00Z",
+  "_processed": {
+    "fingerprint": "29ac99e67cbf00e78323ab1dc202385e2628a32663e4b1f884476dd21481b3db",
+    "processedAt": "2026-08-24T00:24:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

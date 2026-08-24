@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] commit-mutex: git push origin main BLOCKED again by pre-push size-lint gate — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L, wc -l verified live 2026-08-24T00:08Z). Recurrence of the SAME offender first escalated 2026-08-23T20:10:16Z (docs/signals/processed/alert-commander-20260823T201016Z.json, routed-to-po, tracked as FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH). File is STILL 252L despite a dev-mcp-server notebook entry (commit ec0bd2ace) and a lane-move to review[] marked DONE_VERIFIED (commit 5d5d33a86) under sprint UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES — the DONE_VERIFIED claim did not land an actual line-count fix/baseline-bump on this file; verify before closing that row. Not a non-fast-forward conflict (local commit 9538287c8 chore(memory/alert-commander): notebook 2026-08-24 c199 silent-exit landed local-only cleanly on top of origin/main). Fleet-wide: ALL pushes to main remain blocked until this offender is fixed/re-baselined.",
+  "priority": "high",
+  "createdAt": "2026-08-24T00:08:43Z",
+  "_processed": {
+    "fingerprint": "84f7a97d9e367ac23d4ece5670ac3cea9dd7514ae3e7e12633b7a4b217c94dc2",
+    "processedAt": "2026-08-24T00:24:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

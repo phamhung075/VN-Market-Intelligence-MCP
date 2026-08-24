@@ -1,0 +1,61 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel manufacturing — construction steel (rebar), hot-rolled coil (HRC), galvanized steel products",
+  "customer": "Construction contractors and distributors (domestic), export markets for HRC/galvanized products",
+  "ops": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; operating_profit field returns 0 (source-data corruption, 32nd+ consecutive cycle unresolved) while net_profit (9,056 tỷ, 17.1% margin) and profit_before_tax (10,762 tỷ) remain populated — internally inconsistent line item, not a genuine zero-margin event",
+  "mgmt": "No insider signals flagged; capacity expansion (Dung Quat 2) ongoing per prior cycles' context; sector-comparison ROE 12.7% vs sector median 2.9% (above median)",
+  "ey_spread_pct": 2.04,
+  "valuation_verdict": "FAIR",
+  "pe": 14.2,
+  "pb": 1.7,
+  "roe_sector_comparison_pct": 12.7,
+  "kinhdich": {
+    "que": "Tan (35)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 63
+  },
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "esc_results": {
+    "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
+    "ESC-2": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "ESC-3": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "coverage_guard_held": true,
+      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
+    },
+    "ESC-4": {
+      "result": "DISCARDED",
+      "reason": "operating_profit=0 corrupt source field, formula unevaluable (32nd+ cycle)"
+    },
+    "ESC-5": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
+  },
+  "escalation_status": "NONE",
+  "evidence_fragment_ids": [
+    1428,
+    1429
+  ],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none flagged",
+  "data_quality_note": "Q2-2026 PDF on file (HPG_2026_Q2.pdf, since 2026-08-01) but not yet extracted — ~23-24d extraction lag; Q1-2026 remains latest available.",
+  "generated_at": "2026-08-24T00:15:00Z",
+  "_processed": {
+    "fingerprint": "29fbcdd861245857084de2bd7cb4cba145af8620be8510b2a69f0928f5adbef1",
+    "processedAt": "2026-08-24T00:24:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
