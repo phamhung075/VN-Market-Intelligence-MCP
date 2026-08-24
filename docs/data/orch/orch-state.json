@@ -88,11 +88,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-    "next_agent": "agents-architect",
-    "next_action": "Design-Router Sweep claim of FIX-CADENCE-COWORK-DUP-MARKET-WATCHER — spawn agents-architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
-    "updated_at": "2026-08-24T19:21:03Z",
-    "updated_by": "dev-team (design-router sweep)"
+    "active_task_id": "CCATO-MCP-T8-DOD-HARNESS",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 2 row(s) (2 from review[], 0 from done[]), highest-ranked CCATO-MCP-T8-DOD-HARNESS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-24T19:48:26Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24242,55 +24242,6 @@
         "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec."
       },
       {
-        "id": "CCATO-MCP-T8-DOD-HARNESS",
-        "type": "IMPL-XS",
-        "status": "REVIEW",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "Integration test suite replaying §5.2 (a)-(e)",
-        "depends": [
-          "CCATO-MCP-T5-USECASE",
-          "CCATO-MCP-T6-TOOL-REGISTRATION"
-        ],
-        "next_agent": "qa",
-        "supervised": false,
-        "updated_at": "2026-08-24T19:18:00Z",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-08-24T18:48:42Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server",
-        "commit": "14048b9dcace288181666312231db0db8542d276"
-      },
-      {
-        "id": "FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "high",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "owner": "dev-frontend",
-        "next_agent": "qa",
-        "created_at": "2026-08-23T07:47:20Z",
-        "created_by": "po/router-intent-FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL-20260823",
-        "title": "All 23 Layer-B (CLI-session) cron rows on /dashboard/orchestration falsely render 'Chưa từng chạy' — a structurally-guaranteed constant that asserts a fact the system has no data for; already caused a live near-miss (near-double-arm of repo-mutating crons)",
-        "desc": "USER-REPORTED 2026-08-23 (verbatim intent: 'no all session is running actual but status not update'). Section 'Cron phiên làm việc (23)' on http://localhost:3001/dashboard/orchestration renders, for ALL 23 rows: Lần chạy gần nhất = 'Chưa từng chạy', Dự kiến lần tới = '—', Trạng thái = 'Phiên làm việc'.\n\n=== NOT A TRACKING OUTAGE, NOT A CRON FAILURE ===\nThe crons ARE running. 'Chưa từng chạy' is a constant by construction and can never say anything else:\n(1) apps/mcp-server/src/infrastructure/cron/layerBCronRegistry.ts builds Layer-B rows by PARSING .claude/commands/crons/*.md authoring docs on disk. It is a static config-catalogue read; it never queries any runtime fire table. Its `interface CronStatusRowB` types `expected_last_fire`/`expected_next_fire`/`last_fire`/`last_status` as the LITERAL type `null` (not `string | null`), and `buildRow()` hardcodes all four to null + `status: \"SESSION_SCOPED\"`. It is type-level impossible for a Layer-B row to ever carry a fire timestamp. This is CORRECT and deliberate — CronCreate jobs live inside the Claude Code CLI process, which has no writer into market.db, so there is no Layer-B equivalent of Layer-A's getDistinctJobNames(db)+buildLayerARow(...) telemetry pipeline in cronStatusHandler.ts.\n(2) apps/frontend/app/routes/dashboard.orchestration.tsx `normalizeCronRowB()` re-hardcodes the same four fields to null and forces status via `normalizeCronStatusB()` (which ignores its input entirely). Belt-and-braces, also correct.\n(3) SAME FILE, the shared row-render loop's last-fire cell (`{row.last_fire == null ? <span>Chưa từng chạy</span> : <ClientTimestamp/>}`, ~L414-420, verify live — line numbers drift) is layer-BLIND. Layer-A and Layer-B rows go through ONE `rows.map(...)`, so Layer-B inherits a branch written for Layer-A.\n\n=== THE ACTUAL DEFECT — an implementation-side scope widening of an explicitly Layer-A-scoped AC ===\nThe suppression of red/amber for Layer-B is CORRECT and must be preserved (BA NFR-7 / AC-14 / AC-19 — session crons legitimately do not fire when no session is live, so MISSED/STALE would be false-positive noise). The defect is that the last-fire CELL asserts a POSITIVE FACT ('this has never run') that the system has no data to support and which is actively FALSE.\n\nPROVENANCE — the spec never authorized this; the implementation widened it:\n- docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md:364 AC-20 reads, verbatim: 'A row with `last_fire: null` (Layer-A, never fired) renders \"Chưa từng chạy\"...'. EXPLICITLY LAYER-A-SCOPED.\n- Same BA spec:350 AC-14: 'NO `layer_b` row has `status` of MISSED, LATE, STALE, NEVER_FIRED, or any red/amber value.'\n- Same BA spec:416 test-matrix row (c): Layer-B must show 'no fabricated fire timestamp'.\n- docs/handoffs/TASK-DASH-CRON-2.md:23 preserved the qualifier ('(Layer-A never-fired)').\n- docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 DROPPED it: '- Never-fired: `last_fire == null ? \"Chưa từng chạy\" : <VN-locale format>` (AC-20).' — no layer qualifier, sitting in a generic `dashboard.orchestration.tsx` bullet list. That single dropped qualifier is where the widening entered.\n\nWHY EVERY EXISTING TEST STILL PASSES WHILE THE UI LIES: AC-14 guards the `status` FIELD. The false copy leaks in through the `last_fire` CELL, which never goes through the status enum at all — so the entire AC-14/AC-19/NFR-7 guard rail is bypassed by construction. apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts:344-356 ('Never-fired display logic (AC-20) — mirrors CronLayerTable's ternary') reimplements the component predicate as `lastFire == null` with NO layer input, so it mirrors — and therefore blesses — the bug.\n\n=== DOCUMENTED OPERATIONAL HARM — this is not a cosmetic nit ===\n2026-08-22: a router session read this exact column as evidence that the session crons were unarmed and began executing the /cron-cowork-team, /cron-detect-loop and /cron-standalone-team re-registration sequences. All three markers were in fact held by LIVE peer sessions. The user interrupted before any CronCreate fired. Re-registering over a live peer double-arms repo-mutating crons (code-janitor, claude-manager-helper) — a correctness defect, not noise. See docs/agent-memory/notebooks/po.md + memory feedback_router_almost_rearmed_live_peer_cron_markers_20260822.\n\n=== ACCEPTANCE ===\nAC-1 (PRIMARY): for `layer === \"cli-session\"` rows the last-fire cell MUST NOT render 'Chưa từng chạy'. It renders a neutral not-tracked label — PO-ruled copy: 'Không theo dõi'. Layer-A rows with a genuinely null `last_fire` KEEP 'Chưa từng chạy' unchanged (BA AC-20 remains valid for Layer-A and is still load-bearing there — see the sibling row FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS).\nAC-2: the new Layer-B copy is a NAMED EXPORTED CONSTANT (same shape as the existing `CRON_STATUS_LABELS` record), never an inline string literal in JSX — the current inline literal at the render site is exactly why the string was invisible to every existing test.\nAC-3: the explanatory copy currently buried in the `<tr title={row.reason ?? undefined}>` tooltip is surfaced in the visible cell (or an adjacent always-visible affordance), not tooltip-only. PO ruling — render the frontend's OWN Vietnamese copy, do NOT surface the backend `reason` string verbatim: it is English ('Session-scoped: fires only while a live CLI session is active') inside a Vietnamese UI (violates the standing language-boundary rule), and translating it at source would drag apps/mcp-server/ into this fix. Keeping the copy frontend-side holds this to ONE zone.\nAC-4 (GUARD, must not regress): Layer-B rows still never render a red or amber badge, and `normalizeCronRowB` still force-nulls all four fire fields (BA AC-14/AC-15/AC-19, NFR-7). DO NOT 'fix' the normalizer to pass fire timestamps through — that would fabricate data. The normalizer is CORRECT; only the render branch is wrong.\nAC-5 (SHOULD, NON-BLOCKING — must not stall AC-1): the `Lớp` column and the `Trạng thái` badge both read 'Phiên làm việc' for every Layer-B row, so the two columns together carry zero information. Both strings are pinned verbatim by still-valid ACs (BA AC-19 pins the badge copy; FR-5.2 pins the layer copy; test:287 and test:337 assert both), so neither may simply be reworded. The only conflict-free resolution PO can see is that AC-18 ALREADY requires the two layers be split into visually distinct sub-sections with their own headers ('Cron máy chủ' / 'Cron phiên làm việc'), which makes a per-row `Lớp` column redundant inside a layer-homogeneous sub-table — for BOTH layers. If that can be done cleanly in this change, do it. If it cannot be resolved without violating AC-19 or FR-5.2, LEAVE IT AS-IS, record why in the task report, and file a follow-up row. Do not block AC-1 on this.\nAC-6 (doc conformance — prevents reintroduction): docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 is corrected to restore the layer qualifier BA had and to name the Layer-B branch explicitly. Without this the next implementer reading the brief reintroduces the exact same widening.\nAC-7 (test): TASK-DASH-CRON-2-cron-recheck-table.test.ts:344-356's `lastFireDisplayIsNeverFiredText(lastFire)` helper becomes layer-aware (it currently takes no layer argument and mirrors the buggy predicate). Add: a Layer-B row asserts the not-tracked copy and asserts NOT 'Chưa từng chạy'; a Layer-A null row still asserts 'Chưa từng chạy'. Line 286's `CRON_STATUS_LABELS.NEVER_FIRED === 'Chưa từng chạy'` assertion STAYS — that constant is Layer-A's and is unchanged. Full frontend suite green.\n\n=== EXPLICITLY OUT OF SCOPE ===\nBuilding real Layer-B fire telemetry. It would require a Claude-Code-CLI-session -> market.db writer that does not exist today and is a materially larger design question. If dev-frontend judges it warranted, file a SPIKE — do not attempt it here.\n\n=== DO NOT CONFLATE ===\nFIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS (BACKLOG, zone apps/mcp-server/, next_agent dev-mcp-server) shares the user-visible SYMPTOM STRING ('Chưa từng chạy' on a cron that is actually running) but is a DIFFERENT root cause in a DIFFERENT zone: Layer-A job-name resolution failing in cronStatusCompute.ts's resolveJobNameDb() 3-tier resolver, where the fix is to make the TRUE last_fire resolvable. This row is Layer-B, where there IS no true last_fire to resolve and the fix is to stop claiming one. Neither row supersedes the other; both should land.",
-        "files": [
-          "apps/frontend/app/routes/dashboard.orchestration.tsx",
-          "apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts",
-          "docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md"
-        ],
-        "baseline_pass": true,
-        "related_to": [
-          "FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS"
-        ],
-        "depends_on": [],
-        "discovered_by": "user (2026-08-23 dashboard read) + router session 72a0d0d9 root-cause derivation; provenance chain (BA AC-20 layer qualifier dropped by architect brief L127) re-derived at source by po",
-        "updated_at": "2026-08-24T19:19:14Z",
-        "updated_by": "dev-frontend",
-        "review_note": "dev-frontend DONE-CODE: AC-1/AC-2/AC-3 — last-fire cell now checks row.layer===\"cli-session\" FIRST, renders new named exports CRON_LAYER_B_LAST_FIRE_LABEL(\"Không theo dõi\")/_HINT (visible not tooltip-only VN copy) instead of falling into the Layer-A \"Chưa từng chạy\" ternary (untouched for server rows). AC-4 guard verified: normalizeCronRowB still force-nulls all 4 fire fields, unchanged. AC-5 (non-blocking, done): dropped redundant per-row Lớp column — CronRecheckTable already splits Layer-A/Layer-B into 2 header-labelled sub-tables (AC-18 pre-existing); confirmed both pinned tests (CRON_STATUS_LABELS.SESSION_SCOPED test:287, cronLayerLabel(\"cli-session\") test:337) are pure-function tests unaffected by DOM column removal. AC-6: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 corrected to restore Layer-A qualifier + name the Layer-B branch. AC-7: TASK-DASH-CRON-2-cron-recheck-table.test.ts predicate made layer-aware, +5 net new tests, line 286 CRON_STATUS_LABELS.NEVER_FIRED assertion untouched. Evidence: tsc --noEmit clean; full vitest 2188 pass/2 fail (same pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich schema fails, confirmed unrelated via direct code read, zero import overlap — NOT via git stash, notebook flags stash unsafe in this shared-main tree); targeted TASK-DASH-CRON-2-cron-recheck-table.test.ts 46/46 pass; G12 Playwright render-check.spec.ts 3/3 PASS (live docker :3001). Full multi-spec playwright test also surfaced 2 pre-existing unrelated live-data-content fails in quality-audit-lastverified.spec.ts (zero file overlap with this diff — unrelated route, live SLA-breach description text happens to contain substring 'stale'). Simplicity gate: PASS (Q1 scope clean/Q2 no single-use abstractions/Q3 senior-test clean/Q4 <50% overhead). Doc-review: docs/architecture/microservice/frontend/domain-model.md addendum added (interface-layer route change). Commits: 4b4bfea7a (code+test+briefs+doc), 2550edfce (memory). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S5."
-      },
-      {
         "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
         "priority": "high",
         "status": "REVIEW",
@@ -24476,6 +24427,59 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
+      },
+      {
+        "id": "CCATO-MCP-T8-DOD-HARNESS",
+        "type": "IMPL-XS",
+        "status": "QA",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Integration test suite replaying §5.2 (a)-(e)",
+        "depends": [
+          "CCATO-MCP-T5-USECASE",
+          "CCATO-MCP-T6-TOOL-REGISTRATION"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-24T19:48:26Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-24T19:48:24Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "commit": "14048b9dcace288181666312231db0db8542d276",
+        "drain_source_lane": "review"
+      },
+      {
+        "id": "FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL",
+        "type": "FIX",
+        "status": "QA",
+        "priority": "high",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "next_agent": "qa",
+        "created_at": "2026-08-23T07:47:20Z",
+        "created_by": "po/router-intent-FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL-20260823",
+        "title": "All 23 Layer-B (CLI-session) cron rows on /dashboard/orchestration falsely render 'Chưa từng chạy' — a structurally-guaranteed constant that asserts a fact the system has no data for; already caused a live near-miss (near-double-arm of repo-mutating crons)",
+        "desc": "USER-REPORTED 2026-08-23 (verbatim intent: 'no all session is running actual but status not update'). Section 'Cron phiên làm việc (23)' on http://localhost:3001/dashboard/orchestration renders, for ALL 23 rows: Lần chạy gần nhất = 'Chưa từng chạy', Dự kiến lần tới = '—', Trạng thái = 'Phiên làm việc'.\n\n=== NOT A TRACKING OUTAGE, NOT A CRON FAILURE ===\nThe crons ARE running. 'Chưa từng chạy' is a constant by construction and can never say anything else:\n(1) apps/mcp-server/src/infrastructure/cron/layerBCronRegistry.ts builds Layer-B rows by PARSING .claude/commands/crons/*.md authoring docs on disk. It is a static config-catalogue read; it never queries any runtime fire table. Its `interface CronStatusRowB` types `expected_last_fire`/`expected_next_fire`/`last_fire`/`last_status` as the LITERAL type `null` (not `string | null`), and `buildRow()` hardcodes all four to null + `status: \"SESSION_SCOPED\"`. It is type-level impossible for a Layer-B row to ever carry a fire timestamp. This is CORRECT and deliberate — CronCreate jobs live inside the Claude Code CLI process, which has no writer into market.db, so there is no Layer-B equivalent of Layer-A's getDistinctJobNames(db)+buildLayerARow(...) telemetry pipeline in cronStatusHandler.ts.\n(2) apps/frontend/app/routes/dashboard.orchestration.tsx `normalizeCronRowB()` re-hardcodes the same four fields to null and forces status via `normalizeCronStatusB()` (which ignores its input entirely). Belt-and-braces, also correct.\n(3) SAME FILE, the shared row-render loop's last-fire cell (`{row.last_fire == null ? <span>Chưa từng chạy</span> : <ClientTimestamp/>}`, ~L414-420, verify live — line numbers drift) is layer-BLIND. Layer-A and Layer-B rows go through ONE `rows.map(...)`, so Layer-B inherits a branch written for Layer-A.\n\n=== THE ACTUAL DEFECT — an implementation-side scope widening of an explicitly Layer-A-scoped AC ===\nThe suppression of red/amber for Layer-B is CORRECT and must be preserved (BA NFR-7 / AC-14 / AC-19 — session crons legitimately do not fire when no session is live, so MISSED/STALE would be false-positive noise). The defect is that the last-fire CELL asserts a POSITIVE FACT ('this has never run') that the system has no data to support and which is actively FALSE.\n\nPROVENANCE — the spec never authorized this; the implementation widened it:\n- docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md:364 AC-20 reads, verbatim: 'A row with `last_fire: null` (Layer-A, never fired) renders \"Chưa từng chạy\"...'. EXPLICITLY LAYER-A-SCOPED.\n- Same BA spec:350 AC-14: 'NO `layer_b` row has `status` of MISSED, LATE, STALE, NEVER_FIRED, or any red/amber value.'\n- Same BA spec:416 test-matrix row (c): Layer-B must show 'no fabricated fire timestamp'.\n- docs/handoffs/TASK-DASH-CRON-2.md:23 preserved the qualifier ('(Layer-A never-fired)').\n- docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 DROPPED it: '- Never-fired: `last_fire == null ? \"Chưa từng chạy\" : <VN-locale format>` (AC-20).' — no layer qualifier, sitting in a generic `dashboard.orchestration.tsx` bullet list. That single dropped qualifier is where the widening entered.\n\nWHY EVERY EXISTING TEST STILL PASSES WHILE THE UI LIES: AC-14 guards the `status` FIELD. The false copy leaks in through the `last_fire` CELL, which never goes through the status enum at all — so the entire AC-14/AC-19/NFR-7 guard rail is bypassed by construction. apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts:344-356 ('Never-fired display logic (AC-20) — mirrors CronLayerTable's ternary') reimplements the component predicate as `lastFire == null` with NO layer input, so it mirrors — and therefore blesses — the bug.\n\n=== DOCUMENTED OPERATIONAL HARM — this is not a cosmetic nit ===\n2026-08-22: a router session read this exact column as evidence that the session crons were unarmed and began executing the /cron-cowork-team, /cron-detect-loop and /cron-standalone-team re-registration sequences. All three markers were in fact held by LIVE peer sessions. The user interrupted before any CronCreate fired. Re-registering over a live peer double-arms repo-mutating crons (code-janitor, claude-manager-helper) — a correctness defect, not noise. See docs/agent-memory/notebooks/po.md + memory feedback_router_almost_rearmed_live_peer_cron_markers_20260822.\n\n=== ACCEPTANCE ===\nAC-1 (PRIMARY): for `layer === \"cli-session\"` rows the last-fire cell MUST NOT render 'Chưa từng chạy'. It renders a neutral not-tracked label — PO-ruled copy: 'Không theo dõi'. Layer-A rows with a genuinely null `last_fire` KEEP 'Chưa từng chạy' unchanged (BA AC-20 remains valid for Layer-A and is still load-bearing there — see the sibling row FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS).\nAC-2: the new Layer-B copy is a NAMED EXPORTED CONSTANT (same shape as the existing `CRON_STATUS_LABELS` record), never an inline string literal in JSX — the current inline literal at the render site is exactly why the string was invisible to every existing test.\nAC-3: the explanatory copy currently buried in the `<tr title={row.reason ?? undefined}>` tooltip is surfaced in the visible cell (or an adjacent always-visible affordance), not tooltip-only. PO ruling — render the frontend's OWN Vietnamese copy, do NOT surface the backend `reason` string verbatim: it is English ('Session-scoped: fires only while a live CLI session is active') inside a Vietnamese UI (violates the standing language-boundary rule), and translating it at source would drag apps/mcp-server/ into this fix. Keeping the copy frontend-side holds this to ONE zone.\nAC-4 (GUARD, must not regress): Layer-B rows still never render a red or amber badge, and `normalizeCronRowB` still force-nulls all four fire fields (BA AC-14/AC-15/AC-19, NFR-7). DO NOT 'fix' the normalizer to pass fire timestamps through — that would fabricate data. The normalizer is CORRECT; only the render branch is wrong.\nAC-5 (SHOULD, NON-BLOCKING — must not stall AC-1): the `Lớp` column and the `Trạng thái` badge both read 'Phiên làm việc' for every Layer-B row, so the two columns together carry zero information. Both strings are pinned verbatim by still-valid ACs (BA AC-19 pins the badge copy; FR-5.2 pins the layer copy; test:287 and test:337 assert both), so neither may simply be reworded. The only conflict-free resolution PO can see is that AC-18 ALREADY requires the two layers be split into visually distinct sub-sections with their own headers ('Cron máy chủ' / 'Cron phiên làm việc'), which makes a per-row `Lớp` column redundant inside a layer-homogeneous sub-table — for BOTH layers. If that can be done cleanly in this change, do it. If it cannot be resolved without violating AC-19 or FR-5.2, LEAVE IT AS-IS, record why in the task report, and file a follow-up row. Do not block AC-1 on this.\nAC-6 (doc conformance — prevents reintroduction): docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 is corrected to restore the layer qualifier BA had and to name the Layer-B branch explicitly. Without this the next implementer reading the brief reintroduces the exact same widening.\nAC-7 (test): TASK-DASH-CRON-2-cron-recheck-table.test.ts:344-356's `lastFireDisplayIsNeverFiredText(lastFire)` helper becomes layer-aware (it currently takes no layer argument and mirrors the buggy predicate). Add: a Layer-B row asserts the not-tracked copy and asserts NOT 'Chưa từng chạy'; a Layer-A null row still asserts 'Chưa từng chạy'. Line 286's `CRON_STATUS_LABELS.NEVER_FIRED === 'Chưa từng chạy'` assertion STAYS — that constant is Layer-A's and is unchanged. Full frontend suite green.\n\n=== EXPLICITLY OUT OF SCOPE ===\nBuilding real Layer-B fire telemetry. It would require a Claude-Code-CLI-session -> market.db writer that does not exist today and is a materially larger design question. If dev-frontend judges it warranted, file a SPIKE — do not attempt it here.\n\n=== DO NOT CONFLATE ===\nFIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS (BACKLOG, zone apps/mcp-server/, next_agent dev-mcp-server) shares the user-visible SYMPTOM STRING ('Chưa từng chạy' on a cron that is actually running) but is a DIFFERENT root cause in a DIFFERENT zone: Layer-A job-name resolution failing in cronStatusCompute.ts's resolveJobNameDb() 3-tier resolver, where the fix is to make the TRUE last_fire resolvable. This row is Layer-B, where there IS no true last_fire to resolve and the fix is to stop claiming one. Neither row supersedes the other; both should land.",
+        "files": [
+          "apps/frontend/app/routes/dashboard.orchestration.tsx",
+          "apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts",
+          "docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md"
+        ],
+        "baseline_pass": true,
+        "related_to": [
+          "FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS"
+        ],
+        "depends_on": [],
+        "discovered_by": "user (2026-08-23 dashboard read) + router session 72a0d0d9 root-cause derivation; provenance chain (BA AC-20 layer qualifier dropped by architect brief L127) re-derived at source by po",
+        "updated_at": "2026-08-24T19:48:26Z",
+        "updated_by": "dev-frontend",
+        "review_note": "dev-frontend DONE-CODE: AC-1/AC-2/AC-3 — last-fire cell now checks row.layer===\"cli-session\" FIRST, renders new named exports CRON_LAYER_B_LAST_FIRE_LABEL(\"Không theo dõi\")/_HINT (visible not tooltip-only VN copy) instead of falling into the Layer-A \"Chưa từng chạy\" ternary (untouched for server rows). AC-4 guard verified: normalizeCronRowB still force-nulls all 4 fire fields, unchanged. AC-5 (non-blocking, done): dropped redundant per-row Lớp column — CronRecheckTable already splits Layer-A/Layer-B into 2 header-labelled sub-tables (AC-18 pre-existing); confirmed both pinned tests (CRON_STATUS_LABELS.SESSION_SCOPED test:287, cronLayerLabel(\"cli-session\") test:337) are pure-function tests unaffected by DOM column removal. AC-6: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 corrected to restore Layer-A qualifier + name the Layer-B branch. AC-7: TASK-DASH-CRON-2-cron-recheck-table.test.ts predicate made layer-aware, +5 net new tests, line 286 CRON_STATUS_LABELS.NEVER_FIRED assertion untouched. Evidence: tsc --noEmit clean; full vitest 2188 pass/2 fail (same pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich schema fails, confirmed unrelated via direct code read, zero import overlap — NOT via git stash, notebook flags stash unsafe in this shared-main tree); targeted TASK-DASH-CRON-2-cron-recheck-table.test.ts 46/46 pass; G12 Playwright render-check.spec.ts 3/3 PASS (live docker :3001). Full multi-spec playwright test also surfaced 2 pre-existing unrelated live-data-content fails in quality-audit-lastverified.spec.ts (zero file overlap with this diff — unrelated route, live SLA-breach description text happens to contain substring 'stale'). Simplicity gate: PASS (Q1 scope clean/Q2 no single-use abstractions/Q3 senior-test clean/Q4 <50% overhead). Doc-review: docs/architecture/microservice/frontend/domain-model.md addendum added (interface-layer route change). Commits: 4b4bfea7a (code+test+briefs+doc), 2550edfce (memory). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S5.",
+        "claimed_at": "2026-08-24T19:48:24Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -24522,13 +24526,13 @@
         "last_served_tick": "2026-08-24T19:20:46Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-24T16:18:58Z"
+        "last_served_tick": "2026-08-24T19:48:05Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-24T16:54:07Z"
       }
     },
-    "_updated_at": "2026-08-24T19:46:05Z",
+    "_updated_at": "2026-08-24T19:48:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24565,6 +24569,55 @@
         "payload": "docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md — FIX-CADENCE-COWORK-DUP-MARKET-WATCHER investigated and found to be a duplicate of already-shipped, already-DONE_VERIFIED work (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC commit 5918c55fe + FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING commit 662d1fcc3, both 2026-08-14, both archived docs/data/orch/archive/2026-08.json). Live production evidence confirmed today (2026-08-24 16:00Z tick): market-watcher-eod fired alone, market-watcher-offhours correctly dropped by the supersede-mutex, no notebook clobber. Recommend dedup-close this row rather than dispatching new implementation work. One non-blocking loose end flagged for agent-father: stale INERT wording in cowork-schedule.json market-watcher-eod._note (brief §3).",
         "createdAt": "2026-08-24T19:25:40Z",
         "drained_at": "2026-08-24T19:46:05Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1af08e2c3a0455b71480590d27ba7a589bd8bf5e137fe491656bb2572c4dedfa",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260824T194720Z",
+          "matched_slots": [
+            "chef-evening"
+          ],
+          "won_slots": [],
+          "held_by_other": [
+            "chef-evening"
+          ],
+          "all_held": true,
+          "spawned": [],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-evening": "cron"
+          },
+          "cadence_minutes": {
+            "chef-evening": null
+          },
+          "last_fired_timestamp": null,
+          "last_fired_slots": [],
+          "last_fired_write_errors": null,
+          "classification": "HELD",
+          "reason": "already_running_via_guaranteed_slot_firer",
+          "nominal_tick": "19:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 30,
+          "note": "CROSS-MECHANISM COLLISION AVERTED. chef-evening (guaranteed:true) was already live under PID 11296 (`claude -p 'run docs/agents/unified-agent/flow/chef.md  slot=chef-evening'`, 48s elapsed at probe, still running 1m44s later) — dispatched by the guaranteed-slot firer, NOT by this dispatcher. The firer does not take the `cowork-slot:<id>` lock, so Step 4.6's lock probe would have shown the slot free and this dispatcher would have spawned a SECOND chef-evening. Detected only by an out-of-flow `ps -eo pid,etime,command | grep slot=chef-evening` probe run before Step 4.6; no in-flow guard exists for this. Spawn refused, no lock claimed, last_fired deliberately NOT stamped (it still reads 2026-08-23T19:49:26Z — the firer never stamps it, which is why this slot re-presents as due every day; hand-stamping here would erase the evidence of that blindness). Needs: promote the ps-grep probe into spawn-fanout.md as a pre-Step-4.6 gate, and wire the firer to write last_fired."
+        },
+        "createdAt": "20260824T194720Z",
+        "drained_at": "2026-08-24T19:47:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
