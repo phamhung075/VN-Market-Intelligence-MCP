@@ -94,3 +94,14 @@
 - Broader ARCHITECTURE.md pass this cycle vs strict 1-line diff — kept to the 1-line diff; a separate broader DDD-risk review (`UC-DDDRISK-P1`, this same session/journal, STEP-S7) already covered the file this cycle, re-litigating would duplicate work.
 **why-decision:** Cheapest fix that closes the mini-SSOT gap (chain lists 4 layers, golden rule references a 5th) without creating a second maintained copy of the layer table.
 **why-change:** No change from the router's dispatch scope — verified diff is exactly `git diff --stat docs/ARCHITECTURE.md` → 1 insertion, no other lines touched.
+
+### STEP architect-S9 · architect · 2026-08-24T15:55:00Z
+**task-id:** UC-MDH-P2
+**what-done:** Designed the atomic FR-3/FR-4/FR-6 deploy-gated bundle (exact line ranges in agentMemoryUpdateTools.ts/registry.ts, 3-generator regen chain for tool-registry.json+project-stats.json+tools/list/INDEX.md, system-map.json manual line, 1300b test corrections) + ruled B2 YES (agent-father exclusive lane, evidence-backed).
+**what-considered:**
+- Verified `scripts/gen-tool-registry.ts`/`gen-project-stats.ts`/`gen-tools-index.sh` are live working generators (not aspirational) — FR-4 needs almost no manual JSON surgery, just re-run order.
+- Found BA's 13-consumer FR-5 list conflates instructional docs (safe-now) with structural-inventory docs (must land atomically w/ FR-3). Reclassified `tools/list/append_session_record.md` (orphaned stub, no generator deletes it) + `tools/list/INDEX.md` (GENERATED, hand-editing it during safe-now would violate its own header) from FR-5 → FR-4-extended. FR-5 real safe-now scope = 10 files, not 13.
+- BA's FR-6 "delete the 2 test cases" undercounts — live read of the test file found 6 to delete + 2 to surgically edit (both exercise update_memory_file too, deleting outright would drop coverage). Documented exact line ranges.
+- B2: verified structurally (agent-father's own commit_zone + create/edit-flow file lists + live dev-standards.md:1987 precedent on the identical file class), not asserted from convention alone.
+**why-decision:** Every correction traces to a live file read (generator scripts, agent-father's own flow docs, the test file itself), not to re-trusting BA's counts — matches the flow's "never design without reading" constraint and closes 2 real desync hazards (a still-registered tool's structural inventory going stale early) before PM decomposes.
+**why-change:** No change to BA's 7 FRs or their intent — reclassified 2 files' *gate*, corrected 1 FR's *count*, both within FR-4/FR-6's own stated scope, zero new FRs invented.
