@@ -25644,6 +25644,32 @@
         "zone_note": "apps/ is excluded by docs/agents/agent-father/init.md commit_zone.excluded"
       },
       "routed_to": "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE"
+    },
+    {
+      "id": "po-decision-bug5468-2026-08-23T15:27:38Z",
+      "ts": "2026-08-23T15:27:38Z",
+      "from": "po",
+      "to": "po",
+      "type": "system-issue",
+      "severity": "INFO",
+      "status": "triaged",
+      "payload_ref": null,
+      "dedup_key": "po-decision:bug5468:pdfx-reconcile-pause",
+      "summary": "PO DECISION on BUG 5468 pause question: do NOT pause bctcPdfPullJob/bctcExtractReconcileJob. No safe fast toggle exists (no env-gate found; a code change would need a rebuild racing the same clock as the actual fix). Reverting the 21-row requeue is already correctly vetoed by ops (destroys P0 evidence, re-sticks cohort). dev-pdf-extractor is already dispatched at the real root cause (restart loop / ocr_gateway inflight bookkeeping, tracked FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH). Accepted risk: some of the 21 rows may burn reconcile_attempts toward the cap-8 terminal-fail while the fix lands. MITIGATION for whoever monitors this: if any row in the cohort approaches reconcile_attempts>=6-7 before the restart-loop fix lands, apply a targeted reconcile_attempts reset (same safe idempotent UPDATE pattern already used for the url_not_found->pending reset) rather than let it terminalise to enrich_failed -- cheaper and faster than pausing the scheduler, and does not require a redeploy. qa correctly continues withholding certification on FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE until real extraction output lands, independent of this decision.",
+      "payload": {
+        "related_row": "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
+        "related_incident": "docs/incidents/ops-20260823-pdfx-rebuild-and-a30-refutation.md",
+        "commit": "23486b9cb"
+      },
+      "po_ruling_20260824T0737Z": "CASING DEFECT CONFIRMED, AND IT IS NOT THE ONLY BARRIER. (1) Every live selector is byte-exact: scripts/agents-flow/cowork-tick-preflight.sh:360 select(.status==\"NEW\"), .claude/skills/signal-dashboard/dashboard-protocol.md:86/92 select(.to==$agent and .status==\"NEW\"), docs/agents/dev-team/flow/drain-signals.md:24 'Collect status=NEW rows'. jq == on strings is byte-exact, so \"new\" matched NOTHING for 16h. (2) It was also UNEVICTABLE: scripts/orch-cold-evict.sh:181 TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED matched at :583 with .status|IN($tsig_arr[]) — the file's own header at :164-166 states the match is EXACT-STRING, no case fold, and that a case-fold was DELIBERATELY rejected. So \"new\" was simultaneously unpickable and immortal. (3) Casing fixed here, but delivery is STILL structurally impossible: ops is absent from the cowork_signal_recipient set in docs/data/system-map.json (jq gives [po,tran-ngoc-bau,alert-commander,unified-agent]) and grep signal_queue across all 12 files of docs/agents/ops/** plus .claude/agents/ops.md returns ZERO hits — ops has no signal_queue selector anywhere in the fleet. Root causes tracked at FIX-SIGNALQUEUE-OPEN-STATUS-DRAINED-BY-NOTHING-EVICTED-BY-NOTHING (consumer axis, enriched this tick) and FIX-ORCHAPPLY-SIGNALROW-STATUS-UNVALIDATED-ADMITS-UNPICKABLE-UNEVICTABLE-VALUES (producer axis, minted this tick). Row left NEW, not closed: its MITIGATION clause (reset reconcile_attempts if any of the 21-row cohort reaches >=6-7) is a standing, still-unactuated instruction.",
+      "rerouted_from": "ops",
+      "rerouted_at": "2026-08-24T13:16:43Z",
+      "rerouted_by": "po/triage-20260824T1310Z",
+      "reroute_reason": "to=ops is structurally undeliverable: ops has no signal_queue selector anywhere in the fleet (grep over docs/agents/ops/ and .claude/agents/ops.md = 0 hits) and ops is absent from system-map.json's cowork_signal_recipient set. Rerouted to po, which has a live selector, so the payload is readable rather than immortal-and-unpickable. Structural fix tracked at FIX-SIGNALQUEUE-TO-OPS-HAS-NO-CONSUMER-PRODUCERS-KEEP-ROUTING-THERE. Status deliberately NOT flipped to READ here: READ is in TERMINAL_SIGNAL_STATUSES and would cold-evict the payload in 24h.",
+      "triaged_at": "2026-08-24T13:16:43Z",
+      "triaged_by": "po",
+      "disposition": "REHOUSED-TO-TASK-ROW",
+      "po_triage_20260824T1310Z": "CLOSED SAFELY, because its standing instruction now lives somewhere durable. The router deliberately held this NEW for 21h to stop the mitigation clause being cold-evicted, which was the right call while the clause existed ONLY in this payload. It no longer does: the mitigation is copied verbatim onto task row FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET, which also had its null owner set to dev-mcp-server in this same write. A task row is the correct carrier for a standing instruction; a signal payload is transport. SEPARATELY — CORRECTING THE ROUTER'S FINDING 4: this ruling's reference to FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE is NOT a citation to a nonexistent row and is NOT an instance of the known cited-row-id defect. That row was real and OPEN when this ruling was written at 2026-08-23T15:27:38Z (it sat in review[], HELD, per commit 8697d13a1). It reached done_verified at commit 2571bd92c on 2026-08-23 20:31:41Z — about five hours AFTER this text was authored — and was then cold-evicted off the hot board. The ruling was correct when written and went stale afterwards, which is a different failure from resolving to a nonexistent id at write time and needs a different fix (stale-reference detection, not id validation). Nothing to mint: the row completed, and its residual half is FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW (backlog, P2, dev-pdf-extractor)."
     }
   ],
   "backlog_detail": [],
