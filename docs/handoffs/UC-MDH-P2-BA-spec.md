@@ -112,7 +112,7 @@ BA performed spec-only work per its own boundary rules (`forbidden_outputs`: nev
   - `scripts/gen-tool-list-stubs.py:8-10` — confirmed ADD-ONLY (mints missing stubs, "never overwrites an existing stub file"). It does **not** delete orphaned per-tool stubs for tools no longer in the registry — so `docs/agents/tools/list/append_session_record.md` will NOT self-heal; it needs an explicit `git rm`.
   - `docs/data/system-map.json:6,29` — `_tools_ssot` header confirms this is a **hand-maintained mirror**, no generator writes it (grep of `scripts/` + `apps/mcp-server` found zero writers targeting this path). FR-4's own text already scopes this edit correctly (deploy-gated); flagged here only because BA's separate live-consumer table (item #13) implies it's also an FR-5 target, which would race FR-4's gate — see correction below.
   - `docs/agents/agent-father/init.md:63-64` (`commit_zone.allowed: ["docs/agents/", ...]`) + `docs/agents/agent-father/flow/{edit-prepare.md:21, create.md:16, scaffold-files.md:97}` (all three explicitly name `docs/agents/tools/package/<agent_name>.md` as a file agent-father's own lifecycle flows author) + `docs/policies/dev-standards.md:1987` (live precedent: `docs/agents/system-auditor/flow/main.md` ruled "agent-father's exclusive commit zone", a developer-scoped row explicitly forbidden from touching it) — basis for the B2 ruling below.
-  - `apps/mcp-server/src/__tests__/1300b-agent-memory-update-tools.test.ts` — full read, all 17 `it()` blocks individually classified (see FR-6 below).
+  - `apps/mcp-server/src/__tests__/1300b-agent-memory-update-tools.test.ts` — full read, all 14 `it()` blocks individually classified (see FR-6 below).
 
 - **Reuse patterns:**
   - FR-4's registry half = reuse `scripts/gen-tool-registry.ts` + `scripts/gen-project-stats.ts` + `scripts/gen-tools-index.sh` (3 existing generators, source-of-truth chained: source → registry.json → project-stats.json + INDEX.md) — zero new tooling, zero manual JSON surgery beyond `system-map.json`'s one hand-maintained line.
@@ -128,12 +128,12 @@ BA performed spec-only work per its own boundary rules (`forbidden_outputs`: nev
      c. `bash scripts/gen-tools-index.sh` — regenerates `docs/agents/tools/list/INDEX.md` from the same registry; drops the `append_session_record` entry for free.
      d. `git rm docs/agents/tools/list/append_session_record.md` — orphaned per-tool stub, no generator removes it (manual, see Verified paths).
      e. `docs/data/system-map.json:29` — manually delete the `"append_session_record",` line from `.project.microservices[0].tools[]` (alphabetically sorted; deleting in place preserves order, no re-sort needed). This is the **only** genuinely hand-edited step in FR-4.
-  3. **FR-6** `1300b-agent-memory-update-tools.test.ts` — **BA's spec undercounts ("the 2 append_session_record test cases")**. Live read finds **6 to DELETE outright** + **2 to SURGICALLY EDIT** (not delete — they exercise both tools):
+  3. **FR-6** `1300b-agent-memory-update-tools.test.ts` — **BA's spec undercounts ("the 2 append_session_record test cases")**. Live read finds **5 to DELETE outright** + **2 to SURGICALLY EDIT** (not delete — they exercise both tools):
      - DELETE: `L74-85` ("accepts valid agent names"), `L87-113` ("rejects invalid agent names via Zod" — never calls the real tool, hand-rolled reimplementation, dead either way), `L115-126` ("formats markdown correctly"), `L128-135` ("minimal fields"), `L215-222` ("prevents directory traversal in task_name").
      - EDIT: `L67-72` ("registers 2 tools...") → rename, drop the `append_session_record` assertion, keep `update_memory_file`.
      - EDIT: `L240-265` (sandbox regression guard) → remove the `append_session_record` `callTool` block (L246-249) + its "Exercise both tools" comment (L244-245 → singular); **keep** the `update_memory_file` call + both assertions — deleting this test outright would silently drop its whole regression-guard purpose.
      - Module docblock `L1-8`: drop the `append_session_record` mention.
-     - Net: 17 `it()` blocks → 12, zero coverage loss on `update_memory_file`'s own surface. Re-verify line numbers live at execution time (same caveat as FR-3).
+     - Net: 14 `it()` blocks → 9, zero coverage loss on `update_memory_file`'s own surface. Re-verify line numbers live at execution time (same caveat as FR-3).
   4. **Pre-commit gate (mechanized backstop):** run `tool-registry-parity.test.ts` + full `tsc` + the 1300b suite green BEFORE the single commit — this is exactly what that parity test exists to catch if any step above is missed.
 
 - **Correction to BA spec — FR-5's real safe-now scope is 10 files, not 13; 2 files reclassified from FR-5 → FR-4-extended (deploy-gated), 1 already was:**
