@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T03:58:20Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-24T04:27:01Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5008,32 +5009,6 @@
       }
     ],
     "backlog": [
-      {
-        "id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/pdf-extractor/",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "title": "ocr_gateway self-declares a bookkeeping bug 59 times since the PEK-semaphore rebuild: inflight semaphore=1 != os_children=0 -- prime suspect for the pdf-extractor memory-driven silent-restart loop (BUG 5466/5468)",
-        "desc": "ops measured live 2026-08-23: log line 'ocr_gateway.inflight: semaphore=1 != os_children=0 -- bookkeeping disagrees with OS ground truth (this mismatch is, by definition, a bug)' fired 59 times post-rebuild; 90/199 /extract posts got 429. This is the leading suspect for the two silent ExitCode=0/OOMKilled=false exits (14:27:10Z, 14:58:52Z) that killed in-flight PEK extractions and left 21 reconcile-queue rows unable to produce output despite the semaphore-contention fix (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE) working correctly on its own terms. dev-pdf-extractor is already investigating this as part of its restart-loop dispatch -- this row is a tracking mint only, do NOT dispatch a second agent at it.",
-        "generic_mandate": "Fix ocr_gateway.py's inflight accounting so the semaphore counter and the real OS child-process count (/proc-derived) never diverge; root-cause WHY they diverge (leaked acquire without matching release on an unusual exit path is the leading hypothesis, not yet confirmed).",
-        "ac": "AC-1 the self-declared bookkeeping-mismatch log line no longer fires under the same load pattern that produced it 59 times. AC-2 confirm/refute the causal link to the memory-pinning restart loop with a live measurement, not inference.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/ocr_gateway.py"
-        ],
-        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for OCR-GATEWAY-INFLIGHT/bookkeeping. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that row's fix is proven correct and unrelated to this counter).",
-        "created_by": "po (triage 2026-08-23, ops finding, router item 3)",
-        "created_at": "2026-08-23T15:20:00Z",
-        "updated_at": "2026-08-24T01:35:51Z",
-        "bounded1_revert_note": "[po 2026-08-24T01:35:50Z SUPERSEDES the 2026-08-24T01:24:37Z BOUNDED-1 revert note] supervised:true CLEARED. Two corrections to that note. (a) ITS INERTNESS PREMISE IS FALSE. supervised-without-plan_only on a backlog[] row with a dev-role next_agent is not a no-picker state — it is exactly the BACKLOG-XOR-GAP class that docs/agents/po/flow/manual-dispatch-sweep.md sweeps on EVERY PO tick via scripts/lib/po-manual-dispatch-eligibility.jq is_backlog_xor_gap. Setting the flag did not park the row; it promoted it to the #1 slot of that sweep 10 minutes later. Anyone reaching for supervised:true as an inert-parking mechanism on a backlog row should know it does the opposite. (b) ITS CONTRAINDICATION IS STALE — verified, not assumed. The desc line `dev-pdf-extractor is already investigating this as part of its restart-loop dispatch` has no referent: zero rows in ANY lane carry a pdf-extractor restart-loop investigation, and the container is stable (StartedAt 2026-08-23T15:44:17Z, RestartCount=0, ~9h45m, ExitCode=0). There is no second agent to avoid because there is no first agent. PRIORITY HELD AT P0, DELIBERATELY NOT DOWNGRADED: the defect still reproduces live — 20 `ocr_gateway.inflight` mismatch lines and 22 HTTP 429s against 418 /extract posts in the last 10h. Materially milder than the ops window that minted it (59 mismatches, 90/199 = 45% 429s) but not resolved, and I have no evidence the consumer impact cleared, so a downgrade would be scoring on absence of measurement rather than on measurement. Whoever picks this up: re-measure the 429 rate first and re-rank on that number.",
-        "po_manual_dispatch_flagged_at": "2026-08-24T01:35:50Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — top-ranked P0 of 109 candidates this tick (38 backlog-XOR-gap, 70 DRS-stranded, 1 ready-XOR); folded into this tick BATCH"
-      },
       {
         "id": "FIX-A29-CRON-GAP-NO-OUTAGE-WINDOW-DISCRIMINATOR",
         "type": "FIX",
@@ -22648,8 +22623,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-24T03:02:19Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-24T04:26:59Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -22804,6 +22779,37 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
+      },
+      {
+        "id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "title": "ocr_gateway self-declares a bookkeeping bug 59 times since the PEK-semaphore rebuild: inflight semaphore=1 != os_children=0 -- prime suspect for the pdf-extractor memory-driven silent-restart loop (BUG 5466/5468)",
+        "desc": "ops measured live 2026-08-23: log line 'ocr_gateway.inflight: semaphore=1 != os_children=0 -- bookkeeping disagrees with OS ground truth (this mismatch is, by definition, a bug)' fired 59 times post-rebuild; 90/199 /extract posts got 429. This is the leading suspect for the two silent ExitCode=0/OOMKilled=false exits (14:27:10Z, 14:58:52Z) that killed in-flight PEK extractions and left 21 reconcile-queue rows unable to produce output despite the semaphore-contention fix (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE) working correctly on its own terms. dev-pdf-extractor is already investigating this as part of its restart-loop dispatch -- this row is a tracking mint only, do NOT dispatch a second agent at it.",
+        "generic_mandate": "Fix ocr_gateway.py's inflight accounting so the semaphore counter and the real OS child-process count (/proc-derived) never diverge; root-cause WHY they diverge (leaked acquire without matching release on an unusual exit path is the leading hypothesis, not yet confirmed).",
+        "ac": "AC-1 the self-declared bookkeeping-mismatch log line no longer fires under the same load pattern that produced it 59 times. AC-2 confirm/refute the causal link to the memory-pinning restart loop with a live measurement, not inference.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/ocr_gateway.py"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for OCR-GATEWAY-INFLIGHT/bookkeeping. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that row's fix is proven correct and unrelated to this counter).",
+        "created_by": "po (triage 2026-08-23, ops finding, router item 3)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-24T04:27:01Z",
+        "bounded1_revert_note": "[po 2026-08-24T01:35:50Z SUPERSEDES the 2026-08-24T01:24:37Z BOUNDED-1 revert note] supervised:true CLEARED. Two corrections to that note. (a) ITS INERTNESS PREMISE IS FALSE. supervised-without-plan_only on a backlog[] row with a dev-role next_agent is not a no-picker state — it is exactly the BACKLOG-XOR-GAP class that docs/agents/po/flow/manual-dispatch-sweep.md sweeps on EVERY PO tick via scripts/lib/po-manual-dispatch-eligibility.jq is_backlog_xor_gap. Setting the flag did not park the row; it promoted it to the #1 slot of that sweep 10 minutes later. Anyone reaching for supervised:true as an inert-parking mechanism on a backlog row should know it does the opposite. (b) ITS CONTRAINDICATION IS STALE — verified, not assumed. The desc line `dev-pdf-extractor is already investigating this as part of its restart-loop dispatch` has no referent: zero rows in ANY lane carry a pdf-extractor restart-loop investigation, and the container is stable (StartedAt 2026-08-23T15:44:17Z, RestartCount=0, ~9h45m, ExitCode=0). There is no second agent to avoid because there is no first agent. PRIORITY HELD AT P0, DELIBERATELY NOT DOWNGRADED: the defect still reproduces live — 20 `ocr_gateway.inflight` mismatch lines and 22 HTTP 429s against 418 /extract posts in the last 10h. Materially milder than the ops window that minted it (59 mismatches, 90/199 = 45% 429s) but not resolved, and I have no evidence the consumer impact cleared, so a downgrade would be scoring on absence of measurement rather than on measurement. Whoever picks this up: re-measure the 429 rate first and re-rank on that number.",
+        "po_manual_dispatch_flagged_at": "2026-08-24T01:35:50Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — top-ranked P0 of 109 candidates this tick (38 backlog-XOR-gap, 70 DRS-stranded, 1 ready-XOR); folded into this tick BATCH",
+        "promoted_at": "2026-08-24T04:26:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-24T04:26:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -22819,7 +22825,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-24T01:23:08Z"
+        "last_served_tick": "2026-08-24T04:26:48Z"
       },
       "sls": {
         "last_served_tick": "2026-08-24T01:55:22Z"
@@ -22837,7 +22843,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T04:25:29Z",
+    "_updated_at": "2026-08-24T04:26:48Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
