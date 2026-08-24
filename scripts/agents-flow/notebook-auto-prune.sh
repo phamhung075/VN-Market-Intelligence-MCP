@@ -106,6 +106,28 @@
 #   per-section "oldest", so the MIN-key-beats-sentinels inversion this AC-5/AC-6
 #   pair closes does not exist in that caller. scripts/notebook-compose.test.sh
 #   (its own regression suite) re-run clean, unmodified by this fix.
+#
+# MEASUREMENT-PLANE FIX (same ticket, AC-1..AC-4, 2026-08-24): the SELECTION guard
+# above (AC-5/AC-6) only intercepts once the drop-oldest loop has already worked its
+# way down to exactly ONE remaining non-sentinel section — for a file with SEVERAL
+# dated sections plus rolling ones whose bytes alone exceed cap, the pre-fix loop
+# would virtually drop 2+ dated sections in-memory (never persisted — every exit
+# path below bypasses the atomic write) before that trap ever engaged, then emit a
+# signal describing the POST-virtual-drop state (e.g. section_count=3) rather than
+# the file's TRUE original shape (section_count=5) — technically safe on disk, but
+# wasteful and misleading. This closes the gap the row's root_cause names directly:
+# the MEASUREMENT plane (BYTE_CAP/LINE_CAP predicate) was computed over the WHOLE
+# file, including bytes the SELECTION plane already refuses to ever drop. Fix:
+# before any drop is selected, measure what remains if EVERY currently-present
+# dated section were removed (_nso_undroppable_remainder — preamble + sentinels
+# only); if THAT alone still breaches either cap, no amount of dropping dated
+# content can ever converge, so retain everything and emit
+# notebook_undroppable_remainder_over_cap_breach immediately (iteration 1, zero
+# wasted drops, accurate counts). Placed AFTER the AC-5 check so AC-5's own
+# (evidentiary, not byte-driven) signal keeps precedence on the shapes it already
+# owns. When undroppable-alone is within cap, this check is always false and the
+# existing drop-oldest convergence proceeds exactly as before (AC-2 negative case
+# — bloat genuinely in dated sections, unaffected).
 set -u
 
 # FR-2 (UC-CRITIC-HOOKS-ENFORCEMENT): shared crash-vs-clean-pass discriminator.
@@ -344,6 +366,89 @@ emit_no_valid_drop_candidate_signal() {
 EOF
 }
 
+# --- Undroppable-remainder-exceeds-cap helper + signal (AC-1..AC-4, FIX-NOTEBOOK-
+# AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE — the MEASUREMENT-plane
+# half of the two-plane fix; AC-5/AC-6/AC-7/AC-8 above are the SELECTION-plane
+# half and were already shipped 2026-08-12/08-14) ---
+# _nso_undroppable_remainder: given the current in-memory content and its
+# nso_sections_with_ts blob, returns what would remain if EVERY currently-present
+# non-sentinel ("## " with a real timestamp, i.e. droppable) section were removed
+# — preamble + every sentinel/rolling section ONLY, exactly what the SELECTION
+# plane (MIN_KEY sort below) already treats as permanently undroppable. Measuring
+# THIS in isolation is what lets the loop recognize, on iteration 1, that no
+# amount of dropping dated content can ever converge a file whose bloat lives in
+# its rolling sections — the honest signal below fires before a single section is
+# even considered for dropping, instead of after the (pre-existing, still-safe
+# but wasteful and misleading) AC-5 cardinality trap two/three virtual drops in.
+_nso_undroppable_remainder() {
+  local content="$1" sections="$2" sentinel_key="$3"
+  local total_lines all_lines drop_lines
+  total_lines="$(printf '%s\n' "$content" | wc -l | tr -d ' ')"
+  all_lines="$(printf '%s\n' "$sections" | cut -d: -f1 | tr '\n' ' ')"
+  drop_lines="$(printf '%s\n' "$sections" | awk -F: -v sk="$sentinel_key" '$2!=sk{print $1}' | tr '\n' ' ')"
+  if [ -z "$drop_lines" ]; then
+    printf '%s\n' "$content"
+    return 0
+  fi
+  printf '%s\n' "$content" | awk -v all="$all_lines" -v drop="$drop_lines" -v total="$total_lines" '
+    BEGIN {
+      na = split(all, A, " ")
+      nd = split(drop, D, " ")
+      for (i = 1; i <= nd; i++) is_drop[D[i]] = 1
+    }
+    {
+      skip = 0
+      for (i = 1; i <= na; i++) {
+        start = A[i]
+        end = (i < na) ? A[i + 1] - 1 : total
+        if (NR >= start && NR <= end && (start in is_drop)) { skip = 1; break }
+      }
+      if (!skip) print
+    }
+  '
+}
+
+# Fires when the preamble + every currently-present sentinel section is, on its
+# own, already over cap on EITHER axis — i.e. the SELECTION plane's permanent
+# exemption for rolling headings and the MEASUREMENT plane's cap predicate now
+# agree: charging that bloat to dated history can never converge, so every
+# currently-present dated section is retained untouched and this signal is
+# emitted instead (same honest-signal, no-truncation, always-exit-0 contract as
+# notebook_single_section_overage_breach above). Placed AFTER the pre-existing
+# AC-5 check in the loop below so that shape's own (unrelated, evidentiary — a
+# lone dated section is not trustworthy as "oldest" regardless of byte math)
+# signal keeps precedence when both conditions are true on the same file.
+emit_undroppable_remainder_over_cap_signal() {
+  local ts
+  ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
+  [ -z "$ts" ] && return 0
+  local sig_file
+  sig_file="$SIGNALS_DIR/notebook-undroppable-remainder-over-cap-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$ts" | tr -d ':').json"
+  cat > "$sig_file" <<EOF 2>/dev/null || true
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_undroppable_remainder_over_cap_breach",
+  "priority": "high",
+  "createdAt": "$ts",
+  "payload": {
+    "file": "$REL_PATH",
+    "line_count": $LINE_COUNT,
+    "cap": $LINE_CAP,
+    "byte_count": $BYTE_COUNT,
+    "byte_cap": $BYTE_CAP,
+    "section_count": $SECTION_COUNT,
+    "non_sentinel_section_count": $NON_SENTINEL_SECTION_COUNT,
+    "sentinel_section_count": $SENTINEL_SECTION_COUNT,
+    "undroppable_line_count": $UNDROPPABLE_LINE_COUNT,
+    "undroppable_byte_count": $UNDROPPABLE_BYTE_COUNT,
+    "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+    "action_required": "manual_split_to_archive"
+  }
+}
+EOF
+}
+
 # --- Dropped-newest-dated-section signal (AC-6, same ticket) — fires whenever the
 # section this hook is ABOUT to drop carries the file's own MAXIMUM non-sentinel
 # key, i.e. every non-sentinel section in the file (whether that is one section,
@@ -474,7 +579,13 @@ BYTE_COUNT=$(wc -c < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
 # --- Over cap: parse sections ---
 # Extract line numbers of all "^## " boundaries
 SECTION_LINES="$(grep -n "^## " "$FILE_PATH" 2>/dev/null || true)"
-SECTION_COUNT="$(echo "$SECTION_LINES" | grep -c "^[0-9]" 2>/dev/null || echo 0)"
+# GREP-C-EXIT-1-DOUBLE-FIRE GUARD (see identical note at the loop's SECTION_COUNT
+# re-derivation below): capture stdout, THEN default on empty — never
+# `grep -c ... || echo 0`, since `grep -c` legitimately exits 1 (no match) on a
+# genuine zero count while STILL printing "0", so the `||` fallback fires too and
+# the variable ends up holding a literal two-line "0\n0".
+SECTION_COUNT="$(echo "$SECTION_LINES" | grep -c "^[0-9]" 2>/dev/null)"
+[ -z "$SECTION_COUNT" ] && SECTION_COUNT=0
 
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
 [ -z "$TIMESTAMP" ] && exit 0
@@ -514,8 +625,10 @@ while true; do
   BYTE_COUNT="$(printf '%s\n' "$FILE_CONTENT" | wc -c | tr -d ' ')"
   [ "$LINE_COUNT" -le "$LINE_CAP" ] && [ "$BYTE_COUNT" -le "$BYTE_CAP" ] && break
 
-  # Count sections
-  SECTION_COUNT="$(echo "$FILE_CONTENT" | grep -c "^## " 2>/dev/null || echo 0)"
+  # Count sections. GREP-C-EXIT-1-DOUBLE-FIRE GUARD: capture then default-on-empty,
+  # never `grep -c ... || echo 0` (see note at the pre-loop SECTION_COUNT above).
+  SECTION_COUNT="$(echo "$FILE_CONTENT" | grep -c "^## " 2>/dev/null)"
+  [ -z "$SECTION_COUNT" ] && SECTION_COUNT=0
 
   # Safe-fail: only 1 section (or 0) and still over cap (either axis) — cannot prune further.
   # DECISION option [a] (see BYTE-CAP LOCKSTEP note above): keep this behaviour unchanged —
@@ -571,8 +684,22 @@ EOF
   # above this script's `set -u` line for the full rationale. Also computes
   # MAX_NON_SENTINEL_KEY, consumed by the AC-6 guard further down this loop.
   NON_SENTINEL_KEYS_COL="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | grep -v "^${NSO_SENTINEL_KEY}\$" 2>/dev/null || true)"
-  NON_SENTINEL_SECTION_COUNT="$(echo "$NON_SENTINEL_KEYS_COL" | grep -c '^[0-9]' 2>/dev/null || echo 0)"
-  SENTINEL_SECTION_COUNT="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | grep -c "^${NSO_SENTINEL_KEY}\$" 2>/dev/null || echo 0)"
+  # GREP-C-EXIT-1-DOUBLE-FIRE GUARD (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-
+  # COUNTED-BUT-UNDROPPABLE, 2026-08-24 — root-caused from live malformed-JSON
+  # signal corroboration on dev-mcp-server.md/tran-ngoc-bau.md): `grep -c PATTERN`
+  # legitimately exits 1 (not 0) whenever the count IS zero, even though it still
+  # prints "0" to stdout — so `... | grep -c PATTERN 2>/dev/null || echo 0` fires
+  # its `||` fallback on the ORDINARY zero-count case too, appending a SECOND "0"
+  # and leaving the variable holding a literal two-line "0\n0". Every downstream
+  # heredoc that interpolates that variable unquoted (emit_*_signal below) then
+  # emits invalid JSON with a stray bare "0," line — exactly the shape the
+  # canonical signal drain rejected as unparseable. Fix: capture stdout, then
+  # default to 0 only when stdout was genuinely empty (a real prerequisite
+  # failure), never on grep's exit code alone.
+  NON_SENTINEL_SECTION_COUNT="$(echo "$NON_SENTINEL_KEYS_COL" | grep -c '^[0-9]' 2>/dev/null)"
+  [ -z "$NON_SENTINEL_SECTION_COUNT" ] && NON_SENTINEL_SECTION_COUNT=0
+  SENTINEL_SECTION_COUNT="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | grep -c "^${NSO_SENTINEL_KEY}\$" 2>/dev/null)"
+  [ -z "$SENTINEL_SECTION_COUNT" ] && SENTINEL_SECTION_COUNT=0
   MAX_NON_SENTINEL_KEY="$(echo "$NON_SENTINEL_KEYS_COL" | grep '^[0-9]' 2>/dev/null | sort | tail -1)"
 
   if [ "$NON_SENTINEL_SECTION_COUNT" -eq 1 ] && [ "$SENTINEL_SECTION_COUNT" -ge 1 ]; then
@@ -582,6 +709,27 @@ EOF
     # sentinel section(s) (structural exemption, unchanged) is a valid drop
     # candidate. Safe-fail: same honest-signal contract as SECTION_COUNT<=1 above.
     emit_no_valid_drop_candidate_signal
+    exit 0
+  fi
+
+  # AC-1..AC-4 (MEASUREMENT plane, same ticket): before trusting any drop
+  # selection below, check whether the file's own undroppable remainder
+  # (preamble + every currently-present sentinel section — i.e. what would be
+  # left if EVERY dated section here were dropped) is, by itself, already over
+  # cap on either axis. If so, dropping any amount of dated content can never
+  # converge this file — retain every dated section untouched and emit the
+  # honest signal instead of destroying history for zero benefit. Invariant
+  # across loop iterations (sentinel bytes never change), so this always fires
+  # on the FIRST iteration it is ever reachable on, before any section has
+  # actually been dropped this invocation — the reported counts above (already
+  # computed) are therefore the file's TRUE original shape, not a post-virtual-
+  # drop approximation.
+  UNDROPPABLE_CONTENT="$(_nso_undroppable_remainder "$FILE_CONTENT" "$SECTIONS_WITH_TS" "$NSO_SENTINEL_KEY")"
+  UNDROPPABLE_LINE_COUNT="$(printf '%s\n' "$UNDROPPABLE_CONTENT" | wc -l | tr -d ' ')"
+  UNDROPPABLE_BYTE_COUNT="$(printf '%s\n' "$UNDROPPABLE_CONTENT" | wc -c | tr -d ' ')"
+
+  if [ "$UNDROPPABLE_LINE_COUNT" -gt "$LINE_CAP" ] || [ "$UNDROPPABLE_BYTE_COUNT" -gt "$BYTE_CAP" ]; then
+    emit_undroppable_remainder_over_cap_signal
     exit 0
   fi
 
@@ -598,7 +746,10 @@ EOF
   # the old code silently dropped the just-written section instead of the true oldest one.
   MIN_KEY="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | sort | head -1)"
   TIE_GROUP="$(echo "$SECTIONS_WITH_TS" | awk -F: -v k="$MIN_KEY" '$2==k')"
-  TIE_COUNT="$(echo "$TIE_GROUP" | grep -c ":" 2>/dev/null || echo 0)"
+  # GREP-C-EXIT-1-DOUBLE-FIRE GUARD (see note above) — same capture-then-default
+  # pattern; TIE_GROUP always has >=1 row in practice, but never rely on that.
+  TIE_COUNT="$(echo "$TIE_GROUP" | grep -c ":" 2>/dev/null)"
+  [ -z "$TIE_COUNT" ] && TIE_COUNT=0
 
   if [ "$TIE_COUNT" -le 1 ]; then
     # No ambiguity — exactly one section has the minimum key. Unchanged from before.

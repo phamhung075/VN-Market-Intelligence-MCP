@@ -2,7 +2,7 @@
 name: notebook-write
 description: "Section-overwrite agent notebook at end of cycle. Appends a new section, retains last 3 sections, prunes older sections. Replaces full-overwrite pattern. Used as end-of-cycle step in all dev-team and cowork flow files."
 ---
-<!-- size-justification: ~251L — AC-1 through AC-7 are the single authoritative notebook-write
+<!-- size-justification: ~262L — AC-1 through AC-7 are the single authoritative notebook-write
      contract (section anchors, c<NNN> provenance, retention WHILE-loop + worked example, AC-2a
      immutability invariant, AC-3 atomic settled-write, AC-4 blank-state, AC-5 line-cap gate,
      AC-6 two-class contract, AC-7 commit) read together by every APPEND/OVERWRITE agent at
@@ -10,7 +10,10 @@ description: "Section-overwrite agent notebook at end of cycle. Appends a new se
      the fleet. Pre-existing overage (was 222L, uncaptured); grew to 251L
      (FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT, 2026-08-15) adding the confirmed root-cause
      note + worked example that closes the AC-2 off-by-one this justification's own history
-     documents. -->
+     documents; grew to 262L (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-
+     UNDROPPABLE AC-1..AC-4, 2026-08-24) documenting the pruner's byte-cap measurement plane now
+     matching its selection plane for rolling headings, so this file's own prescribed convention
+     and the pruner stop contradicting each other. -->
 
 ## End-of-cycle notebook write — section-overwrite pattern
 
@@ -37,6 +40,17 @@ otherwise-dated file can leave `scripts/agents-flow/notebook-auto-prune.sh`
 with no safe drop candidate (`notebook_no_valid_drop_candidate_breach`, no
 truncation — FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-
 UNDROPPABLE AC-5/AC-6, 2026-08-12; live incident: `agent-father.md`).
+
+**Rolling headings (`## Archive`, `## Known patterns / preferences`, `##
+Identity`, etc. — no date/timestamp token by design) are permanently exempt
+from being the pruner's drop candidate — and, since AC-1..AC-4 of the SAME
+ticket (2026-08-24), the hook's cap check is scoped the same way: if the
+preamble plus every rolling section, on its own, already exceeds the byte or
+line cap, the hook retains ALL dated sections untouched and emits
+`notebook_undroppable_remainder_over_cap_breach` instead of deleting cycle
+history that could never fix the breach. Keep rolling sections themselves
+small (split overgrown ones to an archive doc by hand) — the pruner cannot
+shrink them for you.
 
 **`c<NNN>` generation rule (FIX-AGENT-NOTEBOOK-UUID-PROVENANCE) — MANDATORY.**
 `NNN` MUST be one of:

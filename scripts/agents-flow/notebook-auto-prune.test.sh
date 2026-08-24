@@ -113,6 +113,23 @@
 #   newest) — pre-fix this assertion FAILS (the SHA-confused key causes the
 #   inverse drop).
 #
+# T12-T14 (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE
+# AC-1..AC-4, MEASUREMENT-PLANE fix, 2026-08-24): T9/T10 above (AC-5/AC-6) close
+# the SELECTION half of the two-plane bug but only intercept once the
+# drop-oldest loop has already worked down to exactly ONE remaining dated
+# section. T12 proves the residual MEASUREMENT half: a file with SEVERAL dated
+# sections plus rolling ones whose bytes alone exceed cap wastefully virtual-
+# drops 2+ dated sections in-memory pre-fix before AC-5 ever traps it, and the
+# resulting signal misreports the file's post-virtual-drop shape instead of
+# its true original one. T13 is the AC-2 negative (genuine dated bloat, small
+# rolling — unaffected, drops exactly as today). T14 is the AC-3 ratchet
+# replay (3 consecutive over-cap writes; retained dated-section count must
+# never decrease). T15 is the GREP-C-EXIT-1-DOUBLE-FIRE fix: the same ticket's
+# own AC-6 signal (notebook_prune_dropped_newest_dated_section) was found live,
+# the same day, emitting INVALID JSON on every zero-sentinel file because
+# `grep -c PATTERN 2>/dev/null || echo 0` double-fires when the count is
+# legitimately zero (grep -c exits 1 on no-match even though it printed "0").
+#
 # Run:
 #   bash scripts/agents-flow/notebook-auto-prune.test.sh
 #
@@ -123,7 +140,8 @@
 #               2026-07-31 — old assertion encoded the exact "refuse forever" anti-pattern
 #               this task closes; see docs/data/notebook-section-order.json for AC-2 context),
 #               FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (T9-T10,
-#               AC-5/AC-6, occurrence 5, 2026-08-12),
+#               AC-5/AC-6, occurrence 5, 2026-08-12; T12-T15, AC-1..AC-4 + grep-c
+#               double-fire, 2026-08-24),
 #               UC-CRITIC-HOOKS-ENFORCEMENT (T8),
 #               FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (T11, 2026-08-14)
 set -uo pipefail
@@ -643,6 +661,230 @@ else
     PASS=$((PASS + 1))
   else
     echo "FAIL T11: sections_after=$T11_SECTIONS_AFTER has_OLD=$T11_HAS_OLD has_MUTEX=$T11_HAS_MUTEX lines_after=$T11_LINES_AFTER (expected 1 section, TASK-OLD dropped, TASK-COWORK-MUTEX-001 retained)"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
+# ── T12 (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE
+#      AC-1..AC-4, MEASUREMENT-PLANE fix — must FAIL before / PASS after): the
+#      file's own undroppable remainder (preamble + every sentinel/rolling
+#      section) ALONE already exceeds the byte cap, so no amount of dropping
+#      dated ("## " with a real timestamp) sections can ever converge this
+#      file. 3 dated sections (small/narrow, distinct oldest->newest
+#      timestamps) + 2 large rolling sections ('## Archive', '## Known
+#      patterns / preferences', wide/dense — alone bigger than the byte
+#      overage), over the BYTE cap only. Pre-fix: the loop virtually drops 2 of
+#      the 3 dated sections in-memory before the pre-existing AC-5
+#      cardinality guard traps it (non_sentinel_section_count reaches exactly
+#      1) and exits WITHOUT writing — the file survives on disk (AC-5 already
+#      makes that much safe), but the ONLY signal fired
+#      (notebook_no_valid_drop_candidate_breach) misreports the file's TRUE
+#      original shape (section_count=3, not 5) since it only ever sees the
+#      post-virtual-drop state, and no notebook_undroppable_remainder_over_cap_
+#      breach signal exists at all pre-fix. Fixed code recognizes the
+#      undroppable remainder alone breaches cap on iteration 1, BEFORE any
+#      section is even considered for dropping, and emits the distinct,
+#      accurate signal instead (section_count=5, non_sentinel_section_count=3,
+#      sentinel_section_count=2 — the TRUE original counts) with zero wasted
+#      iterations, and the no-valid-drop-candidate signal never fires for this
+#      file at all.
+T12_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/undroppable-remainder-ac1.md"
+{
+  echo "# Undroppable Remainder Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "Archive" 25 300
+  dense_section "Known patterns / preferences" 25 300
+  dense_section "2026-08-01T10:00:00Z - D1 oldest" 3 20
+  dense_section "2026-08-05T10:00:00Z - D2 middle" 3 20
+  dense_section "2026-08-10T10:00:00Z - D3 newest" 3 20
+} > "$T12_FILE"
+
+T12_LINES_BEFORE=$(wc -l < "$T12_FILE" | tr -d ' ')
+T12_BYTES_BEFORE=$(wc -c < "$T12_FILE" | tr -d ' ')
+
+if [ "$T12_LINES_BEFORE" -gt 200 ] || [ "$T12_BYTES_BEFORE" -le 12000 ]; then
+  echo "FAIL T12 (fixture invalid): lines=$T12_LINES_BEFORE bytes=$T12_BYTES_BEFORE — expected lines<=200 (byte-ONLY breach) AND bytes>12000 pre-run"
+  FAIL=$((FAIL + 1))
+else
+  T12_HASH_BEFORE="$(shasum -a 256 "$T12_FILE" | cut -d' ' -f1)"
+  T12_REL="docs/agent-memory/notebooks/undroppable-remainder-ac1.md"
+  T12_SIG_GLOB="notebook-undroppable-remainder-over-cap-$(echo "$T12_REL" | tr '/.' '-')-*.json"
+  T12_NOVALID_GLOB="notebook-no-valid-drop-candidate-$(echo "$T12_REL" | tr '/.' '-')-*.json"
+  T12_SIG_BEFORE=$(signal_count "$T12_SIG_GLOB")
+  T12_NOVALID_BEFORE=$(signal_count "$T12_NOVALID_GLOB")
+
+  run_prune "$T12_FILE"
+
+  T12_HASH_AFTER="$(shasum -a 256 "$T12_FILE" | cut -d' ' -f1)"
+  T12_SIG_AFTER=$(signal_count "$T12_SIG_GLOB")
+  T12_NOVALID_AFTER=$(signal_count "$T12_NOVALID_GLOB")
+  T12_SIG_FILE=$(find "$TMPDIR_TEST/docs/signals" -maxdepth 1 -name "$T12_SIG_GLOB" 2>/dev/null | head -1 || true)
+  T12_SECTION_COUNT_OK=0
+  if [ -n "$T12_SIG_FILE" ]; then
+    T12_SC=$(jq -r '.payload.section_count // empty' "$T12_SIG_FILE" 2>/dev/null || true)
+    T12_NSC=$(jq -r '.payload.non_sentinel_section_count // empty' "$T12_SIG_FILE" 2>/dev/null || true)
+    T12_SSC=$(jq -r '.payload.sentinel_section_count // empty' "$T12_SIG_FILE" 2>/dev/null || true)
+    [ "$T12_SC" = "5" ] && [ "$T12_NSC" = "3" ] && [ "$T12_SSC" = "2" ] && T12_SECTION_COUNT_OK=1
+  fi
+
+  if [ "$T12_HASH_BEFORE" = "$T12_HASH_AFTER" ] && [ "$T12_SIG_AFTER" -gt "$T12_SIG_BEFORE" ] && \
+     [ "$T12_NOVALID_AFTER" = "$T12_NOVALID_BEFORE" ] && [ "$T12_SECTION_COUNT_OK" -eq 1 ]; then
+    echo "PASS T12: AC-1 measurement-plane fix — undroppable remainder (2 rolling sections) alone exceeds byte cap, all 3 dated sections retained untouched (no drop attempted), notebook_undroppable_remainder_over_cap_breach emitted with TRUE original counts (section_count=5, non_sentinel=3, sentinel=2), no misleading no-valid-drop-candidate signal fired"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T12: hash_match=$([ "$T12_HASH_BEFORE" = "$T12_HASH_AFTER" ] && echo yes || echo no) sig_before=$T12_SIG_BEFORE sig_after=$T12_SIG_AFTER novalid_before=$T12_NOVALID_BEFORE novalid_after=$T12_NOVALID_AFTER section_count_ok=$T12_SECTION_COUNT_OK (expected hash unchanged, new signal emitted with section_count=5/non_sentinel=3/sentinel=2, no no-valid-drop-candidate signal)"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
+# ── T13 (same ticket, AC-2 NEGATIVE — must NOT regress): bloat genuinely IS in
+#      the dated sections, the rolling section present is small — the
+#      true-oldest dated section must still be dropped exactly as today, and
+#      the new AC-1..AC-4 measurement-plane guard must stay silent (undroppable
+#      remainder here is tiny, nowhere near cap).
+T13_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/genuine-dated-bloat-ac2.md"
+{
+  echo "# Genuine Dated Bloat Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "Known patterns / preferences" 3 20
+  dense_section "2026-07-01T10:00:00Z - oldest, must be dropped" 20 250
+  dense_section "2026-07-05T10:00:00Z - middle" 20 250
+  dense_section "2026-07-10T10:00:00Z - newest" 20 250
+} > "$T13_FILE"
+
+T13_LINES_BEFORE=$(wc -l < "$T13_FILE" | tr -d ' ')
+T13_BYTES_BEFORE=$(wc -c < "$T13_FILE" | tr -d ' ')
+
+if [ "$T13_LINES_BEFORE" -gt 200 ] || [ "$T13_BYTES_BEFORE" -le 12000 ]; then
+  echo "FAIL T13 (fixture invalid): lines=$T13_LINES_BEFORE bytes=$T13_BYTES_BEFORE — expected lines<=200 (byte-ONLY breach) AND bytes>12000 pre-run"
+  FAIL=$((FAIL + 1))
+else
+  T13_REL="docs/agent-memory/notebooks/genuine-dated-bloat-ac2.md"
+  T13_UNDROP_GLOB="notebook-undroppable-remainder-over-cap-$(echo "$T13_REL" | tr '/.' '-')-*.json"
+  T13_UNDROP_BEFORE=$(signal_count "$T13_UNDROP_GLOB")
+
+  run_prune "$T13_FILE"
+
+  T13_UNDROP_AFTER=$(signal_count "$T13_UNDROP_GLOB")
+  T13_BYTES_AFTER=$(wc -c < "$T13_FILE" | tr -d ' ')
+  T13_HAS_OLDEST=$(grep -c "oldest, must be dropped" "$T13_FILE" 2>/dev/null)
+  T13_HAS_MIDDLE=$(grep -c "middle" "$T13_FILE" 2>/dev/null)
+  T13_HAS_NEWEST=$(grep -c "newest" "$T13_FILE" 2>/dev/null)
+  T13_HAS_ROLLING=$(grep -c "Known patterns" "$T13_FILE" 2>/dev/null)
+
+  if [ "$T13_BYTES_AFTER" -le 12000 ] && [ "$T13_HAS_OLDEST" -eq 0 ] && [ "$T13_HAS_MIDDLE" -ge 1 ] && \
+     [ "$T13_HAS_NEWEST" -ge 1 ] && [ "$T13_HAS_ROLLING" -ge 1 ] && [ "$T13_UNDROP_AFTER" = "$T13_UNDROP_BEFORE" ]; then
+    echo "PASS T13: AC-2 negative — genuine dated bloat (small rolling section) still drops the true-oldest dated section exactly as today, converges under byte cap, no undroppable-remainder signal (rolling alone is well under cap)"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T13: bytes_after=$T13_BYTES_AFTER has_oldest=$T13_HAS_OLDEST has_middle=$T13_HAS_MIDDLE has_newest=$T13_HAS_NEWEST has_rolling=$T13_HAS_ROLLING undrop_before=$T13_UNDROP_BEFORE undrop_after=$T13_UNDROP_AFTER (expected bytes<=12000, oldest dropped, middle+newest+rolling retained, no undroppable-remainder signal)"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
+# ── T14 (same ticket, AC-3 RATCHET): replay the T12 undroppable-remainder shape
+#      through 3 consecutive over-cap "writes" (each simulating an agent
+#      appending one more dated section) — the retained dated-section count
+#      must be non-decreasing across all 3 runs (pre-fix, relying solely on
+#      the AC-5 cardinality trap already left this non-decreasing SINCE no
+#      write ever lands once trapped — this test guards the combined AC-1..
+#      AC-6 invariant going forward: it must never again be possible for a
+#      replay of this shape to shed dated history run over run).
+T14_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/ratchet-replay-ac3.md"
+{
+  echo "# Ratchet Replay Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "Archive" 25 300
+  dense_section "Known patterns / preferences" 25 300
+  dense_section "2026-08-01T10:00:00Z - D1 oldest" 3 20
+} > "$T14_FILE"
+
+T14_OK=1
+T14_PREV_COUNT=0
+for round in 1 2 3; do
+  case "$round" in
+    2) dense_section "2026-08-05T10:00:00Z - D2 round2" 3 20 >> "$T14_FILE" ;;
+    3) dense_section "2026-08-10T10:00:00Z - D3 round3" 3 20 >> "$T14_FILE" ;;
+  esac
+  T14_BYTES="$(wc -c < "$T14_FILE" | tr -d ' ')"
+  if [ "$T14_BYTES" -le 12000 ]; then
+    echo "FAIL T14 (fixture invalid, round $round): bytes=$T14_BYTES — expected >12000 every round"
+    FAIL=$((FAIL + 1))
+    T14_OK=0
+    break
+  fi
+  run_prune "$T14_FILE"
+  T14_DATED_COUNT=$(grep -cE "^## [0-9]{4}-[0-9]{2}-[0-9]{2}" "$T14_FILE" 2>/dev/null || echo 0)
+  if [ "$T14_DATED_COUNT" -lt "$T14_PREV_COUNT" ]; then
+    echo "FAIL T14 (round $round): dated_count=$T14_DATED_COUNT < prev_round_count=$T14_PREV_COUNT — retained dated-section count DECREASED"
+    FAIL=$((FAIL + 1))
+    T14_OK=0
+    break
+  fi
+  T14_PREV_COUNT="$T14_DATED_COUNT"
+done
+
+if [ "$T14_OK" -eq 1 ]; then
+  echo "PASS T14: AC-3 ratchet — retained dated-section count non-decreasing across 3 consecutive over-cap replays (ended at $T14_PREV_COUNT dated sections, never shed any)"
+  PASS=$((PASS + 1))
+fi
+
+# ── T15 (GREP-C-EXIT-1-DOUBLE-FIRE, same ticket, live corroboration): `grep -c
+#      PATTERN` legitimately exits 1 (not 0) on a genuine zero-count match while
+#      STILL printing "0" to stdout, so the pre-existing
+#      `... | grep -c PATTERN 2>/dev/null || echo 0` pattern used for
+#      NON_SENTINEL_SECTION_COUNT/SENTINEL_SECTION_COUNT double-fires on every
+#      zero-sentinel file, leaving the variable holding a literal two-line
+#      "0\n0" — which corrupts the notebook_prune_dropped_newest_dated_section
+#      heredoc into invalid JSON (a stray bare "0," line before "reason").
+#      LIVE: 4 real signals in this shape were found unparseable by the
+#      canonical signal drain the same day this fix landed (dev-mcp-server.md,
+#      tran-ngoc-bau.md x3 — all zero-sentinel same-day-tie files). Same shape
+#      as T7 (3 same-day-tied dated sections, NO sentinel section at all —
+#      sentinel_section_count legitimately 0) but T7 never asserted the
+#      dropped-newest signal's own JSON validity, so it never caught this.
+T15_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/grepc-doublefire-ac6.md"
+{
+  echo "# Grep-C Double-Fire Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "2026-07-30 — TASK-M" 70 20
+  dense_section "2026-07-30 — TASK-N" 70 20
+  dense_section "2026-07-30 — TASK-O" 70 20
+} > "$T15_FILE"
+
+T15_LINES_BEFORE=$(wc -l < "$T15_FILE" | tr -d ' ')
+
+if [ "$T15_LINES_BEFORE" -le 200 ]; then
+  echo "FAIL T15 (fixture invalid): lines=$T15_LINES_BEFORE — expected >200 pre-run"
+  FAIL=$((FAIL + 1))
+else
+  T15_REL="docs/agent-memory/notebooks/grepc-doublefire-ac6.md"
+  T15_SIG_GLOB="notebook-prune-dropped-newest-$(echo "$T15_REL" | tr '/.' '-')-*.json"
+
+  run_prune "$T15_FILE"
+
+  T15_SIG_FILE=$(find "$TMPDIR_TEST/docs/signals" -maxdepth 1 -name "$T15_SIG_GLOB" 2>/dev/null | head -1 || true)
+  T15_VALID_JSON=0
+  T15_SENTINEL_FIELD_OK=0
+  if [ -n "$T15_SIG_FILE" ] && jq empty "$T15_SIG_FILE" >/dev/null 2>&1; then
+    T15_VALID_JSON=1
+    T15_SSC=$(jq -r '.payload.sentinel_section_count // empty' "$T15_SIG_FILE" 2>/dev/null || true)
+    [ "$T15_SSC" = "0" ] && T15_SENTINEL_FIELD_OK=1
+  fi
+
+  if [ -n "$T15_SIG_FILE" ] && [ "$T15_VALID_JSON" -eq 1 ] && [ "$T15_SENTINEL_FIELD_OK" -eq 1 ]; then
+    echo "PASS T15: grep-c-exit-1-double-fire fixed — notebook_prune_dropped_newest_dated_section on a zero-sentinel file is valid, parseable JSON with sentinel_section_count=0 (no stray bare '0,' line)"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T15: sig_file=${T15_SIG_FILE:-<none>} valid_json=$T15_VALID_JSON sentinel_field_ok=$T15_SENTINEL_FIELD_OK (expected a valid, parseable dropped-newest signal with sentinel_section_count=0)"
     FAIL=$((FAIL + 1))
   fi
 fi
