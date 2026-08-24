@@ -33,3 +33,21 @@ Zone health: root-cause fix (format→existence gate) not a symptom patch, stopp
 **Evidence:** commit `db0ed7c02` (`tasksMdJanitorJob.ts` + test file + `system-map.json` + spec doc, explicit pathspec) + commit `080340915` (orch-state.json board write, explicit pathspec, isolated from the many other unrelated dirty files present in the working tree at write time). Full `apps/mcp-server` suite: 52 fail/17 files vs documented ~50/15 baseline, zero overlap with `tasksMdJanitor`/D4/`system-map`/`coordination` — delta is pre-existing 5000ms-timeout network-dependent tests. `bun tsc --noEmit` clean.
 
 Zone health: PO's own AC-5/6/7 corrections independently re-verified against the spec text and landed as specified (not rubber-stamped), a genuine zone-boundary conflict (docs/agents/**) surfaced and reported rather than silently overstepped or silently dropped, held escalation locks (esc-deepdive:FPT, esc-datacov:HPG/FPT) left untouched per the row's DO-NOT-RELEASE note | HEALTHY, one dependency (agent-father) outstanding.
+
+## 2026-08-24 — CCATO-MCP-T7-SKILL-DUAL-PATH (RLC dispatch) → review[]
+
+**Session:** 7fd9c60a-9854-4589-9e98-e4c5e7e9168d. Depends on T6-TOOL-REGISTRATION (DONE_VERIFIED) — read T5/T6's shipped artifacts + the architect brief (`docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md` §3.4) as spec source since the board row carried no `detail_ref`.
+
+**Fix (docs-only, no `apps/mcp-server/` code touched):** `.claude/skills/claim-truth-gate/SKILL.md` rewritten into an explicit Path A (MCP-native `call_tool(server="vn-market", tool="narrative_truth_gate", ...)` — primary for the 5 no-Bash cowork agents) / Path B (`scripts/narrative-truth-gate.sh`, unchanged, TNB-only per brief §6 R-5) contract, replacing the old single-path bash-exit-code invocation. Swapped the 5 T3 anchors named in brief §3.4 — `fb-market-poster/flow/daily.md` STEP 4d, `unified-agent/flow/chef-dish.md` Rule AF-3, `market-watcher/flow/cycle.md` Step 4f, `alert-commander/flow/stage-dispatch-log.md` Step 4a-pre, `digest-predict/flow/daily-predict.md` P-5.5 — from `GATE_EXIT = skill ...` (bash exit-code idiom, 0/1/2) to `GATE_VERDICT = call_tool(...)` (text-verdict idiom, PASS/FAIL(N)/CONFIG_ERROR), relabeling only the invocation call + the 3 outcome-bullet headers. Self-correct protocol steps and time-sensitivity override prose left byte-identical in all 5, per brief §3.4 ("anchor points... already correct and do not move"). `tran-ngoc-bau/flow/audit-market.md` (Path B/TNB) deliberately untouched.
+
+**Scope note:** original T3 wiring (2026-07-11) also touched `fb-market-poster/main.md` + `unified-agent/chef.md`, but a later split (TE-T26/TE-T16, 2026-08-06) moved the live anchors into `daily.md`/`chef-dish.md` — confirmed via live grep across `docs/agents/**` for the current anchor locations, not the stale commit paths. `qa-responder/flow/cycle.md` + `digest-predict/flow/{daily,weekly,monthly}.md` also reference this skill but were never part of T3's/brief §3.4's named 5 — left untouched (still functionally correct post-edit, they only pointer-reference the skill, no local stale exit-code prose).
+
+**Verified:** re-ran `CCATO-MCP-T6-TOOL-REGISTRATION.test.ts` (10/10 pass, 16 expect calls) confirming the tool this task now documents as primary is intact. No `apps/mcp-server/` source changed this task, so the G12 two-gate (bun test / tsc / tool-count / scheduler-count) does not apply — doc-only change, zero code delta.
+
+**NOT shipped this pass (explicitly out of scope):** `docs/agents/tools/list/INDEX.md` + `narrative_truth_gate.md` stub regen — flagged by T6 as agent-father's exclusive zone, a separate follow-up. Path A's own full (a)-(e) DoD replay is CCATO-MCP-T8's scope (in `ready[]`, not started per dispatch instruction).
+
+**Board:** `in_progress[]` → `review[]` (`status:REVIEW`, `next_agent:qa`) via `orch-apply.sh`, `.head` reset idle in the same write.
+
+**Evidence:** commit (SKILL.md + 5 flow files, explicit pathspec) + decision-journal STEP `dev-mcp-server-S3` in `sprint-SPRINT-CCATO-TRUTHGATE-MCP-NATIVE-dev-mcp-server.md`.
+
+Zone health: no code touched, all 5 named anchors verified present + swapped via post-edit grep, TNB/Path B correctly left alone (R-5), stale-path scope confusion (main.md/chef.md vs daily.md/chef-dish.md) caught before editing rather than after | HEALTHY.
