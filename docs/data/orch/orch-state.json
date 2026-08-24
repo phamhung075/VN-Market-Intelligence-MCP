@@ -2737,24 +2737,6 @@
         "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Folded into FIX-CHEF-VNM-TECHNICAL-INDICATOR-CONTRADICTION-10X-AND-GATE-FIRES-ON-AGREEMENT (all 60 are chef/VNM, one claim, one ticker). Archiving on schedule is correct."
       },
       {
-        "id": "sys-20260823T224924-0b1c",
-        "ts": "2026-08-23T22:49:24Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "Auditor blind-spot: cannot detect launchd failures tier-1 probe checks for",
-        "severity": "CRITICAL",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T04:00Z",
-        "dedup_key": "auditor_coverage_gap:launchd_dimension:tier1",
-        "triaged_at": "2026-08-24T14:29:30Z",
-        "triaged_by": "po",
-        "disposition": "REHOUSED-TO-ROW -> task_board.backlog[].id==FIX-AUDITOR-BLINDSPOT-LAUNCHD-DIMENSION-NOT-OBSERVABLE-BY-SPAWNED-SUBAGENT",
-        "po_triage_note": "[po 2026-08-24T14:29Z RE-VERIFIED before cold-evict] Coverage re-resolved as jq PATHS under task_board (bare-grep/.id== false-positives on telemetry findings that share task-row id shape). Owner: .task_board.backlog[519] FIX-AUDITOR-BLINDSPOT-LAUNCHD-DIMENSION-NOT-OBSERVABLE-BY-SPAWNED-SUBAGENT — resolved, on-topic, present in git HEAD. Status flipped READ->triaged: triaged is a PO-terminal disposition in TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:181) exactly like READ, so eviction behaviour is unchanged and nothing is stranded. Transport defect that made READ mean 'delivered to nobody': .task_board.backlog[525] FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z, which nothing reads — per standing rule against invented timestamped field names): Rehoused into FIX-AUDITOR-BLINDSPOT-LAUNCHD-DIMENSION-NOT-OBSERVABLE-BY-SPAWNED-SUBAGENT."
-      },
-      {
         "id": "sys-20260824T004111-4a12",
         "ts": "2026-08-24T00:41:11Z",
         "from": "system-auditor",
@@ -3432,8 +3414,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-24T23:02:18Z",
-    "_updated_by": "po (triage-20260824T2258Z: BIZCTX sign-off + 3 mints + 8 folds)",
+    "_updated_at": "2026-08-24T23:10:43Z",
+    "_updated_by": "po (PUSH-BACKSTOP: red pre-push gate mint + launchd corroboration fold)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12791,9 +12773,10 @@
         "blocks": [],
         "why_this_matters": "The parent row FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD is signed off on met acceptance, but its root cause is NOT definitif. The ops decision journal records only `old log files had corrupted state preventing launchd from opening them for writing during exec setup` — established by delete-and-retry, never by identifying the mechanism. Two facts keep the door open: (a) the pre-death fleet-push.log.bak is 507845 bytes with last write 2026-07-03, which is exactly when the 19-day dark window began; (b) the live log is already 42013 bytes after 9.4 days (~4.5 KB/day) with NO rotation anywhere in scripts/fleet-worktree-push.sh or the plist, so it re-enters the same size band in roughly 3-4 months. If size is the driver this recurs on a timer; if it is not, we still do not know what is. Severity is medium, not high, ONLY because FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN now makes a recurrence loud instead of silent.",
         "acceptance": "Either (a) prove the EX_CONFIG mechanism (reproduce a launchd StandardOutPath open() failure against a controlled log file and name the actual trigger — size, xattr, quarantine, fd state), or (b) if it cannot be proven, install a bounded log-rotation guard so the condition cannot regrow: fleet-worktree-push.sh truncates/rotates fleet-push.log and fleet-push-error.log above a documented byte cap as its FIRST action, with the cap as a named tunable next to PUSH_THRESHOLD in the header block. Either way a regression test must cover it. Also sweep the sibling repo-tracked LaunchAgents for the same unrotated-stdout shape rather than fixing this one job in isolation.",
-        "updated_at": "2026-08-23T21:08:14Z",
+        "updated_at": "2026-08-24T23:10:44Z",
         "updated_by": "po",
-        "status_note": "\n\n[po/triage-2026-08-23T21:08:06Z — PREMISE CORRECTION, DO NOT DISPATCH THIS AS TONIGHT'S PUSH FIX] Tonight's fleet-push block (ahead=46, behind=0, reason=push-fail) is NOT caused by log rotation and NOT by a launchd ExitConfig/plist defect. PO proved the real cause this tick: the pre-push hook's size-lint gate rejects apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts at baseline=228L actual=252L upper=250L (`wc -l` verified 252 live). tsc passes. Now tracked at FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (P0, apps/mcp-server/, next_agent=dev-mcp-server). THIS ROW'S OWN SCOPE IS UNCHANGED AND STILL VALID as written — the log has no rotation and its EX_CONFIG root cause was never proven — but it is a latent-regrowth hygiene item, not the live blocker, and dispatching it tonight would move nothing. Kept open at its existing priority; re-read this note before claiming it."
+        "status_note": "\n\n[po/triage-2026-08-23T21:08:06Z — PREMISE CORRECTION, DO NOT DISPATCH THIS AS TONIGHT'S PUSH FIX] Tonight's fleet-push block (ahead=46, behind=0, reason=push-fail) is NOT caused by log rotation and NOT by a launchd ExitConfig/plist defect. PO proved the real cause this tick: the pre-push hook's size-lint gate rejects apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts at baseline=228L actual=252L upper=250L (`wc -l` verified 252 live). tsc passes. Now tracked at FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (P0, apps/mcp-server/, next_agent=dev-mcp-server). THIS ROW'S OWN SCOPE IS UNCHANGED AND STILL VALID as written — the log has no rotation and its EX_CONFIG root cause was never proven — but it is a latent-regrowth hygiene item, not the live blocker, and dispatching it tonight would move nothing. Kept open at its existing priority; re-read this note before claiming it.",
+        "po_fold_20260824T2310Z": "CORROBORATED — the regrowth this row predicted HAS HAPPENED. `launchctl list | grep vn-market` at 2026-08-24T23:10Z returns only com.vn-market.docker-events, docker-cleanup, socat-tls-bridge and cowork-guaranteed-slot-firer. `com.vn-market.fleet-push` is NOT LOADED. Its log docs/agent-memory/sessions/fleet-push.log last wrote 2026-08-24 14:13 local and the tail is 15 consecutive `[fleet-push] ABORT: git push ... failed` lines. So the silent-death condition is live again and the fleet's only scheduled push actuator is not running — every push since is opportunistic/agent-invoked. Note this is SEPARATE from, and not fixed by, the current red pre-push gate: see FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS. Fixing the gate without reloading the plist leaves the backlog draining only when an agent happens to run the script by hand."
       },
       {
         "id": "FIX-DRAIN-PAYLOADREF-UNBOUNDED-INLINE-SIZE-GATE",
@@ -17978,6 +17961,37 @@
         ],
         "depends_on": [],
         "discovered_by": "cowork-team 20:15Z tick self-audit (envelopes 10692a4a + d7391475); routed by po triage 2026-08-24T22:58Z"
+      },
+      {
+        "id": "FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-08-24T23:10:43Z",
+        "created_by": "po/triage-20260824T2258Z",
+        "updated_at": "2026-08-24T23:10:44Z",
+        "dedup_key": "prepush-gate-red:size-lint|file:apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+        "title": "Pre-push size-lint is RED on bctcScalarAggregator.ts by ONE line (baseline=1096 tol=109 upper=1205, actual=1206) — the fleet's only push actuator aborts every run and 117 commits are stranded on local main",
+        "desc": "MEASURED LIVE, not inferred: PO ran the sanctioned backstop `bash scripts/fleet-worktree-push.sh` at 2026-08-24T23:09Z. tsc gate PASSED, behind=0, then `[size-lint] FAIL — 1 offending file(s) (scanned 1431): apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts — baseline-tolerance-exceeded (baseline=1096L actual=1206L upper=1205L)` -> `[pre-push] BLOCKED` -> push aborted, 117 commits still unpushed. The gate's rule (scripts/audits/size-lint-justification.sh:118-121) is upper = baseline + max(baseline/10, 5) = 1096 + 109 = 1205. The file is at 1206. ONE LINE over.\n\nROOT CAUSE IS NAMED AND IS TODAY'S WORK: the last commit to touch that file is 28f8509fc (2026-08-24) 'fix(bctc): salvage orphaned worktree agent-ae9ed2cd6f04b3686 — HPG general-bucket scalar fallback + PARTIAL reflow eligibility'. That commit belongs to CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS, which is DONE_VERIFIED. A row signed off as verified pushed the pre-push gate red and nothing caught it — the salvage was verified on its own content, never against the gate its content had to pass.\n\nTHIS IS THE SERIAL PATTERN, do not treat it as a one-off (see po memory feedback_serial_sizelint_offender_read_as_false_done_verified_closure): the same log shows the PREVIOUS blockers were tasksMdJanitorJob.ts (1012L) and ocr_gateway.py (594L); both are now well under (472L / 515L) and this third file tripped immediately behind them. Each fix uncovers the next offender, so 'size-lint green' must be re-measured at fix time, never assumed from a prior pass.\n\nSECOND, SEPARATE BLOCKER ON THE SAME PATH — even a green gate will not help until this is fixed: `com.vn-market.fleet-push` is NOT LOADED in launchd. `launchctl list | grep vn-market` returns only docker-events, docker-cleanup, socat-tls-bridge and cowork-guaranteed-slot-firer. Its log docs/agent-memory/sessions/fleet-push.log last wrote 2026-08-24 14:13 local. So the authoritative 30-min push trigger is dead and the only pushes happening are opportunistic agent-invoked ones. Folded as corroboration onto FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE, which predicted exactly this regrowth.",
+        "acceptance": "AC-1 `bash scripts/audits/size-lint-justification.sh` (or the pre-push gate) returns 0 offenders on a clean HEAD — RE-MEASURE at fix time, do not trust this row's count, because the serial pattern above means a 4th offender may surface the moment this one clears. AC-2 PREFER trimming bctcScalarAggregator.ts back under 1205L over re-baselining: 1206 lines in one aggregator is real debt and the baseline exists to ratchet it down, not to follow it up. If re-baselining is chosen anyway it must be a written decision naming 28f8509fc as the cause and stating why the added lines cannot live elsewhere — a silent bump of docs/data/size-lint-baseline.json is rejected. AC-3 `git rev-list --count origin/main..HEAD` drops to 0 (or under the 20 threshold) after the fix, proving the fleet actually drained — a green gate that nobody pushes through does not close this row. AC-4 add the pre-push gate to the DONE_VERIFIED bar for any row whose commit touches a file with a size-lint baseline entry; the salvage row above passed its own AC while turning the fleet's push path red.",
+        "files": [
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "docs/data/size-lint-baseline.json",
+          "scripts/audits/size-lint-justification.sh"
+        ],
+        "baseline_pass": false,
+        "related_to": [
+          "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
+          "FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE",
+          "FIX-FLEET-PUSH-THRESHOLD-20-DESIGNS-IN-A-20-COMMIT-UNPUSHED-WINDOW",
+          "FIX-TASKCLAIM-LINT-LINEMOVED-GRANDFATHER-MISS-REDS-PREPUSH-STRANDS-FLEET"
+        ],
+        "depends_on": [],
+        "discovered_by": "po Step PUSH-BACKSTOP, live `bash scripts/fleet-worktree-push.sh` run 2026-08-24T23:09Z (abort signal docs/signals/fleet-push-abort-push-fail-20260824T230902Z.json)"
       }
     ],
     "closed_sprints": [
@@ -21085,32 +21099,6 @@
             "observed_at": "2026-08-24T18:34:35Z"
           }
         }
-      },
-      {
-        "id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
-        "type": "FIX",
-        "title": "chef.md gathers processed/bctc_signal_* biz-context (c112 auto-cure) but never plumbs it into per-ticker conviction_calls rationale — BIZ_CTX_OK still evaluates false; wire GATHER->Steps 4-7.5",
-        "status": "DONE_VERIFIED",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "po_goahead_20260814T042125": "RATIFIED AT SOURCE, not on the relay. Deliverable exists: docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md, 32085 bytes, provenance real (f5872a52a BA spec + 917c93759 architect ratification), § [Architect] Brownfield Findings present at :319. PO independently re-read ALL 10 corrected line anchors against the live files rather than trusting the table: chef.md:145 (FR-0a anchor text verbatim, inside the 137-151 AUTO-CURE comment), :162 fundamental_* TRANSITION line with blank :163 and 'Supplementary calls' :164 exactly as mapped (FR-1); chef-dish.md:475-476 (FR-0b), :24-25 session-state handoff (FR-2), :116 pillar table row + :122 confidence-scoring bullet end before blank :123 / '**Volatility & Breadth Context**' :124 (FR-3), :294 carry/FII provenance bullet before :295 'Store all chain sentences' (FR-4), :443 Citation Discipline (FR-5), :535-537 BIZ_CTX_OK 3-line block (FR-6), :648 rationale_one_liner before :649 closing brace (FR-7 schema), :685 'Extract conviction calls from Step 4' (FR-7 impl). ALL MATCH. Independently re-derived the one load-bearing implementability claim rather than accepting it: ANY_LAYER_PARTIAL at :540-544 does contain 'OR (BIZ_CTX_OK relied on a gap token)' at :542, and it stays computable after FR-6's rewrite via the new definition's 2nd OR-branch — architect's claim holds. Drift re-checked: last commit touching either file is still c31ee006e, the exact commit architect named as the drift source, so the corrected map is current as of HEAD 774c84f85. BLOCKER Q1 / EC-5: PO does NOT exercise the veto BA reserved. Architect's ruling is right — force-widening ticker coverage to manufacture a BIZ_CTX citation would conflate a data-availability gate with a publish-scope decision, a strictly worse failure than the one this row fixes; FR-3's opportunistic-only clause already implements the safe default. Any later objection is a follow-up FR against FR-3, never a rework of FR-0/1/2/4/5/6/7. AGENT-FATHER: anchor on the QUOTED TEXT, not the numbers (architect risk-flag R1).",
-        "po_goahead_20260814T203645": "Ratified at source 2026-08-14: read chef.md/chef-dish.md live (FR-0..7 present verbatim), bctc_signal_DXG_20260814_routine.json (valuation.verdict=AVOID confirmed), and all 4 synthesis JSONs (business_context_cited=null 3/3 post-fix dishes). Not a relayed verdict. Proceed with FR-8 widening.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
-        "updated_at": "2026-08-24T23:02:19Z",
-        "owner": "po",
-        "updated_by": "po",
-        "closed_at": "2026-08-24T23:02:18Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "jq (raw read of docs/data/unified-agent-synthesis-2026-08-24-evening.json) + mcp__gateway__call_tool(vn-market, get_sector_comparison)",
-            "args": "{\"file\":\"docs/data/unified-agent-synthesis-2026-08-24-evening.json\",\"jq\":\".known_gaps, .conviction_calls\"} ; {\"code\":\"VCB\"}",
-            "live_value_observed": "known_gaps = [L2_carry_regime_only, L3_CPI_VIRA_gaps, L5_kinhdich_unavailable] — NO [gap:business_context_absent]. conviction_calls[2] VCB.business_context_cited = {field:mgmt, text:'ROE 16.7% sector-annualized, below 17.6% sector median; largest SOE bank by market cap, stable profitability', source:'bctc_signal_VCB_20260824_routine.json'}; rationale_one_liner itself cites 'ROE 16.7% vs sector 17.6%'. Independent live get_sector_comparison(VCB) at 2026-08-24 22:56 UTC returned ROE 16.7% vs median 17.6% (DUOI MEDIAN) and PE 14.1 vs 9.0 (PREMIUM +57%) — exact match to both the cited text and the source signal file's own ops/mgmt fields.",
-            "observed_at": "2026-08-24T23:02:18Z"
-          },
-          "gate_text": "A subsequent chef evening/morning dish persists known_gaps[] WITHOUT [gap:business_context_absent] AND >=1 conviction_calls[] rationale cites a product/customer/ops/mgmt fact traceable to a bctc_signal_*/fundamental_* signal read that cycle (RAW-verify the synthesis JSON, not the notebook self-report).",
-          "gate_met_by": "docs/data/unified-agent-synthesis-2026-08-24-evening.json, metadata.timestamp_utc=2026-08-24T19:49:27Z, cycle_id=evening-2026-08-24T19:45Z, committed 4fbd578cb"
-        },
-        "po_signoff_20260824T2258Z": "DONE_VERIFIED. Four-way corroboration, no relayed verdict: (1) the 2026-08-24 evening dish's known_gaps[] carries NO [gap:business_context_absent] — the exact token this row was minted on; (2) VCB's conviction_call carries a populated business_context_cited naming bctc_signal_VCB_20260824_routine.json; (3) that source file exists on disk and its own ops field reads 'ROE 16.7% duoi trung vi nganh ngan hang 17.6%' — so the cited text is a real traceable ops/mgmt fact, not the generic sector language this row recorded three times (VCB 08-06; VCB+DXG 08-07; occurrence_count 3 at P0 on 08-11); (4) an INDEPENDENT live get_sector_comparison(VCB) probe run at sign-off time returns the same ROE 16.7%/17.6% and PE 14.1/9.0 figures, so the citation is corroborated outside the chef pipeline entirely. FR-0..FR-7 are present at HEAD (chef-dish.md:702 BIZ_CTX_OK = >=1 conviction_call has business_context_cited != null; :710 ANY_LAYER_PARTIAL 'OR (BIZ_CTX_OK relied on a gap token)'; :774 the gap-token append) — landed c11504775 / 5829a7ad2, FR-8 5077a5d89. tran-ngoc-bau c134 independently raised the precondition as met (handoff Persisting-blocker #3: both of today's dishes cite >=1 business_context). ROOT CAUSE CLOSED: gathered biz-context now reaches per-ticker conviction_calls on BOTH dishes — that was the entire deliverable. SPLIT OUT rather than reworked here: the 08:52Z EOD dish emits [gap:business_context_absent] while its own VCB conviction_call carries a non-null business_context_cited — a self-contradiction against the landed :702/:774 definition, i.e. the gate is narrated on that path instead of evaluated from the array the same run just wrote. Different defect (token/state desync at Step 7.5, not a GATHER->rationale wiring gap), filed as FIX-CHEF-EOD-BIZCTXOK-GATE-NARRATED-NOT-EVALUATED. Reopening this P0 for it would re-litigate criteria that are demonstrably met."
       }
     ],
     "head": {
