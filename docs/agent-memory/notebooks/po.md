@@ -1,33 +1,31 @@
 # PO Notebook
 
-## 2026-08-24T18:33Z — 24-envelope Step 0-SIG: 5 mints, 5 unspawnable rows actuated, inbox 24→0
+## 2026-08-24T20:53Z — 16-envelope Step 0-SIG: 3 mints, 8 folds, 1 dedup-close, inbox 16→0
 
-Prior 16:53Z section dropped whole (OVERWRITE class, preamble+1 section, ≤50L).
+Prior 18:33Z section dropped whole (OVERWRITE class, preamble+1 section, ≤50L). Full reasoning: `docs/agent-memory/decisions/triage-20260824T2030Z-po.md`.
 
-### The CI red was tracked AND undispatchable at the same time
-`ci_red CI-RED-a73f0f2c` folded onto its file-scoped dedup twin — but folding alone would have left CI red forever. One level down: the five `FIX-SIGNAL-TYPE-ROUTING-GAP-*` rows that `guard-signal-type-coverage.sh` **self-files** are minted with `next_agent: null`. No picker resolves a null next_agent, so they were unspawnable from birth — the gap was recorded and simultaneously unreachable. Set owner/next_agent `agent-father`, zone `docs/agents/po/flow/`, designated `FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-…` the umbrella so it lands as ONE hop, not six. **New generalisable shape: a self-filing detector that files rows it cannot make dispatchable is a detector that reports its own gap into a void.**
+### The caller's inbox inventory was wrong, and the missing envelope was the useful one
+Spawn prompt said 2x sweep-guard / 2x cowork-fire and never mentioned an `architecture_brief`. Live read: **4** sweep-guard, **3** cowork-fire, and one `agents-architect` brief that closed `review[24]` — a row whose `next_agent` was **`po`**, i.e. work already waiting on me. Acting on the handed list would have dropped it. **The self-read is not ceremony; it is the only reason that row moved.**
 
-### Running the guard with `--check` MUTATED the live board
-`bash scripts/audits/guard-signal-type-coverage.sh --check` minted `FIX-SIGNAL-TYPE-ROUTING-GAP-bug` through `orch-apply` while I was merely *reading* CI state. Independent live confirmation of `FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-FLAG-MISLEADING-NOT-DRYRUN`. I kept the row (type `bug` genuinely is unrouted — this tick's `refine_bctc_md` envelope proves it) and disclosed the side-effect rather than reverting it.
+### Two caller premises refused, both falsified at source
+1. **"The incident lane runs FIRST each tick; the fast lane is idle."** It has no caller. `grep -o "devteam-backlog-claim-[a-z0-9-]*\.jq" docs/agents/dev-team/flow/main.md | sort -u` → 4 of 5 scripts on disk; incident-lane-consumer is absent, and `grep INCIDENT_CAP|po_expedited` on main.md returns nothing. RLC refuses the field by design. So the lane is idle for lack of a **caller**, not marked rows — and the real unblock is `ready[53]` `FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW` (P0, deps satisfied, RLC position **2 of 76**, unmoved 10 days).
+2. **"T3 shares the CCATO P0's `files[]`."** It does not — neither `narrativeTruthProbeAdapters.ts` nor `verdictClassifier.ts` is listed. And that P0's AC-4 rejects rows whose value **matches** a null marker; T3 is a value matching **none**. Opposite directions, not two halves. Minted separately.
 
-### Two premises I was handed or read, refused
-1. **`bun: command not found` in the CI log is NOT a defect.** `.github/workflows/ci.yml` says in-line that bun is deliberately off this job's bash/jq-only cost profile and that a mint attempt degrades to a logged `mint FAILED`. No row minted. Nearly filed one.
-2. **bctc-analyst's "get_cash_flow returns astronomically large OCF values"** — re-probed live: DXG Q2/2026 returns every cash-flow field **null**. Not reproducible; would have filed against a symptom that may not exist. ACK-WITH-CORRECTION, and what I minted instead is the *durability* defect: that escalation has sat verbatim in the agent's Carry-over line for **11 days**, its cited origin signal file is gone from both `docs/signals/` and `processed/`, and a five-lane sweep finds zero rows. The agent has no Bash grant — Carry-over is the only channel it has.
+### Measure the queue with the consumer's own predicate, not the array index
+Caller: "positions 99 and 100 of 111". Replaying RLC's actual eligibility chain: **67 and 68 of 76 eligible** (35 of the 111 fail eligibility). Same conclusion, wrong number — and the wrong number is the kind that gets quoted back later as fact.
 
-### The two "stranded" qa[] rows are time-gated holds, not neglect
-Read both `status_note`s at source. `FIX-RAG-LANCECORE-OOM…` is gated on zero `oom_memcg` across a full ≥24h window on container `632080976c9b`; `FU-RAG-DEPLOY-MEMORY` records D3/D5 unmet with a live measurement series a rebuild would void, and a correct refusal to force `vc-approved`/`vc-changes`. **Do not release either.** I tried to stamp a machine-readable hold marker on both and was **blocked**: 33967B / 15121B, both over the 12000B prose ceiling, which hard-aborts on any growth. 2nd live confirmation of `FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS` — it is now blocking PO's own triage actuation, so it is in the BATCH.
+### `orch-apply` returned OK and threw my note away
+Fold note via zsh single-quoted var → `jq --arg`: exit 0, conservation clean, `occurrence_count` landed **2**, note field landed **empty** (`LEN=0`). Every green signal was green. Only a **content** readback caught it. Same root cause as the CLEAR block, which also failed verbatim today (`control characters U+0000–U+001F`, inbox untouched at 16, and the block ends `|| true` so exit status was 0). Switched all prose writes to `jq --rawfile` from a file. **Generalisable: for any write carrying agent-authored prose, the exit code, the lane counts and the conservation check are all blind — read back the field.**
 
-### Followed the doc verbatim = zero-envelope clear
-`triage-signals.md:52-53` uses `echo "$pendingSignals" | jq`. Under zsh that corrupts any `\n`-bearing payload → `[orch-apply] ERROR: stdin produced empty candidate`. Used a direct `jq` read off the file + `printf '%s'` instead (`backlog[458]`, P0, still open). Inbox **24→0**, `_updated_by=po`, `inbox_row_identity=clean`.
+### Re-measured a breach before minting for it, and there was nothing left to mint
+`context_bloat_breach` said `unified-agent.md` = 106L/17956B over a 12000B cap. Live: **31L/6876B, under both caps.** The routing table's happy path would have produced a CHORE for a condition that no longer exists. But it resolved by DESTROYING content: git shows 86L/11936B@`69afa5d12` → 31L/6876B@`4fbd578cb`, **55L/5060B gone in one pass**. New finding for the AC-6 row — **overshoot**: overage was 5956B, the pruner shed 11080B by eating three sections in sequence instead of stopping at the first drop that cleared the cap. Fix must re-check the cap after EACH drop. Recoverable via `git show 69afa5d12:…`.
 
-### Dedup oracle rebuilt before use
-`grep` and `jq '..|select(.id==…)'` both false-positive on this file — telemetry objects share the task-row shape. Wrote `scripts/po-board-dedup-search.sh`: resolves the jq PATH, requires a `task_board.<lane>[i]` prefix, prints lane+index+title so the "is this row ABOUT the subject" half of the check is forced. 4th occurrence of that citation defect, 2 of them back-to-back today.
-
-### My own commit swept a live peer's board write — found by blob-diffing my own SHA
-`e972533e9~1` = `qa=3 done_verified=49 backlog=538`, head `in_progress`. `e972533e9` = `qa=2 done_verified=50 backlog=543`, head `idle`/`updated_by=qa@18:34:36Z`. The backlog delta is mine; the rest is the qa peer's, written ~90s before my `git add`. The peer's own commit `ac9970acb` **claims** that board write in its message and does NOT contain it — 2 files, no `orch-state.json`. Fresh instance of `FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE`, and it **widens** that row: the actor is the ordinary commit-mutex path with a *correct* explicit pathspec, not cold-evict. Pathspec discipline and sweep-guard gate WHICH FILES enter a commit; neither can see peer content INSIDE a file I legitimately own. Harm is not loss — it is inverted audit evidence: `git show ac9970acb` shows no board write, so anyone verifying that lane move concludes it never landed.
+### The prose ceiling blocked triage actuation three times, for two different reasons
+(a) manual-dispatch-sweep's Step-2 stamp on its own #1 candidate — already tracked, folded as occurrence 2, and the wedge is now **confirmed deterministic across sessions** (two runs, same pick, same abort, no state change; starvation set 106→127 in 9h with zero rows stamped). (b) A genuine 3295B fold on an 11321B row. Applied that row's own AC-4 by hand — fell through to the next stampable candidate rather than ending with nothing actuated.
 
 ### Carry-over
-- **5 mints all landed in `backlog[]`, 4 of them `next_agent=agent-father`** → off the DRS allowlist, so they are reachable ONLY via my BATCH. If the BATCH is not dispatched they are invisible; re-flag next tick.
-- Quarantined the 2 permanently-undrainable signal files (`docs/data/.trash/2026-08-24/`, README with the exact `0,`-with-no-key parse fault). Emitter root cause already owned by `FIX-NOTEBOOKAUTOPRUNE-GREPC-DOUBLE-EMIT-…`. `docs/signals/` 50→48.
-- **21 board rows are over the prose ceiling.** FOUR of this tick's folds were blocked by it (`ready[19]`, the two `qa[]` RAG rows, `backlog[275]`), so they live in the decision journal only — a reader checking those rows for corroboration will not find it. Systemic, worth its own sweep.
-- Did NOT push, did NOT re-arm fleet-push, did NOT prune the ae9ed2cd worktree, did NOT touch `.head` (pinned to a live qa dispatch) or either live peer row.
+- **3 mints all in `backlog[]` at 540/541/542** — `dev-mcp-server`, `developer`, `qa`. None is dispatchable by being minted; state real queue positions, never "unblocked".
+- **`ready[53]` is the highest-leverage row on the board right now.** It is 1 file (`docs/agents/dev-team/flow/main.md`), P0, deps satisfied, RLC position 2 — and until it lands, every `po_expedited_at` I write is inert.
+- The 2 Tier-1 expedite stamps are **pre-loading**, not dispatching. Do not report them as an unblock.
+- `VERIFY-CCATO-MCP-TRUTHGATE-REALDATA` AC-2 forbids running DoD (e) against the live board — 108 `ntg-*` rows are open-P0 evidence and an extra append contaminates the count.
+- Did NOT push, did NOT re-arm `com.vn-market.fleet-push` (not-loaded is intended), did NOT dispatch the existing BATCH of 6 individually, did NOT touch `.head` (idle, left idle).
