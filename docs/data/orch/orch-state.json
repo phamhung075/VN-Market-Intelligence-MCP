@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-24T17:52:27Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-24T18:34:36Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14006,8 +14005,9 @@
         "acceptance_criteria": "Inherits the parent's AC-1/AC-2/AC-3 verbatim plus: AC-4 any day with 2+ non-silent intraday fires surfaces every non-silent cycle's synthesis on disk (no first-write-wins drop, no last-write-clobber); AC-5 exactly ONE filename convention exists per artifact family after the change -- chef.md:103's SLOT_ID domain and chef-dish.md:737/740's FILEPATH example must agree, and the two live 2026-08-13 shapes (unified-agent-synthesis-2026-08-13-intraday.json vs -chef-intraday.json) must not both remain producible. AC-3 is ALREADY CLOSED by confirmed NO-OP (drain-signals.js fingerprint excludes the basename, re-verified at lines 251-252 on 2026-08-14) -- no drain-signals.js code change is in scope.",
         "out_of_scope": "FR-4 (tran-ngoc-bau write-serialization) -- descoped by Amendment 1, owned by the GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS chain. EC-2 chef-intraday marker-key UTC-hour migration -- owned by FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION; Phase 1 ships VN_HOUR verbatim.",
         "supervised_note_history": "The parent's 'no code ships without parent re-adjudication by PO' gate is DISCHARGED for this row by po_phase1_readjudication_20260814T2101Z on the parent. plan_only and supervised are deliberately FALSE here -- that discharge is the whole purpose of this row.",
-        "updated_at": "2026-08-14T21:05:14Z",
-        "updated_by": "po (Phase-1 re-adjudication)"
+        "updated_at": "2026-08-24T18:32:06Z",
+        "updated_by": "po (Phase-1 re-adjudication)",
+        "status_note": " | [po 2026-08-24T18:29:19Z] CORROBORATION FOLDED, no new row (bug-escalation envelope e2037d2c, cowork-team, 2026-08-24T15:15:30Z): the bctc leg of this Phase-1 spec now has OBSERVED, not inferred, evidence of live data loss. bctc-analyst fires 4x/day (cron 0 15,18,21,0 UTC) all in mode=routine, and the filename template bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json is date-only, so all four daily cycles write the SAME basename per ticker. scripts/agents-flow/drain-signals.js:260 sets dest = path.join(PROC, base) with NO collision guard; the -replay.json suffix at :257 fires only on a duplicate FINGERPRINT (sha256 over from+type+payload+createdAt), and the content differs every cycle, so that branch is never taken. Git proves the overwrite: docs/signals/processed/bctc_signal_VCB_20260823_routine.json has FOUR commits on 2026-08-23 (47d74a8eb 00:17Z, a8fae8137 15:07Z, c4ac9c5d0, f13fa173a 21:07Z), one per cycle, same path rewritten each time; the 08-22 file has two (e98049c69, 9aef86e43). Zero replay files present. Blast radius is BOUNDED: the SQLite signals_processed row survives per fingerprint (drain-signals.js:304) and the durable inbox batch is intact, so ROUTING is not lost -- what is lost is the on-disk forensic copy, so any reader treating docs/signals/processed/ as the day record sees 1 of 4 cycles. Suggested fix confirms this spec's own direction: bctc_signal_{TICKER}_{YYYYMMDDTHHMMSSZ}_{mode}.json, matching what bctc-analyst ALREADY does for escalation signals; template change only, 5 doc sites (docs/agents/bctc-analyst/init.md:16/:85/:149, flow/stage-analyze.md:114, flow/stage-consolidate.md:64). A dest-exists collision guard in drain-signals.js is an optional second layer in the scripts/ zone, not required to close this."
       },
       {
         "id": "FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS",
@@ -16151,13 +16151,13 @@
         "priority": "P0",
         "created_at": "2026-08-23T18:07:39Z",
         "created_by": "po",
-        "updated_at": "2026-08-24T11:00:22Z",
+        "updated_at": "2026-08-24T18:32:06Z",
         "updated_by": "po",
         "check_id": "CI-RED-0c938085",
         "dedup_key": "ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md",
         "verification_gate": "ci_green_on_subsequent_push",
         "origin_signal_id": "fbf3660850e1a7911e902b232089df71c71580e3157ee5907d38d513792cf378",
-        "status_note": "CI IS RED ON THIS AND STAYS RED UNTIL THE TABLE ROWS LAND. Verified live by po 2026-08-23T18:00Z. Two Pipeline-A signal types sit in dev_team_idle_chain.pending_triage_inbox[] with no routing row in the Pipeline-A table of docs/agents/po/flow/triage-signals.md, so scripts/audits/guard-signal-type-coverage.sh fails the signal-type-coverage-guard CI job. Failing run 32655888564 (head ab5087296) log verbatim: 'FAIL - unrouted Pipeline-A types: [\"recurring-bug\",\"sprint_registry_dangling_ids\"]'. PO reproduced the same set independently by hand-replaying the script's two read-only extractors (pipeline_a_section + extract_type_column) WITHOUT executing the script: ROUTED_A=28, live types=13, unrouted={recurring-bug, sprint_registry_dangling_ids}.\n\nTYPE 1 - sprint_registry_dangling_ids (1 envelope, from orch-validate-stage1h, priority high). ROOT CAUSE IS A NAMING MISMATCH, AND THE PREVIOUS FIX ROW WAS CLOSED ON A FALSE GREEN. The emitter is scripts/orch-validate.mjs:862, which emits the literal string `sprint_registry_dangling_ids`. The routing table contains `sprint_registry_unresolved_journal_ids` - a DIFFERENT type from a DIFFERENT emitter (scripts/agents-flow/decision-journal-archive.sh AC-4). PO verified by grep: `sprint_registry_dangling_ids` returns 0 hits in BOTH docs/agents/po/flow/triage-signals.md AND triage-signals-longtail.md. Row FIX-SIGNAL-TYPE-ROUTING-GAP-sprint-registry-unresolved-journal-ids was CANCELLED 2026-08-23T14:40Z with the note 'verified already satisfied ... confirmed by grep on the live doc' - that grep was run against the name the ROW was given, not the literal the EMITTER produces, so it passed against a string that was never the problem. THE NEW ROW MUST USE THE EMITTER'S EXACT LITERAL, character for character, or this repeats a third time.\n\nTYPE 2 - recurring-bug (2 envelopes, from dev-team, priority low). SELF-INFLICTED CLOSED LOOP, NOT AN EXTERNAL PRODUCER. The literal type string is handed to authors by dev-team's OWN flow: docs/agents/dev-team/flow/main.md:162, the HEAD.lock-recurrence signal-envelope template. So the dispatcher emits a type its own routing table cannot route. dev-team self-reported this in bug-escalation envelope b4e5ec27: recurring-bug was verifiably ABSENT from the inbox at commit 0c9380859 (the SHA the earlier CI run tested) and PRESENT after the 2026-08-23T15:37Z tick - i.e. the second half of this CI red was created by the tick that reported it. Fixing the table row is necessary but not sufficient; the template at main.md:162 should either be changed to an already-routed type or the new row must be written to match it.\n\nSCOPE (mechanical, no design needed): add exactly two rows to the Pipeline-A table in docs/agents/po/flow/triage-signals.md, keyed on the emitters' exact literals. Suggested dispositions, both already exercised by PO this tick: `recurring-bug` -> dedup-check NON-TERMINAL LANES on payload.module/row_to_amend first; these envelopes routinely carry their own action_required (`amend_existing_row` / `mint_fix_task`) and a `row_to_amend` id - honour it, FOLD by default, mint only when no row_to_amend resolves. `sprint_registry_dangling_ids` -> payload.ids[] names sprint/task ids that Stage 1h found referenced in one plane but unresolvable in another; dedup on the id set, then either reconcile via the verify_sprint_registry_referential_integrity script named in action_required, or mint a CHORE owner=claude-manager-helper zone=docs/agent-memory/decisions/ (same disposition as the sibling sprint_registry_unresolved_journal_ids row directly above it).\n\nWHY THIS IS agent-father AND NOT architect/developer: docs/agents/** is agent-father's exclusive commit zone. dev-team named this explicitly in envelope b4e5ec27 ('Routing rows live in agent-father's exclusive zone, so dev-team cannot add them').\n\nRELATED, DO NOT DUPLICATE: (1) FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (backlog, P1) is the 17-day-old umbrella for this same file and already names recurring-bug in its 2026-08-08 scope widening - PO re-pointed it to agent-father this tick so both land in ONE hop. It could NOT absorb today's evidence inline: its prose is 34589B, far past ORCH_ROW_PROSE_CEILING_BYTES=12000, so any append hard-rejects at orch-apply.sh. That prose-freeze is exactly why this tighter row exists rather than a widening. (2) FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE (backlog, P1, architect, plan_only) owns the STRUCTURAL question - open producer namespace vs hand-maintained closed allowlist - and must not be collapsed into this tactical row. (3) TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY (review, P0) is the registry implementation.\n\nMEASUREMENT WARNING FOR WHOEVER VERIFIES THIS - READ BEFORE RUNNING ANYTHING. Do NOT verify by running scripts/audits/guard-signal-type-coverage.sh. It is NOT read-only: it writes the live orch-state.json via ORCH_APPLY_LIVE_FILE_OVERRIDE, and its `--check` flag is a no-op alias, NOT a dry-run, despite what its own header advertises (tracked as FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-FLAG-MISLEADING-NOT-DRYRUN, backlog P1). Proof from the failing CI log itself: after printing FAIL it attempted TWO auto-mints and both aborted only because `bun: command not found` on the runner - on a developer host with bun present those mints WOULD have landed. That auto-filer is the source of the undispatchable rows (zone set to a filesystem path, next_agent null) seen three times on 2026-08-23. Verify instead by hand-replaying the two read-only extractors, or by reading the CI job result on a later SHA. SECOND TRAP, INDEPENDENT: the guard derives its live-type set from the SAME pending_triage_inbox[] array PO's Step 0-SIG clears every cycle, so CLEARING an unrouted envelope turns the guard GREEN with the routing table untouched. Green-because-the-input-was-deleted is indistinguishable from green-because-fixed. PO therefore deliberately HELD BACK all 3 envelopes of these 2 types from this tick's inbox CLEAR (cleared 41 of 44) so CI stays honestly red until the table rows land. Do not clear them as a shortcut to green.\n\n[po/triage-20260824T1056Z] THE UNROUTED PIPELINE-A SET HAS GROWN 2 -> 9 IN 17 HOURS, AND MOST OF THE GROWTH IS A DIFFERENT SUB-CLASS THAN THE TWO TYPES THIS ROW WAS MINTED FOR. Re-derived by hand-replaying the guard's two read-only extractors (pipeline_a_section + extract_type_column) WITHOUT executing the script, exactly as the 18:07Z measurement did: ROUTED_A=28 unchanged, live inbox types=14, unrouted_A = [agent-output-contract-violation, auditor_cycle_missing, auditor_probe_anomaly, cron_fire_gap, db_integrity_breach, narrative_contradiction, recurring-bug, sprint_registry_dangling_ids, system_issue]. TWO SUB-CLASSES, DO NOT FIX THEM THE SAME WAY. (a) NO RULE ANYWHERE (4): recurring-bug and sprint_registry_dangling_ids (this row's original pair, still unrouted) plus agent-output-contract-violation and auditor_probe_anomaly. (b) RULE EXISTS BUT ON THE OTHER PIPELINE (5): narrative_contradiction, cron_fire_gap, db_integrity_breach and auditor_cycle_missing all have full Pipeline-B rows, and system_issue is the underscore twin of the routed hyphen system-issue. Sub-class (b) is a direct consequence of the deliberate per-pipeline scoping added 2026-08-22 (guard fix #2, 'a type routed on B does not count as routed on A') - correct as a detector, but it means every cross-pipeline type needs an explicit bridge row. The doc already carries TWO such bridges by hand (Pipeline-A system-issue, Pipeline-B audit-handoff), which is the pattern to follow or to replace. SCOPE GUIDANCE, unchanged in kind: adding 9 hand-written bridge rows is a tactical unblock; the structural answer stays with FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE (architect, plan_only) and TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY (review, P0). HOLD-BACK REPEATED AND WIDENED THIS TICK: PO cleared 55 of 82 inbox envelopes and deliberately HELD BACK all 27 whose type is in the unrouted set above (narrative_contradiction 10, cron_fire_gap 6, system_issue 3, recurring-bug 2, db_integrity_breach 2, sprint_registry_dangling_ids 1, auditor_probe_anomaly 1, auditor_cycle_missing 1, agent-output-contract-violation 1), so CI stays honestly red until the rows land. Clearing them would turn the guard green with the routing table untouched.",
+        "status_note": "CI IS RED ON THIS AND STAYS RED UNTIL THE TABLE ROWS LAND. Verified live by po 2026-08-23T18:00Z. Two Pipeline-A signal types sit in dev_team_idle_chain.pending_triage_inbox[] with no routing row in the Pipeline-A table of docs/agents/po/flow/triage-signals.md, so scripts/audits/guard-signal-type-coverage.sh fails the signal-type-coverage-guard CI job. Failing run 32655888564 (head ab5087296) log verbatim: 'FAIL - unrouted Pipeline-A types: [\"recurring-bug\",\"sprint_registry_dangling_ids\"]'. PO reproduced the same set independently by hand-replaying the script's two read-only extractors (pipeline_a_section + extract_type_column) WITHOUT executing the script: ROUTED_A=28, live types=13, unrouted={recurring-bug, sprint_registry_dangling_ids}.\n\nTYPE 1 - sprint_registry_dangling_ids (1 envelope, from orch-validate-stage1h, priority high). ROOT CAUSE IS A NAMING MISMATCH, AND THE PREVIOUS FIX ROW WAS CLOSED ON A FALSE GREEN. The emitter is scripts/orch-validate.mjs:862, which emits the literal string `sprint_registry_dangling_ids`. The routing table contains `sprint_registry_unresolved_journal_ids` - a DIFFERENT type from a DIFFERENT emitter (scripts/agents-flow/decision-journal-archive.sh AC-4). PO verified by grep: `sprint_registry_dangling_ids` returns 0 hits in BOTH docs/agents/po/flow/triage-signals.md AND triage-signals-longtail.md. Row FIX-SIGNAL-TYPE-ROUTING-GAP-sprint-registry-unresolved-journal-ids was CANCELLED 2026-08-23T14:40Z with the note 'verified already satisfied ... confirmed by grep on the live doc' - that grep was run against the name the ROW was given, not the literal the EMITTER produces, so it passed against a string that was never the problem. THE NEW ROW MUST USE THE EMITTER'S EXACT LITERAL, character for character, or this repeats a third time.\n\nTYPE 2 - recurring-bug (2 envelopes, from dev-team, priority low). SELF-INFLICTED CLOSED LOOP, NOT AN EXTERNAL PRODUCER. The literal type string is handed to authors by dev-team's OWN flow: docs/agents/dev-team/flow/main.md:162, the HEAD.lock-recurrence signal-envelope template. So the dispatcher emits a type its own routing table cannot route. dev-team self-reported this in bug-escalation envelope b4e5ec27: recurring-bug was verifiably ABSENT from the inbox at commit 0c9380859 (the SHA the earlier CI run tested) and PRESENT after the 2026-08-23T15:37Z tick - i.e. the second half of this CI red was created by the tick that reported it. Fixing the table row is necessary but not sufficient; the template at main.md:162 should either be changed to an already-routed type or the new row must be written to match it.\n\nSCOPE (mechanical, no design needed): add exactly two rows to the Pipeline-A table in docs/agents/po/flow/triage-signals.md, keyed on the emitters' exact literals. Suggested dispositions, both already exercised by PO this tick: `recurring-bug` -> dedup-check NON-TERMINAL LANES on payload.module/row_to_amend first; these envelopes routinely carry their own action_required (`amend_existing_row` / `mint_fix_task`) and a `row_to_amend` id - honour it, FOLD by default, mint only when no row_to_amend resolves. `sprint_registry_dangling_ids` -> payload.ids[] names sprint/task ids that Stage 1h found referenced in one plane but unresolvable in another; dedup on the id set, then either reconcile via the verify_sprint_registry_referential_integrity script named in action_required, or mint a CHORE owner=claude-manager-helper zone=docs/agent-memory/decisions/ (same disposition as the sibling sprint_registry_unresolved_journal_ids row directly above it).\n\nWHY THIS IS agent-father AND NOT architect/developer: docs/agents/** is agent-father's exclusive commit zone. dev-team named this explicitly in envelope b4e5ec27 ('Routing rows live in agent-father's exclusive zone, so dev-team cannot add them').\n\nRELATED, DO NOT DUPLICATE: (1) FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (backlog, P1) is the 17-day-old umbrella for this same file and already names recurring-bug in its 2026-08-08 scope widening - PO re-pointed it to agent-father this tick so both land in ONE hop. It could NOT absorb today's evidence inline: its prose is 34589B, far past ORCH_ROW_PROSE_CEILING_BYTES=12000, so any append hard-rejects at orch-apply.sh. That prose-freeze is exactly why this tighter row exists rather than a widening. (2) FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE (backlog, P1, architect, plan_only) owns the STRUCTURAL question - open producer namespace vs hand-maintained closed allowlist - and must not be collapsed into this tactical row. (3) TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY (review, P0) is the registry implementation.\n\nMEASUREMENT WARNING FOR WHOEVER VERIFIES THIS - READ BEFORE RUNNING ANYTHING. Do NOT verify by running scripts/audits/guard-signal-type-coverage.sh. It is NOT read-only: it writes the live orch-state.json via ORCH_APPLY_LIVE_FILE_OVERRIDE, and its `--check` flag is a no-op alias, NOT a dry-run, despite what its own header advertises (tracked as FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-FLAG-MISLEADING-NOT-DRYRUN, backlog P1). Proof from the failing CI log itself: after printing FAIL it attempted TWO auto-mints and both aborted only because `bun: command not found` on the runner - on a developer host with bun present those mints WOULD have landed. That auto-filer is the source of the undispatchable rows (zone set to a filesystem path, next_agent null) seen three times on 2026-08-23. Verify instead by hand-replaying the two read-only extractors, or by reading the CI job result on a later SHA. SECOND TRAP, INDEPENDENT: the guard derives its live-type set from the SAME pending_triage_inbox[] array PO's Step 0-SIG clears every cycle, so CLEARING an unrouted envelope turns the guard GREEN with the routing table untouched. Green-because-the-input-was-deleted is indistinguishable from green-because-fixed. PO therefore deliberately HELD BACK all 3 envelopes of these 2 types from this tick's inbox CLEAR (cleared 41 of 44) so CI stays honestly red until the table rows land. Do not clear them as a shortcut to green.\n\n[po/triage-20260824T1056Z] THE UNROUTED PIPELINE-A SET HAS GROWN 2 -> 9 IN 17 HOURS, AND MOST OF THE GROWTH IS A DIFFERENT SUB-CLASS THAN THE TWO TYPES THIS ROW WAS MINTED FOR. Re-derived by hand-replaying the guard's two read-only extractors (pipeline_a_section + extract_type_column) WITHOUT executing the script, exactly as the 18:07Z measurement did: ROUTED_A=28 unchanged, live inbox types=14, unrouted_A = [agent-output-contract-violation, auditor_cycle_missing, auditor_probe_anomaly, cron_fire_gap, db_integrity_breach, narrative_contradiction, recurring-bug, sprint_registry_dangling_ids, system_issue]. TWO SUB-CLASSES, DO NOT FIX THEM THE SAME WAY. (a) NO RULE ANYWHERE (4): recurring-bug and sprint_registry_dangling_ids (this row's original pair, still unrouted) plus agent-output-contract-violation and auditor_probe_anomaly. (b) RULE EXISTS BUT ON THE OTHER PIPELINE (5): narrative_contradiction, cron_fire_gap, db_integrity_breach and auditor_cycle_missing all have full Pipeline-B rows, and system_issue is the underscore twin of the routed hyphen system-issue. Sub-class (b) is a direct consequence of the deliberate per-pipeline scoping added 2026-08-22 (guard fix #2, 'a type routed on B does not count as routed on A') - correct as a detector, but it means every cross-pipeline type needs an explicit bridge row. The doc already carries TWO such bridges by hand (Pipeline-A system-issue, Pipeline-B audit-handoff), which is the pattern to follow or to replace. SCOPE GUIDANCE, unchanged in kind: adding 9 hand-written bridge rows is a tactical unblock; the structural answer stays with FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE (architect, plan_only) and TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY (review, P0). HOLD-BACK REPEATED AND WIDENED THIS TICK: PO cleared 55 of 82 inbox envelopes and deliberately HELD BACK all 27 whose type is in the unrouted set above (narrative_contradiction 10, cron_fire_gap 6, system_issue 3, recurring-bug 2, db_integrity_breach 2, sprint_registry_dangling_ids 1, auditor_probe_anomaly 1, auditor_cycle_missing 1, agent-output-contract-violation 1), so CI stays honestly red until the rows land. Clearing them would turn the guard green with the routing table untouched. | [po 2026-08-24T18:29:19Z] ci_red 471a398a FOLDED on the file-scoped dedup_key (run 32749074699, head a73f0f2c7). TYPE SET HAS ROTATED off this title's Pipeline-A pair; it is now Pipeline-B: [container_capacity_pressure, launchd_tracking_gap, memory_loop_breach, memory_pressure_transient, system_issue]. Reproduced locally. THIS ROW IS THE UMBRELLA: dispatch ONE agent-father hop adding every missing table row to docs/agents/po/flow/triage-signals.md + its triage-signals-longtail.md sibling; the six FIX-SIGNAL-TYPE-ROUTING-GAP-* / -SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED rows are members, not separate dispatches. PREMISE CORRECTED, do not chase: the CI log's 'bun: command not found -> [orch-apply] ABORTED: exit 127' is NOT a defect -- ci.yml states in-line that bun is deliberately off this job's bash/jq-only profile and a mint degrades to a logged mint-FAILED line; the gate is exit 1 on any unrouted type. CONFIRMS FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-FLAG-MISLEADING-NOT-DRYRUN: --check MUTATED the live board this tick, minting FIX-SIGNAL-TYPE-ROUTING-GAP-bug.",
         "ci_red_observed_shas": [
           "ab50872961c786bab709e2227e7f4c03d8b3ae71 (CI-RED-ab508729, run 32655888564, job signal-type-coverage-guard, 2026-08-23T17:53:28Z)"
         ],
@@ -17338,49 +17338,57 @@
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-container-capacity-pressure",
         "type": "routing-gap",
         "status": "BACKLOG",
-        "owner": "po",
+        "owner": "agent-father",
         "zone": "docs/agents/po/flow/",
         "title": "Unrouted signal type 'container_capacity_pressure' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:container_capacity_pressure",
         "created_at": "2026-08-24T16:18:07Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=container_capacity_pressure routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-24T16:18:08Z"
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=container_capacity_pressure routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. | [po 2026-08-24T18:29:19Z] ACTUATED: this row was self-filed by scripts/audits/guard-signal-type-coverage.sh with next_agent=null, i.e. structurally unspawnable -- no picker on any lane can resolve a null next_agent, so it could never be dispatched and signal-type-coverage-guard stayed RED regardless. owner/next_agent/zone set to agent-father + docs/agents/po/flow/. DISPATCH AS ONE HOP with its siblings under the umbrella row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS -- all of them are table rows in the same two files (docs/agents/po/flow/triage-signals.md and its triage-signals-longtail.md sibling) and must not become N separate agent-father dispatches.",
+        "updated_at": "2026-08-24T18:32:06Z",
+        "next_agent": "agent-father",
+        "priority": "P1"
       },
       {
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-launchd-tracking-gap",
         "type": "routing-gap",
         "status": "BACKLOG",
-        "owner": "po",
+        "owner": "agent-father",
         "zone": "docs/agents/po/flow/",
         "title": "Unrouted signal type 'launchd_tracking_gap' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:launchd_tracking_gap",
         "created_at": "2026-08-24T16:18:08Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=launchd_tracking_gap routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-24T16:18:09Z"
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=launchd_tracking_gap routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. | [po 2026-08-24T18:29:19Z] ACTUATED: this row was self-filed by scripts/audits/guard-signal-type-coverage.sh with next_agent=null, i.e. structurally unspawnable -- no picker on any lane can resolve a null next_agent, so it could never be dispatched and signal-type-coverage-guard stayed RED regardless. owner/next_agent/zone set to agent-father + docs/agents/po/flow/. DISPATCH AS ONE HOP with its siblings under the umbrella row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS -- all of them are table rows in the same two files (docs/agents/po/flow/triage-signals.md and its triage-signals-longtail.md sibling) and must not become N separate agent-father dispatches.",
+        "updated_at": "2026-08-24T18:32:06Z",
+        "next_agent": "agent-father",
+        "priority": "P1"
       },
       {
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-memory-loop-breach",
         "type": "routing-gap",
         "status": "BACKLOG",
-        "owner": "po",
+        "owner": "agent-father",
         "zone": "docs/agents/po/flow/",
         "title": "Unrouted signal type 'memory_loop_breach' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:memory_loop_breach",
         "created_at": "2026-08-24T16:18:09Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=memory_loop_breach routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-24T16:18:10Z"
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=memory_loop_breach routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. | [po 2026-08-24T18:29:19Z] ACTUATED: this row was self-filed by scripts/audits/guard-signal-type-coverage.sh with next_agent=null, i.e. structurally unspawnable -- no picker on any lane can resolve a null next_agent, so it could never be dispatched and signal-type-coverage-guard stayed RED regardless. owner/next_agent/zone set to agent-father + docs/agents/po/flow/. DISPATCH AS ONE HOP with its siblings under the umbrella row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS -- all of them are table rows in the same two files (docs/agents/po/flow/triage-signals.md and its triage-signals-longtail.md sibling) and must not become N separate agent-father dispatches.",
+        "updated_at": "2026-08-24T18:32:06Z",
+        "next_agent": "agent-father",
+        "priority": "P1"
       },
       {
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-memory-pressure-transient",
         "type": "routing-gap",
         "status": "BACKLOG",
-        "owner": "po",
+        "owner": "agent-father",
         "zone": "docs/agents/po/flow/",
         "title": "Unrouted signal type 'memory_pressure_transient' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:memory_pressure_transient",
         "created_at": "2026-08-24T16:18:10Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=memory_pressure_transient routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-24T16:18:11Z"
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=memory_pressure_transient routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. | [po 2026-08-24T18:29:19Z] ACTUATED: this row was self-filed by scripts/audits/guard-signal-type-coverage.sh with next_agent=null, i.e. structurally unspawnable -- no picker on any lane can resolve a null next_agent, so it could never be dispatched and signal-type-coverage-guard stayed RED regardless. owner/next_agent/zone set to agent-father + docs/agents/po/flow/. DISPATCH AS ONE HOP with its siblings under the umbrella row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS -- all of them are table rows in the same two files (docs/agents/po/flow/triage-signals.md and its triage-signals-longtail.md sibling) and must not become N separate agent-father dispatches.",
+        "updated_at": "2026-08-24T18:32:06Z",
+        "next_agent": "agent-father",
+        "priority": "P1"
       },
       {
         "id": "FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE",
@@ -17441,13 +17449,85 @@
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-bug",
         "type": "routing-gap",
         "status": "BACKLOG",
-        "owner": "po",
+        "owner": "agent-father",
         "zone": "docs/agents/po/flow/",
         "title": "Unrouted signal type 'bug' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:bug",
         "created_at": "2026-08-24T18:23:54Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=bug routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-24T18:23:55Z"
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=bug routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. | [po 2026-08-24T18:29:19Z] ACTUATED: this row was self-filed by scripts/audits/guard-signal-type-coverage.sh with next_agent=null, i.e. structurally unspawnable -- no picker on any lane can resolve a null next_agent, so it could never be dispatched and signal-type-coverage-guard stayed RED regardless. owner/next_agent/zone set to agent-father + docs/agents/po/flow/. DISPATCH AS ONE HOP with its siblings under the umbrella row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS -- all of them are table rows in the same two files (docs/agents/po/flow/triage-signals.md and its triage-signals-longtail.md sibling) and must not become N separate agent-father dispatches.",
+        "updated_at": "2026-08-24T18:32:06Z",
+        "next_agent": "agent-father",
+        "priority": "P1"
+      },
+      {
+        "id": "FIX-MARKETWATCHER-EOD-LEDGER-CLAIM-COMMITTED-ZERO-WRITES",
+        "title": "market-watcher EOD reports 10 analysis-brief ledger entries 'committed' — zero were written this cycle and 2 of the named files have never existed; the false record is durably committed to the notebook",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "docs/agents/market-watcher/",
+        "created_at": "2026-08-24T18:29:19Z",
+        "dedup_key": "agent-write-path-defect:docs/agents/market-watcher/flow/eod.md|claim-without-write",
+        "origin_signal_id": "6edc3a8cd29c049f6d14935a3766a9ad50513c8b5a087089676b6d37b8976509",
+        "status_note": "AC: a market-watcher-eod cycle that RETURNS 'ledger entries written' must be provably backed by a git-tracked change to each named docs/analysis-briefs/{TICKER}.md in that cycle's own commit. | EVIDENCE (router Step 5.3 reconciliation of the 2026-08-24T16:00Z tick, first fire since 2026-08-14T16:10:51Z): RETURN + notebook both claim 10 ledger entries; commit 3c3f18bc6 changed exactly ONE file (docs/agent-memory/notebooks/market-watcher.md). docs/analysis-briefs/SAB.md and VEA.md do not exist at all, which independently falsifies the create-if-missing branch at docs/agents/market-watcher/flow/eod.md:21-23 -- neither branch ran. DBC/DPM (mtime 2026-08-06), KDC (2026-05-20), MSN (2026-07-23), VNM (2026-08-12) untouched; BID/EIB/VIC dirty from EARLIER cycles, not this one. | SELF-FALSIFYING DETAIL, cite it in the fix: the RETURN's ticker list and the notebook's ticker list disagree by one member (RETURN says VIC, notebook says VJC) -- two accounts of the same ten differing proves the list was narrated, never read back from actual writes. | SCOPE: dispatch is HEALTHY (slot matched, claimed, spawned, returned); this is write-path only. | SECONDARY (do NOT re-mint, already tracked): docs/agents/market-watcher/flow/eod.md:101 git add is notebook-scoped, so the ONE genuine deliverable this cycle (docs/signals/price_anomaly_20260824T1600.json, 13025B, 34 tickers, 5 anomalies) is untracked and docs/data/coverage-state.json went dirty again ~4h after its manual restore at 693f8df9e -- same RULE 2.5 pathspec-orphan shape already on file. | Filed by po from bug-escalation envelope 6edc3a8c, dev-team tick 2026-08-24T18:07Z.",
+        "updated_at": "2026-08-24T18:32:06Z"
+      },
+      {
+        "id": "FIX-REFINEBCTC-SKIPSET-NO-STATUS-FILTER-FAILED-UNITS-PERMANENTLY-TERMINAL",
+        "title": "refine_bctc_md resume skip-set is keyed on unit_id with no window_status filter — a unit pushed FAILED with empty markdown is excluded from every future chunk forever, no retry path in any layer; 15 of 24 pushed units of VIC Q1-2026 are now permanently empty",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "docs/agents/refine_bctc_md/",
+        "created_at": "2026-08-24T18:29:19Z",
+        "dedup_key": "refine-bctc-durability:skipset-no-window-status-filter",
+        "origin_signal_id": "fb709def64fee12a580b8dfc11ccc9f45a190c6e2d9a5e1681b7ba952a62602c",
+        "status_note": "AC: (i) the resume skip-set filters on window_status == 'DONE' so a FAILED unit re-enters the next chunk; (ii) a bounded per-unit retry counter prevents a genuinely unextractable page looping forever; (iii) a companion decision is recorded for what finalize_bctc_refine does when any unit is still FAILED at finalize time -- today it finalizes regardless, which is how a report with 15/24 empty units can be marked complete. | SITE: docs/agents/refine_bctc_md/flow/main.md:71 and :78 -- pushed_ids = Set(units.map(u => u.unit_id)) / chunk = windows.filter(w => !pushed_ids.has(w.unit_id)). window_status is read exactly once in the whole flow, at :74-77 for the RESET-GUARD has_done_units check, and never for skip-set eligibility. A FAILED push is therefore indistinguishable from a DONE push to the resume path. | BLAST RADIUS, verified at source via get_bctc_refined against report_id 1f53ef33-8f50-489b-8505-689740692ab0 (VIC Q1-2026), NOT from the agent RETURN: 24 pushed, 9 DONE, 15 FAILED -- units 0000/0001/0007 (morning fire 09:03-09:05Z) plus 0012-0023 (16:33-16:34Z fire), markdown empty, confidence 0, covering pages 1, 2, 11 and 20-50 (the entire notes section). | SEPARATE SUB-FINDING worth its own look, do not let it hide inside D1: units 0014,0015,0016,0018,0019,0020,0021,0023 all landed inside 16:34:09-16:34:17 -- eight units in eight seconds, one per second, all carrying the byte-identical flag string content_mismatch:prose_expected_continuation, while the other four this fire are spaced ~13s apart with varied flags. A 1/sec cluster of identical flags is a template emission, not twelve per-unit judgements. Morning contrast on the SAME report and pipeline: 75% success, 5-30s spacing -- a cliff, not a gradient. | Filed by po from bug envelope fb709def, dev-team tick 2026-08-24T18:07Z.",
+        "updated_at": "2026-08-24T18:32:06Z"
+      },
+      {
+        "id": "FIX-REFINEBCTC-DONE-WITHOUT-IMAGE-LEG-SHIPS-ROWSHIFTED-NUMBERS-AT-CONFIDENCE-065",
+        "title": "refine_bctc_md ships window_status DONE at confidence 0.65-0.75 on units whose own flags say image_unavailable / garbled_ocr_layout — the FR-13 structure leg provably did not run, and the resulting row-shifted numbers pass every downstream null and plausibility check",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "docs/agents/refine_bctc_md/",
+        "created_at": "2026-08-24T18:29:19Z",
+        "dedup_key": "refine-bctc-integrity:done-without-image-leg",
+        "origin_signal_id": "fb709def64fee12a580b8dfc11ccc9f45a190c6e2d9a5e1681b7ba952a62602c",
+        "status_note": "AC: DONE is blocked when image_unavailable (or garbled_ocr_layout) is present on the unit -- FR-13's contract is numbers<-OCR, structure<-image, so an absent image leg means the contract was not met and DONE is a false status; alternatively gate DONE behind a confidence floor. | EVIDENCE, report 1f53ef33-8f50-489b-8505-689740692ab0 (VIC Q1-2026), units 0004/0005/0006 flagged image_unavailable, image_unavailable:pages6-8, garbled_ocr_layout respectively, ALL THREE shipped DONE at 0.65-0.75 with full number tables. Corruption visible in unit 0005 by sign/label inspection alone: Nguyen gia (gross cost) carries a parenthesized negative (33.020.984) -- gross cost is never negative; Du phong ton that dau tu carries POSITIVE 44.670.551 / 35.916.035 while every other provision row in the same table is parenthesized negative; Dau tu nam giu den ngay dao han dai han carries (3.436.252) where the prior-period column is +16.567.029; Gia tri hao mon luy ke moves (160.683.471) -> (73.936.379), accumulated depreciation halving YoY on a growing asset base. Values are shifted relative to their labels -- exactly what the unit's own garbled_ocr_layout flag says -- and it still shipped DONE. | WHY THIS IS WORSE THAN THE SIBLING D1 ROW: a FAILED unit with empty markdown is loud and self-describing; a DONE unit at 0.65 with plausibly-magnituded but row-shifted numbers passes every null check and every non-zero plausibility check downstream (TONG CONG TAI SAN 1.178.694.748 trieu VND is believable for VIC, so nothing flags it). See feedback_nonzero_values_need_plausibility_check. | SPLIT, PO ROUTING DECISION: this row is the DONE-GATING half only (flow-doc zone, agent-father). The root cause of the image unavailability itself is a pdf-extractor concern and folds onto the already-open FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP (next_agent=developer) plus FIX-BCTC-IMGDEG-SIGNAL-SUMMARY-CONTRADICTS-ITS-OWN-LIVE-CONFIDENCES -- do NOT assign that slice to agent-father. | Filed by po from bug envelope fb709def, dev-team tick 2026-08-24T18:07Z.",
+        "updated_at": "2026-08-24T18:32:06Z"
+      },
+      {
+        "id": "CHORE-CTXBLOAT-CLAIM-TRUTH-GATE-SKILL-MD-OVER-BYTE-CAP-RECURRING",
+        "title": "context-bloat-backstop-hook fires repeatedly on .claude/skills/claim-truth-gate/SKILL.md (13018B, still over cap after the 17:4xZ trim attempt) — a skill file, a subject class the context_bloat_breach routing rule's owner/zone options do not cover",
+        "owner": "claude-manager-helper",
+        "next_agent": "claude-manager-helper",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": ".claude/skills/",
+        "created_at": "2026-08-24T18:29:19Z",
+        "dedup_key": "context_bloat_breach:.claude/skills/claim-truth-gate/SKILL.md",
+        "origin_signal_id": "e3f9d7cf329a25a2b8d70650b51515491cf51b46461537a29f0543496398dac7",
+        "status_note": "AC: .claude/skills/claim-truth-gate/SKILL.md is under the byte cap AND the hook stops firing on it for a full 24h. | MEASURED LIVE 2026-08-24T18:2xZ: 182L / 13018B. Commit b1e48b8ba ('tighten claim-truth-gate cache-param note -- reduce byte-cap overage') already attempted a trim and the file STILL breached twice after it, at 17:45:19Z and 17:47:44Z. A trim that leaves the file over cap is not a fix; this needs a split (extract the CCATO-MCP-T7 dual-path invocation section to a sibling) not another shave. | THREE fires reached this tick's durable inbox for this ONE file (15:24:50Z, 17:45:19Z, 17:47:44Z) -- folded into this single artifact per the routing rule's one-open-artifact-per-file discipline. | ROUTING GAP worth naming in the fix: docs/agents/po/flow/triage-signals.md's context_bloat_breach row offers exactly two zones, docs/agent-memory/notebooks/ and docs/agent-memory/decisions/, and its DEFER carve-out is scoped to open-sprint decision journals. A .claude/skills/*.md subject matches neither, so the rule under-specifies its own owner/zone for this class. | Filed by po, dev-team tick 2026-08-24T18:07Z.",
+        "updated_at": "2026-08-24T18:32:06Z"
+      },
+      {
+        "id": "FIX-BCTCANALYST-CARRYOVER-ESCALATION-NEVER-REACHES-BOARD-11-DAYS",
+        "title": "bctc-analyst has carried 'DXG cash-flow-anomaly (c162) still pending dev-team pickup' verbatim in its notebook Carry-over line for 11 days with ZERO board row and no surviving signal file — the escalation exists only inside the agent's own notebook",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "docs/agents/bctc-analyst/",
+        "created_at": "2026-08-24T18:29:19Z",
+        "dedup_key": "agent-escalation-durability:bctc-analyst|carryover-never-reaches-board",
+        "origin_signal_id": "57db23dcc87e9c3f1016a53f6aa58f2c0db0d1b708dec58b7e7d4e54c1fe26b7",
+        "status_note": "AC: a bctc-analyst finding that survives >=2 cycles as a Carry-over line must have produced either a board row or a live docs/signals/*.json -- verified by picking any current Carry-over item and resolving it to one of those two planes. | MEASURED: docs/agent-memory/notebooks/bctc-analyst.md lines 14/24/34 carry the identical string 'DXG cash-flow-anomaly (c162) still pending dev-team pickup' across three consecutive cycles. The cited origin file bctc-analyst-20260813T001500Z.json is absent from BOTH docs/signals/ and docs/signals/processed/. Board sweep of all five non-terminal lanes for get_cash_flow / OCF-magnitude / 'astronomic' returns ZERO rows. So after 11 days the finding has no durable carrier at all. | PO ACK-WITH-CORRECTION on the finding's own content -- do NOT copy the agent's claim forward as fact: the notebook says get_cash_flow 'returns astronomically large OCF values'. Re-probed live at 2026-08-24T18:2xZ via gateway: get_cash_flow(DXG) returns period Q2/2026 with operating_cf, investing_cf, financing_cf, capex, free_cash_flow, ocf_ni_ratio ALL null. The astronomic-magnitude claim is NOT reproducible today and must not be minted as fact. What IS reproducible is a different and still-real shape: found=true with source_tier=1 while every financial field is null, which a consumer cannot distinguish from a genuine zero -- same class as the already-open FIX-VNLIQUIDITY-MISSING-INPUT-PUBLISHED-AS-COMPUTED-ZERO-UNDER-STATUS-OK. Scope the fix to the durability defect (this row) and fold the data shape onto that existing row rather than re-mint it. | CONTRIBUTING, already documented: bctc-analyst has no Bash grant (project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts), so it cannot commit or write a signal file itself -- the Carry-over line is the only channel it has. The fix belongs in the flow, not in the agent's diligence. | Filed by po, dev-team tick 2026-08-24T18:07Z.",
+        "updated_at": "2026-08-24T18:32:06Z"
       }
     ],
     "closed_sprints": [
@@ -20571,6 +20651,49 @@
             "args": "commit=7c08e42a9; files=.claude/skills/cron-detect-loop/register.md,docs/agents/system-auditor/flow/tier1-probe.md; probe script cross-check=scripts/agents-flow/auditor-tier1-probe.sh",
             "live_value_observed": "ancestor=yes; git show --stat touches 2/2 claimed files; field-set grep match confirmed {verdict,detail,last_healthy_at,spawn_decision,signature}; 3 live JSON samples (ALL_GREEN no-spawn, FAILURE+SPAWN->spawn, FAILURE+DEBOUNCED->no-spawn) all branch correctly through new prompt text; AC-4/AC-5 grep both 0 matches confirming no-edit-needed claims; test suite flaky 264/0,263/1,264/0 due to pre-existing sibling-file T-DEBOUNCE-1 inverted-boolean bug, out of this row's file scope",
             "observed_at": "2026-08-24T16:31:31Z"
+          }
+        }
+      },
+      {
+        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
+        "type": "CLEAN",
+        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
+        "files": [
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
+          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
+          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
+        ],
+        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).\n[dev-mcp-server] Implementation Record (salvage-only, worktree NOT removed per standing user instruction): copied file CONTENTS (never checked out the worktree branch in the main tree) for the 5 modified + 1 new file the status_note flagged for salvage. Verified before copying: worktree base commit 4a6d2174c is an ancestor of current main HEAD, and main's pre-salvage content for all 5 modified files was byte-identical to that base — so the copy is exactly equivalent to a conflict-free rebase, no manual merge needed. Excluded per status_note, confirmed live: (a) ` D apps/mcp-server/data` — re-probed in main tree, still a tracked symlink (mode 120000, blob e67b455909149dffe457ead0f8cb08bfb2504376) -> ../../data; never propagated the deletion. (b) docs/agent-memory/modules/tool-usage-stats.json — diff confirmed it zeroes toolCounts (15 entries -> {}) at 2026-08-12T17:47:15Z, stale rolling-telemetry churn; left untouched. AC-4 (any other worktree carrying the same hidden-diff shape): `git worktree list` shows exactly one worktree besides main (agent-ae9ed2cd6f04b3686) — no other instances found.\nTests: targeted run on the 3 salvaged/new test files (BEQ-SECTION-GUARD.test.ts, LF-SERVE-REFLOW.test.ts, FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) = 32 pass/0 fail/138 expect() calls. Full suite (cd apps/mcp-server && bun test, captured to file not tail-piped, so exit code is real): 15456 pass/40 skip/50 fail/48943 expect() calls across 1284 files [506.02s]. Failing-file-set extracted programmatically (awk state-machine over file-header + (fail) lines) = {1113-vps-proxy-health, 1146-get-insider-transactions, 1193-push-prices-persist, 1405b-bctc-vps-fixes, 1518-get-foreign-flow-ohlcv-source, 1844-backtest-retrieval, 1858c-logvpspush-fix, 1875c-record-signal-outcome-routing, 1892a-pushNewsHandler, 235-telegram-send-merge, 251-mcp-tools, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, RAPID-B2-get-market-cap-tool, TSU-DEV-U5-foreign-flow-null-holding-ratio, VPT-1-vps-proxy-health-endpoint} — byte-identical (15/15, zero extra, zero missing) to the documented baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline, most-recently reconfirmed 2026-08-24T03:46Z QA verify on the board). Zero new regressions. bun tsc --noEmit: clean, 0 errors. Server boot (PORT=3099, isolated from any live container on :3000): /health returned toolCount=184, zero import errors, clean SIGTERM shutdown (WAL checkpoint flushed). Tool count 184 / cron job count 88 unchanged from pre-task baseline — no new tool registered (backfillBctcScalarsTool.ts is an existing registered tool, only its handler body changed), so this is expected not a regression.\nCommit 28f8509fc351d73694319ae505909b4c43941cf5 (pathspec: apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts, apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts, apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) — 6 files changed, 578 insertions(+), 8 deletions(-). Not pushed (local main stays ahead of origin per session policy).\nNOT DONE (explicitly out of this task's stated scope, \"SALVAGE ONLY\"): worktree removal (AC-3 of the original status_note) — deliberately deferred, standing user instruction protects .claude/worktrees/agent-ae9ed2cd6f04b3686 from pruning, and removal is destructive/irreversible pending separate user sign-off. Also did not act on AC-2 (advancing the separate FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG row currently in ready[]/next_agent=ba to review/qa or re-scoping it) — that is a distinct board row this task's brief did not authorize touching; flagging it for whoever owns that row next: the salvaged commit above already implements it end-to-end with passing tests, so a fresh ba re-plan-from-scratch would be duplicate work.\nNEXT: qa — verify commit 28f8509fc via direct-commit review (RAW-verify against live git, not this status_note's prose).\n\n[QA] Review Record (direct-commit verify): Independently re-derived all 5 claims + sibling-row judgment (docs/agents/qa/flow/main.md Direct-Commit Verify). C1 CONFIRMED: git show --numstat 28f8509fc = 6 files/578(+)/8(-), exact match. C2 (load-bearing) CONFIRMED at SHA256 level: 4a6d2174c ancestor-of-main confirmed; all 5 modified files' content at 28f8509fc^ (dcd4976fb) byte-identical to their content at 4a6d2174c -- true conflict-free rebase, no third-party edits clobbered. C3 CONFIRMED both exclusions held: apps/mcp-server/data still symlink mode 120000 blob e67b4559.. in HEAD (matches claim); tool-usage-stats.json absent from commit's touched-file list (last touched by unrelated 75d51f17a). C4 PARTIALLY REFUTED then RECOVERED: targeted 32/32 pass matches exactly, but my own full-suite run scored 72 fail/19 files (not 50/15) -- 4 files beyond documented baseline (030-pdf-extractor, 1019-ssc-pdf-breaker-bypass, 1294b-bctc-fallback, FIX-1267-ssc-circuit-breaker), all pure 5000ms+ timeouts, zero domain-identifier hits in fail log. Reproduced those 4 files in ISOLATED detached worktrees at BOTH parent dcd4976fb and 28f8509fc itself: 29/29 pass 0 fail <16s at EACH -- proves live shared-tree load contention (3 concurrent unrelated commits landed on main mid-run), not a regression from this diff; documented baseline itself already drifted to 52/17 per reference_mcpserver_fullsuite_preexisting_failure_baseline 12:30Z same-day remeasure, so it is not the stable oracle the dispatch assumed. C5 CONFIRMED: tsc 0 errors; boot PORT=3099 toolCount=184 (health) matches docs/data/project-stats.json SSOT (toolCount=184/cronJobCount=88); clean SIGTERM+WAL-checkpoint shutdown. mock-guard PASS; DDD/secrets grep clean on all 3 touched production files. Sibling row FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG: left AS-IS, not modified -- already correctly depends_on-gated onto this row by PO with an explicit re-adjudicate-not-reimplement note; salvaged test file substantively covers that row's AC-1/AC-4/AC-5. Full evidence trail: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md qa-S199.",
+        "updated_at": "2026-08-24T18:34:36Z",
+        "updated_by": "dev-mcp-server",
+        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted.",
+        "promoted_at": "2026-08-24T17:18:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-24T17:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit": "28f8509fc351d73694319ae505909b4c43941cf5",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-24T18:34:35Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show --numstat + git merge-base --is-ancestor + sha256 byte-diff + bun test (targeted+full+isolated-worktree x2) + bun tsc --noEmit + mock-guard.sh + live server boot",
+            "args": "commit=28f8509fc351d73694319ae505909b4c43941cf5; files=apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts,apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts,apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts,apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts,apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts,apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts",
+            "live_value_observed": "targeted 32 pass/0 fail/138 expect(); tsc 0 errors; full-suite 15434 pass/40 skip/72 fail/19 files [1204s] -- 4 files beyond 15-file baseline, isolated-worktree reproduction at parent+at-commit both 29/29 pass/0 fail, zero regression; boot toolCount=184 matches SSOT; mock-guard PASS",
+            "observed_at": "2026-08-24T18:34:35Z"
           }
         }
       }
@@ -24212,41 +24335,6 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
-      },
-      {
-        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
-        "type": "CLEAN",
-        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "qa",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
-        "files": [
-          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
-          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
-          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
-        ],
-        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).\n[dev-mcp-server] Implementation Record (salvage-only, worktree NOT removed per standing user instruction): copied file CONTENTS (never checked out the worktree branch in the main tree) for the 5 modified + 1 new file the status_note flagged for salvage. Verified before copying: worktree base commit 4a6d2174c is an ancestor of current main HEAD, and main's pre-salvage content for all 5 modified files was byte-identical to that base — so the copy is exactly equivalent to a conflict-free rebase, no manual merge needed. Excluded per status_note, confirmed live: (a) ` D apps/mcp-server/data` — re-probed in main tree, still a tracked symlink (mode 120000, blob e67b455909149dffe457ead0f8cb08bfb2504376) -> ../../data; never propagated the deletion. (b) docs/agent-memory/modules/tool-usage-stats.json — diff confirmed it zeroes toolCounts (15 entries -> {}) at 2026-08-12T17:47:15Z, stale rolling-telemetry churn; left untouched. AC-4 (any other worktree carrying the same hidden-diff shape): `git worktree list` shows exactly one worktree besides main (agent-ae9ed2cd6f04b3686) — no other instances found.\nTests: targeted run on the 3 salvaged/new test files (BEQ-SECTION-GUARD.test.ts, LF-SERVE-REFLOW.test.ts, FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) = 32 pass/0 fail/138 expect() calls. Full suite (cd apps/mcp-server && bun test, captured to file not tail-piped, so exit code is real): 15456 pass/40 skip/50 fail/48943 expect() calls across 1284 files [506.02s]. Failing-file-set extracted programmatically (awk state-machine over file-header + (fail) lines) = {1113-vps-proxy-health, 1146-get-insider-transactions, 1193-push-prices-persist, 1405b-bctc-vps-fixes, 1518-get-foreign-flow-ohlcv-source, 1844-backtest-retrieval, 1858c-logvpspush-fix, 1875c-record-signal-outcome-routing, 1892a-pushNewsHandler, 235-telegram-send-merge, 251-mcp-tools, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, RAPID-B2-get-market-cap-tool, TSU-DEV-U5-foreign-flow-null-holding-ratio, VPT-1-vps-proxy-health-endpoint} — byte-identical (15/15, zero extra, zero missing) to the documented baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline, most-recently reconfirmed 2026-08-24T03:46Z QA verify on the board). Zero new regressions. bun tsc --noEmit: clean, 0 errors. Server boot (PORT=3099, isolated from any live container on :3000): /health returned toolCount=184, zero import errors, clean SIGTERM shutdown (WAL checkpoint flushed). Tool count 184 / cron job count 88 unchanged from pre-task baseline — no new tool registered (backfillBctcScalarsTool.ts is an existing registered tool, only its handler body changed), so this is expected not a regression.\nCommit 28f8509fc351d73694319ae505909b4c43941cf5 (pathspec: apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts, apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts, apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) — 6 files changed, 578 insertions(+), 8 deletions(-). Not pushed (local main stays ahead of origin per session policy).\nNOT DONE (explicitly out of this task's stated scope, \"SALVAGE ONLY\"): worktree removal (AC-3 of the original status_note) — deliberately deferred, standing user instruction protects .claude/worktrees/agent-ae9ed2cd6f04b3686 from pruning, and removal is destructive/irreversible pending separate user sign-off. Also did not act on AC-2 (advancing the separate FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG row currently in ready[]/next_agent=ba to review/qa or re-scoping it) — that is a distinct board row this task's brief did not authorize touching; flagging it for whoever owns that row next: the salvaged commit above already implements it end-to-end with passing tests, so a fresh ba re-plan-from-scratch would be duplicate work.\nNEXT: qa — verify commit 28f8509fc via direct-commit review (RAW-verify against live git, not this status_note's prose).\n",
-        "updated_at": "2026-08-24T17:52:27Z",
-        "updated_by": "dev-mcp-server",
-        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted.",
-        "promoted_at": "2026-08-24T17:18:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-24T17:52:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit": "28f8509fc351d73694319ae505909b4c43941cf5",
-        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -24299,1250 +24387,9 @@
         "last_served_tick": "2026-08-24T16:54:07Z"
       }
     },
-    "_updated_at": "2026-08-24T18:16:08Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "7b89b0223cfe61f5bb6f23f40ce24605aea379ee04cac27aaf07199f688b246f",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "DXG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Phát triển bất động sản khu dân cư/khu đô thị (BĐS)",
-          "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường phía Nam",
-          "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (36+ kỳ liên tiếp) — không có số liệu BCTC gốc để phân tích trực tiếp; ROE so-sánh-ngành 1.9% (dưới median 7.3% ngành BĐS) từ nguồn peer-comparison",
-          "mgmt": "Không đánh giá được (thiếu dữ liệu BCTC gốc); dòng tiền ngoại 5 phiên +21K cp ròng (mạnh hơn ngành -2K cp)",
-          "as_of": "2026-08-24T15:10:00Z",
-          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày) — get_bctc_full vẫn 'Chưa có dữ liệu' cho MỌI kỳ (không riêng Q2); anomaly đã báo dev-team (c162, chưa xử lý)",
-          "valuation": {
-            "pe": 66.5,
-            "pb": 1.2,
-            "sector_pe_median": 16.1,
-            "earning_yield_pct": 1.5,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": -3.5,
-            "verdict": "AVOID"
-          },
-          "kinhdich_reading": {
-            "que": "Quan (20)",
-            "xu_huong": "TRUNG TINH",
-            "tin_hieu": "THAN TRONG",
-            "do_tin_cay_pct": 13
-          },
-          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
-          "esc_gate": {
-            "ESC-1_accounting_manipulation": "UNEVALUABLE — no BCTC data ('Chưa có dữ liệu')",
-            "ESC-2_balance_sheet": "UNEVALUABLE — no BCTC data",
-            "ESC-3_ocf_vs_np": "UNEVALUABLE — no BCTC data",
-            "ESC-4_nonop_share": "UNEVALUABLE — no BCTC data",
-            "ESC-5_refine_confidence": "UNEVALUABLE — no BCTC data, no report_id"
-          },
-          "data_quality_note": "valuation_verdict AVOID — do NOT post bullish signal per stage-analyze.md rule",
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T15:17:43Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "0b997b07db22a75974ffdc956bb0c6098196aa425e4ebe5bad95cf3d0df8c158",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "FPT",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
-          "customer": "Doanh nghiệp CNTT trong/ngoài nước (Nhật, Âu, Mỹ), thuê bao viễn thông nội địa, sinh viên hệ thống trường FPT",
-          "ops": "Biên LN gộp 34.0%, LN thuần HĐKD 22.0% (2.748 tỷ); ROE so-sánh-ngành 28.3% (trên median 10.6% ngành Công nghệ); OCF Q1 âm -2.848 tỷ (đầu tư ngắn hạn + phải thu tăng, không phải dấu hiệu mất khả năng thanh toán)",
-          "mgmt": "Đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/2026 (điều chỉnh hồi tố); LNST +13.8% YoY sau điều chỉnh, tăng trưởng nổi bật thị trường Châu Âu (+44.4%) và Nhật Bản",
-          "as_of": "2026-08-24T15:10:00Z",
-          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
-          "valuation": {
-            "pe": 13.8,
-            "pb": 3.6,
-            "sector_pe_median": 17.3,
-            "earning_yield_pct": 7.25,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": 2.25,
-            "verdict": "FAIR"
-          },
-          "kinhdich_reading": {
-            "que": "Tuy (17)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 100
-          },
-          "sentiment_trend_30d": {
-            "direction": "GIẢM (đang xấu đi)",
-            "slope": -0.22,
-            "entries": 27
-          },
-          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
-          "esc_gate": {
-            "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
-            "ESC-2_balance_sheet": {
-              "result": false,
-              "imbalance_pct": 0
-            },
-            "ESC-3_ocf_vs_np": {
-              "result": "DATA-COVERAGE-LIMITED",
-              "quarters_returned": 3,
-              "quarters_required": 4,
-              "coverage_guard_held": true,
-              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
-            },
-            "ESC-4_nonop_share": {
-              "result": false,
-              "non_operating_share_pct": 2
-            },
-            "ESC-5_refine_confidence": {
-              "result": true,
-              "min_confidence": 0.45,
-              "low_confidence_unit_ids": [
-                "unit-0008",
-                "unit-0009",
-                "unit-0010",
-                "unit-0011",
-                "unit-0012",
-                "unit-0013",
-                "unit-0014"
-              ],
-              "escalation_status": "GUARD-HELD",
-              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-            }
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T15:17:43Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f23d41e06387519f1b501cb0268fed57eddc7c11c7ff3f9240e4d50960cb73c7",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "HPG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Thép xây dựng, ống thép, tôn mạ; nguyên liệu quặng sắt một phần nhập khẩu từ Úc (~5% doanh thu liên quan)",
-          "customer": "Nhà thầu xây dựng, nhà phân phối vật liệu xây dựng nội địa; xuất khẩu thép sang khu vực Đông Nam Á",
-          "ops": "Biên LN gộp 15.8% (8.365 tỷ); ROE so-sánh-ngành 12.7% (trên median 2.9% ngành Thép); Operating Profit báo cáo = 0 tỷ (dữ liệu OCR lỗi/corrupt kéo dài, KHÔNG dùng để tính ESC-4 — flag dữ liệu đã báo dev-team nhiều kỳ)",
-          "mgmt": "Không có cảnh báo quản trị mới; dòng tiền ngoại từ 5 phiên +480K cp ròng (mạnh hơn ngành +13K cp)",
-          "as_of": "2026-08-24T15:10:00Z",
-          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
-          "valuation": {
-            "pe": 14.2,
-            "pb": 1.7,
-            "sector_pe_median": 32.6,
-            "earning_yield_pct": 7.04,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": 2.04,
-            "verdict": "FAIR"
-          },
-          "kinhdich_reading": {
-            "que": "Tiem (53)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 100
-          },
-          "sentiment_trend_30d": {
-            "direction": "ỔN ĐỊNH",
-            "slope": -0.02,
-            "entries": 25
-          },
-          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
-          "esc_gate": {
-            "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
-            "ESC-2_balance_sheet": {
-              "result": false,
-              "imbalance_pct": 0
-            },
-            "ESC-3_ocf_vs_np": {
-              "result": "DATA-COVERAGE-LIMITED",
-              "quarters_returned": 3,
-              "quarters_required": 4,
-              "coverage_guard_held": true,
-              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
-            },
-            "ESC-4_nonop_share": {
-              "result": "DISCARDED",
-              "note": "operating_profit=0 is a known OCR extraction corruption artifact (recurring 30+ cycles), not a genuine one-off signal — non_operating_share would compute to 100% on this corrupt input; do not escalate on corrupt data"
-            },
-            "ESC-5_refine_confidence": {
-              "result": false,
-              "reason": "report_id=null, existing_refine_status=PARTIAL (not DONE)"
-            }
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T15:17:43Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "85b64b44b724e174d9891c77593516ad3988f0bc2996fdfbacb3fbd408d8aa90",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "VCB",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Ngân hàng bán lẻ + doanh nghiệp: tín dụng, huy động, thanh toán quốc tế, bancassurance",
-          "customer": "Khách hàng doanh nghiệp lớn/vừa, khách hàng cá nhân đô thị, đối tác thanh toán quốc tế",
-          "ops": "LN thuần HĐKD/doanh thu 80.9%; ROE so-sánh-ngành 16.7% (dưới median 17.6% ngành Ngân hàng); OCF/NI ratio Q1 1.368 (chất lượng lợi nhuận lành mạnh)",
-          "mgmt": "Không có cảnh báo quản trị mới; dòng tiền ngoại 5 phiên -97K cp ròng (yếu hơn ngành +22K cp)",
-          "as_of": "2026-08-24T15:10:00Z",
-          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
-          "valuation": {
-            "pe": 14.1,
-            "pb": 2.2,
-            "sector_pe_median": 9,
-            "earning_yield_pct": 7.09,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": 2.09,
-            "verdict": "FAIR"
-          },
-          "kinhdich_reading": {
-            "que": "Tuy (45)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 63
-          },
-          "sentiment_trend_30d": {
-            "direction": "TĂNG (đang cải thiện)",
-            "slope": 0.1,
-            "entries": 15
-          },
-          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
-          "esc_gate": {
-            "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
-            "ESC-2_balance_sheet": {
-              "result": false,
-              "imbalance_pct": 0.37
-            },
-            "ESC-3_ocf_vs_np": {
-              "result": false,
-              "quarters_returned": 4,
-              "divergence_ratio": 0.368
-            },
-            "ESC-4_nonop_share": {
-              "result": "N/A",
-              "note": "bank — non-operating-share concept not applicable to VCB income statement structure"
-            },
-            "ESC-5_refine_confidence": {
-              "result": false,
-              "reason": "report_id=null, existing_refine_status=PARTIAL (not DONE)"
-            }
-          },
-          "regime": "NEUTRAL",
-          "carry_regime": "NEUTRAL"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T15:17:43Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "32b526060aa6f127efd202fba79c149a88eaa09ddd54e9fcb0da08ede4c4cdeb",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-24T15:05:46Z",
-          "matched_slots": [
-            "bctc-analyst-slot-1"
-          ],
-          "won_slots": [
-            "bctc-analyst-slot-1"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/bctc-analyst/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "bctc-analyst-slot-1": "cron"
-          },
-          "cadence_minutes": {
-            "bctc-analyst-slot-1": null
-          },
-          "last_fired_timestamp": "2026-08-24T15:03:54Z",
-          "last_fired_slots": [
-            "bctc-analyst-slot-1"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "15:00",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 31,
-          "note": "Step 5.3 off-flow latch detector DEFERRED (BGFAN-1 in-flight at Step 5b); prior last_fired 2026-08-23T15:03:34Z retained for de-stamp if detector fires. cycle_snapshot_promoted=false (cycle-snapshot-latest.json stale since 2026-08-23T00:07:50Z)."
-        },
-        "createdAt": "2026-08-24T15:05:46Z",
-        "drained_at": "2026-08-24T15:17:43Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e2037d2c6c242132d10fc94b8cd3c1856a34a61015233f2abe4c5a8b02e041c5",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "medium",
-        "payload": {
-          "title": "bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json filename has no time component — 4 daily cycles collide, drain overwrites the processed/ record",
-          "detected_by": "cowork-team dispatcher, reconciling the 2026-08-24T15:00Z bctc-analyst-slot-1 return",
-          "mechanism": [
-            "bctc-analyst fires 4x/day (cron 0 15,18,21,0 UTC), all in mode=routine.",
-            "Filename template docs/agents/bctc-analyst/init.md:85 (also :16, :149, flow/stage-analyze.md:114, flow/stage-consolidate.md:64) is bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json — date only, no HHMMSS.",
-            "All 4 daily cycles therefore write the SAME basename per ticker.",
-            "scripts/agents-flow/drain-signals.js:260 sets dest = path.join(PROC, base) with no collision guard. The -replay.json suffix at :257 applies ONLY on a duplicate FINGERPRINT (sha256 over from+type+payload+createdAt); content differs every cycle, so that branch is never taken.",
-            "Result: each drain overwrites the prior cycle-of-the-day processed/ record in place, including its own _processed provenance block."
-          ],
-          "observed_not_inferred": {
-            "docs/signals/processed/bctc_signal_VCB_20260823_routine.json": "4 commits on 2026-08-23 (47d74a8eb 00:17Z, a8fae8137 15:07Z, c4ac9c5d0, f13fa173a 21:07Z) — one per cycle, same path rewritten each time",
-            "docs/signals/processed/bctc_signal_VCB_20260822_routine.json": "2 commits (e98049c69 18:17Z, 9aef86e43 21:37Z)",
-            "replay_files_present": 0
-          },
-          "blast_radius": "Bounded. The SQLite signals_processed row survives per fingerprint (drain-signals.js:304) and the pending_triage_inbox batch is durable, so ROUTING is not lost. What is lost is the on-disk forensic copy: docs/signals/processed/ shows only the last cycle of each day, and any reader treating that directory as the day record sees 1 of 4 cycles. Prior versions are recoverable from git history only.",
-          "fix": "Add a time component to the routine filename, matching what bctc-analyst ALREADY does for its escalation signals (docs/signals/bctc-analyst-20260812T180708Z.json). Suggested: bctc_signal_{TICKER}_{YYYYMMDDTHHMMSSZ}_{mode}.json. Purely a template change in the 5 doc sites listed above.",
-          "zone": "docs/agents/bctc-analyst/",
-          "suggested_next_agent": "agent-father",
-          "notes": "signal_type=bctc_signal IS routed (docs/agents/po/flow/triage-signals.md:23), so this is NOT a signal-type-coverage gap and will not red guard-signal-type-coverage.sh. A defensive collision guard in drain-signals.js (dest exists -> suffix) is a separate, optional second layer in scripts/ zone; the filename fix alone closes this."
-        },
-        "createdAt": "2026-08-24T15:15:30Z",
-        "drained_at": "2026-08-24T15:17:43Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "10f4ff46bf842b55aec5587a9a4f1bbee720f95d93e2aee62fdc07c520e480c5",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": ".claude/skills/claim-truth-gate/SKILL.md",
-          "line_count": 182,
-          "cap": 200,
-          "byte_count": 12973,
-          "byte_cap": 12000,
-          "class": "skill-file",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 973,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T15:24:50Z",
-        "drained_at": "2026-08-24T15:45:41Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "094e22d020f66fbb648f50c4feccf54d3c20bc13a690dc46782219cfd65c0218",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "normal",
-        "payload": {
-          "fire_time": "2026-08-24T16:05:22Z",
-          "matched_slots": [
-            "news-scout-offhours",
-            "market-watcher-eod",
-            "alert-commander-critical"
-          ],
-          "won_slots": [
-            "news-scout-offhours",
-            "market-watcher-eod",
-            "alert-commander-critical"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/news-scout/flow/main.md",
-            "docs/agents/market-watcher/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "news-scout-offhours": "cadence",
-            "market-watcher-eod": "cadence",
-            "alert-commander-critical": "cron"
-          },
-          "cadence_minutes": {
-            "news-scout-offhours": 30,
-            "market-watcher-eod": 30,
-            "alert-commander-critical": null
-          },
-          "last_fired_timestamp": "2026-08-24T16:04:52Z",
-          "last_fired_slots": [
-            "news-scout-offhours",
-            "market-watcher-eod",
-            "alert-commander-critical"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "16:00",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 31,
-          "note": "3-slot batch, single batch (MAX_PARALLEL=4, not degraded: headroom 4712MB >= 1500 floor, load ~2 vs 24). market-watcher-offhours resolved out by declared supersedes (market-watcher-eod) in cowork-match-slots.js before Step 4b. market-watcher-eod last_fired was 2026-08-14T16:10:51Z (10d) — genuine frozen-slot cohort member, first fire since. Step 5.3 DEFERRED for all three; prior last_fired for de-stamp: news-scout-offhours=2026-08-24T12:04:50Z, market-watcher-eod=2026-08-14T16:10:51Z, alert-commander-critical=2026-08-24T12:04:50Z. cycle-snapshot-latest.json still 2026-08-23T00:07:50Z (40h stale), cycle_snapshot_promoted=false. regime_status/volatility_level absent from snapshot at every path -> emitted 'unknown' honestly."
-        },
-        "createdAt": "2026-08-24T16:05:22Z",
-        "drained_at": "2026-08-24T16:15:37Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6edc3a8cd29c049f6d14935a3766a9ad50513c8b5a087089676b6d37b8976509",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": {
-          "title": "market-watcher EOD reports 10 ledger entries 'committed' — zero were written; 2 named files have never existed",
-          "zone": "docs/agents/market-watcher/",
-          "suggested_next_agent": "agent-father",
-          "detected_by": "router, Step 5.3 deferred reconciliation of the 2026-08-24T16:00Z cowork tick",
-          "summary": "market-watcher-eod (slot fired 16:00Z, first fire since 2026-08-14) returned Status:DONE claiming 'docs/analysis-briefs/{10-TICKER}.md — Ledger entries with price, RSI, YoY, volume'. Ground truth: none of the ten files was written this cycle, and two of them do not exist at all. The same claim is durably committed to the notebook at 3c3f18bc6 as 'Ledger: 10 entries committed'.",
-          "evidence": {
-            "claimed_tickers_return_text": [
-              "BID",
-              "DBC",
-              "DPM",
-              "EIB",
-              "KDC",
-              "MSN",
-              "SAB",
-              "VEA",
-              "VIC",
-              "VNM"
-            ],
-            "claimed_tickers_notebook_yoy_list": [
-              "VNM",
-              "SAB",
-              "DBC",
-              "EIB",
-              "DPM",
-              "VJC",
-              "MSN",
-              "VEA",
-              "BID",
-              "KDC"
-            ],
-            "list_disagreement": "RETURN says VIC, notebook says VJC — the two accounts of the same 10 differ by one member, itself evidence the list is narrated rather than read back from actual writes",
-            "files_absent_entirely": [
-              "docs/analysis-briefs/SAB.md",
-              "docs/analysis-briefs/VEA.md"
-            ],
-            "files_clean_untouched_with_stale_mtimes": {
-              "DBC.md": "2026-08-06",
-              "DPM.md": "2026-08-06",
-              "KDC.md": "2026-05-20",
-              "MSN.md": "2026-07-23",
-              "VNM.md": "2026-08-12"
-            },
-            "files_dirty_but_from_earlier_cycles": {
-              "BID.md": "mtime 2026-08-24 04:07Z (morning cycle, not this one)",
-              "EIB.md": "mtime 2026-08-23 15:24Z (yesterday)",
-              "VIC.md": "mtime 2026-08-23 15:24Z (yesterday)"
-            },
-            "commit_3c3f18bc6_contents": "1 file changed — docs/agent-memory/notebooks/market-watcher.md only",
-            "what_WAS_genuine": "docs/signals/price_anomaly_20260824T1600.json — 13025 B, 34 tickers, 5 anomalies (HUT/DAG/KDH/VHM/SSI), mtime 16:06Z. Real and correct."
-          },
-          "defect_1_primary": {
-            "spec": "docs/agents/market-watcher/flow/eod.md:21-23 — 'per ticker, if docs/analysis-briefs/{TICKER}.md does not exist -> create from docs/references/analysis-ledger-template.md' then append",
-            "observed": "neither branch ran. The create-if-missing branch is provably unexecuted: SAB.md and VEA.md are still absent after a cycle that claims to have written them.",
-            "severity": "the false record is COMMITTED, not just narrated in an ephemeral return — a future reader of the notebook sees a ledger that was never updated"
-          },
-          "defect_2_secondary_known_shape": {
-            "spec": "docs/agents/market-watcher/flow/eod.md:101 — git add is notebook-scoped only",
-            "observed": "price_anomaly_20260824T1600.json (the one real deliverable) is untracked; docs/data/coverage-state.json dirty again 4h after its manual restore at 693f8df9e",
-            "note": "same RULE 2.5 pathspec-orphan shape already on file; recorded here only because it compounds defect 1 — even correct work does not become durable"
-          },
-          "context": "This slot had not fired since 2026-08-14T16:10:51Z (10 days). The 16:00Z fire was the first opportunity to observe whether the freeze was dispatch-side or write-path-side. Dispatch is healthy — the slot matched, claimed, spawned and returned normally. The write path is where it fails."
-        },
-        "createdAt": "20260824T161228Z",
-        "drained_at": "2026-08-24T16:15:37Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "471a398aa97fe23b2865fa017f8001f3c6c6e599d26b416efbbcfffe1fb5354d",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-a73f0f2c",
-          "head_sha": "a73f0f2c7ae17e3ef74936f7bea7cf2222e57690",
-          "run_id": 32749074699,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32749074699",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "signal-type-coverage-guard",
-              "conclusion": "failure",
-              "jobId": 97501443759
-            }
-          ],
-          "fingerprint": "0802b55e72c06656242808bc5927b96e76fbab66712aa124f4620e9191c51849",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD a73f0f2c7ae17e3ef74936f7bea7cf2222e57690: signal-type-coverage-guard",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-24T16:52:28Z",
-        "drained_at": "2026-08-24T17:16:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "b5b269696c7cd4a9a351f124b55dc9445818a7c23abc872e1d150d23fe451e5b",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/auditor-launchd-ack.json. actor=7fd9c60a-9854-4589-9e98-e4c5e7e9168d mode=warn escalated=true prior_warns=6 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-24T16:44:18Z",
-        "drained_at": "2026-08-24T17:16:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7e94b218027592f34af22924c27b6dcd0eb84fd63935c2f881403585e42188cd",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "16:30",
-          "tick_id": "2026-08-24T16:30:00Z",
-          "drift_min": 0,
-          "leader_lock": "acquired",
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "signal_backlog": 32,
-          "devq": 5,
-          "container_vm_headroom_mb": 4562,
-          "matched_slots": [
-            "refine-bctc-slot-4"
-          ],
-          "won_slots": [
-            "refine-bctc-slot-4"
-          ],
-          "spawned": [
-            "refine-bctc-slot-4"
-          ],
-          "last_fired_slots": [
-            "refine-bctc-slot-4"
-          ],
-          "last_fired_timestamp": "2026-08-24T16:32:38Z",
-          "downgraded": [],
-          "suppressed_cadence": [],
-          "chef_mutex_applied": false,
-          "fanout_gate": {
-            "degraded": false,
-            "max_parallel": 4,
-            "batches": 1
-          },
-          "step_5_3": "DEFERRED — BGFAN-1 background spawn; detector re-runs against real return text on notification",
-          "note": "prior last_fired for de-stamp: refine-bctc-slot-4=2026-08-23T16:39:25Z. Step 4.7 snapshot written as cycle-snapshot-16:31.json (wall-clock name vs nominal 16:30 — 4th confirmation of the naming defect). cycle_snapshot_promoted=false; cycle-snapshot-latest.json still created_at 2026-08-23T00:07:50Z (~40h stale). regime_status/volatility_level absent at every snapshot path — 'unknown' passed honestly."
-        },
-        "createdAt": "20260824T163309Z",
-        "drained_at": "2026-08-24T17:16:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "fb709def64fee12a580b8dfc11ccc9f45a190c6e2d9a5e1681b7ba952a62602c",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "bug",
-        "priority": "high",
-        "payload": {
-          "title": "refine_bctc_md skip-set has no status filter — FAILED units are terminal, 15/24 pages of VIC Q1-2026 permanently unrecoverable; and image-blind units still ship DONE with row-shifted numbers",
-          "zone": "docs/agents/refine_bctc_md/",
-          "suggested_next_agent": "agent-father",
-          "detected_by": "router Step 5.3 deferred reconciliation, cowork tick 2026-08-24T16:30Z, slot refine-bctc-slot-4 — verified against live DB via get_bctc_refined, not against the agent's RETURN",
-          "summary": "Two independent defects on report 1f53ef33-8f50-489b-8505-689740692ab0 (VIC Q1-2026). D1: the resume skip-set is keyed on unit_id with no window_status filter, so a unit pushed FAILED with empty markdown is excluded from every future chunk forever — there is no retry path in any layer. 12 units failed this fire and are now terminal; with 3 from the morning fire that is 15 of 24 pushed units permanently empty, covering pages 20-50 (the entire notes section). finalize_bctc_refine will still mark the report complete. D2: the inverse and arguably worse — units flagged image_unavailable + garbled_ocr_layout shipped as DONE at confidence 0.65-0.75 carrying visibly row-shifted numbers, which downstream consumers will treat as trustworthy.",
-          "defect_1_primary": {
-            "id": "D1-SKIPSET-NO-STATUS-FILTER",
-            "site": "docs/agents/refine_bctc_md/flow/main.md:71 and :78",
-            "code": "pushed_ids = Set(units.map(u => u.unit_id))  /  chunk = windows.filter(w => !pushed_ids.has(w.unit_id))",
-            "mechanism": "window_status is read exactly once in the flow — at :74-77 for the RESET-GUARD has_done_units check — and never for skip-set eligibility. Membership in pushed_ids is by unit_id alone. A FAILED push is therefore indistinguishable from a DONE push to the resume path.",
-            "consequence": "The mechanism that makes this agent safely resumable is the same mechanism that makes a batch failure permanent. No retry, no backlog, no signal — the pages simply never come back.",
-            "blast_radius_this_report": "units 0000, 0001, 0007 (morning fire 09:03-09:05Z) + units 0012-0023 (this fire 16:33-16:34Z) = 15 of 24 pushed units, markdown empty, confidence 0. Pages 1, 2, 11, 20-50.",
-            "candidate_fix": "filter the skip-set on window_status === 'DONE', with a bounded per-unit retry counter so a genuinely unextractable page cannot loop forever. Needs a companion decision on what finalize_bctc_refine should do when any unit is still FAILED at finalize time — today it finalizes regardless."
-          },
-          "defect_2_secondary": {
-            "id": "D2-DONE-WITHOUT-IMAGE-LEG",
-            "mechanism": "FR-13's contract is numbers<-OCR, structure<-image. Units 0004, 0005, 0006 carry the agent's own flags image_unavailable / image_unavailable:pages6-8 / garbled_ocr_layout — the structure leg provably did not run — yet all three shipped window_status DONE at confidence 0.65-0.75 with full number tables.",
-            "evidence_of_corruption_in_unit_0005": [
-              "Nguyen gia (gross cost) row carries a parenthesized negative (33.020.984) — gross cost is never negative",
-              "Du phong ton that dau tu (impairment provision) carries positive 44.670.551 / 35.916.035 while every other provision row in the same table is parenthesized negative — (1.583.814), (3.556.570), (35.946.240)",
-              "Dau tu nam giu den ngay dao han dai han carries negative (3.436.252) where the prior-period column is positive 16.567.029",
-              "Gia tri hao mon luy ke moves (160.683.471) -> (73.936.379), i.e. accumulated depreciation halving year-on-year on a growing asset base",
-              "Net: values are shifted relative to their labels — exactly what the unit's own garbled_ocr_layout flag says — and it still shipped DONE"
-            ],
-            "why_this_is_worse_than_D1": "A FAILED unit with empty markdown is loud and self-describing. A DONE unit at 0.65 confidence with plausibly-magnituded but row-shifted numbers passes every null check and every non-zero plausibility check downstream. TONG CONG TAI SAN 1.178.694.748 trieu VND is a believable figure for VIC, so nothing flags it.",
-            "candidate_fix": "block DONE when image_unavailable is present (the FR-13 structure leg cannot have run), or gate DONE behind a confidence floor. Root cause of the image unavailability itself is likely dev-pdf-extractor, not the flow doc — po to route the two halves separately.",
-            "related_known": "backlog.509 bctc-imgdeg (strict === at line 67); feedback_nonzero_values_need_plausibility_check"
-          },
-          "evidence": {
-            "verification_method": "get_bctc_refined via gateway against report_id 1f53ef33-8f50-489b-8505-689740692ab0, read directly rather than trusting the agent RETURN",
-            "total_units_pushed": 24,
-            "done": 9,
-            "failed": 15,
-            "this_fire_units": "unit-0012 through unit-0023, all 12 FAILED, refined_at 2026-08-24 16:33:21 to 16:34:17",
-            "timing_anomaly": "units 0014,0015,0016,0018,0019,0020,0021,0023 all landed within 16:34:09-16:34:17 — eight units in eight seconds, one per second, all carrying the byte-identical flag string content_mismatch:prose_expected_continuation. The other four this fire (0012,0013,0017,0022) are spaced ~13s apart and carry varied specific flags. The 1/sec cluster is a template emission, not twelve per-unit judgements — worth a look independently of D1/D2.",
-            "morning_fire_contrast": "units 0000-0011 at 09:03-09:05Z were 9 DONE / 3 FAILED with 5-30s per-unit spacing. Same report, same pipeline, 75% success in the morning and 0% in the afternoon — a cliff, not a gradient."
-          },
-          "return_vs_ground_truth": {
-            "verified_true": "12 windows this chunk (unit-0012..0023) — confirmed; all 12 FAILED — confirmed; 24 total pushed — confirmed; NO_FILESYSTEM_OUTPUT true — confirmed, docs/refine-output/ does not exist and nothing landed",
-            "internal_contradiction": "the RETURN says both '16 windows remain for next fire' and 'remaining 28 windows (unit-0024 through unit-0039)'. The named range is 16 units, and 40-24=16, so 28 is the outlier of three statements about one quantity. Benign here — the DB confirms the actual work — but it is the same narrated-summary-drifts / read-back-fields-hold shape seen in the market-watcher EOD case filed earlier today.",
-            "agent_framing_was_incomplete": "the RETURN attributes everything to upstream partitioning or OCR quality, which points at pdf-extractor. That is at most half of it: the durability defect (D1) is in this agent's own flow doc, and D2 is the opposite of what was reported — the problem is the chunk that succeeded, not the chunk that failed."
-          },
-          "context": "Dispatch itself was healthy: slot matched, claimed, spawned, returned normally, Step 5.3 detector 0/6 markers, last_fired stamp stands at 2026-08-24T16:32:38Z. This is a payload-quality and durability finding, not a scheduling one."
-        },
-        "createdAt": "2026-08-24T16:39:33Z",
-        "drained_at": "2026-08-24T17:16:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "64e49d534dc62186ce8219603b08cebb1ebeaba22a39fb1bc5f425e74b789b53",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": ".claude/skills/claim-truth-gate/SKILL.md",
-          "line_count": 182,
-          "cap": 200,
-          "byte_count": 13177,
-          "byte_cap": 12000,
-          "class": "skill-file",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 1177,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T17:45:19Z",
-        "drained_at": "2026-08-24T17:47:02Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "06123aba3ee215314efa03df48366ee59b93df6a750a77a0e3f5c843e8bd8b53",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 67,
-          "cap": 200,
-          "byte_count": 40756,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 28756,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T17:42:37Z",
-        "drained_at": "2026-08-24T17:47:02Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "797669788acbc26f4e4a8fa0a73576a9b20e12a988e805ca37a8d5c392e486d6",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "normal",
-        "payload": {
-          "fire_time": "2026-08-24T17:35:56Z",
-          "matched_slots": [
-            "digest-daily"
-          ],
-          "won_slots": [
-            "digest-daily"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/digest-predict/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "closed",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "digest-daily": "cron"
-          },
-          "cadence_minutes": {
-            "digest-daily": null
-          },
-          "last_fired_timestamp": "2026-08-24T17:34:17Z",
-          "last_fired_slots": [
-            "digest-daily"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "17:30",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 32,
-          "container_vm_headroom_mb": 3177,
-          "fanout_gate": {
-            "degraded": false,
-            "max_parallel": 4,
-            "batches": 1
-          },
-          "note": "DE-STAMP RESERVE: digest-daily prior last_fired was 2026-08-23T17:33:38Z — revert target if the deferred Step 5.3 detector scores MARKER_HITS>=2 against the real return text (never to null, BLOCKER-3). SIGNAL DRAIN HELD BACK: 6 NEW rows, all to=po type=narrative_contradiction from the CCATO emitter (ntg-20260824T000000Z-technical_indicators-VNM-*), deliberately NOT marked READ. All six reproduce the emitter's three documented defects — no dedup_key field (hence six rows for one finding), ts 2026-08-24T00:00:00Z is local CEST midnight mislabelled as Zulu, and the verdict is inverted against its own payload (summary accuses chef of falsely claiming absence of VNM technical data while payload.returned_value is 'not found in database', i.e. chef was correct). Marking to=po rows READ delivers them nowhere — PO selects on NEW and there is no po cowork slot — and READ cold-evicts at 24h; 60 CCATO rows have already gone that way. Emitter fix already tracked by SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (active) and FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (backlog), so no duplicate filed. Queue census this tick: 84 of 109 signal_queue rows are CCATO (NEW 6 / READ 60 / RETRACTED 13 / triaged 5); only 22 of 109 rows carry a dedup_key at all. CARRIED DEFECTS RE-CONFIRMED: Step 4.7 snapshot landed as cycle-snapshot-17:33.json against nominal 17:30 (FIFTH confirmation of wall-clock vs nominal-tick naming), and cycle_snapshot_promoted came back false again with cycle-snapshot-latest.json still at 2026-08-23T00:07:50Z (~41.5h stale) — one defect and its consequence, not two. regime_status/volatility_level absent at every snapshot path (only macro_snapshot.data.signals.carry.regime exists), so 'unknown' passed honestly per the spec's own else-branch. Locale load parse: raw 'load averages: 8,04 5,61 4,21' truncated to 8 by awk -F',' — non-binding at this load. calendar_status recorded as 'closed' by derivation (17:30Z is outside the VN 02:00-08:59Z session), NOT read from the server this tick — it is server-computed since FR-A4 and absent from the snapshot. PRE-SPAWN REPAIR: committed 377e52aec first — digest-predict.md carried 5 uncommitted lines from the 2026-08-23T17:42Z cycle (1d stranded, mtime 17:44Z) recording a legitimate cross-session claim race; landed ahead of the fire so this cycle could not clobber it. Slot lock claimed and released with released=1 verified on the field, not on ok. Consistency check passed: trigger_prompt line 1 resolves to docs/agents/digest-predict/flow/main.md == flow_path, and main.md:21 carries Step pre-D DAILY-PREDICT DEDUP GATE — this is the exact slot whose flow_path/trigger_prompt divergence motivated FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE, now consistent. ps-probe for slot=digest-daily clean before spawn (digest-daily is guaranteed:true, so the guaranteed-slot firer is a live double-fire path with no cross-mechanism guard)."
-        },
-        "createdAt": "2026-08-24T17:35:56Z",
-        "drained_at": "2026-08-24T17:47:02Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3b226f131bdc4ace9b657b70ae28f19eee9fa7330325469f92bec5a499d95028",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_no_valid_drop_candidate_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 53,
-          "cap": 200,
-          "byte_count": 39131,
-          "byte_cap": 12000,
-          "section_count": 2,
-          "non_sentinel_section_count": 1,
-          "sentinel_section_count": 1,
-          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-24T17:42:35Z",
-        "drained_at": "2026-08-24T17:47:02Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "8d2e0479a05d3c34981e3f4dfca89612d34b0f129458496f9aea0dfe4a36bda5",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_no_valid_drop_candidate_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 53,
-          "cap": 200,
-          "byte_count": 39131,
-          "byte_cap": 12000,
-          "section_count": 2,
-          "non_sentinel_section_count": 1,
-          "sentinel_section_count": 1,
-          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-24T17:42:51Z",
-        "drained_at": "2026-08-24T17:47:02Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "57db23dcc87e9c3f1016a53f6aa58f2c0db0d1b708dec58b7e7d4e54c1fe26b7",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "DXG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Real estate development — residential projects (HCMC + satellite provinces)",
-          "customer": "Homebuyers and investors in mid-tier residential segment",
-          "ops": "get_bctc_full returns 'Chưa có dữ liệu' — 38th+ consecutive cycle with no extracted BCTC data; get_cash_flow returns astronomically large OCF values (known extraction anomaly, c162, still pending dev-team pickup — do NOT cite these cash-flow figures)",
-          "mgmt": "Valuation AVOID: PE 66.5x vs 16.1x sector median (+312% premium); ROE 1.9% well below 7.3% sector median",
-          "valuation": {
-            "pe": 66.5,
-            "pe_sector_median": 16.1,
-            "earning_yield_pct": 1.5,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": -3.5,
-            "valuation_verdict": "AVOID",
-            "roe_pct_sector_annualized": 1.9
-          },
-          "kinhdich_reading": {
-            "que": "Quan (20)",
-            "xu_huong": "TRUNG TINH",
-            "tin_hieu": "THAN TRONG",
-            "do_tin_cay_pct": 13
-          },
-          "sentiment_trend": "unavailable (no BCTC-linked sentiment entries this cycle)",
-          "esc_gate": {
-            "ESC-1": "unevaluable — no source BCTC data",
-            "ESC-2": "not evaluable — no balance-sheet data",
-            "ESC-3": "not evaluable — get_bctc_full data absent despite get_cash_flow anomalous return",
-            "ESC-4": "not evaluable — no P&L data",
-            "ESC-5": "not evaluable — no report_id path attempted (no filed report on record)"
-          },
-          "trick_summary": null,
-          "trick_confidence": "none",
-          "trick_pass_versions": [],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none",
-          "evidence_fragments": [
-            {
-              "id": 1471,
-              "evidence_type": "bctc_valuation_premium",
-              "direction": "bearish",
-              "magnitude": 1,
-              "confidence": 0.6
-            },
-            {
-              "id": 1472,
-              "evidence_type": "bctc_roe_ratio",
-              "direction": "bullish",
-              "magnitude": 0.3,
-              "confidence": 0.6
-            },
-            {
-              "id": 1473,
-              "evidence_type": "bctc_report_overdue",
-              "direction": "bearish",
-              "magnitude": 0.5,
-              "confidence": 0.55
-            }
-          ],
-          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026)",
-          "data_quality_note": "DXG 'Chưa có dữ liệu' unresolved 37th+ cycle; cash-flow anomaly (bctc-analyst-20260813T001500Z.json, c162) still pending dev-team pickup",
-          "cycle_id": "20260824-1800"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T18:16:08Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e314ba3a536d3790c8cae22eaf68d1a02e9ea1b635200f1fd2e145e57468f091",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "FPT",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-          "customer": "Enterprise IT buyers (VN + offshore, esp. Europe/Japan), SME telecom subscribers",
-          "ops": "Gross margin 34.0%, operating margin 22.0% (Q1-2026); software exports remains core driver, telecom continues to drag blended margin",
-          "mgmt": "Q1-2026 NPAT 2,477 tỷ VND, +13.8% YoY on FTEL equity-method restated basis (raw YoY withheld per PUB-7 period-basis guard); consistent quarterly delivery",
-          "valuation": {
-            "pe": 13.8,
-            "pe_sector_median": 17.3,
-            "earning_yield_pct": 7.25,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": 2.25,
-            "valuation_verdict": "FAIR",
-            "roe_pct_sector_annualized": 28.3
-          },
-          "kinhdich_reading": {
-            "que": "Tuy (17)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 100
-          },
-          "sentiment_trend": {
-            "window_days": 30,
-            "direction": "GIẢM",
-            "slope": -0.22,
-            "entries": 27
-          },
-          "esc_gate": {
-            "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
-            "ESC-2": {
-              "result": false,
-              "imbalance_pct": 0
-            },
-            "ESC-3": {
-              "result": "DATA-COVERAGE-LIMITED",
-              "quarters_returned": 3,
-              "quarters_required": 4,
-              "coverage_guard_held": true
-            },
-            "ESC-4": {
-              "result": false,
-              "non_operating_share_pct": 2
-            },
-            "ESC-5": {
-              "result": true,
-              "low_confidence_units": [
-                "unit-0008",
-                "unit-0009",
-                "unit-0010",
-                "unit-0011",
-                "unit-0012",
-                "unit-0013",
-                "unit-0014"
-              ],
-              "min_confidence": 0.45,
-              "escalation_status": "GUARD-HELD",
-              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-            }
-          },
-          "trick_summary": null,
-          "trick_confidence": "none",
-          "trick_pass_versions": [],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none",
-          "evidence_fragments": [
-            {
-              "id": 1465,
-              "evidence_type": "bctc_roe_strong",
-              "direction": "bullish",
-              "magnitude": 1,
-              "confidence": 0.6
-            },
-            {
-              "id": 1466,
-              "evidence_type": "bctc_report_overdue",
-              "direction": "bearish",
-              "magnitude": 0.5,
-              "confidence": 0.55
-            }
-          ],
-          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
-          "fetchedAt": "2026-08-24T18:03:22.023Z",
-          "cycle_id": "20260824-1800"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T18:16:08Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "30cc871b6199d38297b101aee0cff9a30a763d610377085118f7cb7ad16597dc",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "HPG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Steel production (long + flat products), construction materials, agriculture (feed/livestock)",
-          "customer": "Construction contractors, infrastructure/property developers, domestic + export steel buyers",
-          "ops": "Gross margin 15.8%; operating_profit reported as 0 tỷ VND — known data-quality anomaly (34th+ consecutive cycle, op_profit=0 corrupt while net profit 9,056 tỷ VND remains positive)",
-          "mgmt": "ROE 6.5% (raw quarter, non-annualized) / 12.7% sector-comparison annualized; steel-cycle sensitive, foreign flow +480K cp net (stronger than sector)",
-          "valuation": {
-            "pe": 14.2,
-            "pe_sector_median": 32.6,
-            "earning_yield_pct": 7.04,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": 2.04,
-            "valuation_verdict": "FAIR",
-            "roe_pct_sector_annualized": 12.7
-          },
-          "kinhdich_reading": {
-            "que": "Tiem (53)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 100
-          },
-          "sentiment_trend": {
-            "window_days": 30,
-            "direction": "ỔN ĐỊNH",
-            "slope": -0.02,
-            "entries": 25
-          },
-          "esc_gate": {
-            "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
-            "ESC-2": {
-              "result": false,
-              "imbalance_pct": 0
-            },
-            "ESC-3": {
-              "result": "DATA-COVERAGE-LIMITED",
-              "quarters_returned": 3,
-              "quarters_required": 4,
-              "coverage_guard_held": true
-            },
-            "ESC-4": {
-              "result": "DISCARDED",
-              "reason": "operating_profit=0 corrupt — non_operating_share calc undefined"
-            },
-            "ESC-5": {
-              "result": false,
-              "reason": "report_id null (refine_status=PARTIAL, not DONE)"
-            }
-          },
-          "trick_summary": null,
-          "trick_confidence": "none",
-          "trick_pass_versions": [],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none",
-          "evidence_fragments": [
-            {
-              "id": 1467,
-              "evidence_type": "bctc_roe_ratio",
-              "direction": "bullish",
-              "magnitude": 0.508,
-              "confidence": 0.6
-            },
-            {
-              "id": 1468,
-              "evidence_type": "bctc_report_overdue",
-              "direction": "bearish",
-              "magnitude": 0.5,
-              "confidence": 0.55
-            }
-          ],
-          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
-          "fetchedAt": "2026-06-07T11:12:22.298Z",
-          "cycle_id": "20260824-1800"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T18:16:08Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3b06e0855e4b827e6ddaac4f573ba2417aef97f03067545d09efbad7aec17a71",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "VCB",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "State-owned commercial bank — corporate + retail lending, trade finance, treasury operations",
-          "customer": "Corporate borrowers, retail depositors, government-linked entities",
-          "ops": "Operating profit 80.9% of net revenue (bank cost structure); ROA 0.4%; foreign flow -97K cp net (weaker than sector)",
-          "mgmt": "ROE 16.7% sector-annualized, below 17.6% sector median; largest SOE bank by market cap, stable profitability",
-          "valuation": {
-            "pe": 14.1,
-            "pe_sector_median": 9,
-            "earning_yield_pct": 7.09,
-            "max_deposit_rate_pct": 5,
-            "ey_spread_pp": 2.09,
-            "valuation_verdict": "FAIR",
-            "roe_pct_sector_annualized": 16.7
-          },
-          "kinhdich_reading": {
-            "que": "Tuy (45)",
-            "xu_huong": "THUAN LOI",
-            "tin_hieu": "GIU",
-            "do_tin_cay_pct": 63
-          },
-          "sentiment_trend": {
-            "window_days": 30,
-            "direction": "TĂNG",
-            "slope": 0.1,
-            "entries": 15
-          },
-          "esc_gate": {
-            "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
-            "ESC-2": {
-              "result": false,
-              "imbalance_pct": 0.37
-            },
-            "ESC-3": {
-              "result": false,
-              "quarters_returned": 4,
-              "divergence_ratio": 0.368,
-              "threshold": 0.4
-            },
-            "ESC-4": {
-              "result": "N/A",
-              "reason": "bank — non_operating_share calc not applicable"
-            },
-            "ESC-5": {
-              "result": false,
-              "reason": "report_id null (refine_status=PARTIAL, not DONE)"
-            }
-          },
-          "trick_summary": null,
-          "trick_confidence": "none",
-          "trick_pass_versions": [],
-          "insider_signals": "no significant insider activity",
-          "legal_risk": "none",
-          "evidence_fragments": [
-            {
-              "id": 1469,
-              "evidence_type": "bctc_roe_strong",
-              "direction": "bullish",
-              "magnitude": 0.668,
-              "confidence": 0.6
-            },
-            {
-              "id": 1470,
-              "evidence_type": "bctc_report_overdue",
-              "direction": "bearish",
-              "magnitude": 0.5,
-              "confidence": 0.55
-            }
-          ],
-          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 14/08/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
-          "fetchedAt": "2026-07-19T12:43:43.098Z",
-          "cycle_id": "20260824-1800"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-24T18:16:08Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e3f9d7cf329a25a2b8d70650b51515491cf51b46461537a29f0543496398dac7",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": ".claude/skills/claim-truth-gate/SKILL.md",
-          "line_count": 182,
-          "cap": 200,
-          "byte_count": 13140,
-          "byte_cap": 12000,
-          "class": "skill-file",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 1140,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T17:47:44Z",
-        "drained_at": "2026-08-24T18:16:08Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "5ef88a4f57c8ef757c94120b3be0ccbf20ebcb86594632479a80f4fa2e919c02",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "20260824T180422Z",
-          "matched_slots": [
-            "bctc-analyst-slot-2"
-          ],
-          "won_slots": [
-            "bctc-analyst-slot-2"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/bctc-analyst/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "bctc-analyst-slot-2": "cron"
-          },
-          "cadence_minutes": {
-            "bctc-analyst-slot-2": null
-          },
-          "last_fired_timestamp": "2026-08-24T18:03:21Z",
-          "last_fired_slots": [
-            "bctc-analyst-slot-2"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "18:00",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 33,
-          "note": "12 NEW narrative_contradiction rows deliberately NOT drained this tick — all 12 share one subject (ntg-20260824T000000Z-technical_indicators-VNM, 90 rows total, 78% of signal_queue) and reproduce the documented CCATO defects; board row FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (P0, next_agent=developer) already covers them. Emitter produced zero new rows since 17:45Z tick."
-        },
-        "createdAt": "20260824T180422Z",
-        "drained_at": "2026-08-24T18:16:08Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-24T18:32:20Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,

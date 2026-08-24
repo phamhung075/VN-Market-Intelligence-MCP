@@ -76,6 +76,8 @@ Both spellings are concurrently live through August (underscore fired 6 times, h
 
 **Dedup discipline for every row below:** unless stated otherwise, "dedup-check" means scan the NON-TERMINAL LANES — `.task_board.backlog[]` + `.ready[]` + `.in_progress[]` + `.review[]` + `.qa[]` — the same lane set used by `repair_task_request`/`ci_red` above (status-token enums structurally miss BACKLOG/READY rows — never dedup on a status enum).
 
+**Dedup lookup tool (use this, not `grep`) → `scripts/po-board-dedup-search.sh <regex> [--all-lanes]`** (2026-08-24). `grep <id> docs/data/orch/orch-state.json` and `jq '.. | select(.id == …)'` BOTH false-positive on this file: telemetry/finding objects elsewhere in it share the task-row shape `{id,title,status,…}`, so a hit proves nothing about board membership — 4 recorded occurrences, 2 of them back-to-back on 2026-08-24, cost 2 suppressed escalations (`feedback_auditor_dedup_citation_resolves_to_nonexistent_row_id`). The script resolves each match's jq PATH, **requires** a `task_board.<lane>[i]` prefix, and prints lane + index + id + `dedup_key` + title so the second half of the check — *is this row ABOUT the subject, or is the filename mentioned incidentally* — is forced rather than assumed. Defaults to the NON-TERMINAL lane set defined immediately above.
+
 The 5 highest-volume live types (covers 114/132 = 86% of the current hot `to=po` inbox):
 
 | `type` | From | Action | Routing |
