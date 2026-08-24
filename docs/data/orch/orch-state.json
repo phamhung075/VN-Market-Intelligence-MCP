@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T6-TOOL-REGISTRATION",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T6-TOOL-REGISTRATION — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-24T02:25:39Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-24T02:57:29Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -128,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-24T02:59:57Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -140,7 +139,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -161,7 +160,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -182,7 +181,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -203,7 +202,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -224,7 +223,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -245,7 +244,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -266,7 +265,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -287,7 +286,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -308,7 +307,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -329,7 +328,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -350,7 +349,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -371,7 +370,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -392,7 +391,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -413,7 +412,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -434,7 +433,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -455,7 +454,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -476,7 +475,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -497,7 +496,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -518,7 +517,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -539,7 +538,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -560,7 +559,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -581,7 +580,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -602,7 +601,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -623,7 +622,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -2040,7 +2039,7 @@
         "type": "auditor_probe_anomaly",
         "summary": "Tier-1 heartbeat frozen: probe threshold wedge",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-24T02:00Z",
@@ -2054,7 +2053,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 11h (cadence 4h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -2068,7 +2067,7 @@
         "type": "cron_fire_gap",
         "summary": "ragFtsRebuildCron stale 822.5h (35 days) — last run 2026-07-20",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
@@ -2082,7 +2081,7 @@
         "type": "cron_fire_gap",
         "summary": "vnstockTradingStatsRefresh stale (check A-29)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
@@ -2096,7 +2095,7 @@
         "type": "cron_fire_gap",
         "summary": "monthlySignalQualityAudit MISSED 2018.7h overdue",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
@@ -2110,7 +2109,7 @@
         "type": "cron_fire_gap",
         "summary": "ohlcvStalenessCheck stale (check A-29)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
@@ -2124,7 +2123,7 @@
         "type": "cron_fire_gap",
         "summary": "brokerSanctionsSweep stale (check A-29)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
@@ -2138,7 +2137,7 @@
         "type": "cron_fire_gap",
         "summary": "breadthHistoryPersister stale (check A-29)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
@@ -22572,7 +22571,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T02:25:24Z",
+    "_updated_at": "2026-08-24T02:59:57Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22885,6 +22884,305 @@
         },
         "createdAt": "2026-08-24T02:20:29Z",
         "drained_at": "2026-08-24T02:23:59Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d523611acdef6174b58a29ee9f9fbea54b1b748892d1d7738b4e76f55cb13393",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "normal",
+        "payload": {
+          "classification": "FIRE",
+          "tick": "2026-08-24T02:30Z",
+          "drift_min": 0,
+          "pressure_mode": "adaptive",
+          "silent": false,
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "alert-commander"
+          ],
+          "errors": [],
+          "degraded": false,
+          "max_parallel": 4,
+          "container_vm_headroom_mb": 3027,
+          "load_1min": 5.53,
+          "cores": 12,
+          "new_signals_seen": 13,
+          "new_signals_marked_read": 0,
+          "new_signals_held": 12,
+          "new_signals_out_of_scope": 1,
+          "cycle_snapshot_file": "docs/data/cycle-snapshot-02:31.json",
+          "cycle_snapshot_promoted": false,
+          "note": "CHEF-INTRADAY NOTEBOOK MISS (02:13Z cycle, verified post-return). unified-agent completed a full\nchef-intraday cycle and wrote docs/data/unified-agent-synthesis-2026-08-24-chef-intraday.json\n(6348 B, valid, substantive: 3 conviction calls VCB HOLD / FPT REDUCE / HPG HOLD with BCTC\ncitations, hexagram 36 Minh Di, macro block, 5 explicit gap tokens) but did NOT write its notebook.\nEvidence: docs/agent-memory/notebooks/unified-agent.md mtime 2026-08-23T19:51Z (pre-run), grep\n-c 2026-08-24 returns 0, newest entry still 08-23 evening. The notebook is this agent per its own\ncontract the primary cycle log (full overwrite). Its 9-step return summary omits notebook\npersistence entirely. Net effect: the cycle is invisible in the agent own log. Needs agent-father.\n\nPOSITIVE: ANCHOR-1/-2 held. Synthesis metadata.fired_at = 2026-08-24T02:13:00Z, byte-identical to\nthe scheduled_utc_time the dispatcher passed, while generated_at = 02:21:30Z. Chef anchored on the\ndispatcher nominal instant, not its own wall clock. Recording because this is the exact defect\nANCHOR exists to prevent and it worked.\n\nPUBLISHED-MARKER CLAIM UNCORROBORATED. Chef reported Phase-2 Marker Claim: Claimed published marker\nsuccessfully for published:chef-intraday:2026-08-24:09. No such lock exists in task_list_held for\nkind sprint-task (the documented reuse precedent), dashboard-row, or intent, checked ~7 min after\nthe claim. Either released (known chef defect) or never claimed. Low blast radius this cycle: key\nis VN-hour-scoped and cadence is 60 min, so an in-window repeat is not reachable.\n\nCOMMIT-MISS WORSENED. 10 uncommitted unified-agent-synthesis-*.json now. Notebook last commit\n5c780df38 2026-08-14, message reads self-commit swept by router, yet working tree holds 08-22 and\n08-23 entries -> chef has been writing and failing to commit for 10 days. Fifth artifact on the\n2026-08-14 date, but via the commit-miss mechanism, NOT the last_fired freeze: corroborating, not\nindependent evidence.\n\nALERT-COMMANDER c201 VERIFIED CLEAN. Commit 5f59981df real, notebook-only 9+/9-, working tree clean,\nSILENT EXIT correctly reasoned. First return this session with no false sub-claim (prior 2 had one\neach). Step 5.3 DEFERRED match 0/6 on both returns this tick-pair; no de-stamp.\n\nDRAIN HELD AGAIN. Same 12 CCATO rows, ids identical to 02:15Z, dedup_key absent on all 12, ts still\nfrozen 2026-08-24T00:00:00Z (local midnight labelled Z). Marked READ would be documented silent loss\nfor to=po. Neither branch is correct; the drain contract is broken for to=po. Cost of holding:\nnew_signals stays 12, forcing WORK on every subsequent tick.\n\n13th NEW row (auditor_probe_anomaly -> architect, dedup detector_wedge:tier1_heartbeat_frozen:\nmem_threshold_floor, ts 02:09:33Z real clock read) is properly formed and outside the cowork\nrecipient set; correctly untouched by this drain.\n\nSNAPSHOT PROMOTION FAILED 5th CONSECUTIVE. cycle-snapshot-02:31.json written 15729 B at wall-clock\n02:31; promoter looks up nominal 02:30. cycle-snapshot-latest.json still 4468 B from 2026-08-23\n02:09, now >24h stale.\n\nLoad parse latent again: flow arithmetic reads 5, true 5.53 (comma-decimal locale); both pass the\n<=24 gate so the DEGRADED verdict is unaffected this tick.\n"
+        },
+        "createdAt": "2026-08-24T02:33:20Z",
+        "drained_at": "2026-08-24T02:58:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5c7674000b331878a0c45a9b30ad7fc6773f348b1e965b71a573f73522e6ef56",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-24T02:45Z",
+          "classification": "FIRE",
+          "silent": false,
+          "drift_min": 0,
+          "pressure_mode": "adaptive",
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "alert-commander"
+          ],
+          "errors": [],
+          "new_signals_seen": 29,
+          "new_signals_marked_read": 0,
+          "new_signals_held": 28,
+          "new_signals_out_of_scope": 1,
+          "ccato_rows": 24,
+          "ccato_distinct_payloads": 4,
+          "ccato_multiplicities": [
+            4,
+            8,
+            8,
+            4
+          ],
+          "degraded": false,
+          "max_parallel": 4,
+          "container_vm_headroom_mb": 2615,
+          "load_1min": 3.08,
+          "cycle_snapshot_written": "docs/data/cycle-snapshot-02:47.json",
+          "cycle_snapshot_promoted": false,
+          "note": "CCATO BATCH DOUBLED IN ONE TICK: 12 rows at 02:15Z and 02:30Z -> 24 rows at 02:45Z. All 24 ids unique, all ts frozen 2026-08-24T00:00:00Z, all dedup_key ABSENT, all technical_indicators/VNM. Only 4 DISTINCT payloads; multiplicities [4,8,8,4]. Exactly double the prior [2,4,4,2]. The emitter re-emits its whole finding set per fire and nothing dedupes it. Projected 48 next tick.\nINVERTED VERDICT CONFIRMED IN-ROW: summary asserts \"get_technical_indicators returned non-null data\" while the same row payload records returned_value=\"not found in database\". The row contradicts its own evidence field. Matches the documented CCATO inversion class.\nCONTROL SET STRENGTHENED: 4 well-formed rows arrived in the SAME window from system-auditor (ts 02:41:42Z-02:43:33Z, real clock reads; every one carries a real dedup_key). Queue and writers are healthy; the fault is confined to the CCATO emitter. One is CRITICAL: ragFtsRebuildCron stale 822.5h / 35 days, last run 2026-07-20. Others: vnstockTradingStatsRefresh stale, monthlySignalQualityAudit 2018.7h overdue, auditor tier-2 cycle no completion evidence in 11h against a 4h cadence.\nDRAIN HELD ALL 28 AGAIN, 0 MARKED READ. Holding is now unambiguously correct rather than merely least-bad: PO selects on NEW, so the 4 legitimate rows including the CRITICAL rag one reach PO only if they stay NEW. Marking READ would bury them, since there is no po cowork slot to route to and READ cold-evicts at 24h.\nSNAPSHOT PROMOTION FAILED 6th CONSECUTIVE. cycle-snapshot-02:47.json written 15848 B at wall-clock 02:47; promoter looks up nominal 02:45. cycle-snapshot-latest.json still the 2026-08-23 02:09 file, now over 24h stale.\nHEADROOM TREND: container_vm_headroom_mb 3225 -> 3027 -> 2615 across three ticks. Still clear of the 1500 floor, DEGRADED=false, but the slope would reach it in roughly three to five more ticks if it holds.\nPRESSURE AGE 14.11 min against a 15-min cadence and a 20-min staleness threshold. Fifth reading inside that narrow band.\nLOAD PARSE: raw sysctl value was comma-decimal (3,08). Converted before compare. An unguarded parse reads 3 and the naive integer read would still pass here, but the defect is live.\n"
+        },
+        "createdAt": "20260824T024810Z",
+        "drained_at": "2026-08-24T02:58:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "df2a20837adf711c06ebadfb38224b22145bb55ac4911fdaca25907eedf480fd",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "121",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T02:25:34Z",
+        "drained_at": "2026-08-24T02:58:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4eeb974e59955ef2a7b4c4542cca2c5855c499c145f69c8cbbee7784c8b609e6",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "133",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T02:56:28Z",
+        "drained_at": "2026-08-24T02:58:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3403bcf7021520742b78fde401a86ebabafce41c818f052d5b6706494b7449a5",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "architect",
+        "type": "auditor_probe_anomaly",
+        "priority": "WARN",
+        "payload": "Tier-1 heartbeat frozen: probe threshold wedge",
+        "createdAt": "2026-08-24T02:09:33Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "architect"
+      },
+      {
+        "envelope_id": "50491948e067cc86720475214f1dc375d5266a016b274b0557a2a9c59dd5992f",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-2 cycle possibly missing — no completion evidence in 11h (cadence 4h)",
+        "createdAt": "2026-08-24T02:41:42Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "79284975564afca341294926f128ca59f21dab7a3af2eaf3eb01043e58010b6b",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "CRITICAL",
+        "payload": "ragFtsRebuildCron stale 822.5h (35 days) — last run 2026-07-20",
+        "createdAt": "2026-08-24T02:43:18Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e9ae0e49e74dace008933b3bfe7e7337c273f6ddb9e2d020acc46daed2dd9fe7",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "WARN",
+        "payload": "vnstockTradingStatsRefresh stale (check A-29)",
+        "createdAt": "2026-08-24T02:43:28Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "654002c9bea4a8339f8979312811e2bb181a8c0aa94f595841193c81d97bef96",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "WARN",
+        "payload": "monthlySignalQualityAudit MISSED 2018.7h overdue",
+        "createdAt": "2026-08-24T02:43:33Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e47b56bc317e2b87b72efb7b3cd9bf04a3d16e6bb5d08198bc2458dc846f4a3b",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "WARN",
+        "payload": "ohlcvStalenessCheck stale (check A-29)",
+        "createdAt": "2026-08-24T02:48:27Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "833e4aa9a9e83431d3bd02b81ef1656fdb000df88ab2716641ec6f20c3d3341c",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "WARN",
+        "payload": "brokerSanctionsSweep stale (check A-29)",
+        "createdAt": "2026-08-24T02:48:31Z",
+        "drained_at": "2026-08-24T02:59:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2f83287d5596ba0d44f3feb854d9e37ef1469d04dcc563d792861d8d3fa975b1",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "WARN",
+        "payload": "breadthHistoryPersister stale (check A-29)",
+        "createdAt": "2026-08-24T02:48:34Z",
+        "drained_at": "2026-08-24T02:59:57Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

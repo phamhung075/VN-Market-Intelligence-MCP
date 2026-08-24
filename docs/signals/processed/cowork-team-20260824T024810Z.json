@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T024810Z",
+  "payload": {
+    "tick": "2026-08-24T02:45Z",
+    "classification": "FIRE",
+    "silent": false,
+    "drift_min": 0,
+    "pressure_mode": "adaptive",
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "alert-commander"
+    ],
+    "errors": [],
+    "new_signals_seen": 29,
+    "new_signals_marked_read": 0,
+    "new_signals_held": 28,
+    "new_signals_out_of_scope": 1,
+    "ccato_rows": 24,
+    "ccato_distinct_payloads": 4,
+    "ccato_multiplicities": [
+      4,
+      8,
+      8,
+      4
+    ],
+    "degraded": false,
+    "max_parallel": 4,
+    "container_vm_headroom_mb": 2615,
+    "load_1min": 3.08,
+    "cycle_snapshot_written": "docs/data/cycle-snapshot-02:47.json",
+    "cycle_snapshot_promoted": false,
+    "note": "CCATO BATCH DOUBLED IN ONE TICK: 12 rows at 02:15Z and 02:30Z -> 24 rows at 02:45Z. All 24 ids unique, all ts frozen 2026-08-24T00:00:00Z, all dedup_key ABSENT, all technical_indicators/VNM. Only 4 DISTINCT payloads; multiplicities [4,8,8,4]. Exactly double the prior [2,4,4,2]. The emitter re-emits its whole finding set per fire and nothing dedupes it. Projected 48 next tick.\nINVERTED VERDICT CONFIRMED IN-ROW: summary asserts \"get_technical_indicators returned non-null data\" while the same row payload records returned_value=\"not found in database\". The row contradicts its own evidence field. Matches the documented CCATO inversion class.\nCONTROL SET STRENGTHENED: 4 well-formed rows arrived in the SAME window from system-auditor (ts 02:41:42Z-02:43:33Z, real clock reads; every one carries a real dedup_key). Queue and writers are healthy; the fault is confined to the CCATO emitter. One is CRITICAL: ragFtsRebuildCron stale 822.5h / 35 days, last run 2026-07-20. Others: vnstockTradingStatsRefresh stale, monthlySignalQualityAudit 2018.7h overdue, auditor tier-2 cycle no completion evidence in 11h against a 4h cadence.\nDRAIN HELD ALL 28 AGAIN, 0 MARKED READ. Holding is now unambiguously correct rather than merely least-bad: PO selects on NEW, so the 4 legitimate rows including the CRITICAL rag one reach PO only if they stay NEW. Marking READ would bury them, since there is no po cowork slot to route to and READ cold-evicts at 24h.\nSNAPSHOT PROMOTION FAILED 6th CONSECUTIVE. cycle-snapshot-02:47.json written 15848 B at wall-clock 02:47; promoter looks up nominal 02:45. cycle-snapshot-latest.json still the 2026-08-23 02:09 file, now over 24h stale.\nHEADROOM TREND: container_vm_headroom_mb 3225 -> 3027 -> 2615 across three ticks. Still clear of the 1500 floor, DEGRADED=false, but the slope would reach it in roughly three to five more ticks if it holds.\nPRESSURE AGE 14.11 min against a 15-min cadence and a 20-min staleness threshold. Fifth reading inside that narrow band.\nLOAD PARSE: raw sysctl value was comma-decimal (3,08). Converted before compare. An unguarded parse reads 3 and the naive integer read would still pass here, but the defect is live.\n"
+  },
+  "_processed": {
+    "fingerprint": "5c7674000b331878a0c45a9b30ad7fc6773f348b1e965b71a573f73522e6ef56",
+    "processedAt": "2026-08-24T02:58:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

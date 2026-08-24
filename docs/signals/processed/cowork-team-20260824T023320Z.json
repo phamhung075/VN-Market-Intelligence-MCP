@@ -1,0 +1,39 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-08-24T02:33:20Z",
+  "payload": {
+    "classification": "FIRE",
+    "tick": "2026-08-24T02:30Z",
+    "drift_min": 0,
+    "pressure_mode": "adaptive",
+    "silent": false,
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "alert-commander"
+    ],
+    "errors": [],
+    "degraded": false,
+    "max_parallel": 4,
+    "container_vm_headroom_mb": 3027,
+    "load_1min": 5.53,
+    "cores": 12,
+    "new_signals_seen": 13,
+    "new_signals_marked_read": 0,
+    "new_signals_held": 12,
+    "new_signals_out_of_scope": 1,
+    "cycle_snapshot_file": "docs/data/cycle-snapshot-02:31.json",
+    "cycle_snapshot_promoted": false,
+    "note": "CHEF-INTRADAY NOTEBOOK MISS (02:13Z cycle, verified post-return). unified-agent completed a full\nchef-intraday cycle and wrote docs/data/unified-agent-synthesis-2026-08-24-chef-intraday.json\n(6348 B, valid, substantive: 3 conviction calls VCB HOLD / FPT REDUCE / HPG HOLD with BCTC\ncitations, hexagram 36 Minh Di, macro block, 5 explicit gap tokens) but did NOT write its notebook.\nEvidence: docs/agent-memory/notebooks/unified-agent.md mtime 2026-08-23T19:51Z (pre-run), grep\n-c 2026-08-24 returns 0, newest entry still 08-23 evening. The notebook is this agent per its own\ncontract the primary cycle log (full overwrite). Its 9-step return summary omits notebook\npersistence entirely. Net effect: the cycle is invisible in the agent own log. Needs agent-father.\n\nPOSITIVE: ANCHOR-1/-2 held. Synthesis metadata.fired_at = 2026-08-24T02:13:00Z, byte-identical to\nthe scheduled_utc_time the dispatcher passed, while generated_at = 02:21:30Z. Chef anchored on the\ndispatcher nominal instant, not its own wall clock. Recording because this is the exact defect\nANCHOR exists to prevent and it worked.\n\nPUBLISHED-MARKER CLAIM UNCORROBORATED. Chef reported Phase-2 Marker Claim: Claimed published marker\nsuccessfully for published:chef-intraday:2026-08-24:09. No such lock exists in task_list_held for\nkind sprint-task (the documented reuse precedent), dashboard-row, or intent, checked ~7 min after\nthe claim. Either released (known chef defect) or never claimed. Low blast radius this cycle: key\nis VN-hour-scoped and cadence is 60 min, so an in-window repeat is not reachable.\n\nCOMMIT-MISS WORSENED. 10 uncommitted unified-agent-synthesis-*.json now. Notebook last commit\n5c780df38 2026-08-14, message reads self-commit swept by router, yet working tree holds 08-22 and\n08-23 entries -> chef has been writing and failing to commit for 10 days. Fifth artifact on the\n2026-08-14 date, but via the commit-miss mechanism, NOT the last_fired freeze: corroborating, not\nindependent evidence.\n\nALERT-COMMANDER c201 VERIFIED CLEAN. Commit 5f59981df real, notebook-only 9+/9-, working tree clean,\nSILENT EXIT correctly reasoned. First return this session with no false sub-claim (prior 2 had one\neach). Step 5.3 DEFERRED match 0/6 on both returns this tick-pair; no de-stamp.\n\nDRAIN HELD AGAIN. Same 12 CCATO rows, ids identical to 02:15Z, dedup_key absent on all 12, ts still\nfrozen 2026-08-24T00:00:00Z (local midnight labelled Z). Marked READ would be documented silent loss\nfor to=po. Neither branch is correct; the drain contract is broken for to=po. Cost of holding:\nnew_signals stays 12, forcing WORK on every subsequent tick.\n\n13th NEW row (auditor_probe_anomaly -> architect, dedup detector_wedge:tier1_heartbeat_frozen:\nmem_threshold_floor, ts 02:09:33Z real clock read) is properly formed and outside the cowork\nrecipient set; correctly untouched by this drain.\n\nSNAPSHOT PROMOTION FAILED 5th CONSECUTIVE. cycle-snapshot-02:31.json written 15729 B at wall-clock\n02:31; promoter looks up nominal 02:30. cycle-snapshot-latest.json still 4468 B from 2026-08-23\n02:09, now >24h stale.\n\nLoad parse latent again: flow arithmetic reads 5, true 5.53 (comma-decimal locale); both pass the\n<=24 gate so the DEGRADED verdict is unaffected this tick.\n"
+  },
+  "_processed": {
+    "fingerprint": "d523611acdef6174b58a29ee9f9fbea54b1b748892d1d7738b4e76f55cb13393",
+    "processedAt": "2026-08-24T02:58:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
