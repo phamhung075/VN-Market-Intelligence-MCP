@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T15:29:34Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-MDH-P2",
+    "next_agent": "architect",
+    "next_action": "Design-Router Sweep claim of UC-MDH-P2 — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-24T15:46:44Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16623,29 +16624,6 @@
         "depends": [],
         "created_at": "2026-08-24T13:16:43Z",
         "created_by": "po/triage-20260824T1310Z",
-        "updated_at": "2026-08-24T13:16:44Z",
-        "updated_by": "po/triage-20260824T1310Z",
-        "id": "FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS",
-        "type": "FIX",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "architect",
-        "files": [
-          "launchd/com.vn-market.fleet-push.plist"
-        ],
-        "dedup_key": "fleetpush-disarm-not-durable",
-        "title": "The user's explicit fleet-push disarm lives ONLY in the untracked installed plist — the version-controlled repo copy still says RunAtLoad=1/StartInterval=1800 with no Disabled key, so any re-install from source silently re-arms an unattended push of 224 commits",
-        "acceptance": "AC-1 make the disarm durable in the tracked plane, or make re-installation refuse to silently re-arm a job the user disarmed. AC-2 MEASURED 2026-08-24T13:0xZ, and this is the whole finding: `diff <(plutil -p launchd/com.vn-market.fleet-push.plist) <(plutil -p ~/Library/LaunchAgents/com.vn-market.fleet-push.plist)` yields EXACTLY ONE line of difference — `> \"Disabled\" => 1`. Every other key is identical. The user's decision is one untracked key deep. AC-3 do NOT resolve this by committing Disabled=1 into the repo plist without a ruling: that makes the disarm the permanent default for every future install/host, which is a different policy decision than 'disarmed today'. Architect must choose between (a) tracked Disabled=1 plus an explicit re-arm procedure, (b) an install-time guard that refuses to overwrite a locally-disabled label, or (c) moving the arm/disarm decision out of the plist into a checked-in policy file the installer reads. AC-4 whatever ships must be verified by re-reading the INSTALLED plist with plutil -p (it is a BINARY plist; grep reads the Disabled key as absent — this exact false negative was hit live during triage). AC-5 do NOT re-arm fleet-push as part of this work, and do NOT push. origin/main stays ab5087296; PUSH-AUTONOMY-1 is unsatisfied; the user pushes personally.",
-        "evidence": "Found by PO 2026-08-24T13:0xZ while adjudicating the router's ack-ledger question; NOT reported by the router, which stated the disarm as 'plist Disabled=1' without distinguishing the tracked repo copy from the installed copy. 224 commits unpushed (git rev-list --count origin/main..HEAD, live). Both pre-push gates (tsc, size-lint) are now GREEN, so the ONLY thing standing between a re-install and an unattended 224-commit push is that one untracked key.",
-        "po_note": "P0 because it protects an explicit standing user decision and both technical brakes have just been released."
-      },
-      {
-        "status": "BACKLOG",
-        "size": "S",
-        "depends": [],
-        "created_at": "2026-08-24T13:16:43Z",
-        "created_by": "po/triage-20260824T1310Z",
         "updated_at": "2026-08-24T14:40:12Z",
         "updated_by": "po/triage-20260824T1320Z",
         "id": "FIX-CRONS-FIVE-STALE-NEVER-FIRING-RAGFTSREBUILD-35-DAYS",
@@ -22698,40 +22676,6 @@
         "status_note": "Brief row 1 of 3 (§6, R1 in §4.1). FIRST of a strictly ordered R1 -> R2 -> R3 chain; ordering is load-bearing (§4.2).\nCHANGE: `scripts/agents-flow/context-bloat-backstop.sh` accepts an optional byte term in the size-justification header:  <!-- size-justification: 1279L/192014B — reason -->  and honors a BYTE-cap breach only when the header declares an explicit byte figure AND the live byte count is within the same ±10 %/min-5 tolerance already applied to lines.\nBACKWARD COMPATIBLE, ASSERT IT: a header with NO /NNNNB term must behave exactly as today, byte-for-byte (AC-3).\nWHY THIS IS NOT A LOOSENING (pre-empting the TE-T24 objection, §4.1): TE-T24's point is that a LINE declaration cannot speak to bytes and a mega-line file would evade the byte dimension for free. An explicit, reviewable, staleness-checked byte number is the opposite of a free pass — po/flow/scripts-registry.md would have to publish 74L/88023B in its own header, which is precisely the visibility BC-1 wants.\nDO NOT instead retune cap:120 (§4.1 R4) — measured p50 is 102 L, the LINE cap is correctly calibrated; the BC-1 ×60 byte budget is the miscalibrated knob and R1+R2 address it per-file rather than loosening the global multiplier for everyone.\nAC-3. Extend the EXISTING harness scripts/agents-flow/context-bloat-backstop.test.sh — do not replace it."
       },
       {
-        "id": "UC-MDH-P2",
-        "type": "SPRINT-S",
-        "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P2",
-        "note": "SCOPE=verifier Rescope note. FALSE-PREMISE corrected: 9+ live doc consumers still instruct agents to CALL the tool (digest-predict is cron-armed) — sweep AGENT_STARTUP/INDEX/README/digest-predict/market-analyst/tools-list/briefings before deregistering. De-conflict TE-T05 (drop its append-session-record deletion clause via orch-apply, see TE-T05 audit_ref). Regenerate tool-registry.json (3-way count sync). Fix 1300b test root cause too. Bulk stub cleanup via scripts/.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "architect",
-        "related": [
-          "TE-T05"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "deploy_gate": "user-approved-off-market",
-        "deploy_gate_note": "ops-rebuild-gated — lands only after a user-approved off-market deploy; next_agent=ba already holds it OUT of BOUNDED-1 auto-pickup, so no supervised flag needed. Bumped P2->P1 with the band 2026-07-17T04:54:03Z",
-        "promoted_at": "2026-08-23T10:53:01Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect",
-        "updated_at": "2026-08-23T17:09:54Z",
-        "claimed_at": "2026-08-23T16:56:19Z",
-        "claimed_by": "dev-team (design-router sweep)",
-        "owner": "architect",
-        "status_note": "BA spec DONE 2026-08-23T17:0xZ (dev-team DRS tick 16:37Z). Deliverable: docs/handoffs/UC-MDH-P2-BA-spec.md (commit 5e1015444, 98L) — FR-1..FR-7 + NFR-1..NFR-3 + DDD-layer table. Journal/notebook: 16879b851. Router re-verified at source: both commits landed, exact file sets, orch-state.json untouched (0 hits). LIVE-CONSUMER COUNT CORRECTED 9 -> 13 (classified subset of 34 raw grep hits); router independently confirmed the 4 newly-found consumers at their stated lines: docs/standards/mcp-tools.md:103, docs/protocols/smart-compact-protocol.md:31, docs/protocols/smart-compact-protocol-offload.md:16/18/25, docs/data/system-map.json:29 (the latter is the 3-way count-sync source). Also confirmed: docs/agents/digest-predict/flow/ and docs/agents/market-analyst/flow/ have ZERO hits — both already migrated to end-0-cowork/notebook-write post-TE-T05; only their init.md + tools/package docs are stale. TE-T05 DE-CONFLICTION IS MOOT, not deferred: TE-T05 landed DONE_VERIFIED 2026-08-08 and a full per-lane jq scan returns ZERO board matches for that id — there is no live deletion clause to drop, so the row scope-note item (b) is closed with no orch-apply needed. ZERO FRs IMPLEMENTED, and NOT (only) because of deploy_gate: every FR target file (agent init.md, tools/package grant docs, skill dir, guides, protocols, briefings) falls under BA forbidden_outputs docs/agents/ba/init.md:59 NEVER modify agent files, flow files, or knowledge files — router verified that line is real and structural, and ba/init.md:61 token_rule Blocked = report + EXIT, so the agent honoured its own contract exactly. FR split per spec: FR-1/2/5/7 need NO rebuild; FR-3/4/6 are deploy-gated and must land atomically in one user-approved off-market window. DISPATCH_LANE UPDATED ba -> architect IN THIS WRITE: the row still carries promoted_by=dev-team (design-router sweep), so leaving the stale lane would have let a future DRS turn re-dispatch to ba — the exact stale-cache defect tracked by FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT. OPEN BLOCKERS: B1 (-> po, PARALLEL, does not block architect) does deploy_gate=user-approved-off-market cover the whole row or only the rebuild-requiring FRs? B2 (-> architect to adjudicate) do digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md fall in agent-father exclusive lane, splitting FR-5 across two owners? NEXT: architect designs the atomic FR-3/4/6 deploy-gated bundle + adjudicates B2, then pm decomposes per-owner."
-      },
-      {
         "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
         "priority": "high",
         "status": "READY",
@@ -22949,6 +22893,33 @@
         "po_ruling_20260824T0850Z": "PO RULING 2026-08-24T08:50Z. SUPERSEDES + CONSOLIDATES po_ruling_20260824, po_expedite_20260824T0722Z and the stale `evidence` field, all three DELETED here for prose-ceiling budget (full text in git history at ec0bf1768). Every fact below re-verified live by PO, not relayed.\n(1) AC-5 ATTRIBUTION WAS WRONG; OPS' HEADLINE INFERENCE IS WITHDRAWN. Ops wrote that the two kernel memcg OOM kills prove 'the per-job allocation issue malloc_trim cannot solve'. The kills are real and correctly timestamped (dmesg -T yields absolute UTC directly, VM clock confirmed UTC; buffer spans 2026-08-20T15:43:31Z..now, 961 docker0 lines = non-vacuous). But oom_memcg=/docker/6ec27ac85c8e is NOT the live container: `docker ps -a --no-trunc` lists 13 containers and 6ec27ac85c8e is not among them. It is the RETIRED pdf-extractor created 2026-08-15T09:47:36Z, which QA read as 'Up 8 days' at 2026-08-23T13:50Z on FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE. The live container is 2edf0c9c9905, StartedAt 2026-08-23T15:44:17Z, i.e. 77 min and 45 min AFTER the two kills.\n(2) THE KILLS ARE NOT 'PRE-FIX', THEY ARE MID-FIX. The retired container ran ops' 2026-08-15 image, which DID contain AC-3's malloc_trim (c3fd44766, 2026-08-15T09:07Z) but wired ONLY into the /pek-extract background task (interface/pek_run_helper). /extract never got it. A SECOND trim landed 2026-08-23T15:25:15Z as 6f3577b9f 'trim native alloc after every /extract call (memcg-OOM root cause)' under row FIX-PDFX-LEGACY-EXTRACT-MEMORY-BURST-HEADROOM, and its own commit body cites THESE EXACT TWO KILLS ('twice today, ~31 min apart'; 14:27:11Z to 14:58:52Z is 31m41s) as its motivating evidence. So the kills are POST-AC-3 and PRE-6f3577b9f. They prove AC-3's PEK-path trim was insufficient ALONE, which is a real finding, and they are evidence FOR a fix that has already shipped, not evidence against the fix that is running. The live image 5d7d36db (git_sha 0c9380859) carries BOTH: `git merge-base --is-ancestor` TRUE for c3fd44766 and for 6f3577b9f.\n(3) EFFICACY IS NOT 'UNDETERMINED'; THE NATURAL SAMPLE IS LARGE AND CLEAN. The live container has served 563 POST /extract + 58 POST /pek-extract in 17.5h, ALL HTTP 200, zero non-200. cgroup memory.events oom_kill=0 and oom=0. dmesg carries zero OOM lines across a buffer that fully covers this container's life. Zero MemoryError lines in its own log. The production workload IS the burst test and it has already run 621 times. A synthetic burst would add statistical power, not first-order evidence.\n(4) ARITHMETIC CORRECTION; AC-4 VERDICT UNCHANGED. 'kB' in /proc/PID/status is KiB. VmHWM 2,316,488 KiB = 2,372,083,712 B = 88.37% of the 2,684,354,560 B cap, not 86.3% (ops read kB as decimal 1000). Over the 80% bar of 2,147,483,648 B by 224,600,064 B = 214.2 MiB. FAILED either way, so this is a correction, not a reversal.\n(5) EXPEDITE RESCINDED: P0 -> P1. The expedite rested on 'a LIVE crash source'. There is none: 0 kills in 17.5h under 621 real extraction calls, and the two cited kills are pre-6f3577b9f. HELD at P1 and not lower on two live facts: memory.peak == memory.max exactly (the ceiling was touched in THIS post-fix life) and the idle anon drift in (6).\n(6) THE ONE OPEN AND GENUINELY CONCERNING SIGNAL: IDLE ANON DRIFT. anon 1,447,403,520 B at 03:56Z -> 1,743,306,752 B at 08:33Z = +282 MiB in 4.6h, while `docker logs -t --since 2026-08-24T04:00:00Z` shows ZERO non-/health requests in that window. Both malloc_trim fixes are wired to request finally-blocks, so with no requests NEITHER can have run. If real this is a third mechanism that neither fix addresses. Honest caveat: two samples taken by two different sessions, not one series. Resolving it is the priority of the new AC-7/AC-8.\n(7) THE REST OF THE PICTURE IS HEALTHY, NOT AT THE WALL. At 08:33Z memory.current 2,288,607,232 B = 85.3% of cap, free 395 MB; anon = 64.9% of cap. memory.events.max is 25,115 but FROZEN across 8 samples from 08:30:38Z to 08:32:59Z, i.e. zero reclaim-at-limit events now. pgsteal/pgscan = 4,964,445/5,033,338 = 98.6%, and workingset_refault_anon = 0. That is successful reclaim, not a death spiral. docker-stats MemPerc and 'peak==max' both read alarming for the same reason: they conflate reclaimable file cache (435 MB, 210 MB of it inactive) with irreducible anon.\n(8) TWO PREMISES IN THIS ROW'S OWN non_goals ARE FALSE; DO NOT INHERIT THEM. Measured with the guard's own algorithm (scripts/orch-row-prose-ceiling-check.mjs STRUCTURAL_FIELDS exclusion): FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM is 8,006 prose bytes, 3,994 UNDER the 12,000 ceiling, so it is WRITABLE and the '33,898B / Stage 2.5 hard-rejects' claim is stale. THIS row is the constrained one at 10,424 prose bytes with 1,576 headroom, which is why the three fields named at the top were consolidated rather than appended. The AC-4 bar ruling therefore lives on the sibling, where it belongs.\n(9) SIDE-FINDING, NOT THIS ROW'S SCOPE. 6f3577b9f's commit body asserts 'SemaphoreContendedError=0, FAILED=0 post-rebuild'; on the live container that is now false (33 raises, 6+ _run_pek_extract FAILED). Owned by FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW (backlog, P2). Flagged, not actioned here.",
         "po_next_measurement_ac_20260824T0850Z": "REPLACES the ABORTED AC-4 burst test. Owner ops. No rebuild, no restart, no synthetic burst; all read-only.\nAC-7 PASSIVE LONGITUDINAL SAMPLER, >=12h, one sample per 5 min appended to a CSV under docs/incidents/data/: ts, memory.current, memory.stat{anon,file,inactive_file,pgscan,pgsteal,workingset_refault_anon}, memory.events{max,oom,oom_kill}, and /proc/1/status VmRSS+VmHWM. Persist it as a script under scripts/ per docs/policies/dev-standards.md Script Persistence; do NOT hand-run it ad hoc. Correlate against `docker logs -t` /extract and /pek-extract lines. Safe at ANY free-memory level: it allocates nothing in the target cgroup.\nAC-8 report B1-B4 from that series. Definitions live on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM field po_ac4_bar_ruling_20260824T0850Z. B4 is the priority question: settle whether the +282 MiB/4.6h zero-traffic anon drift in po_ruling (6) is real or an artifact of two cross-session samples.\nNO SYNTHETIC BURST until the sampler shows sustained free >= 500 MB; the original item-(5) safety gate stands unchanged. If AC-7/AC-8 return clean on all four bars, hand back to po and PO closes the sibling on them: a synthetic burst is NOT required for closure.\nSTILL DO NOT rebuild or restart pdf-extractor: 17.5h of cgroup counters, including the memory.events series, reset on container recreation.",
         "ac5_verdict_override": "MEASURED, CONCLUSION WITHDRAWN by po 2026-08-24T08:50Z: both kills are on RETIRED container 6ec27ac85c8e and predate 6f3577b9f. ac_4_vmhwm_percent_of_cap corrected 86.3 -> 88.37 (kB is KiB). Live container oom_kill=0. See po_ruling (1),(2),(4)."
+      },
+      {
+        "status": "READY",
+        "size": "S",
+        "depends": [],
+        "created_at": "2026-08-24T13:16:43Z",
+        "created_by": "po/triage-20260824T1310Z",
+        "updated_at": "2026-08-24T15:46:42Z",
+        "updated_by": "po/triage-20260824T1310Z",
+        "id": "FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS",
+        "type": "FIX",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "architect",
+        "files": [
+          "launchd/com.vn-market.fleet-push.plist"
+        ],
+        "dedup_key": "fleetpush-disarm-not-durable",
+        "title": "The user's explicit fleet-push disarm lives ONLY in the untracked installed plist — the version-controlled repo copy still says RunAtLoad=1/StartInterval=1800 with no Disabled key, so any re-install from source silently re-arms an unattended push of 224 commits",
+        "acceptance": "AC-1 make the disarm durable in the tracked plane, or make re-installation refuse to silently re-arm a job the user disarmed. AC-2 MEASURED 2026-08-24T13:0xZ, and this is the whole finding: `diff <(plutil -p launchd/com.vn-market.fleet-push.plist) <(plutil -p ~/Library/LaunchAgents/com.vn-market.fleet-push.plist)` yields EXACTLY ONE line of difference — `> \"Disabled\" => 1`. Every other key is identical. The user's decision is one untracked key deep. AC-3 do NOT resolve this by committing Disabled=1 into the repo plist without a ruling: that makes the disarm the permanent default for every future install/host, which is a different policy decision than 'disarmed today'. Architect must choose between (a) tracked Disabled=1 plus an explicit re-arm procedure, (b) an install-time guard that refuses to overwrite a locally-disabled label, or (c) moving the arm/disarm decision out of the plist into a checked-in policy file the installer reads. AC-4 whatever ships must be verified by re-reading the INSTALLED plist with plutil -p (it is a BINARY plist; grep reads the Disabled key as absent — this exact false negative was hit live during triage). AC-5 do NOT re-arm fleet-push as part of this work, and do NOT push. origin/main stays ab5087296; PUSH-AUTONOMY-1 is unsatisfied; the user pushes personally.",
+        "evidence": "Found by PO 2026-08-24T13:0xZ while adjudicating the router's ack-ledger question; NOT reported by the router, which stated the disarm as 'plist Disabled=1' without distinguishing the tracked repo copy from the installed copy. 224 commits unpushed (git rev-list --count origin/main..HEAD, live). Both pre-push gates (tsc, size-lint) are now GREEN, so the ONLY thing standing between a re-install and an unattended 224-commit push is that one untracked key.",
+        "po_note": "P0 because it protects an explicit standing user decision and both technical brakes have just been released.",
+        "promoted_at": "2026-08-24T15:46:41Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -23911,9 +23882,44 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-24T14:05:00Z",
-    "last_triaged_by": "po",
-    "in_progress": []
+    "last_triaged_at": "2026-08-24T15:46:41Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
+    "in_progress": [
+      {
+        "id": "UC-MDH-P2",
+        "type": "SPRINT-S",
+        "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "multi",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P2",
+        "note": "SCOPE=verifier Rescope note. FALSE-PREMISE corrected: 9+ live doc consumers still instruct agents to CALL the tool (digest-predict is cron-armed) — sweep AGENT_STARTUP/INDEX/README/digest-predict/market-analyst/tools-list/briefings before deregistering. De-conflict TE-T05 (drop its append-session-record deletion clause via orch-apply, see TE-T05 audit_ref). Regenerate tool-registry.json (3-way count sync). Fix 1300b test root cause too. Bulk stub cleanup via scripts/.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "architect",
+        "related": [
+          "TE-T05"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "deploy_gate": "user-approved-off-market",
+        "deploy_gate_note": "ops-rebuild-gated — lands only after a user-approved off-market deploy; next_agent=ba already holds it OUT of BOUNDED-1 auto-pickup, so no supervised flag needed. Bumped P2->P1 with the band 2026-07-17T04:54:03Z",
+        "promoted_at": "2026-08-23T10:53:01Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "updated_at": "2026-08-24T15:46:44Z",
+        "claimed_at": "2026-08-24T15:46:41Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "owner": "architect",
+        "status_note": "BA spec DONE 2026-08-23T17:0xZ (dev-team DRS tick 16:37Z). Deliverable: docs/handoffs/UC-MDH-P2-BA-spec.md (commit 5e1015444, 98L) — FR-1..FR-7 + NFR-1..NFR-3 + DDD-layer table. Journal/notebook: 16879b851. Router re-verified at source: both commits landed, exact file sets, orch-state.json untouched (0 hits). LIVE-CONSUMER COUNT CORRECTED 9 -> 13 (classified subset of 34 raw grep hits); router independently confirmed the 4 newly-found consumers at their stated lines: docs/standards/mcp-tools.md:103, docs/protocols/smart-compact-protocol.md:31, docs/protocols/smart-compact-protocol-offload.md:16/18/25, docs/data/system-map.json:29 (the latter is the 3-way count-sync source). Also confirmed: docs/agents/digest-predict/flow/ and docs/agents/market-analyst/flow/ have ZERO hits — both already migrated to end-0-cowork/notebook-write post-TE-T05; only their init.md + tools/package docs are stale. TE-T05 DE-CONFLICTION IS MOOT, not deferred: TE-T05 landed DONE_VERIFIED 2026-08-08 and a full per-lane jq scan returns ZERO board matches for that id — there is no live deletion clause to drop, so the row scope-note item (b) is closed with no orch-apply needed. ZERO FRs IMPLEMENTED, and NOT (only) because of deploy_gate: every FR target file (agent init.md, tools/package grant docs, skill dir, guides, protocols, briefings) falls under BA forbidden_outputs docs/agents/ba/init.md:59 NEVER modify agent files, flow files, or knowledge files — router verified that line is real and structural, and ba/init.md:61 token_rule Blocked = report + EXIT, so the agent honoured its own contract exactly. FR split per spec: FR-1/2/5/7 need NO rebuild; FR-3/4/6 are deploy-gated and must land atomically in one user-approved off-market window. DISPATCH_LANE UPDATED ba -> architect IN THIS WRITE: the row still carries promoted_by=dev-team (design-router sweep), so leaving the stale lane would have let a future DRS turn re-dispatch to ba — the exact stale-cache defect tracked by FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT. OPEN BLOCKERS: B1 (-> po, PARALLEL, does not block architect) does deploy_gate=user-approved-off-market cover the whole row or only the rebuild-requiring FRs? B2 (-> architect to adjudicate) do digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md fall in agent-father exclusive lane, splitting FR-5 across two owners? NEXT: architect designs the atomic FR-3/4/6 deploy-gated bundle + adjudicates B2, then pm decomposes per-owner."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -23936,7 +23942,7 @@
         "last_served_tick": "2026-08-24T15:19:33Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-24T03:01:50Z"
+        "last_served_tick": "2026-08-24T15:46:31Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-24T03:30:56Z"
@@ -23945,7 +23951,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T15:45:41Z",
+    "_updated_at": "2026-08-24T15:46:31Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
