@@ -1,28 +1,6 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-31 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
-
----
-
-## Session: 2026-07-29 (FE-PG-BCTC-FRESH-FIX — BOUNDED-1 idle-pickup)
-
-**DONE-CODE (rebuild-verify pending, ops-gated) — page-level FreshnessBadge wired onto /dashboard/bctc (Financial Reports hub)**
-
-Zone health: 99 test files; 2177 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed via git-stash A/B); tsc 0 errors | HEALTHY
-
-Task: dashboard.bctc.tsx rendered `generated_at` (page-level) + per-item `updated_at` but no staleness *flag* (quality-audit FE-PG-BCTC-FRESH WARN). Wired the existing FreshnessBadge + useFreshnessRevalidator("event") — slaTierKey dictated by the quality-checklist's own SLA formula (`sla_tiers["event"].max_staleness_min=1560`), same pattern as ~24 sibling pages and the immediately-prior sibling task (FE-PG-_INDEX-FRESH-FIX).
-
-No naive-SQLite risk here (unlike that sibling's `data_asof`): confirmed live against the real, unmodified mcp-server that `generated_at` is already `new Date().toISOString()` server-side (analysisBriefIndexHandler) — no `parseDate` normalization needed.
-
-Found + fixed a related provenance bug: `fetchAnalysisBriefs` parsed the DTO's real `generated_at` but then discarded it (`Omit<LoaderData,"generated_at">`), and the loader substituted a second, independently-computed `new Date().toISOString()`. Both were "now" at request time in practice, but the DTO value is now also the FreshnessBadge input — fixed to thread the real upstream value through instead, avoiding provenance/clock-drift ambiguity between the two processes. Kept the existing always-a-string fallback semantics on absent/malformed `generated_at` (this DTO's type contract predates this task, unlike the sibling's honest-null `data_asof`) — did not invent new null semantics unprompted.
-
-5 new unit tests (valid passthrough / absent+null fallback / 502+network-error no-regression). Full vitest 2177/2179 pass (2 pre-existing QUE-TOOLTIP fails, confirmed via `git stash` A/B — identical 2 failures reproduce with this diff fully stashed out). tsc clean. Playwright full suite (not just render-check): `PLAYWRIGHT_PORT=3021 npx playwright test` → 7/7 pass across all 3 spec files (smoke.spec.ts 1/1, render-check.spec.ts 3/3, quality-audit-lastverified.spec.ts 3/3) — none related to this change. Manually confirmed live SSR HTML on a throwaway `PORT=3022 npm run dev` against the real mcp-server on :3000: green `bg-green-100`/`bg-green-500` FreshnessBadge + "Cập nhật lúc" renders next to the existing ClientTimestamp.
-
-Graphify: skipped — no Skill tool grant in this background subagent context, same disposition as FE-PG-_INDEX-FRESH-FIX/TOKEN-ECONOMY-TICK-PREFLIGHT-WU-1.
-
-Files: `routes/dashboard.bctc.tsx` (`fetchAnalysisBriefs` now returns full `LoaderData` incl. real `generated_at`, FreshnessBadge+useFreshnessRevalidator("event") wired), `__tests__/FE-PG-BCTC-FRESH-FIX-dashboard-bctc-loader.test.ts` (+5 tests, new), `docs/architecture/microservice/frontend/api-reference.md` (new row — dashboard.bctc.tsx was missing from the Remix Routes table entirely).
-
-rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in_progress`→`review`, `next_agent=qa`, review_note flags PENDING-REBUILD for live-container re-verification — mirrors sibling BOUNDED-1 precedent above.
+**Last updated:** 2026-08-24 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 ---
 
@@ -62,6 +40,28 @@ Full vitest: 2183 pass / 2 fail — same pre-existing unrelated QUE_DESCRIPTIONS
 
 ---
 
-**Current state:** 100 test files; 2183 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors; `apps/frontend` bun.lock+package-lock.json in sync; `lint:fence` 0 violations.
+## Session: 2026-08-24 (FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL — router-dispatched, Phase-B intent pre-claim)
+
+**DONE — Layer-B cron rows no longer render false "Chưa từng chạy"**
+
+Zone health: 100 test files; 2188 pass / 2 fail (same pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich fails; +5 net new tests, all green); tsc 0 errors | HEALTHY
+
+Task: `CronLayerTable`'s shared row-render loop's last-fire cell was layer-BLIND — Layer-A and Layer-B rows share one `rows.map(...)`, so all 23 Layer-B rows fell into a `row.last_fire == null` branch written for Layer-A and rendered "Chưa từng chạy" (asserts a false fact — session crons DO run, they just have no fire-telemetry writer; `normalizeCronRowB` correctly force-nulls all four fire fields by design, untouched). Root cause + ACs were fully pre-derived by po in the task row's `desc` (provenance chain traced to architecture brief line 127 dropping BA's original "(Layer-A, never fired)" qualifier) — pure implementation cycle, no re-investigation.
+
+Fix: last-fire cell now checks `row.layer === "cli-session"` FIRST, rendering two new named exports `CRON_LAYER_B_LAST_FIRE_LABEL`("Không theo dõi")/`_HINT` (frontend-owned VN copy, visible not tooltip-only) before the untouched Layer-A `"Chưa từng chạy"` ternary. Also dropped the redundant per-row `Lớp` column (AC-5, non-blocking) — `CronRecheckTable` already splits Layer-A/Layer-B into two header-labelled sub-tables (AC-18 pre-existing), so a per-row layer value inside one already-homogeneous `CronLayerTable` call was pure redundancy; confirmed both pinned tests (`CRON_STATUS_LABELS.SESSION_SCOPED`, `cronLayerLabel("cli-session")`) are pure-function tests, not DOM assertions, so removal is conflict-free. Corrected `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127` (AC-6) and made the test's never-fired predicate layer-aware (AC-7, `TASK-DASH-CRON-2-cron-recheck-table.test.ts`).
+
+G12 evidence: `render-check.spec.ts` 3/3 PASS. Full `playwright test` also surfaced 2 pre-existing unrelated live-data-content fails in `quality-audit-lastverified.spec.ts` (zero file overlap with this diff — a live SLA-breach description string on an unrelated page happens to contain the substring "stale").
+
+Near-miss context: 2026-08-22 a router session misread this exact column as evidence session crons were unarmed and nearly double-armed repo-mutating crons (code-janitor, claude-manager-helper) over a live peer — user interrupted before any CronCreate fired.
+
+Self-inflicted near-miss this cycle, caught+recovered: ran a stray `git stash` mid-investigation in this shared-main working tree (200+ pre-existing peer stash entries). `git stash pop stash@{0}` immediately restored my 3 edited files intact — zero data loss, zero peer-stash disturbance. This notebook already carried the "git stash is unsafe here" lesson (rolling footer, below) from a prior cycle; this is the first time it bit me directly rather than a peer.
+
+Files: `routes/dashboard.orchestration.tsx` (2 new named exports + layer-aware last-fire branch + `Lớp` column drop), `__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts` (layer-aware predicate, +5 net new tests), `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127`, `docs/architecture/microservice/frontend/domain-model.md` (doc-review addendum).
+
+Commit `4b4bfea7a`. Board flipped `backlog`→`review`, `next_agent=qa`. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md` STEP dev-frontend-S5.
+
+---
+
+**Current state:** 100 test files; 2188 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors; `apps/frontend` bun.lock+package-lock.json in sync; `lint:fence` 0 violations.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly/event SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate) EXCEPT where a DTO's own type contract predates the freshness work and already defines an always-a-string fallback (e.g. analysis-briefs `generated_at`); DDD layers enforced; Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001. `parseDate` (app/lib/formatDate.ts) is the SSOT naive-SQLite→UTC normalizer. `git stash` is unsafe in this shared-main working tree — prefer direct code-reading to confirm a failing test is unrelated. **Dual lockfile:** `apps/frontend` intentionally carries both `bun.lock` (CI-canonical, dev speed) AND `package-lock.json` (Dockerfile `npm ci` for the prod image) — any `package.json` dependency change MUST run `cd apps/frontend && bun install && npm install --package-lock-only` to regenerate BOTH, or the next drift silently reproduces this exact CI-red (bit me once, 7 weeks latent before the fence job surfaced it).
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly/event SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate) EXCEPT where a DTO's own type contract predates the freshness work and already defines an always-a-string fallback (e.g. analysis-briefs `generated_at`); DDD layers enforced; Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001. `parseDate` (app/lib/formatDate.ts) is the SSOT naive-SQLite→UTC normalizer. `git stash` is unsafe in this shared-main working tree (200+ pre-existing peer entries) — prefer direct code-reading to confirm a failing test is unrelated; if you stash by mistake, `git stash pop stash@{0}` immediately (never touch other indices). **Dual lockfile:** `apps/frontend` intentionally carries both `bun.lock` (CI-canonical, dev speed) AND `package-lock.json` (Dockerfile `npm ci` for the prod image) — any `package.json` dependency change MUST run `cd apps/frontend && bun install && npm install --package-lock-only` to regenerate BOTH, or the next drift silently reproduces this exact CI-red (bit me once, 7 weeks latent before the fence job surfaced it). **Shared render loop layer-blindness class:** when Layer-A/Layer-B (or any two-variant) rows share one `rows.map(...)`, a branch written for one variant silently applies to the other unless it explicitly discriminates on the variant field first — check for this pattern whenever a shared render loop renders rows sourced from more than one origin.
