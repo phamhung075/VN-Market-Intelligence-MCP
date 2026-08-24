@@ -18014,6 +18014,139 @@
           "observed_at": "2026-08-14T01:33:11Z"
         }
       }
+    },
+    {
+      "id": "CCATO-MCP-T5-USECASE",
+      "type": "IMPL-XS",
+      "status": "DONE_VERIFIED",
+      "size": "XS",
+      "zone": "mcp-server",
+      "priority": "P0",
+      "title": "application/usecases/runNarrativeTruthGate.ts orchestration",
+      "depends": [
+        "CCATO-MCP-T1-DOMAIN-ENGINE",
+        "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+        "CCATO-MCP-T3-PROBE-ADAPTERS",
+        "CCATO-MCP-T4-SIGNAL-WRITER"
+      ],
+      "supervised": false,
+      "updated_at": "2026-08-24T00:00:32Z",
+      "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+      "claimed_at": "2026-08-23T23:29:49Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "dispatch_lane": "dev-mcp-server",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-24T00:00:32Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit",
+          "args": "commit=18e20a438; files=apps/mcp-server/src/application/usecases/runNarrativeTruthGate.ts,apps/mcp-server/src/application/usecases/runNarrativeTruthGateTypes.ts,apps/mcp-server/src/application/usecases/runNarrativeTruthGateFindings.ts,apps/mcp-server/src/__tests__/CCATO-MCP-T5-USECASE.test.ts,apps/mcp-server/src/domain/services/narrativeTruthGate/claimToolMapTypes.ts,apps/mcp-server/src/infrastructure/fileStore/claimToolMapValidator.ts",
+          "live_value_observed": "ancestor=yes; git show --stat lists all 6 src files + 4 docs; bun test CCATO-MCP-T5-USECASE.test.ts 15 pass 0 fail 37 expect; bun tsc --noEmit 0 errors; full suite 15427 pass/51 fail/1 error/1282 files, failing file-set baseline-15 + 1 unrelated flake",
+          "observed_at": "2026-08-24T00:00:32Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): Direct-commit verify: commit 18e20a438 (main ancestor) touches runNarrativeTruthGate.ts/Types.ts/Findings.ts/test+claimToolMapTypes.ts/claimToolMapValidator.ts+4 docs. CCATO-MCP-T5-USECASE.test.ts 15 pass/0 fail/37 expect (matches testing.md doc). tsc --noEmit 0 errors. DDD scan clean (domain zero infra imports; app->infra is correct per DDD Layer Rules). Security scan clean. mock-guard PASS. Full suite 15427 pass/51 fail/1 error/1282 files -- failing file-set = baseline-15 + 1 unrelated VPS-fetcher timeout flake, zero overlap with T5 files. Deps T1-T4 all DONE_VERIFIED. Not OOM-class."
+    },
+    {
+      "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+      "type": "IMPL-XS",
+      "status": "DONE_VERIFIED",
+      "size": "XS",
+      "zone": "mcp-server",
+      "priority": "P0",
+      "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
+      "depends": [
+        "CCATO-MCP-T5-USECASE"
+      ],
+      "supervised": false,
+      "updated_at": "2026-08-24T03:46:34Z",
+      "updated_by": "dev-mcp-server",
+      "claimed_at": "2026-08-24T03:31:38Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "dispatch_lane": "dev-mcp-server",
+      "status_note": "[dev-mcp-server] Implementation Record: registered narrative_truth_gate (interface/mcp/tools/system/narrativeTruthGateTool.ts + narrativeTruthGateFormat.ts, split for size-lint <=120L) wrapping CCATO-MCP-T5 runNarrativeTruthGate(); wired into registry.ts (#187). Byte-identical [FAIL]/[PASS]/[WARN] lines to scripts/narrative-truth-gate.sh L371-378 (em-dash verified byte-for-byte); isError:true only on CONFIG_ERROR per brief §3.1. Regenerated docs/data/tool-registry.json + docs/data/project-stats.json via canonical generators (toolCount 183->184, cronJobCount unchanged 88). Commit 4a59d67ec (pathspec: registry.ts, narrativeTruthGateTool.ts, narrativeTruthGateFormat.ts, CCATO-MCP-T6-TOOL-REGISTRATION.test.ts, tool-registry.json, project-stats.json). Tests: CCATO-MCP-T6-TOOL-REGISTRATION.test.ts 10/10 pass (registration + registry.ts wiring + CONFIG_ERROR/zero-candidate-PASS through the real handler, I/O-safe only + pure formatGateReport byte-fidelity FAIL/PASS/WARN/mixed) — FAIL verdict deliberately not exercised end-to-end through the registered tool (no deps override -> would write the live orch-state.json; T5s own suite already covers full orchestration+signal-emit). tsc --noEmit clean. Server boot on PORT=3099: /health toolCount=184, zero import errors. tool-registry-parity.test.ts 17/17 pass. Full suite: 15441 pass/51 fail/1 error/1283 files -- failing file-set = documented 15-file baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline) + 1 unrelated new flake (1227-source-health-empty-result.test.ts, globalSourceTracker cross-file ordering, 8/8 pass in isolation, zero narrative_truth_gate/CCATO hits in full log) -- same pattern QAs own T5 verify already hit (their run: baseline-15 + 1 unrelated VPS-fetcher flake). size-lint: 2 pre-existing unrelated offenders (pushBctcLayoutHandler.ts, tasksMdJanitorJob.ts), my new files well under 120L, zero new offenders. NOT DONE: docs/agents/tools/list/INDEX.md + narrative_truth_gate.md stub regen was run then reverted uncommitted -- that path is under docs/agents/** (agent-father exclusive zone per this tasks hard constraint). Follow-up: run `python3 scripts/gen-tool-list-stubs.py && bash scripts/gen-tools-index.sh` (idempotent, zero risk) to sync those 2 files (+1 tool, 183->184).\n[QA] Review Record (direct-commit verify): commit 4a59d67ec5a64c73f7cfe58bda2774c55f1db781 (ancestor of main, 6/6 claimed files match). Targeted test 10/10 pass, tool-registry-parity.test.ts 17/17 pass, bun tsc --noEmit 0 errors, mock-guard PASS, DDD grep flagged interface->application import which is the documented correct direction (ARCHITECTURE.md:7 domain<-application<-interface, not a violation), zero infra imports, zero security hits, new files 61L/41L under 120L cap. Full suite 15442 pass/40 skip/50 fail/1283 files, failing file-set = 15 pre-existing baseline files (1146-get-insider-transactions, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, 1113-vps-proxy-health, 1844-backtest-retrieval, 1858c-logvpspush-fix, 1518-get-foreign-flow-ohlcv-source, RAPID-B2-get-market-cap-tool, 1405b-bctc-vps-fixes, TSU-DEV-U5-foreign-flow-null-holding-ratio, 251-mcp-tools, 1892a-pushNewsHandler, VPT-1-vps-proxy-health-endpoint, 235-telegram-send-merge, 1875c-record-signal-outcome-routing, 1193-push-prices-persist), zero overlap with this task. Not OOM/durability-class, not BCTC-touching. VERDICT: vc-approved.",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-24T03:46:34Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + tool-registry-parity.test.ts + mock-guard.sh + full suite bun test",
+          "args": "commit=4a59d67ec5a64c73f7cfe58bda2774c55f1db781; files=apps/mcp-server/src/__tests__/CCATO-MCP-T6-TOOL-REGISTRATION.test.ts,apps/mcp-server/src/interface/mcp/tools/registry.ts,apps/mcp-server/src/interface/mcp/tools/system/narrativeTruthGateFormat.ts,apps/mcp-server/src/interface/mcp/tools/system/narrativeTruthGateTool.ts,docs/data/project-stats.json,docs/data/tool-registry.json",
+          "live_value_observed": "ancestor=yes; stat touches 6/6 claimed files; bun test 10 pass 0 fail 16 expect; tsc 0 errors; tool-registry-parity 17 pass 0 fail; mock-guard PASS; full suite 15442 pass/40 skip/50 fail across 1283 files, failing file-set=15 pre-existing baseline files, zero overlap with task",
+          "observed_at": "2026-08-24T03:46:34Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL",
+      "type": "FIX",
+      "status": "DONE_VERIFIED",
+      "priority": "high",
+      "size": "S",
+      "zone": "apps/frontend/",
+      "owner": "dev-frontend",
+      "created_at": "2026-08-23T07:47:20Z",
+      "created_by": "po/router-intent-FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL-20260823",
+      "title": "All 23 Layer-B (CLI-session) cron rows on /dashboard/orchestration falsely render 'Chưa từng chạy' — a structurally-guaranteed constant that asserts a fact the system has no data for; already caused a live near-miss (near-double-arm of repo-mutating crons)",
+      "desc": "USER-REPORTED 2026-08-23 (verbatim intent: 'no all session is running actual but status not update'). Section 'Cron phiên làm việc (23)' on http://localhost:3001/dashboard/orchestration renders, for ALL 23 rows: Lần chạy gần nhất = 'Chưa từng chạy', Dự kiến lần tới = '—', Trạng thái = 'Phiên làm việc'.\n\n=== NOT A TRACKING OUTAGE, NOT A CRON FAILURE ===\nThe crons ARE running. 'Chưa từng chạy' is a constant by construction and can never say anything else:\n(1) apps/mcp-server/src/infrastructure/cron/layerBCronRegistry.ts builds Layer-B rows by PARSING .claude/commands/crons/*.md authoring docs on disk. It is a static config-catalogue read; it never queries any runtime fire table. Its `interface CronStatusRowB` types `expected_last_fire`/`expected_next_fire`/`last_fire`/`last_status` as the LITERAL type `null` (not `string | null`), and `buildRow()` hardcodes all four to null + `status: \"SESSION_SCOPED\"`. It is type-level impossible for a Layer-B row to ever carry a fire timestamp. This is CORRECT and deliberate — CronCreate jobs live inside the Claude Code CLI process, which has no writer into market.db, so there is no Layer-B equivalent of Layer-A's getDistinctJobNames(db)+buildLayerARow(...) telemetry pipeline in cronStatusHandler.ts.\n(2) apps/frontend/app/routes/dashboard.orchestration.tsx `normalizeCronRowB()` re-hardcodes the same four fields to null and forces status via `normalizeCronStatusB()` (which ignores its input entirely). Belt-and-braces, also correct.\n(3) SAME FILE, the shared row-render loop's last-fire cell (`{row.last_fire == null ? <span>Chưa từng chạy</span> : <ClientTimestamp/>}`, ~L414-420, verify live — line numbers drift) is layer-BLIND. Layer-A and Layer-B rows go through ONE `rows.map(...)`, so Layer-B inherits a branch written for Layer-A.\n\n=== THE ACTUAL DEFECT — an implementation-side scope widening of an explicitly Layer-A-scoped AC ===\nThe suppression of red/amber for Layer-B is CORRECT and must be preserved (BA NFR-7 / AC-14 / AC-19 — session crons legitimately do not fire when no session is live, so MISSED/STALE would be false-positive noise). The defect is that the last-fire CELL asserts a POSITIVE FACT ('this has never run') that the system has no data to support and which is actively FALSE.\n\nPROVENANCE — the spec never authorized this; the implementation widened it:\n- docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md:364 AC-20 reads, verbatim: 'A row with `last_fire: null` (Layer-A, never fired) renders \"Chưa từng chạy\"...'. EXPLICITLY LAYER-A-SCOPED.\n- Same BA spec:350 AC-14: 'NO `layer_b` row has `status` of MISSED, LATE, STALE, NEVER_FIRED, or any red/amber value.'\n- Same BA spec:416 test-matrix row (c): Layer-B must show 'no fabricated fire timestamp'.\n- docs/handoffs/TASK-DASH-CRON-2.md:23 preserved the qualifier ('(Layer-A never-fired)').\n- docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 DROPPED it: '- Never-fired: `last_fire == null ? \"Chưa từng chạy\" : <VN-locale format>` (AC-20).' — no layer qualifier, sitting in a generic `dashboard.orchestration.tsx` bullet list. That single dropped qualifier is where the widening entered.\n\nWHY EVERY EXISTING TEST STILL PASSES WHILE THE UI LIES: AC-14 guards the `status` FIELD. The false copy leaks in through the `last_fire` CELL, which never goes through the status enum at all — so the entire AC-14/AC-19/NFR-7 guard rail is bypassed by construction. apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts:344-356 ('Never-fired display logic (AC-20) — mirrors CronLayerTable's ternary') reimplements the component predicate as `lastFire == null` with NO layer input, so it mirrors — and therefore blesses — the bug.\n\n=== DOCUMENTED OPERATIONAL HARM — this is not a cosmetic nit ===\n2026-08-22: a router session read this exact column as evidence that the session crons were unarmed and began executing the /cron-cowork-team, /cron-detect-loop and /cron-standalone-team re-registration sequences. All three markers were in fact held by LIVE peer sessions. The user interrupted before any CronCreate fired. Re-registering over a live peer double-arms repo-mutating crons (code-janitor, claude-manager-helper) — a correctness defect, not noise. See docs/agent-memory/notebooks/po.md + memory feedback_router_almost_rearmed_live_peer_cron_markers_20260822.\n\n=== ACCEPTANCE ===\nAC-1 (PRIMARY): for `layer === \"cli-session\"` rows the last-fire cell MUST NOT render 'Chưa từng chạy'. It renders a neutral not-tracked label — PO-ruled copy: 'Không theo dõi'. Layer-A rows with a genuinely null `last_fire` KEEP 'Chưa từng chạy' unchanged (BA AC-20 remains valid for Layer-A and is still load-bearing there — see the sibling row FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS).\nAC-2: the new Layer-B copy is a NAMED EXPORTED CONSTANT (same shape as the existing `CRON_STATUS_LABELS` record), never an inline string literal in JSX — the current inline literal at the render site is exactly why the string was invisible to every existing test.\nAC-3: the explanatory copy currently buried in the `<tr title={row.reason ?? undefined}>` tooltip is surfaced in the visible cell (or an adjacent always-visible affordance), not tooltip-only. PO ruling — render the frontend's OWN Vietnamese copy, do NOT surface the backend `reason` string verbatim: it is English ('Session-scoped: fires only while a live CLI session is active') inside a Vietnamese UI (violates the standing language-boundary rule), and translating it at source would drag apps/mcp-server/ into this fix. Keeping the copy frontend-side holds this to ONE zone.\nAC-4 (GUARD, must not regress): Layer-B rows still never render a red or amber badge, and `normalizeCronRowB` still force-nulls all four fire fields (BA AC-14/AC-15/AC-19, NFR-7). DO NOT 'fix' the normalizer to pass fire timestamps through — that would fabricate data. The normalizer is CORRECT; only the render branch is wrong.\nAC-5 (SHOULD, NON-BLOCKING — must not stall AC-1): the `Lớp` column and the `Trạng thái` badge both read 'Phiên làm việc' for every Layer-B row, so the two columns together carry zero information. Both strings are pinned verbatim by still-valid ACs (BA AC-19 pins the badge copy; FR-5.2 pins the layer copy; test:287 and test:337 assert both), so neither may simply be reworded. The only conflict-free resolution PO can see is that AC-18 ALREADY requires the two layers be split into visually distinct sub-sections with their own headers ('Cron máy chủ' / 'Cron phiên làm việc'), which makes a per-row `Lớp` column redundant inside a layer-homogeneous sub-table — for BOTH layers. If that can be done cleanly in this change, do it. If it cannot be resolved without violating AC-19 or FR-5.2, LEAVE IT AS-IS, record why in the task report, and file a follow-up row. Do not block AC-1 on this.\nAC-6 (doc conformance — prevents reintroduction): docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 is corrected to restore the layer qualifier BA had and to name the Layer-B branch explicitly. Without this the next implementer reading the brief reintroduces the exact same widening.\nAC-7 (test): TASK-DASH-CRON-2-cron-recheck-table.test.ts:344-356's `lastFireDisplayIsNeverFiredText(lastFire)` helper becomes layer-aware (it currently takes no layer argument and mirrors the buggy predicate). Add: a Layer-B row asserts the not-tracked copy and asserts NOT 'Chưa từng chạy'; a Layer-A null row still asserts 'Chưa từng chạy'. Line 286's `CRON_STATUS_LABELS.NEVER_FIRED === 'Chưa từng chạy'` assertion STAYS — that constant is Layer-A's and is unchanged. Full frontend suite green.\n\n=== EXPLICITLY OUT OF SCOPE ===\nBuilding real Layer-B fire telemetry. It would require a Claude-Code-CLI-session -> market.db writer that does not exist today and is a materially larger design question. If dev-frontend judges it warranted, file a SPIKE — do not attempt it here.\n\n=== DO NOT CONFLATE ===\nFIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS (BACKLOG, zone apps/mcp-server/, next_agent dev-mcp-server) shares the user-visible SYMPTOM STRING ('Chưa từng chạy' on a cron that is actually running) but is a DIFFERENT root cause in a DIFFERENT zone: Layer-A job-name resolution failing in cronStatusCompute.ts's resolveJobNameDb() 3-tier resolver, where the fix is to make the TRUE last_fire resolvable. This row is Layer-B, where there IS no true last_fire to resolve and the fix is to stop claiming one. Neither row supersedes the other; both should land.",
+      "files": [
+        "apps/frontend/app/routes/dashboard.orchestration.tsx",
+        "apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts",
+        "docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md"
+      ],
+      "baseline_pass": true,
+      "related_to": [
+        "FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS"
+      ],
+      "depends_on": [],
+      "discovered_by": "user (2026-08-23 dashboard read) + router session 72a0d0d9 root-cause derivation; provenance chain (BA AC-20 layer qualifier dropped by architect brief L127) re-derived at source by po",
+      "updated_at": "2026-08-24T19:53:58Z",
+      "updated_by": "dev-frontend",
+      "review_note": "dev-frontend DONE-CODE: AC-1/AC-2/AC-3 — last-fire cell now checks row.layer===\"cli-session\" FIRST, renders new named exports CRON_LAYER_B_LAST_FIRE_LABEL(\"Không theo dõi\")/_HINT (visible not tooltip-only VN copy) instead of falling into the Layer-A \"Chưa từng chạy\" ternary (untouched for server rows). AC-4 guard verified: normalizeCronRowB still force-nulls all 4 fire fields, unchanged. AC-5 (non-blocking, done): dropped redundant per-row Lớp column — CronRecheckTable already splits Layer-A/Layer-B into 2 header-labelled sub-tables (AC-18 pre-existing); confirmed both pinned tests (CRON_STATUS_LABELS.SESSION_SCOPED test:287, cronLayerLabel(\"cli-session\") test:337) are pure-function tests unaffected by DOM column removal. AC-6: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127 corrected to restore Layer-A qualifier + name the Layer-B branch. AC-7: TASK-DASH-CRON-2-cron-recheck-table.test.ts predicate made layer-aware, +5 net new tests, line 286 CRON_STATUS_LABELS.NEVER_FIRED assertion untouched. Evidence: tsc --noEmit clean; full vitest 2188 pass/2 fail (same pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich schema fails, confirmed unrelated via direct code read, zero import overlap — NOT via git stash, notebook flags stash unsafe in this shared-main tree); targeted TASK-DASH-CRON-2-cron-recheck-table.test.ts 46/46 pass; G12 Playwright render-check.spec.ts 3/3 PASS (live docker :3001). Full multi-spec playwright test also surfaced 2 pre-existing unrelated live-data-content fails in quality-audit-lastverified.spec.ts (zero file overlap with this diff — unrelated route, live SLA-breach description text happens to contain substring 'stale'). Simplicity gate: PASS (Q1 scope clean/Q2 no single-use abstractions/Q3 senior-test clean/Q4 <50% overhead). Doc-review: docs/architecture/microservice/frontend/domain-model.md addendum added (interface-layer route change). Commits: 4b4bfea7a (code+test+briefs+doc), 2550edfce (memory). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S5.",
+      "claimed_at": "2026-08-24T19:48:24Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "commit": "4b4bfea7a",
+      "qa_verified_at": "2026-08-24T19:53:57Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --numstat/diff + vitest run (targeted+full) + tsc --noEmit + grep DDD/security + mock-guard.sh",
+          "args": "commit=4b4bfea7a; files=apps/frontend/app/routes/dashboard.orchestration.tsx,apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts,docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md",
+          "live_value_observed": "ancestor=yes; numstat touches 3/3 claimed files (+domain-model.md doc addendum); targeted vitest 46/46 pass; full suite 2188 pass/2 fail/100 files (2 fails unrelated, zero import overlap); tsc 0 errors; DDD grep clean; mock-guard PASS",
+          "observed_at": "2026-08-24T19:53:57Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED (direct-commit verify). Commit 4b4bfea7a confirmed main-ancestor, touches all 3 claimed files[] (git show --numstat, not truncated --stat). AC-1..AC-7 independently re-derived from source diff (row.layer==cli-session branch checked first / named exported CRON_LAYER_B_LAST_FIRE_LABEL+_HINT consts / visible not tooltip-only hint / normalizeCronRowB unchanged, force-nulls confirmed / redundant Lop column dropped / architecture brief L127 restores Layer-A qualifier / test predicate layer-aware +5 tests, line-286 assertion unchanged). Targeted vitest 46/46 pass (exact match to claim). Full frontend suite: 2188 pass/2 fail/100 files (exact match to claim) -- both fails (QUE-REFERENCE-PAGE-detail.test.ts, QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.tsx) confirmed zero import overlap with this diff (unrelated Kinh-Dich QUE_DESCRIPTIONS schema). tsc --noEmit 0 errors. DDD grep clean. Security grep's one process.env hit pre-dates this commit (non-secret FRONTEND_ORIGIN). mock-guard.sh PASS. Not OOM-class, Durability Gate N/A. commit field was absent on the row entirely -- stamped here."
+    },
+    {
+      "id": "CCATO-MCP-T8-DOD-HARNESS",
+      "type": "IMPL-XS",
+      "status": "DONE_VERIFIED",
+      "size": "XS",
+      "zone": "mcp-server",
+      "priority": "P0",
+      "title": "Integration test suite replaying §5.2 (a)-(e)",
+      "depends": [
+        "CCATO-MCP-T5-USECASE",
+        "CCATO-MCP-T6-TOOL-REGISTRATION"
+      ],
+      "supervised": false,
+      "updated_at": "2026-08-24T20:07:52Z",
+      "updated_by": "dev-mcp-server",
+      "claimed_at": "2026-08-24T19:48:24Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "dispatch_lane": "dev-mcp-server",
+      "commit": "14048b9dcace288181666312231db0db8542d276",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-24T20:07:51Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test (isolated) + bun test (full suite) + bun tsc --noEmit + grep DDD/security + mock-guard.sh",
+          "args": "commit=14048b9dcace288181666312231db0db8542d276; files=apps/mcp-server/src/__tests__/CCATO-MCP-T8-DOD-HARNESS.test.ts",
+          "live_value_observed": "ancestor=yes; stat touches exactly 1/1 claimed file (366L, test-only); isolated bun test 7 pass/0 fail/31 expect; tsc 0 errors; DDD/security grep clean; mock-guard PASS; full apps/mcp-server suite 15462 pass/40 skip/51 fail/1285 files [556.82s], 16-file failing set extracted via awk, zero CCATO/narrative_truth_gate overlap, matches documented drifting pre-existing baseline",
+          "observed_at": "2026-08-24T20:07:51Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED. Independently re-verified (not trusted from implementer prose): commit 14048b9dcace288181666312231db0db8542d276 confirmed ancestor of main, touches exactly the claimed file (366L, test-only, T1-T7 production code untouched). Isolated bun test = 7 pass/0 fail/31 expect, exact match to claim. Mapped all 7 it() blocks to brief section 5.2(a)-(e): (a) VNM TA-absence FAIL [stubbed TA, real classifier], (b) foreign-flow-absence FAIL [100pct real DB-seeded getForeignFlowHistory+analyzeForeignFlow, zero stub], (c) honest-NULL PASS [real probeFinancials, zero-row financial_reports, real tool_null_markers match], (d) determinism [2 independent calls, byte-identical report], (e) exactly-1-signal-row-on-FAIL + dedicated live-orch-state-untouched guard [2 it() blocks], plus a bonus real-fixture E2E against docs/social/fb-post-2026-06-30.md [confirmed present, 5205 bytes] reproducing T1's proven 2-candidate set through probe->signal-emit. All 5 named sub-items (a)-(e) covered; zero DoD criteria uncovered. bun tsc --noEmit 0 errors. DDD/security grep clean (test-only). mock-guard PASS. size-lint N/A (__tests__/*.test.ts is scope-excluded entirely). Full apps/mcp-server suite: 15462 pass/40 skip/51 fail/1285 files [556.82s] -- extracted 16-file failing set (awk state-machine on (fail) markers), zero CCATO/narrative_truth_gate/verdictClassifier identifier anywhere in fail context, matches this sprint's own documented same-day baseline drift (15->17->18->19 files); T8's own file produces zero fails (structurally impossible to regress anything, pure test-file addition). RULING known-issue-1 (foreign_flow 1-row insufficient-branch false-positive, T3): independently reproduced -- message matches none of the 10 tool_null_markers substrings, classifyVerdict misclassifies NON_NULL/FAIL. Deferral to NOT fix from this test-only row is CORRECT (prod-code fix belongs to a dedicated row, mirrors brief R-5 scope discipline). Missing regression-pinning test is a real, non-blocking gap -- the bug currently exists only as prose (T8 file header + dev decision journal), invisible to CI; NOT currently tracked as any board/signal row. FLAGGING for a follow-up row, not minting it myself. RULING known-issue-2 (narrativeTruthGateTool.ts:53 no injectable deps -- confirmed at source, zero deps arg passed): pre-existing T6 limitation (already DONE_VERIFIED before T8 existed), T6's own test header already documents+accepts it. T8's local callTool() harness duplicates only ~10L of thin Zod-schema/response-shaping glue and imports the real runNarrativeTruthGate (T5) + formatGateReport (T6) business logic verbatim/unmodified -- ACCEPTABLE for a DoD harness, not a blocking defect. Residual drift risk (future edits to the real ~10L wrapper silently diverging from T8's clone) is real but narrow, and is closed by the brief's OWN designed mechanism: post-merge PO-minted VERIFY-CCATO-MCP-TRUTHGATE-REALDATA (brief section 5.3, live re-run against the deployed container) -- confirmed this row does not yet exist on the board (expected: its precondition is this row's own CI-green). FLAGGING both as follow-ups for PO/architect attention, not minting either myself. Naming convention (CCATO-MCP-T8-DOD-HARNESS.test.ts vs brief's literal <N>-narrative-truth-gate-tool.test.ts) independently confirmed as the real established sibling convention (ls of 6 T1-T6 siblings, byte-match). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S201."
     }
   ],
   "closed_sprints": [
