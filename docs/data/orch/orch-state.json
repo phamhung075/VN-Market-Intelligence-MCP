@@ -4197,6 +4197,29 @@
     ],
     "backlog": [
       {
+        "id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "title": "ocr_gateway self-declares a bookkeeping bug 59 times since the PEK-semaphore rebuild: inflight semaphore=1 != os_children=0 -- prime suspect for the pdf-extractor memory-driven silent-restart loop (BUG 5466/5468)",
+        "desc": "ops measured live 2026-08-23: log line 'ocr_gateway.inflight: semaphore=1 != os_children=0 -- bookkeeping disagrees with OS ground truth (this mismatch is, by definition, a bug)' fired 59 times post-rebuild; 90/199 /extract posts got 429. This is the leading suspect for the two silent ExitCode=0/OOMKilled=false exits (14:27:10Z, 14:58:52Z) that killed in-flight PEK extractions and left 21 reconcile-queue rows unable to produce output despite the semaphore-contention fix (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE) working correctly on its own terms. dev-pdf-extractor is already investigating this as part of its restart-loop dispatch -- this row is a tracking mint only, do NOT dispatch a second agent at it.",
+        "generic_mandate": "Fix ocr_gateway.py's inflight accounting so the semaphore counter and the real OS child-process count (/proc-derived) never diverge; root-cause WHY they diverge (leaked acquire without matching release on an unusual exit path is the leading hypothesis, not yet confirmed).",
+        "ac": "AC-1 the self-declared bookkeeping-mismatch log line no longer fires under the same load pattern that produced it 59 times. AC-2 confirm/refute the causal link to the memory-pinning restart loop with a live measurement, not inference.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/ocr_gateway.py"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for OCR-GATEWAY-INFLIGHT/bookkeeping. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that row's fix is proven correct and unrelated to this counter).",
+        "created_by": "po (triage 2026-08-23, ops finding, router item 3)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-24T01:24:37Z",
+        "supervised": true,
+        "bounded1_revert_note": "BOUNDED-1 promoted this P0 at 2026-08-24T01:24:37Z then reverted: the row desc says verbatim `this row is a tracking mint only, do NOT dispatch a second agent at it`. BOUNDED-1/RLC gates read no prose, so the constraint is now encoded as supervised:true (holds it out of auto-pickup; supervised-without-plan_only has no sweep lane, which is the correct inert state for a tracking mint). Left in ready[] it would have been dispatched by RLC on a later rotation turn. PO: no live restart-loop investigation row exists in any lane as of 2026-08-24T01:24:37Z — if that investigation is genuinely finished, clear supervised and re-rank; do not assume staleness from this note alone."
+      },
+      {
         "id": "FIX-A29-CRON-GAP-NO-OUTAGE-WINDOW-DISCRIMINATOR",
         "type": "FIX",
         "status": "BACKLOG",
@@ -14595,27 +14618,6 @@
         "po_spec_decision_20260823": "[po 2026-08-23T15:25:32Z] AC-1/AC-2 conflict resolved per ops's own recommended option (i), the cheapest: SINGLE wake at the earliest slot (05:10, 5min before 05:15 chef-morning), covering only that first slot. Consistent with the task's own pre-existing framing (note: 'Cheap, reversible, PARTIAL... ADJUNCT to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute') -- it was already scoped as partial, the title just overclaimed union-of-8 coverage. Options (ii) launchd-owned re-arm-forward-after-each-fire and (iii) caffeinate-held-assertion 05:15-20:13 are real alternatives for FULL coverage but are net-new design work (architect-scoped), not this adjunct -- NOT pursued now; if the missed-fire audit (its real detector) shows the partial-coverage gap actually costing missed slots in practice, promote a new SPRINT for (ii)/(iii) then, evidence-first. TIMEZONE: host is CEST/UTC+2, cowork-schedule.json slot times carry no tz field -- MUST be confirmed local-time-equivalent before the human applies the command (cheap check, ops flagged, still open). Moved ready[]->backlog[] (BLOCKED is not a LANE_ALLOWED_STATUSES member of ready[]) to make the true blocked state legible on the board instead of the misleading TODO the lane forced."
       },
       {
-        "id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/pdf-extractor/",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "title": "ocr_gateway self-declares a bookkeeping bug 59 times since the PEK-semaphore rebuild: inflight semaphore=1 != os_children=0 -- prime suspect for the pdf-extractor memory-driven silent-restart loop (BUG 5466/5468)",
-        "desc": "ops measured live 2026-08-23: log line 'ocr_gateway.inflight: semaphore=1 != os_children=0 -- bookkeeping disagrees with OS ground truth (this mismatch is, by definition, a bug)' fired 59 times post-rebuild; 90/199 /extract posts got 429. This is the leading suspect for the two silent ExitCode=0/OOMKilled=false exits (14:27:10Z, 14:58:52Z) that killed in-flight PEK extractions and left 21 reconcile-queue rows unable to produce output despite the semaphore-contention fix (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE) working correctly on its own terms. dev-pdf-extractor is already investigating this as part of its restart-loop dispatch -- this row is a tracking mint only, do NOT dispatch a second agent at it.",
-        "generic_mandate": "Fix ocr_gateway.py's inflight accounting so the semaphore counter and the real OS child-process count (/proc-derived) never diverge; root-cause WHY they diverge (leaked acquire without matching release on an unusual exit path is the leading hypothesis, not yet confirmed).",
-        "ac": "AC-1 the self-declared bookkeeping-mismatch log line no longer fires under the same load pattern that produced it 59 times. AC-2 confirm/refute the causal link to the memory-pinning restart loop with a live measurement, not inference.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/ocr_gateway.py"
-        ],
-        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for OCR-GATEWAY-INFLIGHT/bookkeeping. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that row's fix is proven correct and unrelated to this counter).",
-        "created_by": "po (triage 2026-08-23, ops finding, router item 3)",
-        "created_at": "2026-08-23T15:20:00Z",
-        "updated_at": "2026-08-23T15:27:20Z"
-      },
-      {
         "id": "FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH",
         "type": "FIX",
         "status": "BACKLOG",
@@ -15833,7 +15835,7 @@
           "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED"
         ],
         "consumer_impact": "This incident has already produced one premature DONE_VERIFIED that was kernel-falsified and de-certified. Five prior 'benign recurrence' folds were retracted. The pattern repeats until a real measurement window runs.",
-        "updated_at": "2026-08-15T10:07:25Z",
+        "updated_at": "2026-08-24T01:25:49Z",
         "po_manual_dispatch_flagged_at": "2026-08-15T09:23:08Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
@@ -15846,7 +15848,10 @@
         "ops_measurement_window": "13.2 hours (2026-08-14T20:19:20Z to 2026-08-15T09:35:54Z)",
         "updated_by": "po/triage-20260815T1002 (measurement delivered + adjudicated; AC-5 routed)",
         "closed_at": "2026-08-15T10:02:53Z",
-        "po_RULING_20260815T1002Z": "[po RULING 2026-08-15T10:02Z — ROW CLOSED. All five ACs resolved. Full adjudication of the measurement lives on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED § po_RULING_20260815T1002Z, with the six D5 evidence fields attached there.]\n\nAC-1 PASS (image sha256:26e681b0ca != pre-fix sha256:4a955869f002). AC-2 PASS (malloc_trim present in the running image). Neither disputed.\nAC-3 FAIL — UPHELD, but re-reasoned: the failure is D3's CAP clause (338/799 samples above 85% of cap; 14 of 15 cycles peaking 83-98%; max 97.87% = ~1002 MiB of a 1073 MiB limit), NOT a persisting leak. Ops's \"memory leak persists\" root-cause line is REFUTED by ops's own dataset — peak-ceiling drift +0.048 pp/cycle over 14 cycles, trough floor flat at 32-48% for 10.5h, 47-55pp released per cycle, and the container's own logs name the mechanism (embedder idle-unload at threshold=900s). Details on the LANCECORE row.\nAC-4 ANSWERED — NOT INCONCLUSIVE. This row's own AC-4 was reported as \"not accessible from this host\". po read it directly this tick: `docker run --rm --privileged --pid=host justincormack/nsenter1 /bin/sh -c \"dmesg -T | grep -iE 'oom|killed process'\"` returns ZERO oom_memcg events for container 66656926d503 across the full 13.6h window.\nAC-5 fail-path ROUTED BY PO, overriding the row's own default: NOT to the LANCECORE re-diagnosis row (leak hunt, premise dead) but to FU-RAG-DEPLOY-MEMORY as a capacity-sizing task. Rationale on the LANCECORE row.\n\nTHE DELIVERY WAS SOUND — this is not a rejection of ops's work. The deploy, the 13.2h window, the sample extraction and the summary statistics are all real and correctly filtered; I reproduced them to within rounding (ops 781 samples/mean 63.02/max 97.87 at 09:35Z; po 799 samples/mean 63.52/max 97.87 at 09:54Z). What failed was the INFERENCE from those numbers and one wrong statistic. Two defects worth carrying forward, neither of them \"ops was careless\":\n\n(1) WRONG STATISTIC FOR D3. D3 says \"fit the growth rate over the final 12h\" — a regression. Ops computed adjacent-sample absolute deltas and reported \"volatility 2.368 pp/min avg, 93.120 pp/min max, 118x threshold\". On a sawtooth that measures tooth amplitude, not trend, and is large for a perfectly healthy process. This is partly MY defect as the bar's author: D3 says \"fit\" but never says \"and do not use adjacent-sample deltas\", and never says what a bounded-oscillating workload should look like. When RAG-MEM-DURABILITY-BAR reaches v3 it must (a) name linear regression explicitly, (b) add the peak-ceiling and trough-floor drift tests as the actual leak discriminators, and (c) state that a flat-ceilinged sawtooth over the cap is a CAPACITY finding, not a leak finding. I am not amending the bar mid-incident; filed as the follow-up above.\n\n(2) AC-4 TOOLING GAP IS REAL AND FIXABLE. The in-VM dmesg method is documented on the LANCECORE row and has been executed successfully at least three times in this incident, yet ops concluded the host cannot reach it. That is a runbook-reachability problem: the method exists in row prose but not anywhere ops routinely reads. It belongs in the rag-service ops runbook, not buried in a task row.\n\nEVIDENCE DURABILITY — HANDLED. Ops's raw series lived only at /tmp/rag-durability-measurement/memory-samples.csv and would not have survived. The cleaned 799-sample series is now committed at docs/incidents/data/rag-durability-2026-08-14T2015Z-66656926d503-samples.csv with container/image/StartedAt provenance in its header.\nRAW-FILE DEFECT FOUND WHILE DOING THAT (flagged, deliberately NOT fixed by po — killing a sampler mid-window is an ops call): THREE sampler processes are concurrently appending to that one CSV with TWO different schemas (/tmp/rag-durability-monitor.sh x2 and /tmp/rag-durability-monitor-v2.sh). Of 2391 raw lines only 799 are well-formed; 796 sample writes were split into `<ts>,` + `0,,1073741824,running` line pairs, and the v2 writer is emitting a zero percentage. Ops's filter correctly dropped the malformed rows so the statistics are unaffected — but the evidence file was being actively corrupted while it was being cited as the evidence chain, and the rogue samplers are still running. Whoever owns the next window: run ONE sampler, and write it under scripts/ per the Script Persistence rule rather than /tmp.\n"
+        "po_RULING_20260815T1002Z": "[po RULING 2026-08-15T10:02Z — ROW CLOSED. All five ACs resolved. Full adjudication of the measurement lives on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED § po_RULING_20260815T1002Z, with the six D5 evidence fields attached there.]\n\nAC-1 PASS (image sha256:26e681b0ca != pre-fix sha256:4a955869f002). AC-2 PASS (malloc_trim present in the running image). Neither disputed.\nAC-3 FAIL — UPHELD, but re-reasoned: the failure is D3's CAP clause (338/799 samples above 85% of cap; 14 of 15 cycles peaking 83-98%; max 97.87% = ~1002 MiB of a 1073 MiB limit), NOT a persisting leak. Ops's \"memory leak persists\" root-cause line is REFUTED by ops's own dataset — peak-ceiling drift +0.048 pp/cycle over 14 cycles, trough floor flat at 32-48% for 10.5h, 47-55pp released per cycle, and the container's own logs name the mechanism (embedder idle-unload at threshold=900s). Details on the LANCECORE row.\nAC-4 ANSWERED — NOT INCONCLUSIVE. This row's own AC-4 was reported as \"not accessible from this host\". po read it directly this tick: `docker run --rm --privileged --pid=host justincormack/nsenter1 /bin/sh -c \"dmesg -T | grep -iE 'oom|killed process'\"` returns ZERO oom_memcg events for container 66656926d503 across the full 13.6h window.\nAC-5 fail-path ROUTED BY PO, overriding the row's own default: NOT to the LANCECORE re-diagnosis row (leak hunt, premise dead) but to FU-RAG-DEPLOY-MEMORY as a capacity-sizing task. Rationale on the LANCECORE row.\n\nTHE DELIVERY WAS SOUND — this is not a rejection of ops's work. The deploy, the 13.2h window, the sample extraction and the summary statistics are all real and correctly filtered; I reproduced them to within rounding (ops 781 samples/mean 63.02/max 97.87 at 09:35Z; po 799 samples/mean 63.52/max 97.87 at 09:54Z). What failed was the INFERENCE from those numbers and one wrong statistic. Two defects worth carrying forward, neither of them \"ops was careless\":\n\n(1) WRONG STATISTIC FOR D3. D3 says \"fit the growth rate over the final 12h\" — a regression. Ops computed adjacent-sample absolute deltas and reported \"volatility 2.368 pp/min avg, 93.120 pp/min max, 118x threshold\". On a sawtooth that measures tooth amplitude, not trend, and is large for a perfectly healthy process. This is partly MY defect as the bar's author: D3 says \"fit\" but never says \"and do not use adjacent-sample deltas\", and never says what a bounded-oscillating workload should look like. When RAG-MEM-DURABILITY-BAR reaches v3 it must (a) name linear regression explicitly, (b) add the peak-ceiling and trough-floor drift tests as the actual leak discriminators, and (c) state that a flat-ceilinged sawtooth over the cap is a CAPACITY finding, not a leak finding. I am not amending the bar mid-incident; filed as the follow-up above.\n\n(2) AC-4 TOOLING GAP IS REAL AND FIXABLE. The in-VM dmesg method is documented on the LANCECORE row and has been executed successfully at least three times in this incident, yet ops concluded the host cannot reach it. That is a runbook-reachability problem: the method exists in row prose but not anywhere ops routinely reads. It belongs in the rag-service ops runbook, not buried in a task row.\n\nEVIDENCE DURABILITY — HANDLED. Ops's raw series lived only at /tmp/rag-durability-measurement/memory-samples.csv and would not have survived. The cleaned 799-sample series is now committed at docs/incidents/data/rag-durability-2026-08-14T2015Z-66656926d503-samples.csv with container/image/StartedAt provenance in its header.\nRAW-FILE DEFECT FOUND WHILE DOING THAT (flagged, deliberately NOT fixed by po — killing a sampler mid-window is an ops call): THREE sampler processes are concurrently appending to that one CSV with TWO different schemas (/tmp/rag-durability-monitor.sh x2 and /tmp/rag-durability-monitor-v2.sh). Of 2391 raw lines only 799 are well-formed; 796 sample writes were split into `<ts>,` + `0,,1073741824,running` line pairs, and the v2 writer is emitting a zero percentage. Ops's filter correctly dropped the malformed rows so the statistics are unaffected — but the evidence file was being actively corrupted while it was being cited as the evidence chain, and the rogue samplers are still running. Whoever owns the next window: run ONE sampler, and write it under scripts/ per the Script Persistence rule rather than /tmp.\n",
+        "secondary_claimed_at": "2026-08-24T01:25:48Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION",
@@ -21791,8 +21796,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-24T01:04:14Z",
-    "last_triaged_by": "po/triage-20260824T0104Z",
+    "last_triaged_at": "2026-08-24T01:23:36Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -21962,7 +21967,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-23T21:25:28Z"
+        "last_served_tick": "2026-08-24T01:23:08Z"
       },
       "sls": {
         "last_served_tick": "2026-08-23T21:57:27Z"
@@ -21980,8 +21985,8 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T01:04:14Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-24T01:23:08Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
