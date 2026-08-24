@@ -19,37 +19,6 @@
      also split to docs/agent-memory/notebooks/archive/agent-father-archive-20260823.md
      on 2026-08-23, second prune of the same day (198L against the 200L cap). Nothing deleted. -->
 
-## FIX 2026-08-23T14:45Z — FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (QA CHANGES_REQUESTED, redispatch 1)
-
-- **My 2026-08-14 fix replaced a narrative VERDICT with a narrative ASSERTION.** Same defect class,
-  one level down. It stopped nothing: measured all 69 live dishes, 19 are non-conformant in 5 distinct
-  shapes (top-level keys 4x, metadata keys 1x, dish_type enum 6x, tnb_synthesis keys 3x, direction enum
-  7x) — including `unified-agent-synthesis-2026-08-22-chef-evening.json`, the first dish written AFTER
-  the fix landed.
-- **Lesson (the big one):** "make it a deterministic assertion" is not satisfied by writing a more
-  detailed checklist. If the executor is an LLM (unified-agent runs `model: haiku`), only a command
-  with a hard exit code is deterministic. Check the tool grant first — unified-agent HAS Bash, so the
-  command was always available; the previous fix simply never used it.
-- **Lesson (root cause beat blame):** 8 of the 19 failures write `evening_preview`/`eod_dish`/
-  `convergence_scan` into `metadata.dish_type`. Those are not hallucinations — they are the literal
-  schedule-entry keys from `unified-agent/init.md:117-132`. THREE vocabularies name the same four slots
-  (init.md schedule keys, `chef.md:135` `SLOT_ID` = `chef-evening`, the `dish_type` enum = `evening`)
-  and no doc ever mapped one to another. A stricter assertion alone would have failed forever and fixed
-  nothing. Added the mapping table.
-- Shipped in `chef-dish.md`: (1) Step 7.6's 5-item narrative checklist → one literal `jq` command,
-  exit code is the verdict; (2) SCHEMA_OK widened to metadata's own key-set + dish_type enum (QA's
-  exact two proven gaps); (3) the SLOT → dish_type mapping table.
-- **Caught my own bug by executing:** first draft used `jq -er`, but `-e` only exits non-zero on
-  `false`/`null` — a `"SCHEMA_FAIL: ..."` string exits 0, so the gate would have been decorative.
-  Switched to `halt_error(1)`. Verified by extracting the SHIPPED command back out of the doc and
-  replaying it over all 69 dishes: 50 pass / 19 fail / 0 exit-code inconsistency, plus verdict-mismatch
-  and malformed-JSON negative controls.
-- **Flagged, NOT fixed (needs its own row):** `chef.md:135` + `.claude/agents/unified-agent.md` define
-  FILEPATH's `SLOT_ID` as `chef-evening`; `chef-dish.md:858` defines it as `evening`. Both forms exist
-  on disk for the SAME slot on the SAME day (`...-2026-07-30-evening.json` and
-  `...-2026-07-30-chef-evening.json`). Resolving it changes the on-disk naming contract every consumer
-  globs — not a unilateral call.
-
 ## FIX 2026-08-23T15:10Z — FIX-CHEF-MARKER-KEY-ANCHOR-2/-3/-4 (3 P0 rows, one chain)
 
 - ANCHOR-1 (developer, DONE_VERIFIED) produced `scheduled_utc_time`; all three consumers live under

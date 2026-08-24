@@ -1,23 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-24 — CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS (dev-team BOUNDED-1 auto-pickup, salvage-only) → review[]
-
-**Session:** 7fd9c60a-9854-4589-9e98-e4c5e7e9168d. Salvaged 11-day-old uncommitted work sitting in orphaned worktree `.claude/worktrees/agent-ae9ed2cd6f04b3686` (branch `worktree-agent-ae9ed2cd6f04b3686` @ `4a6d2174c`, `git log main..HEAD` empty/already merged, so every main-tree probe reported it clean/stale-prunable — it wasn't, the value was in the never-committed working tree). Copied file CONTENTS only (`cp`, never `git checkout`/`git switch` in the main tree — that hijacks the shared working dir).
-
-**Fix:** implements FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG. `bctcScalarAggregator.ts`: `findByCodeExcluding()` + general-bucket fallback for operating_profit/operating_cf/investing_cf/financing_cf when a markdown-refine window never matched `SECTION_HEADERS` and left income-statement + cash-flow rows both tagged `"general"` (live HPG 2026-Q1: 233/282 rows general, zero cash_flow); AC-4 plausibility guard rejects a corrupt operating_profit=0 when net_profit > gross_profit. `bctcSectionCompleteness.ts`: `hasCashFlow` now also recognizes `"general"` rows carrying the literal VAS cash-flow label (`lưu chuyển tiền`) — narrow, content-gated, doesn't reintroduce false-DONE risk. `backfillBctcScalarsTool.ts`: `force_reflow` eligibility now includes `refine_status='PARTIAL'` (previously permanently excluded from every reflow attempt).
-
-**Excluded from salvage (verified live before deciding, not blanket-applied):** (a) `apps/mcp-server/data` deletion — re-confirmed still a tracked symlink (mode 120000, blob `e67b4559…`) → `../../data` in main; the worktree had replaced it with a real local dir, a runtime artifact, never committed. (b) `docs/agent-memory/modules/tool-usage-stats.json` — diff zeroes `toolCounts` (15→{}), stale 08-12 rolling-telemetry churn, would clobber peer writes.
-
-**Tests:** 3 salvaged/new files (`BEQ-SECTION-GUARD.test.ts`, `LF-SERVE-REFLOW.test.ts`, new `FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts`) targeted run = 32/32 pass, 138 expect() calls. Full `apps/mcp-server` suite (captured to file, not tail-piped, so exit code is real): 15456 pass/40 skip/50 fail/1284 files [506.02s]. Failing-file-set extracted programmatically (awk state-machine) = byte-identical (15/15) to the documented pre-existing baseline (`reference_mcpserver_fullsuite_preexisting_failure_baseline`) — zero new regressions. `bun tsc --noEmit` clean. Server boot PORT=3099: `/health` toolCount=184 (unchanged — existing tool's handler modified, no new tool registered), zero import errors. cronJobCount=88 unchanged.
-
-**NOT done (explicit task scope = salvage only):** worktree removal — standing user instruction protects `.claude/worktrees/agent-ae9ed2cd6f04b3686` from pruning; destructive/irreversible, needs separate user sign-off. `git worktree list` confirms exactly one worktree besides main — no other hidden-diff instances found. Did not touch the separate `FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG` board row (still `ready[]`/`next_agent:ba`) — flagged for its owner: the salvaged commit already implements it end-to-end with passing tests, a from-scratch `ba` re-plan would duplicate work.
-
-**Board:** `in_progress[]` → `review[]` (`status:REVIEW`, `next_agent:qa`) via `orch-apply.sh`, `.head` reset idle in the same write (guarded on `active_task_id` match).
-
-**Evidence:** commit `28f8509fc` (6 files: 3 domain/interface sources + 3 tests, explicit pathspec, `apps/mcp-server/` only — no commit-mutex claim, per INV-GATEWAY-1). Not pushed (local main ahead of origin, user's call).
-
-Zone health: root cause was an orphaned-worktree salvage (not new feature work) — verified worktree-base==main-pre-salvage byte-identical before copying (zero-conflict guarantee), excluded items judged individually not blanket-applied, full-suite regression check done programmatically not by eyeballing tail output | HEALTHY.
-
 ## 2026-08-24 — FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (review-lane SECONDARY-drain, PO-authorized implementation) → BLOCKED (partial, agent-father dependency)
 
 **Session:** 007e33e4-b453-4bb3-8ab1-ef31495906a3. PO ratified the plan 2026-08-15 (`po_goahead_20260815T055435`) with 3 mandatory corrections (AC-5/6/7); this session wrote the code, which had never actually landed despite the ratification.
