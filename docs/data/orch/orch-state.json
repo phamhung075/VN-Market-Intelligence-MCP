@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-24T20:49:00Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-24T22:01:51Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24468,6 +24467,44 @@
         "dispatch_lane": "architect",
         "ba_spec_ref": "docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md",
         "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec."
+      },
+      {
+        "id": "FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-08-23T23:41:24Z",
+        "created_by": "po (triage of dev-team CORRECTION envelope 68531dca, 2026-08-24)",
+        "updated_at": "2026-08-24T22:01:51Z",
+        "dedup_key": "orch-apply:cas-window-misses-caller-read-transform-gap",
+        "origin_signal_id": "68531dca05f022a240858d2fc6ced44f863ba60e567587c38722304aa1e5d8dc",
+        "title": "orch-apply.sh's CAS window opens AFTER the caller's jq already read the file, so a stale full-document candidate silently reverts a peer's lane-move — and nothing downstream catches it because conservation compares magnitudes, which a revert preserves",
+        "desc": "VERIFIED AT SOURCE by po 2026-08-24: scripts/orch-apply.sh captures MTIME_BEFORE at line 116 ('CAS: capture live file mtime BEFORE reading stdin'), i.e. when orch-apply STARTS — which in the mandated pipeline `jq '<transform>' orch-state.json | bash scripts/orch-apply.sh` is AFTER the caller's jq has already read the file. A candidate built from a read taken minutes earlier therefore applies with MTIME_BEFORE == MTIME_AFTER and no mismatch. Timeline from the dev-team CORRECTION (2026-08-23T21:37Z tick): T0 peer jq reads (qa=2) | T1 our orch-apply writes (qa=7) | T2 peer orch-apply starts, MTIME_BEFORE=T1 | T3 peer renames, MTIME_AFTER=T1 -> MATCH -> applies -> qa back to 2. A concurrently-running pm subagent's unrelated done[] -> done_verified[] write (commit 54f0cf9b4) carried a full-document candidate built minutes earlier and restored the stale qa[]/review[] arrays wholesale; `git show 54f0cf9b4 -- docs/data/orch/orch-state.json | grep <row-id>` is EMPTY for all 5 clobbered ids — pm never mentioned them, it just carried a stale copy of the whole array. NOTHING DOWNSTREAM CATCHES IT: scripts/orch-conservation-check.mjs compares MAGNITUDES (task_total 769 == 769) and a lane REVERT preserves every count; Zod passes; the dup-key validator passes; there is no lane-placement invariant anywhere in the write path. The file is left CLEAN. Attribution warning carried forward from the same envelope: three qa sessions independently concluded the QA-Drain PRIMARY claim 'never actuated' and recommended a dispatcher-side actuation FIX row — that inference is WRONG (the claim DID actuate; picked_batch was read back non-empty from the live file, qa[] went 2 -> 7) and no such row was minted. Their journals qa-S185, qa-S187 and sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-27 carry the wrong attribution and should be annotated.",
+        "generic_mandate": "Let the CALLER supply the baseline. orch-apply.sh must compare against the mtime/hash the caller observed at jq time, not against its own start-of-process reading. Do NOT 'fix' this by banning concurrent board writers — the hazard is the width of the caller's read->transform gap, not the number of writers; 4 concurrent qa sessions wrote the same board that tick with zero mutual clobbering.",
+        "ac": [
+          "AC-1 orch-apply.sh accepts a caller-observed baseline (env var or flag carrying mtime/content-hash read at jq time) and CAS-compares against THAT, falling back to today's behaviour only when the caller supplies nothing.",
+          "AC-2 Regression fixture reproducing the exact T0..T3 interleave above must exit 2 (CAS mismatch) with the caller baseline supplied, and — as the negative control — must still exit 0 for a non-overlapping sequential write.",
+          "AC-3 Add a lane-placement invariant the conservation checker can actually see: a candidate that moves a row BACKWARD out of a lane it did not itself name must be rejected or loudly flagged. Magnitude-only conservation is provably blind to this class (task_total was identical across the whole incident).",
+          "AC-4 Callers migrated in the same change, or a tracked follow-up per caller. The wrapper is mandatory fleet-wide (CLAUDE.md § Orch-State Hot File), so a baseline nobody passes is a no-op.",
+          "AC-5 Do NOT report this fixed on the strength of a green run alone — a green run is the SYMPTOM-FREE state this bug already produces. Prove the guard FIRES on the fixture in AC-2."
+        ],
+        "files": [
+          "scripts/orch-apply.sh",
+          "scripts/orch-conservation-check.mjs"
+        ],
+        "verification_gate": "qa sign-off against AC-1..AC-5; AC-2 and AC-5 require a failing-then-passing fixture, never an exit-code-only report.",
+        "baseline_pass": true,
+        "promoted_at": "2026-08-24T20:48:52Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-24T20:48:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "implementation_note": "AC-1/AC-2/AC-3 implemented + AC-4 tracked as follow-up (no live caller migrated yet, mechanism additive/non-breaking) + AC-5 fixture proves the guard FIRES not just green — see scripts/test/orch-apply-wrapper-tests.sh CALLER-BASELINE-* / LANE-BACKWARD-* cases, 109/109 GREEN. Commit 894a6617e."
       }
     ],
     "qa": [
@@ -24651,44 +24688,7 @@
     },
     "last_triaged_at": "2026-08-24T21:24:37Z",
     "last_triaged_by": "po",
-    "in_progress": [
-      {
-        "id": "FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-08-23T23:41:24Z",
-        "created_by": "po (triage of dev-team CORRECTION envelope 68531dca, 2026-08-24)",
-        "updated_at": "2026-08-24T20:49:00Z",
-        "dedup_key": "orch-apply:cas-window-misses-caller-read-transform-gap",
-        "origin_signal_id": "68531dca05f022a240858d2fc6ced44f863ba60e567587c38722304aa1e5d8dc",
-        "title": "orch-apply.sh's CAS window opens AFTER the caller's jq already read the file, so a stale full-document candidate silently reverts a peer's lane-move — and nothing downstream catches it because conservation compares magnitudes, which a revert preserves",
-        "desc": "VERIFIED AT SOURCE by po 2026-08-24: scripts/orch-apply.sh captures MTIME_BEFORE at line 116 ('CAS: capture live file mtime BEFORE reading stdin'), i.e. when orch-apply STARTS — which in the mandated pipeline `jq '<transform>' orch-state.json | bash scripts/orch-apply.sh` is AFTER the caller's jq has already read the file. A candidate built from a read taken minutes earlier therefore applies with MTIME_BEFORE == MTIME_AFTER and no mismatch. Timeline from the dev-team CORRECTION (2026-08-23T21:37Z tick): T0 peer jq reads (qa=2) | T1 our orch-apply writes (qa=7) | T2 peer orch-apply starts, MTIME_BEFORE=T1 | T3 peer renames, MTIME_AFTER=T1 -> MATCH -> applies -> qa back to 2. A concurrently-running pm subagent's unrelated done[] -> done_verified[] write (commit 54f0cf9b4) carried a full-document candidate built minutes earlier and restored the stale qa[]/review[] arrays wholesale; `git show 54f0cf9b4 -- docs/data/orch/orch-state.json | grep <row-id>` is EMPTY for all 5 clobbered ids — pm never mentioned them, it just carried a stale copy of the whole array. NOTHING DOWNSTREAM CATCHES IT: scripts/orch-conservation-check.mjs compares MAGNITUDES (task_total 769 == 769) and a lane REVERT preserves every count; Zod passes; the dup-key validator passes; there is no lane-placement invariant anywhere in the write path. The file is left CLEAN. Attribution warning carried forward from the same envelope: three qa sessions independently concluded the QA-Drain PRIMARY claim 'never actuated' and recommended a dispatcher-side actuation FIX row — that inference is WRONG (the claim DID actuate; picked_batch was read back non-empty from the live file, qa[] went 2 -> 7) and no such row was minted. Their journals qa-S185, qa-S187 and sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-27 carry the wrong attribution and should be annotated.",
-        "generic_mandate": "Let the CALLER supply the baseline. orch-apply.sh must compare against the mtime/hash the caller observed at jq time, not against its own start-of-process reading. Do NOT 'fix' this by banning concurrent board writers — the hazard is the width of the caller's read->transform gap, not the number of writers; 4 concurrent qa sessions wrote the same board that tick with zero mutual clobbering.",
-        "ac": [
-          "AC-1 orch-apply.sh accepts a caller-observed baseline (env var or flag carrying mtime/content-hash read at jq time) and CAS-compares against THAT, falling back to today's behaviour only when the caller supplies nothing.",
-          "AC-2 Regression fixture reproducing the exact T0..T3 interleave above must exit 2 (CAS mismatch) with the caller baseline supplied, and — as the negative control — must still exit 0 for a non-overlapping sequential write.",
-          "AC-3 Add a lane-placement invariant the conservation checker can actually see: a candidate that moves a row BACKWARD out of a lane it did not itself name must be rejected or loudly flagged. Magnitude-only conservation is provably blind to this class (task_total was identical across the whole incident).",
-          "AC-4 Callers migrated in the same change, or a tracked follow-up per caller. The wrapper is mandatory fleet-wide (CLAUDE.md § Orch-State Hot File), so a baseline nobody passes is a no-op.",
-          "AC-5 Do NOT report this fixed on the strength of a green run alone — a green run is the SYMPTOM-FREE state this bug already produces. Prove the guard FIRES on the fixture in AC-2."
-        ],
-        "files": [
-          "scripts/orch-apply.sh",
-          "scripts/orch-conservation-check.mjs"
-        ],
-        "verification_gate": "qa sign-off against AC-1..AC-5; AC-2 and AC-5 require a failing-then-passing fixture, never an exit-code-only report.",
-        "baseline_pass": true,
-        "promoted_at": "2026-08-24T20:48:52Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-24T20:48:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
