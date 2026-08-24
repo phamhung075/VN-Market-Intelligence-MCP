@@ -127,10 +127,136 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T23:56:56Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-24T00:00:00Z",
+    "_updated_by": "narrative-truth-gate",
     "archive": [],
     "rows": [
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-73498a",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-52999c",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-5e459b",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-28d40c",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-8271b7",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-ac1cc3",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-9e3dad",
         "ts": "2026-08-24T00:00:00Z",
@@ -1526,6 +1652,20 @@
         "triaged_at": "2026-08-24T01:04:14Z",
         "triaged_by": "po",
         "disposition": "REFUTED + MINTED FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES. Premise verified at source before dispositioning, per the flow doc's verify-the-premise rule: the cycles this signal says are missing all ran. Tier-1 c116 completed 2026-08-24T00:30Z (notebook line 3/5, commit 3dc3ee791) 11min before the signal; tier-2 completed 00:49Z (commit 4145766ac) 8min after it. The gap is an artefact of D-CYCLE-2's completion-evidence predicate — order-dependent notebook parse on tier-1, heartbeat-only with no fallback on tier-2/3 — not of missing coverage. NOT closed as noise: the false-positive mechanism is itself the tracked defect."
+      },
+      {
+        "id": "sys-20260824T020933-6921",
+        "ts": "2026-08-24T02:09:33Z",
+        "from": "system-auditor",
+        "to": "architect",
+        "type": "auditor_probe_anomaly",
+        "summary": "Tier-1 heartbeat frozen: probe threshold wedge",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-24T02:00Z",
+        "dedup_key": "detector_wedge:tier1_heartbeat_frozen:mem_threshold_floor"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",

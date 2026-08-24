@@ -1,14 +1,14 @@
 {
-  "written_at": "2026-08-23T23:11:27Z",
-  "fire_tick": "2026-08-23T23:00Z",
+  "written_at": "2026-08-24T02:05:20Z",
+  "fire_tick": "2026-08-24T02:00Z",
   "verdict": "FAILURE",
-  "detail": "launchd_agents: launchd not loaded/unhealthy: com.vn-market.fleet-push(exit-status:1, STALE-ACK(tracked_by=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD,status=ABSENT)) (also acknowledged-degraded, tracked: com.vn-market.docker-events(exit-status:143) ); ",
+  "detail": "mem_creep: mem >= 85% threshold (A-30 WARN boundary, mem-creep gate): vn-market-intelligence-mcp-pdf-extractor-1(85.11%) ; ",
   "checks": {
     "docker_ps": "PASS",
     "health_3000": "PASS",
     "health_3001": "PASS",
     "disk": "PASS",
-    "mem_creep": "PASS",
-    "launchd_agents": "FAIL"
+    "mem_creep": "FAIL",
+    "launchd_agents": "PASS"
   }
 }
