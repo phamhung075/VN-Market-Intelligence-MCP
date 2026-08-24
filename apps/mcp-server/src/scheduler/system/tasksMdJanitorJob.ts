@@ -193,17 +193,117 @@ export function bareTaskId(taskId: string): string {
  * Known-legit kind/pattern list per handlers.md §Step R-1b item 1: persistent /
  * guard / escalation locks that are board-row-less OR held concurrently with any
  * active task BY DESIGN. Prefix-matched (glob) except the "-singleton" suffix.
+ *
+ * FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (2026-08-24): SSOT moved
+ * to docs/data/system-map.json `.project.coordination.known_legit_lock_prefixes`
+ * (CLAUDE.md "System Data — Never Hardcode"). A hardcoded TS array duplicated
+ * verbatim across this file + handlers.md + audit-dimensions.md is the root
+ * cause of this fix — authored once (2026-07-08), never revisited when
+ * bctc-analyst minted new escalation-lock kinds later, including a prefix
+ * rename (`data-quality-anomaly:` -> `bctc-dataquality:`) some time before
+ * 2026-08-08. FALLBACK_KNOWN_LEGIT_PREFIXES below is a defense-in-depth
+ * safety net ONLY (mirrors this file's own "never suppress LESS on this
+ * path's absence" philosophy — see listSessionPresence's failure-mode
+ * comment above); it is NOT the source of truth — add new prefixes to
+ * system-map.json, not here.
  */
-const KNOWN_LEGIT_PREFIXES: readonly string[] = [
+const FALLBACK_KNOWN_LEGIT_PREFIXES: readonly string[] = [
   "cron:",
   "cron-registration:",
   "po-triage-",
   "esc-datacov:",
   "esc-deepdive:",
+  "data-quality-anomaly:",
+  "bctc-dataquality:",
   "session-presence",
   "commit-mutex",
   "intent:",
 ];
+
+const DEFAULT_SYSTEM_MAP_PATH = "docs/data/system-map.json";
+
+/**
+ * Loads the known-legit lock-prefix whitelist from docs/data/system-map.json
+ * (SSOT) — `.project.coordination.known_legit_lock_prefixes`, a BARE
+ * `string[]` (AC-5, po 2026-08-15: an earlier spec draft's verbatim "After"
+ * JSON block nested the list one level deeper at
+ * `...known_legit_lock_prefixes.prefixes`; copy-pasting that shape trips
+ * `!Array.isArray(list)` below and silently degrades to
+ * FALLBACK_KNOWN_LEGIT_PREFIXES behind a console.warn while every test still
+ * passes green — see FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md
+ * §8.2. Code and data must agree on the bare-array shape; this reader is the
+ * one that's authoritative).
+ *
+ * Mirrors loadWatchlistSeedFromSystemMap() (infrastructure/db/seedWatchlist.ts)
+ * — identical relative-to-cwd path resolution (works in-container via the
+ * docs/data volume mount, and in local `bun test` via the
+ * apps/mcp-server/docs -> ../../docs symlink).
+ *
+ * On any failure (missing file, malformed JSON, missing/empty/non-array key)
+ * returns FALLBACK_KNOWN_LEGIT_PREFIXES — deliberately NOT an empty array
+ * (unlike loadWatchlistSeedFromSystemMap's fail-open-to-[] contract): an
+ * empty whitelist here would un-suppress every currently-known
+ * persistent/guard lock kind and flood signal_queue — the exact regression
+ * this subsystem exists to prevent. Exported for direct unit testing
+ * (fallback-path AND SSOT-positive-path coverage — AC-6).
+ */
+export function loadKnownLegitPrefixesFromSystemMap(
+  path: string = DEFAULT_SYSTEM_MAP_PATH,
+): readonly string[] {
+  try {
+    const raw = readFileSync(path, "utf8");
+    const parsed = JSON.parse(raw) as {
+      project?: { coordination?: { known_legit_lock_prefixes?: string[] } };
+    };
+    const list = parsed.project?.coordination?.known_legit_lock_prefixes;
+    if (!Array.isArray(list) || list.length === 0) {
+      console.warn(
+        `[tasks-md-janitor] WARN: ${path} .project.coordination.known_legit_lock_prefixes ` +
+        `missing/empty — using FALLBACK_KNOWN_LEGIT_PREFIXES`,
+      );
+      return FALLBACK_KNOWN_LEGIT_PREFIXES;
+    }
+    return list;
+  } catch (err) {
+    console.warn(
+      `[tasks-md-janitor] WARN: could not load ${path} (${(err as Error).message}) — ` +
+      `using FALLBACK_KNOWN_LEGIT_PREFIXES`,
+    );
+    return FALLBACK_KNOWN_LEGIT_PREFIXES;
+  }
+}
+
+/**
+ * Mutable — deliberately NOT `const` (AC-7, po 2026-08-15, MANDATORY,
+ * overrides the original spec draft's module-scope-const proposal):
+ * tasksMdJanitorJob runs as a DAILY CRON inside the long-lived scheduler
+ * process (cronConfig.ts '0 3 * * *', wired at schedulerJobTable.ts), so a
+ * module-scope `const KNOWN_LEGIT_PREFIXES = load...()` would evaluate
+ * exactly once at container start — every later system-map.json edit would
+ * be silently inert until the next rebuild/restart, quietly re-creating this
+ * row's own staleness class. (The seedWatchlist WATCHLIST_SEED precedent does
+ * NOT transfer: that module-scope load is correct there because seeding runs
+ * at startup by design.) refreshKnownLegitPrefixes() re-reads the SSOT and
+ * reassigns this binding once per runTasksMdJanitor() invocation (see call
+ * site below) — never at module load. Initialized to the fallback so any
+ * direct unit-test call to isKnownLegitPattern()/applyR1bFilter() made
+ * before refreshKnownLegitPrefixes() has ever run still sees the known-good
+ * baseline set, matching this module's pre-SSOT behavior exactly.
+ */
+let KNOWN_LEGIT_PREFIXES: readonly string[] = FALLBACK_KNOWN_LEGIT_PREFIXES;
+
+/**
+ * Re-reads docs/data/system-map.json and reassigns KNOWN_LEGIT_PREFIXES
+ * (AC-7). Called once at the top of every runTasksMdJanitor() invocation.
+ * Exported so tests can drive the SSOT-positive-path assertion explicitly
+ * (AC-6) without waiting on a full runTasksMdJanitor() cycle.
+ */
+export function refreshKnownLegitPrefixes(
+  path: string = DEFAULT_SYSTEM_MAP_PATH,
+): readonly string[] {
+  KNOWN_LEGIT_PREFIXES = loadKnownLegitPrefixesFromSystemMap(path);
+  return KNOWN_LEGIT_PREFIXES;
+}
 
 export function isKnownLegitPattern(bareId: string): boolean {
   if (bareId.endsWith("-singleton")) return true;
@@ -557,6 +657,12 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
   // FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE: R-4b ledger rides on the
   // system-auditor notebook's "D4 candidates:" line (no new state file).
   const notebookPath = resolve(projectRoot, "docs", "agent-memory", "notebooks", "system-auditor.md");
+
+  // FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX / AC-7: re-read the
+  // known-legit-prefix SSOT once per cycle (never at module load) so a
+  // system-map.json edit takes effect on the NEXT daily run, not only after a
+  // container restart. Must run before Step R-1b below.
+  refreshKnownLegitPrefixes(resolve(projectRoot, "docs", "data", "system-map.json"));
 
   const divergences: DivergenceRow[] = [];
   const candidates: D4Candidate[] = []; // R-2/R-3 findings — gated by R-4b before becoming divergences

@@ -37,6 +37,8 @@ import {
   formatD4LedgerSection,
   insertD4LedgerSection,
   applyR4bDebounce,
+  loadKnownLegitPrefixesFromSystemMap,
+  refreshKnownLegitPrefixes,
   _resetDedupStore,
   type JanitorDeps,
   type D4Candidate,
@@ -138,15 +140,74 @@ describe("FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE", () => {
       expect(isKnownLegitPattern("po-triage-2026-07-08")).toBe(true);
       expect(isKnownLegitPattern("esc-datacov:VCB:Q1-2026:ESC-3")).toBe(true);
       expect(isKnownLegitPattern("esc-deepdive:GVR:ESC-4")).toBe(true);
+      // FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (2026-08-24):
+      // the row's originally-cited lock kind (now TTL-expired, no longer held)...
+      expect(isKnownLegitPattern("data-quality-anomaly:DGC:Q1-2026")).toBe(true);
+      // ...and its currently-live renamed equivalent (bctc-analyst renamed this
+      // lock-kind mid-flight; vnindex-crosstool-mismatch is NOT ticker:period
+      // shaped, proving a structural-shape regex would have missed this real
+      // case — see spec §4):
+      expect(isKnownLegitPattern("bctc-dataquality:HPG:operating-profit-zero")).toBe(true);
+      expect(isKnownLegitPattern("bctc-dataquality:vnindex-crosstool-mismatch")).toBe(true);
       expect(isKnownLegitPattern("session-presence:abc123")).toBe(true);
       expect(isKnownLegitPattern("commit-mutex:orch-state")).toBe(true);
       expect(isKnownLegitPattern("intent:dev-mcp-server:fix-d4")).toBe(true);
+    });
+
+    // Negative control (acceptance criterion): a lock kind that superficially
+    // resembles the whitelisted escalation shape but is NOT an actual known
+    // prefix must still trip D4 — proves this fix does not blanket-suppress.
+    it("does NOT exclude a lookalike-but-unknown escalation-shaped lock id (no blanket suppression)", () => {
+      expect(isKnownLegitPattern("bogus-escalation:XYZ:Q1-2026:ESC-1")).toBe(false);
+      expect(isKnownLegitPattern("data-quality-anomaly-typo:DGC:Q1-2026")).toBe(false);
     });
 
     it("bareTaskId strips the task: prefix before pattern matching", () => {
       expect(isKnownLegitPattern(bareTaskId("task:esc-datacov:ACB:Q1-2026:ESC-3"))).toBe(true);
       expect(bareTaskId("task:TASK_1996")).toBe("TASK_1996");
       expect(bareTaskId("TASK_1996")).toBe("TASK_1996"); // no prefix — unchanged
+    });
+  });
+
+  describe("Step R-1b — loadKnownLegitPrefixesFromSystemMap / refreshKnownLegitPrefixes (SSOT, AC-5/6/7)", () => {
+    afterEach(() => {
+      // Reset the module-level mutable KNOWN_LEGIT_PREFIXES back to the
+      // fallback after every test in this block, so a real-SSOT read here
+      // never leaks into later tests/files that assume the pre-refresh
+      // fallback baseline (isKnownLegitPattern reads a shared module
+      // binding — see tasksMdJanitorJob.ts AC-7 comment).
+      refreshKnownLegitPrefixes("/nonexistent/path/system-map.json");
+    });
+
+    // Fallback-path coverage (mirrors WATCHLIST-DB-SYSMAP-DRIFT-FIX.test.ts:179's
+    // loadWatchlistSeedFromSystemMap("/nonexistent/path...") pattern) — confirms
+    // a missing/corrupt system-map.json degrades to the safety-net constant,
+    // never to an empty (i.e. suppress-nothing) whitelist.
+    it("loadKnownLegitPrefixesFromSystemMap falls back to FALLBACK_KNOWN_LEGIT_PREFIXES on missing file", () => {
+      const prefixes = loadKnownLegitPrefixesFromSystemMap("/nonexistent/path/system-map.json");
+      expect(prefixes.length).toBeGreaterThan(0);
+      expect(prefixes).toContain("data-quality-anomaly:");
+      expect(prefixes).toContain("bctc-dataquality:");
+      // The AC-6 SSOT-only canary must NOT be in the fallback — that absence
+      // is exactly what makes the positive-path test below discriminating.
+      expect(prefixes).not.toContain("d4-ssot-liveness-canary:");
+    });
+
+    // AC-6 (po 2026-08-15, MANDATORY): a POSITIVE-path test that FAILS if
+    // system-map.json is not actually read. Every isKnownLegitPattern()
+    // assertion elsewhere in this file passes identically whether the real
+    // SSOT or the fallback supplied the list, because the two lists largely
+    // overlap — that is precisely why this pair of tests, keyed on the
+    // system-map.json-only sentinel prefix "d4-ssot-liveness-canary:", is
+    // required: only a genuine SSOT read can make either assertion pass.
+    it("loadKnownLegitPrefixesFromSystemMap(real path) reads the live SSOT, not the fallback (functional)", () => {
+      const prefixes = loadKnownLegitPrefixesFromSystemMap(); // default path -> real docs/data/system-map.json
+      expect(prefixes).toContain("d4-ssot-liveness-canary:");
+    });
+
+    it("refreshKnownLegitPrefixes(real path) + isKnownLegitPattern prove the SSOT is wired end-to-end", () => {
+      refreshKnownLegitPrefixes(); // default path -> real docs/data/system-map.json
+      expect(isKnownLegitPattern("d4-ssot-liveness-canary:proof")).toBe(true);
     });
   });
 

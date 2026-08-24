@@ -1756,6 +1756,24 @@
         "exchange": "HOSE",
         "active": true
       }
-    ]
+    ],
+    "coordination": {
+      "_note": "SSOT for tasksMdJanitorJob.ts KNOWN_LEGIT_PREFIXES (D4-R1b exclusion whitelist) — read by apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts refreshKnownLegitPrefixes()/loadKnownLegitPrefixesFromSystemMap(), ONCE PER JANITOR CYCLE (AC-7 — not module load, FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX 2026-08-24). docs/agents/system-auditor/{handlers,audit-dimensions}.md reference this array by pointer and were NOT re-synced in this pass — docs/agents/** is agent-father's exclusive zone, out of dev-mcp-server's reach; see that row's note for the follow-up. Adding a new legit persistent/escalation lock-kind prefix: edit ONLY this array.",
+      "_trigger": "a new agent-minted persistent/guard/escalation task_claim lock-kind prefix appears that should be excluded from D4's held-lock/board-row reconciliation",
+      "_test_canary_note": "'d4-ssot-liveness-canary:' is a deliberate, harmless sentinel entry (AC-6, FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX) that exists ONLY so apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts can prove this SSOT array is actually being read live rather than silently degrading to tasksMdJanitorJob.ts's FALLBACK_KNOWN_LEGIT_PREFIXES constant, which does NOT contain this entry. It will never match a real lock id. Do not remove without updating that test.",
+      "known_legit_lock_prefixes": [
+        "cron:",
+        "cron-registration:",
+        "po-triage-",
+        "esc-datacov:",
+        "esc-deepdive:",
+        "data-quality-anomaly:",
+        "bctc-dataquality:",
+        "session-presence",
+        "commit-mutex",
+        "intent:",
+        "d4-ssot-liveness-canary:"
+      ]
+    }
   }
 }

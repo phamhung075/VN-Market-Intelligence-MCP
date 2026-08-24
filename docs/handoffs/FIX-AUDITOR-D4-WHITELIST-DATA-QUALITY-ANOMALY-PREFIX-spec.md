@@ -455,3 +455,31 @@ OUT OF SCOPE HERE — do NOT block or widen this row on it: it is an enum wideni
 ### 8.4 Why this section exists instead of a `detail_ref` cold-store entry
 
 `scripts/orch-apply.sh`'s row-prose-ceiling guard (ORCH_ROW_PROSE_CEILING_BYTES=12000) correctly refused to let this review grow the board row 8646B -> 22766B inline, and directs new prose to the row's `detail_ref` cold store via `scripts/orch-backlog-stub.sh` (LANES=backlog,ready,review). That escape hatch is currently UNAVAILABLE: `FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION` (P1, backlog, next_agent=developer, minted 2026-08-15T04:19Z) records that the stub crashes on the real array-shaped `backlog-detail.json`, and this row has no `detail_ref` to merge into. The spec doc is the correct alternative home — it is the artifact the implementer actually reads — and the row keeps only the binding acceptance text plus pointers here. Not a bypass: no ceiling was retuned and no write was split to dodge the check.
+
+---
+
+## 9. IMPLEMENTATION CLOSEOUT — 2026-08-24T02:24Z (dev-mcp-server)
+
+Shipped: §5a + §5b + §5e, with AC-5/AC-6/AC-7 applied as PO mandated. §5c/§5d (`docs/agents/system-auditor/{handlers,audit-dimensions}.md`) NOT shipped — see §9.4.
+
+### 9.1 AC-5 (bare-array shape) — landed as recommended (form ii)
+
+`docs/data/system-map.json` `.project.coordination.known_legit_lock_prefixes` is a bare `string[]` (11 entries — the 10 from §5a's "After" fallback block plus one AC-6 test canary, §9.2). `tasksMdJanitorJob.ts`'s `loadKnownLegitPrefixesFromSystemMap()` reads that exact bare-array path; no wrapper/`.prefixes` nesting exists anywhere. Verified live: `jq '.project.coordination.known_legit_lock_prefixes' docs/data/system-map.json` returns the flat array.
+
+### 9.2 AC-6 (positive-path SSOT test) — landed via a documented sentinel, PO's own suggested form
+
+Added `"d4-ssot-liveness-canary:"` to the SSOT array only (absent from `FALLBACK_KNOWN_LEGIT_PREFIXES` in code) — self-documented in `system-map.json` via a `_test_canary_note` sibling key under `.project.coordination`, and cross-referenced from `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts`'s new `describe("Step R-1b — loadKnownLegitPrefixesFromSystemMap / refreshKnownLegitPrefixes (SSOT, AC-5/6/7)")` block (2 positive-path tests + 1 fallback-absence test + `afterEach` reset to fallback for test isolation, since `KNOWN_LEGIT_PREFIXES` is now a mutable module binding). This is the exact mechanism PO's spec §8.2 AC-6 text recommends ("simplest sound form... a sentinel prefix present ONLY in system-map.json").
+
+### 9.3 AC-7 (per-cycle reload) — landed via mutable module binding, not a threaded parameter
+
+`KNOWN_LEGIT_PREFIXES` changed from `const` to `let`, initialized to `FALLBACK_KNOWN_LEGIT_PREFIXES`. New exported `refreshKnownLegitPrefixes(path?)` reassigns it; `runTasksMdJanitor()` calls it once at the top of every invocation (before Step R-1b), reading `resolve(projectRoot, "docs", "data", "system-map.json")`. `isKnownLegitPattern(bareId)` and `applyR1bFilter(...)` keep their EXACT original single-purpose signatures unchanged (§5a's "zero changes" claim, which AC-7's own text said to revise, turned out to still hold for the call surface — only the list feeding `isKnownLegitPattern` gained a refresh path; no caller-visible signature changed). This was chosen over threading the list as an explicit parameter through `applyR1bFilter`/`isKnownLegitPattern` because it keeps 100% of the existing 34 tests' call sites (`isKnownLegitPattern("cron:auditor-t1")` etc.) working unmodified, and the daily-cron cadence makes a fresh `readFileSync` once per cycle cheap enough that mtime-memoization (the spec's other sanctioned option) was unnecessary complexity.
+
+### 9.4 GAP — §5c/§5d (`docs/agents/system-auditor/{handlers,audit-dimensions}.md`) NOT shipped this pass
+
+`docs/agents/**` is agent-father's exclusive zone per this repo's dispatch rules (CLAUDE.md, dev-mcp-server's own `zone_restricted: apps/mcp-server/`) — dev-mcp-server has no authorization to write there, regardless of what an earlier plan draft proposed. Consequence: the base row's acceptance item "Code whitelist and both doc lists are byte-identical in content" is satisfied on the **code+data** side only (the code reads `system-map.json` directly — there is structurally only ONE list now, not three) but **not** on the doc-prose side: `handlers.md:19,48-50` and `audit-dimensions.md:55,88-90` still enumerate the PRE-fix 8-prefix list inline and still carry the stale "code has NOT been updated" claim this row's own §2 already found false. Required follow-up: route `docs/agents/system-auditor/handlers.md` + `audit-dimensions.md` edits (verbatim diffs already drafted at §5c/§5d above — still valid, just unapplied) to `agent-father`. The row is left `BLOCKED` on this gap rather than signed off — see the board row's own `blocked_reason`.
+
+### 9.5 Live/test evidence
+
+- `bun test src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts`: 34 pass / 0 fail (up from the pre-fix 27; +7 new: 2 new prefix assertions folded into the existing "covers each documented pattern class" test, 1 negative-control test, 3 SSOT/AC-6 tests, 1 fallback-canary-absence assertion).
+- Full `apps/mcp-server` suite: 52 fail / 17 files (documented stable baseline: ~50/15) — zero overlap between the failing file set and `tasksMdJanitorJob`/D4/`system-map`/`coordination`; the +2 files/+2 fails are pre-existing 5000ms-timeout network-dependent tests (`get_insider_transactions`, `TSU-DEV-U5`, VPS proxy health, etc.), unrelated to this change.
+- `bun tsc --noEmit`: clean, zero errors.
