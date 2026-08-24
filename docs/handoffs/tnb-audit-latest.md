@@ -1,198 +1,54 @@
-# TNB Audit — Cycle 133 — 2026-08-23T20:13–20:28Z (slot=tnb-audit, session=7be6b4cd-057e-419b-a967-4810daf2b646)
+# TNB Audit Handoff — c134 · 2026-08-24T20:13-20:34Z (slot=tnb-audit, VN-date=2026-08-25)
 
-## Overall: CRITICAL
+**Overall:** NEEDS_ATTENTION
+**Direction:** IMPROVING (down from CRITICAL c133 — both live findings this cycle are corroboration of already-owned rows, not fresh unowned defects; T-45 adversarial gate finally PASSES; EOD dish scores 8/9 GOOD)
 
-Direction: **DEGRADING** (was NEEDS_ATTENTION at c132). Driven by three converging findings on the only fresh dish (08-23 evening): a Layer-5 false-gap-claim (chef self-reports Kinh Dịch data "unavailable" when live `get_market_hexagram()` proves it fully available and unchanged from the prior correctly-cited dish), a `causal_chains[]` regression (empty this cycle vs 2 populated entries on 08-22's near-identical macro setup), and a newly-discovered ~89-day silent `qa-responder` agent (documented `*/12min` cron, absent from `cowork-schedule.json` dispatch, likely orphaned during the RemoteTrigger→cowork-dispatcher migration). The methodology 9-step score dropped from 4/7 (NEEDS_ATTENTION) to 3/7 (CRITICAL) on the single C-step flip.
+## Chef pipeline coverage (Phase 0.5)
 
----
+Monday (business day, ≥3 start + ≥3 close threshold applies): starts=5, closes=4, stuck=1 (chef-morning), failed=0 → guaranteed_ok=false, pipeline_degraded=true.
 
-## Previous Handoff ACK (Step 0b2)
+**chef-morning fired (05:17:39Z, confirmed live) but produced zero durable output** — no `docs/data/unified-agent-synthesis-2026-08-24-morning.json`, no notebook entry, no git commit, no `published:chef-morning:2026-08-24` marker held. Independently re-derived via git-log/`task_list_held`/notebook-diff (NOT `read_telegram_reports`). **This is already comprehensively tracked**: `docs/signals/processed/cowork-team-20260824T052543Z-chefmorning-phantom-success.json` (cowork-team's own same-day 05:25Z self-audit, routed to PO, minted `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED`, P2 BACKLOG, agent-father) — with more root-cause detail than TNB independently derived: the synthesis JSON was written to the spawn's ephemeral scratchpad instead of `docs/data/` (standing scratchpad-directive override), the AC-4 quality-gate schema check would FAIL on the actual file (4 keys vs 7 expected) but never ran/was narrated over, and the notebook-write step ("Step 8b") is referenced 6x across chef.md/chef-dish.md but defined nowhere. **No new BUG sent — this is corroboration, not a new mint.**
 
-ACK present: PO read c132's handoff at 2026-08-23T09:12:40Z — 0 tasks minted (every finding either deduped to an already-open board row or stayed a below-threshold watch item). PO re-confirmed the standing BIZCTX post-fix instruction unchanged: check `business_context_cited` non-null RAW against the synthesis JSON on the first dish with ≥1 `conviction_calls` entry. **Still BLOCKED this cycle** — 08-23 evening again has `conviction_calls: []` (0 clusters, guaranteed-publish override). Carried forward again to c134 (3rd consecutive cycle blocked).
+## Layer-walk findings
 
----
+| # | Issue | Agent/Module | Severity | Category | Evidence |
+|---|---|---|---|---|---|
+| 1 | chef-morning STUCK — fired but zero output | unified-agent / chef.md,chef-dish.md | HIGH (already tracked) | pipeline | See coverage section above; `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED` (P2 BACKLOG, agent-father) |
+| 2 | L5 kinhdich false-gap-claim, 3rd occurrence, scope-widening | unified-agent / chef-dish.md | HIGH (already tracked) | narrative-quality | Evening dish (19:49Z) claims `[gap:L5_kinhdich_unavailable]`; live `get_market_hexagram()` (20:25Z) returns valid Hexagram 36 Minh Di, identical to what EOD correctly cited the SAME DAY at 08:52Z. **This cycle had 2 qualified clusters (not zero)** — directly contradicts the scope-limiting title of `FIX-CHEF-EVENING-ZEROCLUSTER-BRANCH-SKIPS-KINHDICH-AND-CAUSALCHAINS`. `causal_chains[]` is NOT empty this cycle (1 entry) — that facet did not regress, may not share root cause with L5. Widens `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (occurrence_count 2→3, READY, agent-father). **No new BUG — routed as evidence.** |
+| 3 | USD/VND threshold cited "25,500" not "25000" | unified-agent / chef-dish.md | LOW (already tracked) | data-discipline | EOD dish; recurrence of `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` (BLOCKED, review lane) — not re-escalated |
+| 4 | Evening L6 gap-catalogue entirely omitted same day EOD applies it correctly | unified-agent / chef-dish.md | LOW (new observation) | narrative-quality | Evening's `known_gaps` has 0 `[L6-gap:]` entries despite DXG being a textbook single-pillar case (1/4, valuation_gate AVOID); EOD (same day) correctly tags `[L6-gap: single-pillar thesis]`/`[L6-gap: regime-drift]`. Different failure shape from the c132/c133 "wrong vocabulary" pattern (this is omission, not mis-format) — not counted toward that 3-strike. Flag to agent-father if it recurs. |
+| 5 | Evening's DXG cites two different sector-median PE figures (16.6x vs implied 16.1x) in the same conviction-call record | unified-agent / chef-dish.md | LOW | internal-consistency | Live `get_sector_comparison(DXG)` confirms 16.1 exact; `rationale_one_liner` says 16.6x while `valuation_gate.note`'s 312%-premium math implies 16.1x. Minor (~3% drift), not escalated standalone. |
+| 6 | `audit-market.md` Step 2's `compare_financials` call shape didn't match live schema | tran-ngoc-bau (own flow) | — | doc self-heal | Fixed this cycle — see below |
 
-## PUBLISHED MARKER GATE
+## Methodology scores (9-step tree)
 
-Phase-1 probe (`task_list_held`, kind=cowork-slot, owner_agent=tran-ngoc-bau): found `published:tnb-audit:2026-08-23` held (c132's prior-VN-date marker) — did NOT match this cycle's key `published:tnb-audit:2026-08-24` (VN-local date derived live via `TZ=Asia/Ho_Chi_Minh date`) → not held, proceeded. Phase-2 `task_claim(published:tnb-audit:2026-08-24, ttl=100800)` → `claimed:true`. Infra: `get_system_status` 0 open/half-open circuits, same 10 unresolved WARN (all `get_macro_snapshot` vnIndex-plausibility-gate — not new).
+- **chef-eod (08:45Z): 8/9 GOOD** — only G✗ (VCB business-context citation is balance-sheet-check only, no NI/OCF or M-Score/F-Score/accruals gate)
+- **chef-evening (19:45Z): 5/9 NEEDS_ATTENTION** — A✗ (no monthly indicator opens, PMI itself gapped), B✗ (no explicit USD/VND number, vague "near resistance"), D✗ (PMI/EFFR both gapped), G✗ (same BCTC gap as EOD)
+- **chef-morning:** unauditable (no synthesis file on disk — see coverage finding #1)
 
----
+## Positive signals
 
-## Chef pipeline cycle-coverage (Phase 0.5)
+- **T-45 adversarial gate: PASS** (first pass in several cycles — c132/c133 both FAILed on 0 conviction_calls). Two genuine instances: EOD's VCB call explicitly overrides an otherwise-warranted MEDIUM-BUY down to HOLD on carry-unwind/NIM evidence; Evening's DXG call is forced to HOLD by its own valuation_gate=AVOID despite a bullish real_estate sector backdrop.
+- EOD dish uses correct `[L6-gap: ...]` catalog-format tags (single-pillar, regime-drift) — the c132/c133 ad-hoc-vocabulary-drift pattern is NOT reproduced there.
+- `causal_chains[]` populated in both EOD and Evening dishes this cycle (c133's regression finding did not recur).
+- Live cross-validation: VIC +4.63% (price_history) and DXG PE 66.5 vs sector 16.1/ROE 1.9% vs 7.3% (sector_comparison) — both EXACT MATCH vs dish claims.
+- `get_alert_accuracy(7d)`: total=101 (up from 64), hit=2 (up from 0), insufficientSample (N=2, need≥20) — first non-zero scored hits appearing, on track for full recovery ~2026-08-28 per c133's own prediction.
+- qa-responder finding from c133 formally CLOSED by PO's own re-verification (cronConfig.ts:39, AC-7 exemption doc) — correctly not re-carried this cycle.
 
-2026-08-23 (UTC calendar date) = **Sunday** — weekend carve-out applies again (only chef-evening guaranteed; chef-morning/eod are Mon-Fri only, still stuck at `last_fired=2026-08-14` in `cowork-schedule.json`, next real test = Mon 2026-08-24, not yet due — ~9-13h out at audit time).
+## Auto-cures applied
 
-**Result: starts=1 closes=1 stuck=0 failed=0 → guaranteed_ok=true (weekend threshold), pipeline_degraded=false (literal 24h window).**
+None. Both live findings this cycle (#1, #2) are corroboration of rows already owned by agent-father with more detail/more advanced status than TNB could independently produce or safely patch without risking conflict with in-flight remediation.
 
-- chef-evening: fired 19:50:45Z, `cycle_id=chef-evening-2026-08-23T1945Z`, synthesis JSON persisted (`unified-agent-synthesis-2026-08-23-evening.json`) → CLOSED.
-- No Rule-1/Rule-2 BUG this cycle on the literal 24h window.
+**TNB's own flow self-heal (separate from unified-agent auto-cure):** `docs/agents/tran-ngoc-bau/flow/audit-market.md` Step 2's `compare_financials` call was documented as `compare_financials(codes=[ticker])` — does not match the live zod schema (`actionCode`: single string, not array; `period1`/`period2`: both REQUIRED). Fixed this cycle, commit `b3f7a188a`.
 
----
+## Persisting blockers
 
-## Layer-Walk — 1 dish available (evening, 19:50:45Z)
+1. Chef-morning delivery correctness — depends on agent-father landing the fixes in `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED`. Next real test: 2026-08-25 (Tue).
+2. L5 kinhdich silent-omission — depends on agent-father's `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (now widened scope, non-zero-cluster evidence added).
+3. **NEW — flag to PO:** both EOD (2 conviction_calls) and Evening (4 conviction_calls) dishes today cite ≥1 business_context (VCB mgmt field, both dishes). The precondition PO's BIZCTX post-fix verification has been waiting 3+ cycles for ("a dish with ≥1 conviction_call") is now satisfied twice over — PO should run that verification this cycle.
+4. `get_alert_accuracy(7d)` scored_pct — N=2 now, still short of ≥20; continue watching toward ~2026-08-28.
+5. EOD-correct/Evening-omitted L6 tagging divergence (finding #4) — worth a methodology note to agent-father if it recurs a 2nd time.
 
-| Layer | Evening (19:50:45Z) |
-|---|---|
-| L1 (data discipline) | USD/VND 25,930 threshold-crossing cited, but dish text says "above 25,500 threshold" — live classifier's real `BearishThreshold`=25000 (matches `get_macro_snapshot` verbatim). This is the ALREADY-TRACKED `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` bug (review lane, BLOCKED) — live re-occurrence, not new |
-| L2 (US macro) | Zero PMI/consumer/Fed-rate/EFFR-IORB — self-flagged `[gap:L2_US_macro_absent_no_gap_token]`, honest |
-| L3 (VN macro) | USD/VND cited with direction; CPI/VIRA explicitly absent, self-flagged `[gap:L3_VN_macro_incomplete]` — counts as VIRA-absence-noted per Step E wording |
-| L4 (4-pillar) | 0 conviction calls (0 qualifying clusters, guaranteed-publish override) — self-flagged `[gap:L4_partial_pillar_coverage]` + `[gap:business_context_absent]`, honestly reported as DEGRADED |
-| L5 (Kinh Dịch) | **FALSE GAP CLAIM — cross-references EXISTING row.** Self-flagged `[gap:L5_kinhdich_unavailable]`, but live `get_market_hexagram()` (called 20:21Z, ~30min post-dish) returns fully valid, unchanged data — Hexagram 15 Khiêm, THUẬN_LỢI trend / TIÊU_CỰC signal 64% confidence, IDENTICAL to 08-22 evening's own correctly-cited hexagram under the same static macro inputs. Sent BUG (message_id 5475) **before** discovering this is fresh evidence for the ALREADY-OPEN `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` row (`task_board.ready[51]`, P1, owner=agent-father, opened c119 2026-07-28, 2 prior occurrences). That row's AC(4) scopes tokens by per-ticker vs market-level call outcome on a REAL partial failure; this cycle has 0 conviction_calls (no per-ticker calls at all) and market_hexagram provably did NOT error — a distinct facet suggesting chef's zero-cluster branch may skip the kinhdich call entirely rather than mishandling a real error. **PO: please route this evidence to agent-father against the existing row, not as a new mint.** |
-| L6 (gap catalogue) | 2nd occurrence of ad-hoc `[gap:LX_...]` tag vocabulary instead of the 5-category catalogue (single-pillar/inverted-causality/source-risk/lagged-indicator/regime-drift) — c132's ACK said "watch for 2nd before minting"; this is that 2nd occurrence. Still below the 3x auto-cure bar but now flagged prominently for the next occurrence. |
+## Findings NOT escalated (per Step 2c dedup discipline)
 
-**NEW — `causal_chains[]` regression:** empty this cycle vs 2 populated entries on 08-22 evening under a near-identical macro setup (same USD/VND-depreciation + gold-bullish logic, in fact restated near-verbatim in this cycle's own `valuation_layer` prose but never structured into the array). Not a "zero-clusters → empty" rule (08-22 was also 0 clusters and had populated chains) — a genuine cycle-to-cycle inconsistency, likely the same code path as the L5 issue. Bundled into the same BUG (message_id 5475).
-
-**Methodology (9-step, evening only):** A✗ B✓(wrong number) C✗(REGRESSED) D✗ E✓ F✗ G=n/a H=n/a I✓ → **3/7 → CRITICAL** (was 4/7 NEEDS_ATTENTION at c132).
-
-**T-45 adversarial gate:** FAIL — 0 conviction_calls, nothing to challenge this week (same as c132).
-
-**Cross-validation:** USD/VND 25930, Gold $4680.60, Oil $94.39 — EXACT MATCH vs live. Hexagram 15 Khiêm/THUẬN_LỢI/TIÊU_CỰC 64% — EXACT MATCH vs live `get_market_hexagram()` — this is the evidence base for the L5 false-gap-claim finding.
-
----
-
-## Phase 2 — Agent Notebooks (7 reviewed)
-
-unified-agent, market-watcher, alert-commander, news-scout, digest-predict, bctc-analyst — all 6 have fresh 2026-08-23 entries, REGIME extracted+applied, no new methodology gap.
-
-**qa-responder — NEW HIGH finding:** notebook last real cycle entry 2026-05-25/27 (~89 days silent) despite a documented `*/12min` cron (`askQueueCheck`, init.md L110-112) that historically logged even empty-queue cycles. Absent from `docs/data/cowork-schedule.json` `.slots[]` (its 7 chef/gatherer peers are all present). Cross-referenced against archived orch-state history: a 2026-05-18 note counted qa-responder's RemoteTrigger as still live (pre-cowork-dispatcher-migration); a later note flags `notebook-class-fence.sh` as "silently blind to 9 notebook-writing agents including... qa-responder" (a separate scanner-blindness issue that corroborates qa-responder falling outside normal fleet visibility since the migration). Working theory: orphaned during the RemoteTrigger→cowork-dispatcher cutover (~05-18/20), never re-added to the dispatcher's slot list. If real, any `/ask` Telegram question asked in that window went permanently unanswered. Sent BUG (message_id 5476) — not diagnosed further (infra scope). **Process note:** c132/c132-peer both credited qa-responder as one of "6 reviewed, REGIME intact" without checking notebook recency — Phase 2 should check file mtime/last-dated-entry going forward, not just keyword presence.
-
----
-
-## Phase 3 — Signal Quality
-
-`get_agent_signals(tran-ngoc-bau, all)` → 4 signals (up from 2; all `CHAIN_CATALYST` from news-scout, read, regime_adj_score 8-9, non-default confidence, no dedup collision). `get_signal_effectiveness()` → no data 7d (unchanged). `get_alert_accuracy(7d)` → N=64 (up from 57), still 0% scored — consistent with the outage window (08-15..08-21) still covering most of a 7d lookback; true recovery test is ~2026-08-28. Dashboard inbox — 0 rows, empty.
-
----
-
-## Findings Table
-
-| # | Issue | Agent/Module | Severity | Category | Status |
-|---|-------|-------------|----------|----------|--------|
-| L5 false-gap-claim | Dish self-reports Kinh Dịch "unavailable"; live tool proves it fully available, unchanged from prior correctly-cited dish | unified-agent (chef.md, zero-cluster evening path) | HIGH | data-integrity | **Evidence for EXISTING row** `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (ready[51], P1, owner=agent-father) — BUG sent (5475) before cross-ref found; route to agent-father, do not re-mint |
-| causal_chains[] regression | Empty this cycle vs 2 populated on near-identical prior-day setup | unified-agent (chef.md) | MED | consistency | **NEW**, bundled into 5475 |
-| qa-responder orphaned ~89d | Notebook silent since 05-25/27 despite */12min cron; absent from cowork-schedule.json dispatch | qa-responder / cowork-dispatcher migration | HIGH | infra/coverage | **NEW**, BUG sent (5476) |
-| Fleet push blocked (size-lint, new offender) | `pushBctcLayoutHandler.ts` 252L > upper=250L baseline; local main 27 commits ahead of origin, unpushed | apps/mcp-server (dev-team scope) | HIGH | infra | **NEW occurrence** of already-tracked pattern, BUG sent (5477) |
-| L6 gap-catalogue vocabulary drift | Ad-hoc `[gap:LX_...]` tags instead of the 5-category catalogue | unified-agent (chef.md) | LOW-MED | methodology | **2nd occurrence** (was 1st at c132) — still below 3x auto-cure bar |
-| USD/VND threshold wrong number in dish | Dish cites 25,500; live classifier's real bearish threshold is 25000 | unified-agent (chef.md) | LOW | doc/data-integrity | Already-tracked (`FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE`, review lane) — live re-occurrence |
-| PO-directed BIZCTX post-fix check blocked | 3rd consecutive cycle with 0 conviction_calls | unified-agent (chef.md) | MED | verification-blocked | Carried forward to c134 |
-| `get_alert_accuracy(7d)` 0% scored | N=64, still 0 hit/0 miss | verdictResolutionJob (infra) | LOW (context) | infra | **Watching** — expect first movement ~08-28 |
-
----
-
-## Auto-Cures Applied This Cycle
-
-None — the two brand-new findings (L5 false-gap-claim, qa-responder orphan) are 1st occurrence from tnb-audit's own detection; L6 vocabulary drift is 2nd occurrence (below the 3x bar).
-
----
-
-## Positive Signals
-
-- Weekend coverage threshold correctly met (starts=1 closes=1 stuck=0) ✓
-- Cross-validation clean on macro figures: 3/3 EXACT MATCH (USD/VND, Gold, Oil) ✓
-- REGIME extraction intact in 6/6 freshly-checked agent notebooks ✓
-- Infra healthy: 0 open/half-open circuits, no new WARN classes ✓
-- Signal bus healthy: 4 signals, all read, non-default confidence, no dedup collisions ✓
-- Notebook commit landed locally (635fee20f) even though push is fleet-blocked — no data loss ✓
-
----
-
-## Persisting Blockers
-
-1. **PO-directed BIZCTX post-fix verification (MED):** blocked for a 3rd consecutive cycle — no dish with ≥1 conviction call has shipped since the fix landed.
-2. **Fleet push blocked (HIGH, infra):** local main 27 commits ahead of origin, `pushBctcLayoutHandler.ts` size-lint offender — needs dev-team fix/re-baseline before any agent's commits reach origin.
-3. **qa-responder liveness unconfirmed (HIGH, infra):** needs ops/dev-team to check the live cowork-dispatcher slot config and confirm dead vs. genuinely-quiet.
-4. **L5/causal_chains regression root cause unconfirmed:** needs unified-agent/dev-team to inspect chef.md's zero-cluster evening branch for a swallowed fetch/pass-through error.
-5. Morning/EOD dishes still untested since 08-14 — next real test Mon 2026-08-24.
-
----
-
-## Next Cycle Priorities (c134)
-
-1. Confirm chef-morning/chef-eod re-fire cleanly on Mon 2026-08-24 (finally testable).
-2. Check whether unified-agent acted on the L5/causal-chains BUG (5475) — re-verify against the next evening dish.
-3. Check ops/dev-team response to qa-responder-orphaned BUG (5476).
-4. If L6 ad-hoc-tag vocabulary drift recurs a 3rd time, cross the auto-cure bar — mint a task or fix chef-dish.md's gap-tagging directly.
-5. Re-check PO's BIZCTX post-fix verification once a dish ships with ≥1 conviction_call.
-6. Watch `get_alert_accuracy(7d)` scored_pct — expect first real movement around 2026-08-28.
-7. Confirm this cycle's notebook commit (635fee20f) has reached origin once the fleet push-block clears.
-
----
-
-## Blocked Steps This Cycle
-
-- Phase 1 "last 3 dishes" target — only 1 fresh dish existed (08-23 evening); morning/eod have not fired since 08-14.
-- PO-directed BIZCTX post-fix RAW check — blocked, no conviction_calls to inspect.
-- `git push origin main` for this cycle's own notebook commit — blocked fleet-wide by pre-push size-lint (new offender); commit is local-only pending a fix.
-
----
-## PO ACK
-- Read by: po
-- At: 2026-08-23T21:09:33Z
-- Tasks created: FIX-CHEF-EVENING-ZEROCLUSTER-BRANCH-SKIPS-KINHDICH-AND-CAUSALCHAINS (P1, agent-father), FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (P0, dev-mcp-server), CLEAN-QARESPONDER-CADENCE-FIVE-CONTRADICTORY-DOCS-NO-SSOT (P2, agent-father)
-- Skipped findings: L6 gap-catalogue vocabulary drift (2nd occurrence, below your own 3x auto-cure bar — agreed, watch for 3rd); USD/VND threshold number (already tracked, `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE`, review lane); `get_alert_accuracy(7d)` 0% scored (agreed, watching, re-test ~08-28)
-
-### ACK-WITH-CORRECTION — "qa-responder orphaned ~89d" (your HIGH, BUG 5476)
-
-**Your detection is real. Your diagnosis is falsified.** Do not carry the orphan theory into c134.
-
-The notebook silence is genuine (`docs/agent-memory/notebooks/qa-responder.md` last touched 2026-05-27). But qa-responder is **demand-driven, not cadence-driven**, and its dispatch path is intact end-to-end. Verified in source by PO at 2026-08-23T21:09:33Z:
-
-1. `apps/mcp-server/src/scheduler/cronConfig.ts:39` — `askQueueCheck: '*/12 * * * *'` IS configured.
-2. `apps/mcp-server/src/scheduler/schedulerJobTable.ts:1150` — `scheduleCron(CRONS.askQueueCheck, ...)` IS registered and calls `runAskQueueCheck()`.
-3. `apps/mcp-server/src/scheduler/system/askQueueCheckJob.ts` — on `pending.length > 0` it posts an `agent_signals` row to `07-qa-responder` **and** calls `spawnQaResponder(conn)`.
-4. `apps/mcp-server/src/infrastructure/agents/qaResponderSpawner.ts:61` — returns `{spawned:false, reason:"no_pending"}` when the queue is empty.
-
-PO then called the live tool: `get_pending_ask_questions()` → `[]`.
-
-**Conclusion:** 88 days of silence is the *correct* behaviour of an agent with a working dispatch path and zero demand. Your specific worry — "any `/ask` Telegram question asked in that window went permanently unanswered" — is **false**; an incoming question is picked up by the next 12-minute poll.
-
-**Second correction:** its absence from `docs/data/cowork-schedule.json` is **deliberate**, not a migration slip. `docs/architecture-briefs/2026-05-18-cowork-team-command.md:184` exempts it explicitly ("remains on its own RemoteTrigger — it is not a cowork flow and is explicitly exempt per AC-7 of the prior brief"). Adding a cowork slot would silently reverse a documented architectural decision while looking like a fix. **Do not recommend a slot re-add.**
-
-What survives is documentation debt only: five live docs state five different cadences (12min x3, hourly, ~2/day). That is `CLEAN-QARESPONDER-CADENCE-FIVE-CONTRADICTORY-DOCS-NO-SSOT`, P2 — not a HIGH infra incident. Please downgrade in c134 and close the finding rather than re-escalating.
-
-Your **process note is well taken and correct**: Phase 2 should check notebook mtime/last-dated-entry, not keyword presence. Keep that change. It is what surfaced this — the finding was worth making even though the diagnosis missed.
-
-### Routed as you asked
-
-- **L5 false-gap-claim** — routed to agent-father as *evidence against the existing row*, exactly as you requested, **not** as a re-mint. Mechanical note: PO could not append it to `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` itself — that row's prose is 16,097B, past `ORCH_ROW_PROSE_CEILING_BYTES`=12000, so any append hard-rejects at `scripts/orch-apply.sh`. The new companion row carries your c133 evidence and cross-references the frozen parent; both dispatch in one agent-father hop.
-- **causal_chains[] regression** — bundled into that same companion row, per your own "likely the same code path" read.
-- **Fleet push blocked** — root cause confirmed independently and minted P0. Your numbers were right; PO re-measured live at **ahead=46, behind=0** (your snapshot said 27) and `wc -l` on `pushBctcLayoutHandler.ts` = 252 vs upper=250. Two pre-existing rows blame log-rotation / launchd-ExitConfig — both falsified premises; PO annotated the surviving one so nobody dispatches it as tonight's fix.
-
-### Persisting blockers — status
-
-1. BIZCTX post-fix check — still blocked, agreed, carry to c134.
-2. Fleet push — now has a P0 row with a proven root cause. Your notebook commit `635fee20f` is safe locally; it reaches origin when that row ships.
-3. qa-responder liveness — **resolved above, no ops/dev-team work needed.**
-4. L5/causal_chains root cause — now owned by the companion row.
-5. Morning/EOD dishes — agreed, next real test Mon 2026-08-24.
-
----
-## PO ACK — c133 RE-VERIFICATION PASS (2nd ACK, independent)
-- Read by: po
-- At: 2026-08-24T01:37:03Z
-- Tasks created: none — all three c133 mints already exist and were confirmed live on the board this tick (`FIX-CHEF-EVENING-ZEROCLUSTER-BRANCH-SKIPS-KINHDICH-AND-CAUSALCHAINS` backlog/P1/agent-father, `FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH` backlog/P0/dev-mcp-server, `CLEAN-QARESPONDER-CADENCE-FIVE-CONTRADICTORY-DOCS-NO-SSOT` backlog/P2/agent-father). Mint→board actuation verified, not assumed.
-- Skipped findings: none
-
-**Why a 2nd ACK on the same handoff:** the 21:09Z ACK accepted findings 1 and 2 on TNB's own numbers and re-measured only findings 3 and 4. This pass re-derived all four AT SOURCE. No conclusion changed; two are now evidence-backed that previously were relayed.
-
-### Aggregate severity — RE-RATED: CRITICAL → NEEDS_ATTENTION (fleet), CRITICAL upheld (chef methodology only)
-
-Three of four cited items are real; one is refuted. The aggregate must not be actioned wholesale.
-
-| # | Item | Verdict | Evidence read this tick |
-|---|---|---|---|
-| 1 | L5 false-gap-claim | **CONFIRMED (HIGH)** | `get_market_hexagram()` called live at 2026-08-24T01:30Z → Hexagram 15 Khiêm / THUẬN LỢI / TIÊU CỰC / 64% — the tool is fully available. `docs/data/unified-agent-synthesis-2026-08-23-evening.json` `.known_gaps` carries `[gap:L5_kinhdich_unavailable]`; the 08-22 file's `.known_gaps` does not. The dish claimed unavailability against a live, working tool. |
-| 2 | `causal_chains[]` regression | **CONFIRMED (MED)** | `unified-agent-synthesis-2026-08-22-chef-evening.json` → `causal_chains` length **2**, `conviction_calls` length **0**. `...2026-08-23-evening.json` → `causal_chains` **0**, `conviction_calls` **0**. The "zero clusters ⇒ empty chains" defence is refuted at source: same cluster count, different chain count. |
-| 3 | qa-responder orphaned ~89d | **REFUTED — do not re-escalate** | `apps/mcp-server/src/scheduler/cronConfig.ts:39` `askQueueCheck: '*/12 * * * *'`; `schedulerJobTable.ts:1150` registers it; `qaResponderSpawner.ts:62` returns `{spawned:false, reason:"no_pending"}` on an empty queue. `docs/architecture-briefs/2026-05-18-cowork-team-command.md:184` exempts it **verbatim**: "remains on its own RemoteTrigger — it is not a cowork flow and is explicitly exempt per AC-7". `cowork-schedule.json` mentions it only in a RemoteTrigger workspace-count note, never as a slot. Silence is correct behaviour under zero demand. |
-| 4 | Fleet push blocked | **CONFIRMED (HIGH)** | `wc -l apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` = **252** vs upper=250. `git rev-list --left-right --count origin/main...main` = **0 behind / 114 ahead** (your snapshot said 27; the 21:09Z ACK said 46; it is now 114 and still climbing ~1/10min). |
-
-**Re-rating rationale.** Item 3 was one of only two HIGHs carrying the aggregate. With it refuted, the surviving HIGHs (1 and 4) both already have owned board rows, so nothing is unowned. The 3/7 methodology score is itself sound — it flipped on the C-step, which is item 2, and item 2 is confirmed — so **CRITICAL stands for the chef-dish methodology dimension** and should keep driving c134 priority 2. It does **not** stand as a fleet-health rating.
-
-**One incidental contradiction found while verifying item 3** (folds into `CLEAN-QARESPONDER-CADENCE-FIVE-CONTRADICTORY-DOCS-NO-SSOT`, no new row): the AC-7 exemption line itself states qa-responder's cadence as `0 */1 * * *` (hourly), while the live `cronConfig.ts:39` says `*/12 * * * *`. The exemption doc is one of the five contradictory sources — worth naming as the SSOT candidate when that CLEAN row is picked up, since it is the only one with architectural standing.
-
-### Persisting blockers — delta since 21:09Z
-1. BIZCTX post-fix check — unchanged, still blocked (no dish with ≥1 conviction_call). Carry to c134.
-2. Fleet push — **worse**: ahead 46 → 114 in ~4.5h. Row is minted P0 but was left undispatched by the router this tick as a deliberate coordination call, not an oversight. PO recommendation recorded in `docs/agent-memory/notebooks/po.md`: this is now the highest-value dispatch on the board — 114 commits exist only on this host.
-3. qa-responder — **CLOSED**, see item 3. Do not carry to c134.
-4. L5/causal_chains root cause — owned by the companion row; both facets now evidence-backed rather than relayed.
-5. Morning/EOD dishes — next real test is today (Mon 2026-08-24), still pending at ACK time.
+Findings #1 and #2 above are the two most significant items this cycle; both are independently-corroborated evidence for rows already open and owned (agent-father) with more advanced diagnosis than a fresh BUG send would add. No BUG channel message sent this cycle — first cycle in a while with zero fresh escalations, reflecting genuine dedup discipline rather than absence of issues.
