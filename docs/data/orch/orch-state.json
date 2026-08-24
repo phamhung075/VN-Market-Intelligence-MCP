@@ -2345,6 +2345,29 @@
         "triaged_by": "po (ruling-20260824T0716Z)",
         "triaged_at": "2026-08-24T07:16:00Z",
         "disposition": "ACCEPTED-WITH-CORRECTIONS. Measurement and routing correct; two payload claims are not. (i) payload.issue.root_cause says pdf-extractor's absence from .acked_memory is the 'sole cause of breach' -- it is the sole cause of the FAILURE VERDICT, not of the breach; the breach is real (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM shipped and idles at 85-87% against its own AC-4 bar of <=80% of cap). (ii) payload.issue.evidence says 'no backlog row' -- FALSE: FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK has tracked exactly this loop since 2026-08-24T04:01:33Z, and FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE tracks the headroom-plane defect. payload.action_required ('ack the entry or raise the cap') offers only the two options PO refused at 04:00Z and refuses again here -- see po_ruling_20260824T0716Z on the FOLD-VERDICT row for the full reasoning. Resolution: no ack, no cap change; the FOLD-VERDICT row is expedited to P0 and `.head` unpinned in this same write so it can finally be dispatched. _updated_by null on this row is the known signal_queue producer-auth gap, not a defect of this row."
+      },
+      {
+        "id": "sys-20260824T125005-a30-pdf",
+        "ts": "2026-08-24T12:50:05Z",
+        "from": "system-auditor",
+        "to": "ops",
+        "type": "memory_pressure_transient",
+        "summary": "pdf-extractor A-30: transient memory pressure 96.95% from concurrent OCR tests, not unbounded leak",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+          "finding": "A-30 pre-gate threshold exceeded (96.95%), multi-probe discriminator confirms benign",
+          "discrimination": "(b) Transient load from concurrent test run, NOT (a) genuine unbounded leak",
+          "evidence": "10-sample A-30 deep-probe window shows healthy GC sawtooth (94%→99% peak→70% reclaim), 4 reclamation dips, stable VmHWM, dev-pdf-extractor pytest active",
+          "expected_outcome": "Memory pressure will recede when test suite completes"
+        },
+        "dedup_key": "auditor-a30-transient-pdf-extractor-ocr-load-20260824",
+        "triaged_at": null,
+        "triaged_by": null,
+        "disposition": null,
+        "related": []
       }
     ],
     "last_triaged_at": "2026-08-24T10:56:41Z",

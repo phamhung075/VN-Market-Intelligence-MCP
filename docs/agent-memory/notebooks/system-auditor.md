@@ -454,3 +454,77 @@ Pre-gate returned FAILURE with `mem_creep: mem >= 85% threshold (A-30 WARN bound
 - caller_quote="mem_creep: mem >= 85% threshold (A-30 WARN boundary, mem-creep gate): vn-market-intelligence-mcp-pdf-extractor-1(86.51%)"
 - resolution=SPEC_WINS — both containers FOLD under documented multi-probe discriminator; pre-gate used simple threshold, agent spec uses full discriminator
 
+
+### Audit Run Tier-1 c1 2026-08-24T12:49:15Z
+
+**Pre-gate verdict:** FAILURE (pdf-extractor mem_creep: 92.55% → 96.95% climbing)
+
+**Spawn rationale:** mem >= 85% threshold gate, heartbeat 240min stale
+
+**Live reading at cycle start:** pdf-extractor 96.95% (2.424GiB / 2.5GiB), rag-service 66.68%, mcp-server 13.98%
+
+**DISCRIMINATION ANALYSIS — A-30 Transient Load vs Genuine Leak:**
+
+**Evidence 1 — Process Activity:**
+- dev-pdf-extractor agent ACTIVE at spawn time, running `python3 -m pytest -q`
+- Started 2:46 (matching probe window), test_ocr_concurrency_invariant.py fixtures loading
+- Container logs show: multiple POST /extract 200, 429 Too Many Requests
+- OCR gateway: semaphore bookkeeping errors, heavy request volume
+- **Conclusion:** Concurrent OCR test load confirmed present
+
+**Evidence 2 — Container Lifecycle:**
+- pdf-extractor started 2026-08-23T15:44:17Z (21h ago)
+- No OOMKilled state before/after probe window
+- RestartCount=0 (no crashes during climb)
+- StartedAt unchanged (no mid-window restart)
+- **Conclusion:** Container stable, not exhibiting death signatures
+
+**Evidence 3 — Memory Pattern (10-sample A-30 deep-probe, 30-second span):**
+- Sample progression: 94.03% → 92.37% (dip) → 97.71% → 98.78% → 99.47% (peak) → 99.45% → 99.43% (plateau) → 95.66% (dip) → 73.03% (22pp reclaim) → 70.15% (further reclaim)
+- Min: 70.15%, Max: 99.47%, Median: 96.69%
+- Reclamation dips: 4 observed (94→92, 99→96, 96→73, 73→70)
+- Discontinuities: 0 (no >40pp crash cliff)
+- **Conclusion:** Healthy garbage collection sawtooth pattern, not monotonic leak
+
+**Evidence 4 — VmHWM Status:**
+- VmHWM_before: 2316488 KB (88.35% of 2.5GiB limit)
+- VmHWM_after: 2316488 KB (unchanged)
+- vmhwm_advancing_in_window: false
+- vmhwm_pinned_at_cap: false
+- **Conclusion:** High-water mark stable, not advancing to new peaks
+
+**A-30 Tripwire Evaluation:**
+- ✓ No state_changed_during_window
+- ✓ OOMKilled=false (both before/after)
+- ✓ No crash-cliff (discontinuity >40pp)
+- ✓ VmHWM NOT (pinned_at_cap AND advancing_in_window)
+- ✓ median 96.69% is NOT >97%
+- ✓ min 70.15% is NOT >93% sustained
+- All tripwires clear
+
+**A-30 Verdict: FOLD** (benign, no escalation warranted)
+
+**Root Cause Discrimination:**
+- **(a) Genuine unbounded leak?** RULED OUT
+  - Evidence against: healthy reclamation dips, stable VmHWM, no restart/OOMKilled, short uptime (21h)
+  
+- **(b) Transient load from concurrent OCR tests?** CONFIRMED
+  - Evidence for: dev-pdf-extractor pytest active, OCR gateway heavy volume, 30-second observation shows GC cycling, memory recedes from peak after active collection
+
+**Monitoring Note:** The 99%+ peak is a stress condition — the container is running near its ceiling under load, but GC is active and effective. After the dev-pdf-extractor tests finish, memory pressure should recede. This does NOT constitute a persistent memory leak.
+
+**Anomalies filed:** None
+- A-30 pre-gate threshold (≥85%) exceeded, but multi-probe discriminator clarifies as transient workload, not infrastructure failure
+- No ops escalation needed; condition expected to self-resolve when test suite completes
+
+**[DURABILITY-SWEEP]** swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0
+
+**[HEARTBEAT]** NOT WRITTEN — Tier-1 subagent never writes auditor-tier1-last-healthy.json
+
+**CONTRACT-CONTRADICTION:**
+- check=A-30
+- spec=tier1-probe.md § A-30 Reclamation Discriminator (multi-probe + tripwire mapping)
+- caller_value="FAILURE" 
+- caller_quote="mem_creep: mem >= 85% threshold... pdf-extractor-1(96.95%)"
+- resolution=SPEC_WINS — documented discriminator overrides simple threshold; multi-probe shows benign sawtooth under concurrent test load
+
