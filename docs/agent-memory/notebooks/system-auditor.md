@@ -45,8 +45,8 @@ Tier-2 audit completed. Primary finding: cron fire-gap surge with 11 STALE/MISSE
 
 ## c1007 · 2026-08-24T18:32Z
 ### Audit Run Tier-2 (16:00–18:32 UTC 2026-08-24)
-- Tier: 2 | Services: VPS 3/5 healthy | Sources: 5/5 SLA OK | Cron: 89 total
-- Anomalies: 2 new (0 critical, 0 warn, 2 info) | 0 dedup-skipped
+- Tier: 2 | Services: VPS 5/5 (3 healthy + 2 market-idle) | Sources: 5/5 SLA OK | Cron: 89 total
+- Anomalies: 0 new | 17 dedup-skipped (A-29: 7 STALE + 1 MISSED + 9 unresolved-join from prior cycle)
 - Status: ALL_GREEN (freshness sweep passed, cron anomalies from prior tick)
 
 #### Step 0b.1/0b.2 — Durability Sweep
