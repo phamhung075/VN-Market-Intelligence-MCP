@@ -65,6 +65,13 @@ export HEARTBEAT_FILE_PATH="$TMPDIR_TEST/auditor-tier1-last-healthy.json"
 # docs/data/auditor-tier1-last-trigger.json — every run_probe()/CLI
 # invocation below inherits this exported override.
 export TRIGGER_FILE_PATH="$TMPDIR_TEST/auditor-tier1-last-trigger.json"
+# FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT — isolated scratch path,
+# same hermeticity discipline as TRIGGER_FILE_PATH/HEARTBEAT_FILE_PATH above.
+# NEVER the live docs/data/auditor-tier1-spawn-debounce.json — without this
+# override every FAILURE-path test below would silently read/write the real
+# repo ledger file (confirmed live: an unguarded run polluted it with 12
+# scratch entries before this override was added).
+export SPAWN_DEBOUNCE_FILE_PATH="$TMPDIR_TEST/auditor-tier1-spawn-debounce.json"
 
 # FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE: _check_mem_creep() now
 # sleeps MEM_CREEP_SAMPLE_INTERVAL_SEC between samples (real default 2s) —
@@ -191,6 +198,11 @@ vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)" ;;
       elif [ "${2:-}" = "-q" ]; then
         case "${STUB_MEM_FLEET:-ok}" in
           ok) printf 'id-mcp-server\nid-rag-service\nid-gateway\n' ;;
+          # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT (T-DEBOUNCE): a
+          # fleet shaped like the LIVE 2026-08-24 incident this row exists
+          # to debounce — pdf-extractor (unacked, real container) + the SAME
+          # rag-service acked container the "ok" fleet already carries.
+          pdfx) printf 'id-pdf-extractor\nid-rag-service\n' ;;
           empty) printf '' ;;
         esac
         return 0
@@ -204,6 +216,13 @@ vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)" ;;
           printf 'vn-market-intelligence-mcp-rag-service-1 805306368\n'
           printf 'mcp-gateway 0\n'
           ;;
+        pdfx)
+          # 2.5 GiB cap, matches the live incident's own reported cap
+          # (docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md
+          # §0: "anon-rss 2.37 GiB against a 2.5 GiB cap").
+          printf 'vn-market-intelligence-mcp-pdf-extractor-1 2684354560\n'
+          printf 'vn-market-intelligence-mcp-rag-service-1 805306368\n'
+          ;;
         empty) printf '' ;;
       esac
       return 0
@@ -214,6 +233,7 @@ vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)" ;;
         *mcp-server*) val=$(_next_mem_stub "mcpserver" "${STUB_MEM_MCPSERVER:-12.34}") ;;
         *rag-service*) val=$(_next_mem_stub "rag" "${STUB_MEM_RAG:-20.00}") ;;
         *gateway*) val=$(_next_mem_stub "gateway" "${STUB_MEM_GATEWAY:-0.28}") ;;
+        *pdf-extractor*) val=$(_next_mem_stub "pdfx" "${STUB_MEM_PDFX:-12.00}") ;;
         *) val=$(_next_mem_stub "other" "${STUB_MEM_OTHER:-1.00}") ;;
       esac
       printf '%s%%\n' "$val"
@@ -261,6 +281,12 @@ run_case() {
   # docker-stats sample-sequence counters so each test case's samples start
   # fresh at index 0 (see _next_mem_stub above).
   rm -f "$TMPDIR_TEST"/.stats-call-*
+  # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: wipe the debounce ledger
+  # so each test case's spawn_decision starts fresh (no prior signature).
+  # T-DEBOUNCE tests that deliberately want cross-call ledger state call
+  # run_probe() twice within the SAME test case (no intervening run_case()).
+  rm -f "$SPAWN_DEBOUNCE_FILE_PATH"
+  unset SPAWN_DEBOUNCE_WINDOW_MIN
 }
 
 # ── T1: ALL_GREEN — every check passes ────────────────────────────────────────
@@ -1348,6 +1374,168 @@ check "T58 docker stats was actually called 2x despite the invalid override (cla
 MEM_CREEP_SAMPLES=2
 
 # ══════════════════════════════════════════════════════════════════════════════
+# FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT — per-signature spawn
+# debounce regression tests. Design:
+# docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md.
+# Field/file contract: docs/policies/dev-standards.md
+# CANONICAL:SSOT-AUDITOR-TIER1-SPAWN-DEBOUNCE.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── T-DEBOUNCE-1: THE decisive reproduction — the exact live coordinator pair
+# (07:0xZ 86.90%/91.40% then 07:36Z 86.56%/90.80%, both real 2026-08-24
+# ticks). AC-3 (verdict stays FAILURE unconditionally) + AC-4/AC-5 (same
+# signature across percentage drift -> tick2 DEBOUNCED, ledger never
+# duplicates the entry or bumps spawn_count on a DEBOUNCED tick) ───────────
+run_case
+STUB_MEM_FLEET="pdfx"
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+STUB_MEM_PDFX="86.90"
+STUB_MEM_RAG="91.40"
+OUT1=$(run_probe); RC1=$?
+VERDICT1=$(printf '%s' "$OUT1" | jq -r '.verdict')
+DETAIL1=$(printf '%s' "$OUT1" | jq -r '.detail')
+SPAWN1=$(printf '%s' "$OUT1" | jq -r '.spawn_decision')
+SIG1=$(printf '%s' "$OUT1" | jq -r '.signature')
+
+STUB_MEM_PDFX="86.56"
+STUB_MEM_RAG="90.80"
+OUT2=$(run_probe); RC2=$?
+VERDICT2=$(printf '%s' "$OUT2" | jq -r '.verdict')
+SPAWN2=$(printf '%s' "$OUT2" | jq -r '.spawn_decision')
+SIG2=$(printf '%s' "$OUT2" | jq -r '.signature')
+
+check "T-DEBOUNCE-1 tick1 verdict FAILURE (AC-3 — true positive, never greened)" "$([ "$VERDICT1" = "FAILURE" ] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick1 exit=1" "$([ "$RC1" -eq 1 ] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick1 detail names pdf-extractor with its 86.90%% pct" "$([[ "$DETAIL1" == *"pdf-extractor-1(86.90%)"* ]] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick1 detail carries the acked-transparency clause naming rag-service (91.40%%)" "$([[ "$DETAIL1" == *"acknowledged-degraded"* ]] && [[ "$DETAIL1" == *"rag-service-1(91.40%)"* ]] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick1 signature == mem_creep:<bare pdf-extractor name> (percentages+acked-clause stripped)" "$([ "$SIG1" = "mem_creep:vn-market-intelligence-mcp-pdf-extractor-1" ] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick1 signature NEVER names rag-service (acked-transparency clause excluded from signature by design)" "$([[ "$SIG1" != *"rag-service"* ]] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick1 spawn_decision SPAWN (first sighting of this signature)" "$([ "$SPAWN1" = "SPAWN" ] && echo true || echo false)"
+
+check "T-DEBOUNCE-1 tick2 verdict STILL FAILURE (AC-3 paramount — the spawn is debounced, never the verdict)" "$([ "$VERDICT2" = "FAILURE" ] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick2 exit=1" "$([ "$RC2" -eq 1 ] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick2 signature BYTE-IDENTICAL to tick1 despite 86.90->86.56 / 91.40->90.80 drift" "$([ "$SIG2" = "$SIG1" ] && echo true || echo false)"
+check "T-DEBOUNCE-1 tick2 spawn_decision DEBOUNCED (same signature, inside the 60min window)" "$([ "$SPAWN2" = "DEBOUNCED" ] && echo true || echo false)"
+check "T-DEBOUNCE-1 ledger holds exactly 1 entry (same signature reused, never duplicated)" "$([ "$(jq '.entries | length' "$SPAWN_DEBOUNCE_FILE_PATH")" -eq 1 ] && echo true || echo false)"
+check "T-DEBOUNCE-1 ledger spawn_count stays 1 (a DEBOUNCED tick never increments it)" "$([ "$(jq -r '.entries[0].spawn_count' "$SPAWN_DEBOUNCE_FILE_PATH")" = "1" ] && echo true || echo false)"
+check "T-DEBOUNCE-1 ledger last_seen_at advanced on the DEBOUNCED tick (still tracks liveness)" "$([ "$(jq -r '.entries[0].last_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")" != "$(jq -r '.entries[0].first_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")" ] || echo true)"
+
+# ── T-DEBOUNCE-2: ack-expiry hazard — rag-service's ack going STALE (tracked_by
+# no longer resolves live) moves it OUT of the acked-transparency clause and
+# INTO the primary breach list, which by construction changes the signature
+# and forces an immediate SPAWN under AC-4 — zero special-case code, and this
+# fires even though tick2 above is still inside the OLD signature's 60min
+# debounce window (architecture brief §1/§3.3, proof by construction) ──────
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG_ABSENT_TRACKEDBY"
+STUB_MEM_PDFX="87.10"
+STUB_MEM_RAG="92.00"
+OUT3=$(run_probe); RC3=$?
+VERDICT3=$(printf '%s' "$OUT3" | jq -r '.verdict')
+DETAIL3=$(printf '%s' "$OUT3" | jq -r '.detail')
+SPAWN3=$(printf '%s' "$OUT3" | jq -r '.spawn_decision')
+SIG3=$(printf '%s' "$OUT3" | jq -r '.signature')
+
+check "T-DEBOUNCE-2 verdict FAILURE" "$([ "$VERDICT3" = "FAILURE" ] && echo true || echo false)"
+check "T-DEBOUNCE-2 exit=1" "$([ "$RC3" -eq 1 ] && echo true || echo false)"
+check "T-DEBOUNCE-2 detail shows rag-service as a STALE-ACK primary breach (moved OUT of the transparency clause)" "$([[ "$DETAIL3" == *"rag-service-1(92.00%"* ]] && [[ "$DETAIL3" == *"STALE-ACK"* ]] && echo true || echo false)"
+check "T-DEBOUNCE-2 signature now names BOTH containers, sorted+comma-joined" "$([ "$SIG3" = "mem_creep:vn-market-intelligence-mcp-pdf-extractor-1,vn-market-intelligence-mcp-rag-service-1" ] && echo true || echo false)"
+check "T-DEBOUNCE-2 signature DIFFERS from the debounced tick1/tick2 signature (proves the container-move is NOT swallowed by normalization)" "$([ "$SIG3" != "$SIG1" ] && echo true || echo false)"
+check "T-DEBOUNCE-2 spawn_decision SPAWN — new signature forces immediate spawn under AC-4, even inside the OLD signature's window" "$([ "$SPAWN3" = "SPAWN" ] && echo true || echo false)"
+check "T-DEBOUNCE-2 ledger now holds 2 entries (old signature retained untouched, new signature appended)" "$([ "$(jq '.entries | length' "$SPAWN_DEBOUNCE_FILE_PATH")" -eq 2 ] && echo true || echo false)"
+
+# ── T-DEBOUNCE-3: window expiry re-arms SPAWN — a debounce window is NOT a
+# permanent suppression (AC-5: a sliding window would never expire — this
+# proves the window is fixed at first-sighting, not renewed on each sighting) ─
+run_case
+STUB_DOCKER_PS="one_down"
+OUT1=$(run_probe)
+SPAWN1=$(printf '%s' "$OUT1" | jq -r '.spawn_decision')
+jq '.entries[0].window_expires_at = "2020-01-01T00:00:00Z"' "$SPAWN_DEBOUNCE_FILE_PATH" > "$TMPDIR_TEST/t-debounce3-ledger.json" && mv "$TMPDIR_TEST/t-debounce3-ledger.json" "$SPAWN_DEBOUNCE_FILE_PATH"
+OUT2=$(run_probe)
+SPAWN2=$(printf '%s' "$OUT2" | jq -r '.spawn_decision')
+SPAWN_COUNT2=$(jq -r '.entries[0].spawn_count' "$SPAWN_DEBOUNCE_FILE_PATH")
+check "T-DEBOUNCE-3 tick1 SPAWN (fresh signature)" "$([ "$SPAWN1" = "SPAWN" ] && echo true || echo false)"
+check "T-DEBOUNCE-3 tick2 (after window elapsed) SPAWN again — re-adjudicates, never debounces forever" "$([ "$SPAWN2" = "SPAWN" ] && echo true || echo false)"
+check "T-DEBOUNCE-3 spawn_count incremented to 2 on the re-armed SPAWN" "$([ "$SPAWN_COUNT2" = "2" ] && echo true || echo false)"
+
+# ── T-DEBOUNCE-4: corrupt ledger content -> FAIL OPEN to SPAWN, never
+# silently downgraded to DEBOUNCED on a read/parse fault (Auditability
+# Contract) ──────────────────────────────────────────────────────────────
+run_case
+STUB_DOCKER_PS="one_down"
+run_probe >/dev/null
+printf 'NOT VALID JSON{{{' > "$SPAWN_DEBOUNCE_FILE_PATH"
+OUT2=$(run_probe); RC2=$?
+VERDICT2=$(printf '%s' "$OUT2" | jq -r '.verdict')
+SPAWN2=$(printf '%s' "$OUT2" | jq -r '.spawn_decision')
+check "T-DEBOUNCE-4 corrupt ledger -> verdict still FAILURE" "$([ "$VERDICT2" = "FAILURE" ] && echo true || echo false)"
+check "T-DEBOUNCE-4 corrupt ledger -> exit=1" "$([ "$RC2" -eq 1 ] && echo true || echo false)"
+check "T-DEBOUNCE-4 corrupt ledger -> spawn_decision fails OPEN to SPAWN (same repeated signature, would otherwise be DEBOUNCED)" "$([ "$SPAWN2" = "SPAWN" ] && echo true || echo false)"
+check "T-DEBOUNCE-4 corrupt ledger -> self-heals (a valid ledger is written back after the fault)" "$(jq -e . "$SPAWN_DEBOUNCE_FILE_PATH" >/dev/null 2>&1 && echo true || echo false)"
+
+# ── T-DEBOUNCE-5: suppressed call (Tier-2/3's inner run_probe("suppress_heartbeat")
+# invocation) NEVER emits spawn_decision/signature and NEVER touches the
+# ledger file — provably unaffected by construction (architecture brief §3.4) ─
+run_case
+STUB_DOCKER_PS="one_down"
+rm -f "$SPAWN_DEBOUNCE_FILE_PATH"
+OUT=$(run_probe "suppress_heartbeat"); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+HAS_SD=$(printf '%s' "$OUT" | jq 'has("spawn_decision")')
+HAS_SIG=$(printf '%s' "$OUT" | jq 'has("signature")')
+check "T-DEBOUNCE-5 suppressed call verdict still FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T-DEBOUNCE-5 suppressed call exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T-DEBOUNCE-5 suppressed call JSON has NO spawn_decision key" "$([ "$HAS_SD" = "false" ] && echo true || echo false)"
+check "T-DEBOUNCE-5 suppressed call JSON has NO signature key" "$([ "$HAS_SIG" = "false" ] && echo true || echo false)"
+check "T-DEBOUNCE-5 suppressed call NEVER creates the ledger file" "$([ ! -f "$SPAWN_DEBOUNCE_FILE_PATH" ] && echo true || echo false)"
+
+LOCAL_T2_HB="$TMPDIR_TEST/t-debounce5-tier2-hb.json"
+rm -f "$LOCAL_T2_HB" "$SPAWN_DEBOUNCE_FILE_PATH"
+OUT_T2=$(HEARTBEAT_FILE_PATH="$LOCAL_T2_HB" run_tiered_probe "2")
+HAS_SD_T2=$(printf '%s' "$OUT_T2" | jq 'has("spawn_decision")')
+check "T-DEBOUNCE-5 Tier-2 run_tiered_probe() JSON has no spawn_decision leak from its suppressed inner run_probe() call" "$([ "$HAS_SD_T2" = "false" ] && echo true || echo false)"
+check "T-DEBOUNCE-5 Tier-2 run_tiered_probe() never creates the ledger file either" "$([ ! -f "$SPAWN_DEBOUNCE_FILE_PATH" ] && echo true || echo false)"
+
+# ── T-DEBOUNCE-6: SPAWN_DEBOUNCE_WINDOW_MIN env override honored — retunable
+# without a design change (architecture brief §3.2) ────────────────────────
+run_case
+STUB_DOCKER_PS="one_down"
+SPAWN_DEBOUNCE_WINDOW_MIN=120
+run_probe >/dev/null
+EXP=$(jq -r '.entries[0].window_expires_at' "$SPAWN_DEBOUNCE_FILE_PATH")
+FIRST_SEEN=$(jq -r '.entries[0].first_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")
+DIFF_SEC=$(jq -n --arg a "$FIRST_SEEN" --arg b "$EXP" '($b|fromdateiso8601) - ($a|fromdateiso8601)')
+check "T-DEBOUNCE-6 SPAWN_DEBOUNCE_WINDOW_MIN=120 override honored (window_expires_at - first_seen_at == 120min)" "$([ "$DIFF_SEC" -eq 7200 ] && echo true || echo false)"
+unset SPAWN_DEBOUNCE_WINDOW_MIN
+
+# ── T-DEBOUNCE-7: docker_ps entity signature — end-to-end integration proof
+# that the side-channel (not a regex re-parse of `detail`) wires correctly
+# for a NON-mem_creep entity-bearing check too ─────────────────────────────
+run_case
+STUB_DOCKER_PS="one_down"
+OUT=$(run_probe)
+SIG=$(printf '%s' "$OUT" | jq -r '.signature')
+check "T-DEBOUNCE-7 docker_ps FAILURE signature == docker_ps:<bare service name>, no status/paren noise" "$([ "$SIG" = "docker_ps:mcp-server" ] && echo true || echo false)"
+
+# ── T-DEBOUNCE-8: launchd_agents entity signature — end-to-end integration
+# proof for the third entity-bearing check (reuses T33's exact fixture) ────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_3"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe)
+SIG=$(printf '%s' "$OUT" | jq -r '.signature')
+check "T-DEBOUNCE-8 launchd_agents FAILURE signature == launchd_agents:<bare label>, no exit-status/paren noise" "$([ "$SIG" = "launchd_agents:com.vn-market.fleet-push" ] && echo true || echo false)"
+
+# Restore the pre-existing "safe ALL_GREEN" LAUNCHD_DIR/LAUNCHD_ACK state (an
+# empty dir + a nonexistent ack ledger) for every test appended after this
+# section — same restore discipline the file already applies after T39/T53
+# (run_case() deliberately never resets these two, by pre-existing design).
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$TMPDIR_TEST/no-such-ack-ledger.json"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # TICK-WU-3: telemetry wiring — tt_capture_and_log at the trailer's TWO
 # branches (Tier-1 wraps run_probe, Tier-2/3 wraps run_tiered_probe "$TIER")
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1471,6 +1659,15 @@ run_case
 STUB_DOCKER_PS="one_down"
 LOG_T_LOG6A="$TMPDIR_TEST/telemetry-t-log6a.jsonl"
 RAW_TLOG6A=$(run_probe)
+# FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: the ledger write from the
+# call above just recorded this exact signature (docker_ps:mcp-server) as
+# SPAWNed — a second, immediate same-signature call would legitimately
+# return spawn_decision=DEBOUNCED (correct new stateful behavior, see
+# T-DEBOUNCE below), which would break this test's byte-identity premise for
+# a reason unrelated to what it actually verifies (the tt_capture_and_log
+# wrapper reprinting stdout unmodified). Reset the ledger so BOTH calls see
+# a fresh signature and both legitimately return SPAWN.
+rm -f "$SPAWN_DEBOUNCE_FILE_PATH"
 WRAPPED_TLOG6A=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG6A" tt_capture_and_log "auditor-tier1-probe.sh" run_probe)
 check "T-LOG6 Tier-1 AC-2/AC-3: wrapper reprints stdout BYTE-IDENTICAL to a direct (unwrapped) run_probe() call" \
   "$([ "$WRAPPED_TLOG6A" = "$RAW_TLOG6A" ] && echo true || echo false)"

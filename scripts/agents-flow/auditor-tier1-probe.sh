@@ -53,7 +53,10 @@
 #      silently unloaded with nothing detecting it — the ~73h multi-day
 #      outage this self-check exists to prevent from recurring.
 #
-# Verdict JSON (one line, stdout): {verdict, detail, last_healthy_at}.
+# Verdict JSON (one line, stdout): {verdict, detail, last_healthy_at}, plus,
+# on a genuine standalone Tier-1 FAILURE tick only (never when suppressed for
+# tier 2/3 — see "SPAWN DEBOUNCE" section below), two ADDITIVE keys:
+# {spawn_decision, signature} (FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT).
 #   verdict ∈ ALL_GREEN|FAILURE.
 # Exit code: 0 = ALL_GREEN (heartbeat written, no subagent spawn needed).
 #            1 = FAILURE (cron LLM spawns system-auditor subagent, full
@@ -109,6 +112,15 @@
 #                         "TRIGGER FILE" section below
 #                         (FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-
 #                         MACHINE-VERDICT, ARM B).
+#   SPAWN_DEBOUNCE_FILE_PATH — per-signature spawn-debounce ledger path
+#                         (default: repo docs/data/auditor-tier1-spawn-debounce.json)
+#                         — see "SPAWN DEBOUNCE" section below
+#                         (FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT).
+#   SPAWN_DEBOUNCE_WINDOW_MIN — override the debounce window in whole minutes
+#                         (default: this script's own
+#                         _fresh_threshold_minutes_for_tier(1) == 60min,
+#                         2x Tier-1's own 30min cadence — reused, not
+#                         reinvented).
 #
 # TRIGGER FILE (FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-
 # VERDICT, ARM B, 2026-08-13): every genuine standalone Tier-1 invocation of
@@ -142,6 +154,42 @@
 # caller — same discipline as the heartbeat file, no shape-guard needed in
 # `scripts/git-hooks/pre-commit` yet (this file carries no
 # healthy-vs-degraded ambiguity the way the heartbeat filename family does).
+#
+# SPAWN DEBOUNCE (FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT, 2026-08-24):
+# debounces the cron's SPAWN decision on a PERSISTING failure signature — it
+# NEVER touches the verdict (AC-3, paramount: verdict stays "FAILURE" on
+# every failing tick, unconditionally, exactly as before this fix). Full
+# design: docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md.
+# Field/file contract (authoritative, cited from both this script and the
+# sibling cron-prompt row that consumes it): docs/policies/dev-standards.md
+# CANONICAL:SSOT-AUDITOR-TIER1-SPAWN-DEBOUNCE.
+#
+# Signature = sorted, "|"-joined "<checkname>[:<sorted,comma-joined UNACKED
+# entity names>]" tokens, one per FAILING check this tick — built from a
+# clean, prose-free, percentage-free entity side-channel threaded out of
+# _check_docker_ps/_check_mem_creep/_check_launchd_agents's own per-entity
+# loops (never a regex re-parse of the human `detail` string, which drifts
+# every tick on percentages alone and would debounce nothing). The
+# `(also acknowledged-degraded, tracked: ...)` clause never enters the
+# signature — an acked entity going STALE moves it INTO the unacked breach
+# list, which by construction changes the signature and forces an immediate
+# SPAWN (AC-4), with zero special-case code.
+#
+# Ledger: docs/data/auditor-tier1-spawn-debounce.json, `{entries:[{signature,
+# first_seen_at, last_seen_at, last_spawn_at, spawn_count,
+# window_expires_at}]}`. Read-modify-write via `_spawn_debounce_decision()`,
+# called ONLY from `run_probe()`'s own top-level (non-suppressed) FAILURE
+# branch — gated behind the SAME `suppress_heartbeat` test already used for
+# `_write_trigger_file`/`_write_heartbeat`, so a `--tier=2/3` caller's inner
+# `run_probe("suppress_heartbeat")` call never touches this file (provably
+# unaffected by construction, no new isolation logic needed).
+#
+# Window: 60min default (`SPAWN_DEBOUNCE_WINDOW_MIN` above), reusing —
+# never reinventing — this script's own "2x own cadence"
+# `_fresh_threshold_minutes_for_tier()` convention. Missing/unreadable/
+# corrupt ledger, or any read/write/parse fault, is FAIL-OPEN to SPAWN —
+# never fail-closed to DEBOUNCED (Auditability Contract, same rule every
+# sibling pre-gate script already follows).
 #
 # HARD CONSTRAINT: every probe below is READ-ONLY (docker ps/stats, curl GET,
 # df, launchctl list, jq). This script NEVER runs docker restart/stop/rm/
@@ -209,6 +257,9 @@ TRIGGER_FILE="${TRIGGER_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-trigg
 LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
 LAUNCHD_ACK="${LAUNCHD_ACK_PATH:-$REPO_ROOT/docs/data/auditor-launchd-ack.json}"
 ORCH_STATE="${ORCH_STATE_PATH:-$REPO_ROOT/docs/data/orch/orch-state.json}"
+# FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT — see "SPAWN DEBOUNCE"
+# header section above for the full contract.
+SPAWN_DEBOUNCE_FILE="${SPAWN_DEBOUNCE_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-spawn-debounce.json}"
 WARN_PCT=85
 # FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY (2026-07-29): absolute
 # headroom floor an acked_memory[] ACK may not swallow — see
@@ -291,12 +342,19 @@ _check_docker_ps() {
     line=$(printf '%s\n' "$ps_out" | grep -i "$svc" | head -1)
     if [ -z "$line" ]; then
       bad="${bad}${svc}(not-found) "
+      # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: bare-name-only
+      # entity side-channel for the spawn-debounce signature — see "SPAWN
+      # DEBOUNCE" header section. Zero behavior change to $bad/return-code.
+      [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'docker_ps\t%s\n' "$svc" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       continue
     fi
     status="${line#*$'\t'}"
     case "$status" in
       Up*) : ;;
-      *) bad="${bad}${svc}(${status}) " ;;
+      *)
+        bad="${bad}${svc}(${status}) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'docker_ps\t%s\n' "$svc" >> "$_SIG_ENTITY_FILE" 2>/dev/null
+        ;;
     esac
   done <<< "$services"
   if [ -n "$bad" ]; then
@@ -449,12 +507,16 @@ _check_mem_creep() {
       pct_raw=$(docker stats --no-stream --format '{{.MemPerc}}' "$name" 2>/dev/null)
       if [ -z "$pct_raw" ]; then
         breach="${breach}${name}(stats-unavailable) "
+        # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: bare-name-only
+        # entity side-channel — see "SPAWN DEBOUNCE" header section.
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'mem_creep\t%s\n' "$name" >> "$_SIG_ENTITY_FILE" 2>/dev/null
         sample_failed=1
         break
       fi
       pct=$(printf '%s' "$pct_raw" | tr -d '%' | tr -d '\n')
       if ! printf '%s' "$pct" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
         breach="${breach}${name}(unparseable:${pct_raw}) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'mem_creep\t%s\n' "$name" >> "$_SIG_ENTITY_FILE" 2>/dev/null
         sample_failed=1
         break
       fi
@@ -476,8 +538,10 @@ _check_mem_creep() {
         # or stale tracked_by) — surface pct AND MiB-free so the operator
         # can tell this apart from an ordinary unacknowledged breach.
         breach="${breach}${name}(${pct}%, ${headroom_mib}MiB-free, ${ack_reason}) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'mem_creep\t%s\n' "$name" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       else
         breach="${breach}${name}(${pct}%) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'mem_creep\t%s\n' "$name" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       fi
     fi
   done <<< "$inspect_out"
@@ -658,8 +722,12 @@ _check_launchd_agents() {
         acked="${acked}${label}(not-loaded) "
       elif [ -n "$ack_reason" ]; then
         bad="${bad}${label}(not-loaded, ${ack_reason}) "
+        # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: bare-name-only
+        # entity side-channel — see "SPAWN DEBOUNCE" header section.
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'launchd_agents\t%s\n' "$label" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       else
         bad="${bad}${label}(not-loaded) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'launchd_agents\t%s\n' "$label" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       fi
       continue
     fi
@@ -670,8 +738,10 @@ _check_launchd_agents() {
         acked="${acked}${label}(exit-status:${status}) "
       elif [ -n "$ack_reason" ]; then
         bad="${bad}${label}(exit-status:${status}, ${ack_reason}) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'launchd_agents\t%s\n' "$label" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       else
         bad="${bad}${label}(exit-status:${status}) "
+        [ -n "${_SIG_ENTITY_FILE:-}" ] && printf 'launchd_agents\t%s\n' "$label" >> "$_SIG_ENTITY_FILE" 2>/dev/null
       fi
     fi
   done
@@ -770,6 +840,128 @@ _write_heartbeat() {
   mv -f "$tmp" "$HEARTBEAT_FILE" 2>/dev/null
 }
 
+# ── Spawn debounce (FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT) ─────────
+# See the "SPAWN DEBOUNCE" header section above for the full contract, and
+# docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-TIER1-SPAWN-DEBOUNCE
+# for the field/file contract the sibling cron-prompt row consumes.
+
+# Builds the stable per-tick signature from (a) the bare-entity side-channel
+# file populated by _check_docker_ps/_check_mem_creep/_check_launchd_agents
+# during THIS tick (checkname<TAB>entity lines — percentages/status
+# codes/acked-clause text never reach this file, only bare, UNACKNOWLEDGED
+# entity names), and (b) the 6 checks' own PASS/FAIL verdicts for this tick.
+# `entity_file` may be empty/missing even for a FAILING entity-bearing check
+# (e.g. "docker ps -q returned no output" fires before that check's own
+# per-entity loop ever runs) — falls back to the bare checkname alone for
+# that check, so an infra-wide fault still yields a stable, comparable
+# signature instead of silently dropping the check from the string.
+_build_signature() {
+  local entity_file="$1" st_docker="$2" st_h3000="$3" st_h3001="$4" st_disk="$5" st_mem="$6" st_launchd="$7"
+  local tokens="" chk entities
+
+  [ "$st_h3000" = "FAIL" ] && tokens="${tokens}health_3000"$'\n'
+  [ "$st_h3001" = "FAIL" ] && tokens="${tokens}health_3001"$'\n'
+  [ "$st_disk" = "FAIL" ] && tokens="${tokens}disk"$'\n'
+
+  for chk in docker_ps mem_creep launchd_agents; do
+    case "$chk" in
+      docker_ps) [ "$st_docker" = "FAIL" ] || continue ;;
+      mem_creep) [ "$st_mem" = "FAIL" ] || continue ;;
+      launchd_agents) [ "$st_launchd" = "FAIL" ] || continue ;;
+    esac
+    entities=""
+    if [ -n "$entity_file" ] && [ -f "$entity_file" ]; then
+      entities=$(awk -F'\t' -v c="$chk" '$1==c{print $2}' "$entity_file" 2>/dev/null | sort -u | paste -sd, -)
+    fi
+    if [ -n "$entities" ]; then
+      tokens="${tokens}${chk}:${entities}"$'\n'
+    else
+      tokens="${tokens}${chk}"$'\n'
+    fi
+  done
+
+  printf '%s' "$tokens" | sed '/^$/d' | sort | paste -sd'|' -
+}
+
+# Debounce window in whole minutes. SPAWN_DEBOUNCE_WINDOW_MIN env override,
+# default = this exact script's own _fresh_threshold_minutes_for_tier(1)
+# (60min, 2x Tier-1's own 30min cadence) — REUSES that existing convention,
+# never a second, parallel hardcoded constant (architecture brief §3.2).
+_spawn_debounce_window_min() {
+  local override="${SPAWN_DEBOUNCE_WINDOW_MIN:-}"
+  if [[ "$override" =~ ^[0-9]+$ ]] && [ "$override" -gt 0 ]; then
+    printf '%s' "$override"
+  else
+    _fresh_threshold_minutes_for_tier 1
+  fi
+}
+
+# Per-signature SPAWN/DEBOUNCED decision + ledger read-modify-write
+# (docs/data/auditor-tier1-spawn-debounce.json, atomic tmp+mv write, same
+# idiom as _write_heartbeat/_write_trigger_file above). Called ONLY from
+# run_probe()'s own top-level (non-suppressed) FAILURE branch — see call
+# site. NEVER touches verdict (AC-3, paramount) — this function's return
+# value feeds a NEW, additive `spawn_decision` JSON key only.
+# FAIL-OPEN on any read/parse/write fault (missing/unreadable/corrupt ledger,
+# unwritable dir, malformed date on a hand-edited entry) — never silently
+# downgrades to DEBOUNCED on an I/O fault (Auditability Contract, same rule
+# every sibling pre-gate script already follows,
+# docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md §5.3).
+_spawn_debounce_decision() {
+  local signature="$1"
+  local now window_min ledger_raw combined tmp decision
+
+  now=$(_now_iso)
+  window_min=$(_spawn_debounce_window_min)
+
+  ledger_raw='{"entries":[]}'
+  if [ -f "$SPAWN_DEBOUNCE_FILE" ] && jq -e . "$SPAWN_DEBOUNCE_FILE" >/dev/null 2>&1; then
+    ledger_raw=$(cat "$SPAWN_DEBOUNCE_FILE" 2>/dev/null)
+    [ -z "$ledger_raw" ] && ledger_raw='{"entries":[]}'
+  fi
+
+  combined=$(printf '%s' "$ledger_raw" | jq -c \
+    --arg sig "$signature" --arg now "$now" --argjson win "$window_min" '
+    (try (.entries // []) catch []) as $entries
+    | ($entries | map(select(.signature == $sig)) | .[0]) as $existing
+    | ($now | fromdateiso8601) as $now_epoch
+    | (if $existing != null then (try ($existing.window_expires_at | fromdateiso8601) catch null) else null end) as $expires_epoch
+    | (if $existing != null and $expires_epoch != null and $now_epoch < $expires_epoch
+       then "DEBOUNCED" else "SPAWN" end) as $decision
+    | (if $decision == "DEBOUNCED" then
+         ($entries | map(if .signature == $sig then .last_seen_at = $now else . end))
+       else
+         ($entries | map(select(.signature != $sig))) + [{
+           signature: $sig,
+           first_seen_at: (if $existing != null and ($existing.first_seen_at | type) == "string" then $existing.first_seen_at else $now end),
+           last_seen_at: $now,
+           last_spawn_at: $now,
+           spawn_count: (if $existing != null and ($existing.spawn_count | type) == "number" then ($existing.spawn_count + 1) else 1 end),
+           window_expires_at: (($now_epoch + ($win * 60)) | todateiso8601)
+         }]
+       end) as $new_entries
+    | {decision: $decision, ledger: {entries: $new_entries}}
+  ' 2>/dev/null)
+
+  if [ -z "$combined" ]; then
+    echo "[auditor-tier1-spawn-debounce] ledger read/parse fault on $SPAWN_DEBOUNCE_FILE — failing OPEN to SPAWN" >&2
+    printf 'SPAWN'
+    return 0
+  fi
+
+  decision=$(printf '%s' "$combined" | jq -r '.decision')
+  tmp="$(mktemp "${SPAWN_DEBOUNCE_FILE}.tmp.XXXXXX" 2>/dev/null)" || tmp="${SPAWN_DEBOUNCE_FILE}.tmp.$$"
+  printf '%s' "$combined" | jq '.ledger' > "$tmp" 2>/dev/null
+  if [ -s "$tmp" ]; then
+    chmod 644 "$tmp" 2>/dev/null
+    mv -f "$tmp" "$SPAWN_DEBOUNCE_FILE" 2>/dev/null
+  else
+    rm -f "$tmp" 2>/dev/null
+    echo "[auditor-tier1-spawn-debounce] ledger write FAILED for $SPAWN_DEBOUNCE_FILE — decision still returned, next tick will fail-open identically" >&2
+  fi
+  printf '%s' "$decision"
+}
+
 # auditor-signal-loop-P1 (2026-07-16): optional first positional arg — pass
 # the literal string "suppress_heartbeat" to skip the _write_heartbeat call
 # below ENTIRELY (no mktemp/jq/mv attempted at all) instead of attempting-
@@ -789,8 +981,27 @@ run_probe() {
   local prev_healthy="" out rc failures="" checks_json ts
   local st_docker="PASS" st_h3000="PASS" st_h3001="PASS" st_disk="PASS" st_mem="PASS" st_launchd="PASS"
   local launchd_note="" mem_note=""
+  local entity_sig_file="" signature="" spawn_decision=""
 
   [ -f "$HEARTBEAT_FILE" ] && prev_healthy=$(jq -r '.last_healthy_at // empty' "$HEARTBEAT_FILE" 2>/dev/null)
+
+  # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: entity side-channel for
+  # the spawn-debounce signature — only allocated on a genuine top-level
+  # (non-suppressed) call, so a --tier=2/3 caller's inner
+  # run_probe("suppress_heartbeat") call never even opens the scratch file
+  # (provably unaffected by construction, mirrors the heartbeat/trigger-file
+  # suppress gate below). _SIG_ENTITY_FILE is a script-global (no `local`)
+  # so the entity-bearing check functions — invoked below via `$(...)`
+  # command substitution, always a subshell — can see its value; the
+  # ACTUAL entity data crosses the subshell boundary via the FILE itself
+  # (a real filesystem object, unaffected by subshell exit), never via the
+  # variable, exactly like _next_mem_stub's file-based counter in
+  # auditor-tier1-probe.test.sh.
+  if [ "$suppress_heartbeat" != "suppress_heartbeat" ]; then
+    entity_sig_file="$(mktemp "${TMPDIR:-/tmp}/auditor-tier1-sig.XXXXXX" 2>/dev/null)" || entity_sig_file="/tmp/auditor-tier1-sig.$$"
+    : > "$entity_sig_file" 2>/dev/null
+  fi
+  _SIG_ENTITY_FILE="$entity_sig_file"
 
   out=$(_check_docker_ps 2>&1); rc=$?
   [ $rc -ne 0 ] && { st_docker="FAIL"; failures="${failures}docker_ps: ${out}; "; }
@@ -834,6 +1045,13 @@ run_probe() {
     ts=$(_now_iso)
     if [ "$suppress_heartbeat" != "suppress_heartbeat" ]; then
       if ! _write_heartbeat "$ts" "$checks_json"; then
+        rm -f "$entity_sig_file" 2>/dev/null
+        # Deliberately NO spawn_decision/signature here — this is a rare
+        # heartbeat-WRITE I/O fault, not a real checks_verdict failure, and
+        # the sibling cron-prompt row's own contract already fail-opens to
+        # SPAWN on a missing spawn_decision field, which is exactly the
+        # right behavior for this pathological path (never silently
+        # suppress on a local-disk write fault).
         jq -n --arg v "FAILURE" \
           --arg d "all 6 checks passed but heartbeat write FAILED ($HEARTBEAT_FILE) — never claim green without a verified write" \
           --arg lh "${prev_healthy:-never}" \
@@ -848,6 +1066,7 @@ run_probe() {
     # suppress gate as the heartbeat write above: a --tier=2/3 caller's inner
     # run_probe() invocation must never touch the Tier-1 trigger file either.
     [ "$suppress_heartbeat" != "suppress_heartbeat" ] && _write_trigger_file "ALL_GREEN" "$green_detail" "$checks_json"
+    rm -f "$entity_sig_file" 2>/dev/null
     jq -n --arg v "ALL_GREEN" \
       --arg d "$green_detail" \
       --arg lh "$ts" \
@@ -856,8 +1075,21 @@ run_probe() {
   fi
 
   [ "$suppress_heartbeat" != "suppress_heartbeat" ] && _write_trigger_file "FAILURE" "$failures" "$checks_json"
-  jq -n --arg v "FAILURE" --arg d "$failures" --arg lh "${prev_healthy:-never}" \
-    '{verdict:$v, detail:$d, last_healthy_at:$lh}'
+  # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT: additive spawn_decision/
+  # signature keys, ONLY on a genuine top-level (non-suppressed) FAILURE —
+  # AC-3 paramount, verdict below is UNCONDITIONALLY "FAILURE" either way;
+  # this debounces the cron's SPAWN decision, never the verdict.
+  if [ "$suppress_heartbeat" != "suppress_heartbeat" ]; then
+    signature=$(_build_signature "$entity_sig_file" "$st_docker" "$st_h3000" "$st_h3001" "$st_disk" "$st_mem" "$st_launchd")
+    spawn_decision=$(_spawn_debounce_decision "$signature")
+    rm -f "$entity_sig_file" 2>/dev/null
+    jq -n --arg v "FAILURE" --arg d "$failures" --arg lh "${prev_healthy:-never}" \
+      --arg sd "$spawn_decision" --arg sig "$signature" \
+      '{verdict:$v, detail:$d, last_healthy_at:$lh, spawn_decision:$sd, signature:$sig}'
+  else
+    jq -n --arg v "FAILURE" --arg d "$failures" --arg lh "${prev_healthy:-never}" \
+      '{verdict:$v, detail:$d, last_healthy_at:$lh}'
+  fi
   return 1
 }
 
