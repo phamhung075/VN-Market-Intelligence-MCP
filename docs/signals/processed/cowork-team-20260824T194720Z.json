@@ -1,0 +1,51 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260824T194720Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [],
+    "held_by_other": [
+      "chef-evening"
+    ],
+    "all_held": true,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "HELD",
+    "reason": "already_running_via_guaranteed_slot_firer",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 30,
+    "note": "CROSS-MECHANISM COLLISION AVERTED. chef-evening (guaranteed:true) was already live under PID 11296 (`claude -p 'run docs/agents/unified-agent/flow/chef.md  slot=chef-evening'`, 48s elapsed at probe, still running 1m44s later) — dispatched by the guaranteed-slot firer, NOT by this dispatcher. The firer does not take the `cowork-slot:<id>` lock, so Step 4.6's lock probe would have shown the slot free and this dispatcher would have spawned a SECOND chef-evening. Detected only by an out-of-flow `ps -eo pid,etime,command | grep slot=chef-evening` probe run before Step 4.6; no in-flow guard exists for this. Spawn refused, no lock claimed, last_fired deliberately NOT stamped (it still reads 2026-08-23T19:49:26Z — the firer never stamps it, which is why this slot re-presents as due every day; hand-stamping here would erase the evidence of that blindness). Needs: promote the ps-grep probe into spawn-fanout.md as a pre-Step-4.6 gate, and wire the firer to write last_fired."
+  },
+  "priority": "low",
+  "createdAt": "20260824T194720Z",
+  "_processed": {
+    "fingerprint": "1af08e2c3a0455b71480590d27ba7a589bd8bf5e137fe491656bb2572c4dedfa",
+    "processedAt": "2026-08-24T19:47:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
