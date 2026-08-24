@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T19:19:55Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+    "next_agent": "agents-architect",
+    "next_action": "Design-Router Sweep claim of FIX-CADENCE-COWORK-DUP-MARKET-WATCHER — spawn agents-architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-24T19:21:03Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7192,21 +7193,6 @@
         "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED dev-mcp-server (ZONE CORRECTED from docs/agents/system-auditor/ — the row's own fix_spec flagged this ambiguity explicitly: 'BA/architect confirm zone first (auditor flow vs dev-mcp-server health-check tool)'). Traced live: the auditor's flow doc only calls the get_vps_service_health TOOL (main.md:392); the actual HTTP-vs-systemd probe/classification logic lives in apps/mcp-server/src/interface/mcp/tools/system/vpsHealthTools.ts (confirmed via grep) — an implementation defect, not a prose-spec defect, so PO's architect/developer/dev-mcp-server framing routes it to dev-mcp-server, the zone owner of apps/mcp-server/. Sibling FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY stays architect (pure inline-jq predicate in main.md, no code file) — the two rows only look alike from the title; the technical content differs.",
         "po_corroboration_20260812T1505Z": "FOLD — CONFIRMED FALSE POSITIVE, no mint. Absorbs the B-07 microservice_degraded signal 'vn-bctc-fetch service unhealthy (VPS fetch service)' (telegram 4767 @14:21:18Z; dashboard signal from system-auditor; echoed by 2 cowork_tick_telemetry rows @14:30Z/14:45Z under dedup_key=microservice_degraded:vn-bctc-fetch:B-07). This row's own title already names the mechanism verbatim: the system-auditor health-check probes an HTTP endpoint against vn-bctc-fetch, which is a pure-bash systemd timer with no HTTP listener, so 'unhealthy' is structurally guaranteed and carries no information about the service. Routing note for future ticks: B-07 vn-bctc-fetch degraded signals are a KNOWN-FP class and must fold here rather than mint a *-AVAIL-*/*-HEALTH-* row.",
         "status_note": "\n\n[po/triage 2026-08-12T15:36:32Z] +1 occurrence: telegram 4767 (2026-08-12T14:21:18Z) '[system-auditor] WARN: vn-bctc-fetch service unhealthy (VPS fetch service) (check B-07)'. Known false positive of exactly the class this row describes — B-07 probes an HTTP endpoint against a pure-bash service that has none. Corroborating evidence from the same window: get_system_status at 2026-08-12T15:36:32Z reports 0 open circuits and 0 half-open, and the data-freshness table reads BCTC '41 phut truoc / 0.7h / Tot' — the BCTC fetch path was demonstrably WORKING while B-07 called it unhealthy. Resolved as no-action against this row."
-      },
-      {
-        "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "title": "market.db TEXT-timestamp format non-normalization — 2 LIVE sites, recurring class (5x). (a) NEW 2026-07-31: agent_signals.created_at — apps/mcp-server/src/infrastructure/db/alertStore.ts storeAlerts() binds alert.createdAt RAW into created_at (ISO8601 T + .mmmZ) while the SAME value is bound through datetime(?, \"+2 hours\") for expires_at, so one row carries two formats; every other producer normalizes at agentSignalStore.ts:544. 106/234 rows (45%) are T-separated, ALL from_agent=alert-engine / signal_type=verified_decision, first at 2026-07-30T14:46:43.612Z (right after 0a7e91e5b un-gated the co-write payload). MEASURED LIVE 2026-07-31T09:16Z: `created_at >= datetime(\"now\",\"-60 minutes\")` returns 95 rows, correct answer 59 — 36 falsely included (+61%), because \"T\" (0x54) > \" \" (0x20) at position 11 makes every T row sort after every space row WITHIN the same date (cross-day windows still work by accident). Fix = wrap the created_at placeholder in datetime(?) in the same INSERT — one token, already proven correct by the adjacent expires_at column on the same row. (b) ORIGINAL: market_messages.sent_at space-separated TEXT vs datetime/ISO comparison -> C-06 freshness query false-empty. Ship the canonical rule with the fix: market.db TEXT timestamps are \"YYYY-MM-DD HH:MM:SS\"; writers normalize via SQLite datetime(), readers compare against datetime().",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
-        "updated_at": "2026-08-01T06:20:31Z",
-        "plan_only": true,
-        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
-        "note": "EVIDENCE ADDENDUM 2026-08-01 (po/triage-auditor-findings-20260801) — A CLAIM AGAINST THIS ROW WAS TESTED AND FALSIFIED; recorded here so it is not re-raised. THE CLAIM (from a 3-tier auditor brief): \"a 24-hour window predicate on agent_signals returns far FEWER rows than the table holds, because the bound datetime(now,-24 hours) is space-separated while alert-engine writes ISO-8601-with-T, so the string comparison silently drops most rows\", citing 12 of 116 / 15 of 119 / 20 of 124 from three tiers, and asserting this corrupts C-07 own published output. BOTH HALVES ARE WRONG. (a) DIRECTION IS INVERTED. Measured live 2026-08-01T06:14Z: rows matched by the space bound but NOT by a T bound = 2; rows matched by a T bound but NOT by the space bound = 0. The space-separated bound drops ZERO rows. This is the same direction this row title already states (\"T (0x54) > (0x20) at position 11 makes every T row sort AFTER every space row within the same date\") -- the defect is FALSE INCLUSION, never exclusion, exactly as the original +61%/60-minute measurement found. (b) THE CITED NUMBERS ARE A DENOMINATOR ERROR, NOT A DEFECT. The denominators 116/119/124 are the WHOLE agent_signals table, which is only partially pruned and spans back to 2026-05-18 (live 2026-08-01: 131 rows total; by month 2026-05:28, 2026-06:52, 2026-07:39, 2026-08:12). A 24h window returning ~20% of a 2.5-month table is correct arithmetic. Format-agnostic ground truth via julianday(replace(replace(created_at,T, ),Z,)) >= julianday(now,-24 hours) = 27; the live space-separated predicate also returns 27 -- i.e. on this data the 24h predicate is currently EXACTLY RIGHT, 0 rows in error. (c) WHY, AND WHY IT IS STILL LATENT: this row already says \"cross-day windows still work by accident\". Confirmed -- all 17 current T-format rows are >= 2026-07-31T14:04:45.672Z, well inside the window, and none fall in the 00:00-to-bound-time band of the boundary date where a T row would be falsely included. The latent hazard is unchanged and the fix is still warranted: mixed formats (live 2026-08-01: 114 space, 17 T; the 106/234=45% figure in this title was 2026-07-31 and has since churned) make ANY string bound unsound on the boundary date in whichever direction the mismatch falls. THIS ADDENDUM DOES NOT LOWER PRIORITY -- it removes a false corroboration so the fix is justified by the real (60-minute, +61% false-inclusion) evidence rather than an arithmetic artifact. ALSO NOTED, SEPARATE DEFECT NOT FIXED HERE: 130 of 131 agent_signals rows have expires_at already in the past yet remain in the table, and the oldest is 2026-05-18 -- cleanExpired() is not pruning to its stated TTL. Any brief describing agent_signals as \"a rolling ~2h TTL window\" is wrong; count(*) on it is neither window fullness nor a producer rate.",
-        "evidence_refresh_20260801": "po/triage-auditor-findings-20260801 — 24h-window corroboration FALSIFIED (direction inverted + denominator error); 60-minute false-inclusion evidence stands; P1 unchanged."
       },
       {
         "id": "FIX-NEWS-REUTERS-DEAD-URL-DECOMMISSION",
@@ -23353,25 +23339,6 @@
         "status_note": "Brief row 1 of 3 (§6, R1 in §4.1). FIRST of a strictly ordered R1 -> R2 -> R3 chain; ordering is load-bearing (§4.2).\nCHANGE: `scripts/agents-flow/context-bloat-backstop.sh` accepts an optional byte term in the size-justification header:  <!-- size-justification: 1279L/192014B — reason -->  and honors a BYTE-cap breach only when the header declares an explicit byte figure AND the live byte count is within the same ±10 %/min-5 tolerance already applied to lines.\nBACKWARD COMPATIBLE, ASSERT IT: a header with NO /NNNNB term must behave exactly as today, byte-for-byte (AC-3).\nWHY THIS IS NOT A LOOSENING (pre-empting the TE-T24 objection, §4.1): TE-T24's point is that a LINE declaration cannot speak to bytes and a mega-line file would evade the byte dimension for free. An explicit, reviewable, staleness-checked byte number is the opposite of a free pass — po/flow/scripts-registry.md would have to publish 74L/88023B in its own header, which is precisely the visibility BC-1 wants.\nDO NOT instead retune cap:120 (§4.1 R4) — measured p50 is 102 L, the LINE cap is correctly calibrated; the BC-1 ×60 byte budget is the miscalibrated knob and R1+R2 address it per-file rather than loosening the global multiplier for everyone.\nAC-3. Extend the EXISTING harness scripts/agents-flow/context-bloat-backstop.test.sh — do not replace it."
       },
       {
-        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "priority": "high",
-        "status": "READY",
-        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
-        "type": "SPRINT-S",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "verify_note": "prior_status=TODO",
-        "next_agent": "agents-architect",
-        "owner": "agents-architect",
-        "updated_by": "po",
-        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
-        "updated_at": "2026-08-23T19:56:23Z",
-        "promoted_at": "2026-08-23T19:56:22Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "agents-architect"
-      },
-      {
         "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
         "type": "FIX",
         "priority": "P1",
@@ -23689,6 +23656,25 @@
         "promoted_by": "po",
         "promotion_note": "PO ruling 2026-08-24T16:48Z — promoted BACKLOG->READY. Tier-1 cannot return to green without this row, and that is now proven at source rather than inferred. scripts/agents-flow/auditor-tier1-probe.sh L719-731: the acked branch (ack_rc==0) suppresses the entity side-channel, but BOTH the stale-ack branch (elif) and the no-ack branch (else) emit the byte-identical `printf 'launchd_agents\\t%s\\n' \"$label\"`. So removing the stale fleet-push ack (commit 930297f37) swaps the STALE-ACK annotation for a bare not-loaded annotation and changes NOTHING about the signature or the verdict: signature=launchd_agents:com.vn-market.fleet-push persists and T1 stays FAILURE indefinitely. The spawn debounce bounds the cost to ~1 respawn/hour (docs/data/auditor-tier1-spawn-debounce.json, spawn_count=1, window_expires_at=2026-08-24T17:40:57Z) but never reaches zero. A permanently-RED top-tier health oracle is a broken oracle: it trains the fleet to ignore T1 and it burns ~24 agent spawns/day forever. Promotion is also cheap to act on — ready[] currently holds only 2 rows with next_agent=architect, so this is a shallow queue, not a 109-deep one.",
         "status_note": "HARD CONSTRAINT, READ BEFORE DESIGNING. The remedy is to SCORE Disabled=1 as EXPECTED-DISABLED. The remedy is NOT to load the job. NEVER re-arm com.vn-market.fleet-push — not the plist Disabled key, not launchctl enable/load/bootstrap. Verified live 2026-08-24T16:48Z via `plutil -p ~/Library/LaunchAgents/com.vn-market.fleet-push.plist`: \"Disabled\" => 1, StartInterval => 1800, and the label is ABSENT from `launchctl list`. That disabled state is INTENDED and was deliberately chosen by the user; it is not a fault to fix. Re-arming would push ~224 unpushed commits to origin/main unattended. NOTE the plist is BINARY — `grep -i disabled` returns nothing and reads as \"key absent\"; that false negative has already burned one pass, so use plutil -p. Also FORBIDDEN: adding or retargeting an ack for fleet-push. An ack is the wrong instrument for a policy decision — that ledger acknowledges DEGRADED things that have an open fix row, and a deliberately disarmed job is neither degraded nor has anything to fix. Do NOT conflate this with com.vn-market.docker-events (exit 143), which is a SEPARATE and still-acked line. Design hint, not a mandate: the probe already has a skip mechanism at L696 (obsolete_labels=\"com.vn-market.socat-bridge\"), but 'obsolete' is the wrong semantics for a job that is deliberately disabled — a distinct EXPECTED-DISABLED classification read from the plist's own Disabled key is the honest modelling, and it generalises to every future intentionally-disarmed job instead of hardcoding one more label."
+      },
+      {
+        "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "title": "market.db TEXT-timestamp format non-normalization — 2 LIVE sites, recurring class (5x). (a) NEW 2026-07-31: agent_signals.created_at — apps/mcp-server/src/infrastructure/db/alertStore.ts storeAlerts() binds alert.createdAt RAW into created_at (ISO8601 T + .mmmZ) while the SAME value is bound through datetime(?, \"+2 hours\") for expires_at, so one row carries two formats; every other producer normalizes at agentSignalStore.ts:544. 106/234 rows (45%) are T-separated, ALL from_agent=alert-engine / signal_type=verified_decision, first at 2026-07-30T14:46:43.612Z (right after 0a7e91e5b un-gated the co-write payload). MEASURED LIVE 2026-07-31T09:16Z: `created_at >= datetime(\"now\",\"-60 minutes\")` returns 95 rows, correct answer 59 — 36 falsely included (+61%), because \"T\" (0x54) > \" \" (0x20) at position 11 makes every T row sort after every space row WITHIN the same date (cross-day windows still work by accident). Fix = wrap the created_at placeholder in datetime(?) in the same INSERT — one token, already proven correct by the adjacent expires_at column on the same row. (b) ORIGINAL: market_messages.sent_at space-separated TEXT vs datetime/ISO comparison -> C-06 freshness query false-empty. Ship the canonical rule with the fix: market.db TEXT timestamps are \"YYYY-MM-DD HH:MM:SS\"; writers normalize via SQLite datetime(), readers compare against datetime().",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
+        "updated_at": "2026-08-24T19:21:02Z",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "note": "EVIDENCE ADDENDUM 2026-08-01 (po/triage-auditor-findings-20260801) — A CLAIM AGAINST THIS ROW WAS TESTED AND FALSIFIED; recorded here so it is not re-raised. THE CLAIM (from a 3-tier auditor brief): \"a 24-hour window predicate on agent_signals returns far FEWER rows than the table holds, because the bound datetime(now,-24 hours) is space-separated while alert-engine writes ISO-8601-with-T, so the string comparison silently drops most rows\", citing 12 of 116 / 15 of 119 / 20 of 124 from three tiers, and asserting this corrupts C-07 own published output. BOTH HALVES ARE WRONG. (a) DIRECTION IS INVERTED. Measured live 2026-08-01T06:14Z: rows matched by the space bound but NOT by a T bound = 2; rows matched by a T bound but NOT by the space bound = 0. The space-separated bound drops ZERO rows. This is the same direction this row title already states (\"T (0x54) > (0x20) at position 11 makes every T row sort AFTER every space row within the same date\") -- the defect is FALSE INCLUSION, never exclusion, exactly as the original +61%/60-minute measurement found. (b) THE CITED NUMBERS ARE A DENOMINATOR ERROR, NOT A DEFECT. The denominators 116/119/124 are the WHOLE agent_signals table, which is only partially pruned and spans back to 2026-05-18 (live 2026-08-01: 131 rows total; by month 2026-05:28, 2026-06:52, 2026-07:39, 2026-08:12). A 24h window returning ~20% of a 2.5-month table is correct arithmetic. Format-agnostic ground truth via julianday(replace(replace(created_at,T, ),Z,)) >= julianday(now,-24 hours) = 27; the live space-separated predicate also returns 27 -- i.e. on this data the 24h predicate is currently EXACTLY RIGHT, 0 rows in error. (c) WHY, AND WHY IT IS STILL LATENT: this row already says \"cross-day windows still work by accident\". Confirmed -- all 17 current T-format rows are >= 2026-07-31T14:04:45.672Z, well inside the window, and none fall in the 00:00-to-bound-time band of the boundary date where a T row would be falsely included. The latent hazard is unchanged and the fix is still warranted: mixed formats (live 2026-08-01: 114 space, 17 T; the 106/234=45% figure in this title was 2026-07-31 and has since churned) make ANY string bound unsound on the boundary date in whichever direction the mismatch falls. THIS ADDENDUM DOES NOT LOWER PRIORITY -- it removes a false corroboration so the fix is justified by the real (60-minute, +61% false-inclusion) evidence rather than an arithmetic artifact. ALSO NOTED, SEPARATE DEFECT NOT FIXED HERE: 130 of 131 agent_signals rows have expires_at already in the past yet remain in the table, and the oldest is 2026-05-18 -- cleanExpired() is not pruning to its stated TTL. Any brief describing agent_signals as \"a rolling ~2h TTL window\" is wrong; count(*) on it is neither window fullness nor a producer rate.",
+        "evidence_refresh_20260801": "po/triage-auditor-findings-20260801 — 24h-window corroboration FALSIFIED (direction inverted + denominator error); 60-minute false-inclusion evidence stands; P1 unchanged.",
+        "promoted_at": "2026-08-24T19:21:01Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -24484,9 +24470,31 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-24T17:18:09Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-24T19:21:01Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
+    "in_progress": [
+      {
+        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
+        "type": "SPRINT-S",
+        "zone": "cross-service/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "verify_note": "prior_status=TODO",
+        "next_agent": "agents-architect",
+        "owner": "agents-architect",
+        "updated_by": "po",
+        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
+        "updated_at": "2026-08-24T19:21:03Z",
+        "promoted_at": "2026-08-23T19:56:22Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect",
+        "claimed_at": "2026-08-24T19:21:01Z",
+        "claimed_by": "dev-team (design-router sweep)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -24509,7 +24517,7 @@
         "last_served_tick": "2026-08-24T18:48:22Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-24T15:46:31Z"
+        "last_served_tick": "2026-08-24T19:20:46Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-24T16:18:58Z"
