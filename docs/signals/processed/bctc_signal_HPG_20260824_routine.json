@@ -4,57 +4,61 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing — construction steel (rebar), hot-rolled coil (HRC), galvanized steel products",
-  "customer": "Construction contractors and distributors (domestic), export markets for HRC/galvanized products",
-  "ops": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; operating_profit field returns 0 (source-data corruption, 32nd+ consecutive cycle unresolved) while net_profit (9,056 tỷ, 17.1% margin) and profit_before_tax (10,762 tỷ) remain populated — internally inconsistent line item, not a genuine zero-margin event",
-  "mgmt": "No insider signals flagged; capacity expansion (Dung Quat 2) ongoing per prior cycles' context; sector-comparison ROE 12.7% vs sector median 2.9% (above median)",
-  "ey_spread_pct": 2.04,
-  "valuation_verdict": "FAIR",
-  "pe": 14.2,
-  "pb": 1.7,
-  "roe_sector_comparison_pct": 12.7,
-  "kinhdich": {
-    "que": "Tan (35)",
+  "product": "Thép xây dựng, ống thép, tôn mạ; nguyên liệu quặng sắt một phần nhập khẩu từ Úc (~5% doanh thu liên quan)",
+  "customer": "Nhà thầu xây dựng, nhà phân phối vật liệu xây dựng nội địa; xuất khẩu thép sang khu vực Đông Nam Á",
+  "ops": "Biên LN gộp 15.8% (8.365 tỷ); ROE so-sánh-ngành 12.7% (trên median 2.9% ngành Thép); Operating Profit báo cáo = 0 tỷ (dữ liệu OCR lỗi/corrupt kéo dài, KHÔNG dùng để tính ESC-4 — flag dữ liệu đã báo dev-team nhiều kỳ)",
+  "mgmt": "Không có cảnh báo quản trị mới; dòng tiền ngoại từ 5 phiên +480K cp ròng (mạnh hơn ngành +13K cp)",
+  "as_of": "2026-08-24T15:10:00Z",
+  "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
+  "valuation": {
+    "pe": 14.2,
+    "pb": 1.7,
+    "sector_pe_median": 32.6,
+    "earning_yield_pct": 7.04,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR"
+  },
+  "kinhdich_reading": {
+    "que": "Tiem (53)",
     "xu_huong": "THUAN LOI",
     "tin_hieu": "GIU",
-    "do_tin_cay_pct": 63
+    "do_tin_cay_pct": 100
   },
-  "regime": "NEUTRAL",
-  "carry_regime": "NEUTRAL",
-  "esc_results": {
-    "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
-    "ESC-2": {
+  "sentiment_trend_30d": {
+    "direction": "ỔN ĐỊNH",
+    "slope": -0.02,
+    "entries": 25
+  },
+  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+  "esc_gate": {
+    "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
+    "ESC-2_balance_sheet": {
       "result": false,
       "imbalance_pct": 0
     },
-    "ESC-3": {
+    "ESC-3_ocf_vs_np": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
+      "quarters_required": 4,
       "coverage_guard_held": true,
       "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
     },
-    "ESC-4": {
+    "ESC-4_nonop_share": {
       "result": "DISCARDED",
-      "reason": "operating_profit=0 corrupt source field, formula unevaluable (32nd+ cycle)"
+      "note": "operating_profit=0 is a known OCR extraction corruption artifact (recurring 30+ cycles), not a genuine one-off signal — non_operating_share would compute to 100% on this corrupt input; do not escalate on corrupt data"
     },
-    "ESC-5": {
+    "ESC-5_refine_confidence": {
       "result": false,
-      "report_id": null,
-      "existing_refine_status": "PARTIAL"
+      "reason": "report_id=null, existing_refine_status=PARTIAL (not DONE)"
     }
   },
-  "escalation_status": "NONE",
-  "evidence_fragment_ids": [
-    1428,
-    1429
-  ],
-  "insider_signals": "no significant insider activity",
-  "legal_risk": "none flagged",
-  "data_quality_note": "Q2-2026 PDF on file (HPG_2026_Q2.pdf, since 2026-08-01) but not yet extracted — ~23-24d extraction lag; Q1-2026 remains latest available.",
-  "generated_at": "2026-08-24T00:15:00Z",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
   "_processed": {
-    "fingerprint": "29fbcdd861245857084de2bd7cb4cba145af8620be8510b2a69f0928f5adbef1",
-    "processedAt": "2026-08-24T00:24:09Z",
+    "fingerprint": "f23d41e06387519f1b501cb0268fed57eddc7c11c7ff3f9240e4d50960cb73c7",
+    "processedAt": "2026-08-24T15:17:43Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

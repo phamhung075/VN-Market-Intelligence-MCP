@@ -4,43 +4,42 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real estate development — residential projects (HCMC metro area, Long An, satellite provinces)",
-  "customer": "Retail homebuyers and investors in mid-tier residential segment",
-  "ops": "get_bctc_full(DXG) still returns \"Chưa có dữ liệu BCTC\" — 36th+ consecutive cycle with zero extracted data despite DXG_2026_Q2.pdf on file since 2026-08-01 (and Q1-2026/Q3-2025/Q4-2025 PDFs also on file, unextracted); no income statement / balance sheet figures available this cycle",
-  "mgmt": "Cannot assess management execution without extracted BCTC data; sector-comparison shows PE=66.5x (premium +312% vs sector median 16.1x) driven by depressed trailing earnings, and ROE=1.9% deeply below sector median 7.3%",
-  "ey_spread_pct": -3.5,
-  "valuation_verdict": "AVOID",
-  "pe": 66.5,
-  "pb": 1.2,
-  "roe_sector_comparison_pct": 1.9,
-  "kinhdich": {
-    "que": "Di (27)",
-    "xu_huong": "TRUNG TINH",
-    "tin_hieu": "BAN",
-    "do_tin_cay_pct": 29
+  "product": "Phát triển bất động sản khu dân cư/khu đô thị (BĐS)",
+  "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường phía Nam",
+  "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (36+ kỳ liên tiếp) — không có số liệu BCTC gốc để phân tích trực tiếp; ROE so-sánh-ngành 1.9% (dưới median 7.3% ngành BĐS) từ nguồn peer-comparison",
+  "mgmt": "Không đánh giá được (thiếu dữ liệu BCTC gốc); dòng tiền ngoại 5 phiên +21K cp ròng (mạnh hơn ngành -2K cp)",
+  "as_of": "2026-08-24T15:10:00Z",
+  "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày) — get_bctc_full vẫn 'Chưa có dữ liệu' cho MỌI kỳ (không riêng Q2); anomaly đã báo dev-team (c162, chưa xử lý)",
+  "valuation": {
+    "pe": 66.5,
+    "pb": 1.2,
+    "sector_pe_median": 16.1,
+    "earning_yield_pct": 1.5,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID"
   },
+  "kinhdich_reading": {
+    "que": "Quan (20)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "THAN TRONG",
+    "do_tin_cay_pct": 13
+  },
+  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+  "esc_gate": {
+    "ESC-1_accounting_manipulation": "UNEVALUABLE — no BCTC data ('Chưa có dữ liệu')",
+    "ESC-2_balance_sheet": "UNEVALUABLE — no BCTC data",
+    "ESC-3_ocf_vs_np": "UNEVALUABLE — no BCTC data",
+    "ESC-4_nonop_share": "UNEVALUABLE — no BCTC data",
+    "ESC-5_refine_confidence": "UNEVALUABLE — no BCTC data, no report_id"
+  },
+  "data_quality_note": "valuation_verdict AVOID — do NOT post bullish signal per stage-analyze.md rule",
   "regime": "NEUTRAL",
   "carry_regime": "NEUTRAL",
-  "esc_results": {
-    "ESC-1": "SCOPE-REDUCED (no Bash/Glob, E1 6-pass unevaluable)",
-    "ESC-2": "N/A — no BCTC data extracted this cycle",
-    "ESC-3": "N/A — no cash-flow data extracted this cycle",
-    "ESC-4": "N/A — no P&L data extracted this cycle",
-    "ESC-5": "N/A — no report_id extractable, no BCTC data"
-  },
-  "escalation_status": "NONE",
-  "evidence_fragment_ids": [
-    1432,
-    1433,
-    1434
-  ],
-  "insider_signals": "no significant insider activity",
-  "legal_risk": "none flagged",
-  "data_quality_note": "Persistent extraction gap (36th+ cycle). Prior cash-flow-anomaly signal (c162, bctc-analyst-20260813T001500Z.json) still pending dev-team pickup — carried over, not re-emitted this cycle to avoid duplicate dispatch.",
-  "generated_at": "2026-08-24T00:15:00Z",
   "_processed": {
-    "fingerprint": "9183d2bf438a6ef7ecc5c4c422cee7713ebc1170073e1c49aaefc2521db11e77",
-    "processedAt": "2026-08-24T00:24:09Z",
+    "fingerprint": "7b89b0223cfe61f5bb6f23f40ce24605aea379ee04cac27aaf07199f688b246f",
+    "processedAt": "2026-08-24T15:17:43Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

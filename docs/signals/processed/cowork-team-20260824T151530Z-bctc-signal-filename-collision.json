@@ -24,5 +24,11 @@
     "zone": "docs/agents/bctc-analyst/",
     "suggested_next_agent": "agent-father",
     "notes": "signal_type=bctc_signal IS routed (docs/agents/po/flow/triage-signals.md:23), so this is NOT a signal-type-coverage gap and will not red guard-signal-type-coverage.sh. A defensive collision guard in drain-signals.js (dest exists -> suffix) is a separate, optional second layer in scripts/ zone; the filename fix alone closes this."
+  },
+  "_processed": {
+    "fingerprint": "e2037d2c6c242132d10fc94b8cd3c1856a34a61015233f2abe4c5a8b02e041c5",
+    "processedAt": "2026-08-24T15:17:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

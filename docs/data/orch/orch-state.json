@@ -23968,9 +23968,365 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T14:52:03Z",
+    "_updated_at": "2026-08-24T15:17:43Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "7b89b0223cfe61f5bb6f23f40ce24605aea379ee04cac27aaf07199f688b246f",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Phát triển bất động sản khu dân cư/khu đô thị (BĐS)",
+          "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường phía Nam",
+          "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (36+ kỳ liên tiếp) — không có số liệu BCTC gốc để phân tích trực tiếp; ROE so-sánh-ngành 1.9% (dưới median 7.3% ngành BĐS) từ nguồn peer-comparison",
+          "mgmt": "Không đánh giá được (thiếu dữ liệu BCTC gốc); dòng tiền ngoại 5 phiên +21K cp ròng (mạnh hơn ngành -2K cp)",
+          "as_of": "2026-08-24T15:10:00Z",
+          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày) — get_bctc_full vẫn 'Chưa có dữ liệu' cho MỌI kỳ (không riêng Q2); anomaly đã báo dev-team (c162, chưa xử lý)",
+          "valuation": {
+            "pe": 66.5,
+            "pb": 1.2,
+            "sector_pe_median": 16.1,
+            "earning_yield_pct": 1.5,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinhdich_reading": {
+            "que": "Quan (20)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "THAN TRONG",
+            "do_tin_cay_pct": 13
+          },
+          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+          "esc_gate": {
+            "ESC-1_accounting_manipulation": "UNEVALUABLE — no BCTC data ('Chưa có dữ liệu')",
+            "ESC-2_balance_sheet": "UNEVALUABLE — no BCTC data",
+            "ESC-3_ocf_vs_np": "UNEVALUABLE — no BCTC data",
+            "ESC-4_nonop_share": "UNEVALUABLE — no BCTC data",
+            "ESC-5_refine_confidence": "UNEVALUABLE — no BCTC data, no report_id"
+          },
+          "data_quality_note": "valuation_verdict AVOID — do NOT post bullish signal per stage-analyze.md rule",
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0b997b07db22a75974ffdc956bb0c6098196aa425e4ebe5bad95cf3d0df8c158",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp CNTT trong/ngoài nước (Nhật, Âu, Mỹ), thuê bao viễn thông nội địa, sinh viên hệ thống trường FPT",
+          "ops": "Biên LN gộp 34.0%, LN thuần HĐKD 22.0% (2.748 tỷ); ROE so-sánh-ngành 28.3% (trên median 10.6% ngành Công nghệ); OCF Q1 âm -2.848 tỷ (đầu tư ngắn hạn + phải thu tăng, không phải dấu hiệu mất khả năng thanh toán)",
+          "mgmt": "Đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/2026 (điều chỉnh hồi tố); LNST +13.8% YoY sau điều chỉnh, tăng trưởng nổi bật thị trường Châu Âu (+44.4%) và Nhật Bản",
+          "as_of": "2026-08-24T15:10:00Z",
+          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
+          "valuation": {
+            "pe": 13.8,
+            "pb": 3.6,
+            "sector_pe_median": 17.3,
+            "earning_yield_pct": 7.25,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinhdich_reading": {
+            "que": "Tuy (17)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "sentiment_trend_30d": {
+            "direction": "GIẢM (đang xấu đi)",
+            "slope": -0.22,
+            "entries": 27
+          },
+          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+          "esc_gate": {
+            "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
+            "ESC-2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3_ocf_vs_np": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+            },
+            "ESC-4_nonop_share": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "ESC-5_refine_confidence": {
+              "result": true,
+              "min_confidence": 0.45,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+            }
+          },
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f23d41e06387519f1b501cb0268fed57eddc7c11c7ff3f9240e4d50960cb73c7",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, ống thép, tôn mạ; nguyên liệu quặng sắt một phần nhập khẩu từ Úc (~5% doanh thu liên quan)",
+          "customer": "Nhà thầu xây dựng, nhà phân phối vật liệu xây dựng nội địa; xuất khẩu thép sang khu vực Đông Nam Á",
+          "ops": "Biên LN gộp 15.8% (8.365 tỷ); ROE so-sánh-ngành 12.7% (trên median 2.9% ngành Thép); Operating Profit báo cáo = 0 tỷ (dữ liệu OCR lỗi/corrupt kéo dài, KHÔNG dùng để tính ESC-4 — flag dữ liệu đã báo dev-team nhiều kỳ)",
+          "mgmt": "Không có cảnh báo quản trị mới; dòng tiền ngoại từ 5 phiên +480K cp ròng (mạnh hơn ngành +13K cp)",
+          "as_of": "2026-08-24T15:10:00Z",
+          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
+          "valuation": {
+            "pe": 14.2,
+            "pb": 1.7,
+            "sector_pe_median": 32.6,
+            "earning_yield_pct": 7.04,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinhdich_reading": {
+            "que": "Tiem (53)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "sentiment_trend_30d": {
+            "direction": "ỔN ĐỊNH",
+            "slope": -0.02,
+            "entries": 25
+          },
+          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+          "esc_gate": {
+            "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
+            "ESC-2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3_ocf_vs_np": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
+            },
+            "ESC-4_nonop_share": {
+              "result": "DISCARDED",
+              "note": "operating_profit=0 is a known OCR extraction corruption artifact (recurring 30+ cycles), not a genuine one-off signal — non_operating_share would compute to 100% on this corrupt input; do not escalate on corrupt data"
+            },
+            "ESC-5_refine_confidence": {
+              "result": false,
+              "reason": "report_id=null, existing_refine_status=PARTIAL (not DONE)"
+            }
+          },
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "85b64b44b724e174d9891c77593516ad3988f0bc2996fdfbacb3fbd408d8aa90",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng bán lẻ + doanh nghiệp: tín dụng, huy động, thanh toán quốc tế, bancassurance",
+          "customer": "Khách hàng doanh nghiệp lớn/vừa, khách hàng cá nhân đô thị, đối tác thanh toán quốc tế",
+          "ops": "LN thuần HĐKD/doanh thu 80.9%; ROE so-sánh-ngành 16.7% (dưới median 17.6% ngành Ngân hàng); OCF/NI ratio Q1 1.368 (chất lượng lợi nhuận lành mạnh)",
+          "mgmt": "Không có cảnh báo quản trị mới; dòng tiền ngoại 5 phiên -97K cp ròng (yếu hơn ngành +22K cp)",
+          "as_of": "2026-08-24T15:10:00Z",
+          "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
+          "valuation": {
+            "pe": 14.1,
+            "pb": 2.2,
+            "sector_pe_median": 9,
+            "earning_yield_pct": 7.09,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinhdich_reading": {
+            "que": "Tuy (45)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 63
+          },
+          "sentiment_trend_30d": {
+            "direction": "TĂNG (đang cải thiện)",
+            "slope": 0.1,
+            "entries": 15
+          },
+          "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+          "esc_gate": {
+            "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
+            "ESC-2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "ESC-3_ocf_vs_np": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368
+            },
+            "ESC-4_nonop_share": {
+              "result": "N/A",
+              "note": "bank — non-operating-share concept not applicable to VCB income statement structure"
+            },
+            "ESC-5_refine_confidence": {
+              "result": false,
+              "reason": "report_id=null, existing_refine_status=PARTIAL (not DONE)"
+            }
+          },
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "32b526060aa6f127efd202fba79c149a88eaa09ddd54e9fcb0da08ede4c4cdeb",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-24T15:05:46Z",
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": null
+          },
+          "last_fired_timestamp": "2026-08-24T15:03:54Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "15:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "Step 5.3 off-flow latch detector DEFERRED (BGFAN-1 in-flight at Step 5b); prior last_fired 2026-08-23T15:03:34Z retained for de-stamp if detector fires. cycle_snapshot_promoted=false (cycle-snapshot-latest.json stale since 2026-08-23T00:07:50Z)."
+        },
+        "createdAt": "2026-08-24T15:05:46Z",
+        "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e2037d2c6c242132d10fc94b8cd3c1856a34a61015233f2abe4c5a8b02e041c5",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": {
+          "title": "bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json filename has no time component — 4 daily cycles collide, drain overwrites the processed/ record",
+          "detected_by": "cowork-team dispatcher, reconciling the 2026-08-24T15:00Z bctc-analyst-slot-1 return",
+          "mechanism": [
+            "bctc-analyst fires 4x/day (cron 0 15,18,21,0 UTC), all in mode=routine.",
+            "Filename template docs/agents/bctc-analyst/init.md:85 (also :16, :149, flow/stage-analyze.md:114, flow/stage-consolidate.md:64) is bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json — date only, no HHMMSS.",
+            "All 4 daily cycles therefore write the SAME basename per ticker.",
+            "scripts/agents-flow/drain-signals.js:260 sets dest = path.join(PROC, base) with no collision guard. The -replay.json suffix at :257 applies ONLY on a duplicate FINGERPRINT (sha256 over from+type+payload+createdAt); content differs every cycle, so that branch is never taken.",
+            "Result: each drain overwrites the prior cycle-of-the-day processed/ record in place, including its own _processed provenance block."
+          ],
+          "observed_not_inferred": {
+            "docs/signals/processed/bctc_signal_VCB_20260823_routine.json": "4 commits on 2026-08-23 (47d74a8eb 00:17Z, a8fae8137 15:07Z, c4ac9c5d0, f13fa173a 21:07Z) — one per cycle, same path rewritten each time",
+            "docs/signals/processed/bctc_signal_VCB_20260822_routine.json": "2 commits (e98049c69 18:17Z, 9aef86e43 21:37Z)",
+            "replay_files_present": 0
+          },
+          "blast_radius": "Bounded. The SQLite signals_processed row survives per fingerprint (drain-signals.js:304) and the pending_triage_inbox batch is durable, so ROUTING is not lost. What is lost is the on-disk forensic copy: docs/signals/processed/ shows only the last cycle of each day, and any reader treating that directory as the day record sees 1 of 4 cycles. Prior versions are recoverable from git history only.",
+          "fix": "Add a time component to the routine filename, matching what bctc-analyst ALREADY does for its escalation signals (docs/signals/bctc-analyst-20260812T180708Z.json). Suggested: bctc_signal_{TICKER}_{YYYYMMDDTHHMMSSZ}_{mode}.json. Purely a template change in the 5 doc sites listed above.",
+          "zone": "docs/agents/bctc-analyst/",
+          "suggested_next_agent": "agent-father",
+          "notes": "signal_type=bctc_signal IS routed (docs/agents/po/flow/triage-signals.md:23), so this is NOT a signal-type-coverage gap and will not red guard-signal-type-coverage.sh. A defensive collision guard in drain-signals.js (dest exists -> suffix) is a separate, optional second layer in scripts/ zone; the filename fix alone closes this."
+        },
+        "createdAt": "2026-08-24T15:15:30Z",
+        "drained_at": "2026-08-24T15:17:43Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,
