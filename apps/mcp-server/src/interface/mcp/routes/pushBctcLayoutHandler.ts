@@ -18,63 +18,22 @@
  * DI contract: db injected by caller (server.ts). No getDb() here.
  * Persistence guard: rows_stored / pages_stored reflect DB-verified COUNT after
  * write — never echo input length (write-wedge detection).
+ *
+ * Genuinely split (FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L, 2026-08-24) into:
+ *   - pushBctcLayoutTypes.ts    §3.2 contract types
+ *   - pushBctcLayoutValidate.ts report_id + payload-shape validation
+ *   - pushBctcLayoutWrite.ts    the DELETE-before-INSERT transactional write
+ * This file is now the thin HTTP orchestrator: parse body → validate → write → respond.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
-
-// ── Types (§3.2 contract) ──────────────────────────────────────────────────────
-
-interface DocumentMapUnit {
-  unit_id: string;
-  schema_page: number;
-  pages: number[];
-  page_type: string;
-}
-
-interface DocumentMap {
-  total_pages?: number;
-  units: DocumentMapUnit[];
-}
-
-interface LayoutUnitInput {
-  unit_id: string;
-  stitched_markdown: string;
-  row_count: number;
-  quarantined: boolean;
-  quarantine_reason: string | null;
-  page_row_spans?: unknown[];
-}
-
-interface PageZoneInput {
-  page_number: number;
-  unit_id: string;
-  page_type: string;
-  is_schema_page: boolean;
-  is_continuation_page: boolean;
-  schema_inherited_from_page: number | null;
-  zones: unknown;
-}
-
-interface PushBctcLayoutBody {
-  report_id: string;
-  document_map: DocumentMap;
-  units: LayoutUnitInput[];
-  page_zones: PageZoneInput[];
-  pass_rate_report?: unknown;
-}
-
-// ── Handler ────────────────────────────────────────────────────────────────────
+import type { PushBctcLayoutBody } from "./pushBctcLayoutTypes.js";
+import { validatePushBctcLayoutRequest } from "./pushBctcLayoutValidate.js";
+import { writeBctcLayoutPayload } from "./pushBctcLayoutWrite.js";
 
 /**
  * handlePushBctcLayout — ingest layout-first extraction payload.
- *
- * Idempotent: DELETE-before-INSERT within a single transaction.
- * DELETE FROM bctc_layout_units/bctc_page_zones WHERE report_id = ? runs first,
- * then all units are re-inserted. This handles the case where pdf-extractor
- * generates new unit_id UUIDs on every extraction run (INSERT OR REPLACE would
- * only fire on a matching unit_id — it would not remove stale rows with old UUIDs).
- * Re-pushes are safe: a mid-write failure rolls back completely (report never empty).
  *
  * @param req  Incoming request
  * @param res  Server response
@@ -104,142 +63,16 @@ export async function handlePushBctcLayout(
       }
     }
 
-    // ── Validate report_id ─────────────────────────────────────────────────
-    // FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write: existence check,
-    // NOT UUID-format check. Producers legitimately mint non-UUID ids for
-    // fallback-shell reports (`fallback-<TICKER>-<SORTKEY>` — see
-    // composition-root.ts, bctcReparseJob.ts insertFallbackRecord). The old
-    // format-only gate accepted any syntactically-valid-but-nonexistent UUID
-    // (a real orphan-write risk) while rejecting every genuine fallback-shell
-    // id. isValidUuid() stays correct for its ~14 OTHER call sites (read
-    // side) — untouched by this fix.
-    const reportId = parsed.report_id;
-    if (typeof reportId !== "string" || reportId.length === 0) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          error: "invalid_report_id: must be a non-empty string",
-          report_id: reportId,
-        }),
-      );
-      return;
-    }
-    const knownReport = db.prepare("SELECT 1 FROM financial_reports WHERE id = ?").get(reportId);
-    if (!knownReport) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          error: "invalid_report_id: no matching financial_reports row",
-          report_id: reportId,
-        }),
-      );
+    // ── Validate (report_id existence + payload shape) ──────────────────────
+    const validation = validatePushBctcLayoutRequest(db, parsed);
+    if (!validation.ok) {
+      res.writeHead(validation.status, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(validation.body));
       return;
     }
 
-    // ── Validate payload structure ─────────────────────────────────────────
-    if (!parsed.document_map || typeof parsed.document_map !== "object") {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "document_map is required" }));
-      return;
-    }
-    if (!Array.isArray(parsed.units)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "units must be an array" }));
-      return;
-    }
-    if (!Array.isArray(parsed.page_zones)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "page_zones must be an array" }));
-      return;
-    }
-
-    const documentMapJson = JSON.stringify(parsed.document_map);
-
-    // Build a lookup: unit_id → schema_page from document_map
-    const schemaPagesById = new Map<string, number>();
-    const pageNumbersById = new Map<string, number[]>();
-    for (const dmUnit of parsed.document_map.units) {
-      schemaPagesById.set(dmUnit.unit_id, dmUnit.schema_page);
-      pageNumbersById.set(dmUnit.unit_id, dmUnit.pages ?? []);
-    }
-
-    // ── Transactional write (zero cross-writes) ────────────────────────────
-    db.transaction(() => {
-      // ── IDEMPOTENCY: delete all prior rows for this report before re-inserting ─
-      // pdf-extractor generates new unit_id UUIDs on every extraction run, so
-      // INSERT OR REPLACE on (report_id, unit_id) would NOT fire the REPLACE path —
-      // it would just append. Deleting first guarantees a re-push REPLACES the
-      // report's units atomically (delete + insert in one transaction; a mid-write
-      // failure rolls back completely, never leaving the report empty).
-      db.prepare("DELETE FROM bctc_layout_units WHERE report_id = ?").run(reportId);
-      db.prepare("DELETE FROM bctc_page_zones WHERE report_id = ?").run(reportId);
-
-      // ── bctc_layout_units ──────────────────────────────────────────────
-      const insertUnit = db.prepare(`
-        INSERT INTO bctc_layout_units
-          (report_id, unit_id, schema_page, page_numbers_json, page_type,
-           stitched_markdown, row_count, quarantined, quarantine_reason,
-           document_map_json, extracted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-      `);
-
-      for (const unit of parsed.units) {
-        const schemaPage = schemaPagesById.get(unit.unit_id) ?? 0;
-        const pageNums = pageNumbersById.get(unit.unit_id) ?? [];
-
-        // Determine page_type from document_map (fallback to 'table')
-        const dmUnit = parsed.document_map.units.find((u) => u.unit_id === unit.unit_id);
-        const pageType = dmUnit?.page_type ?? "table";
-
-        insertUnit.run(
-          reportId,
-          unit.unit_id,
-          schemaPage,
-          JSON.stringify(pageNums),
-          pageType,
-          unit.stitched_markdown ?? "",
-          unit.row_count ?? 0,
-          unit.quarantined ? 1 : 0,
-          unit.quarantine_reason ?? null,
-          documentMapJson,
-        );
-      }
-
-      // ── bctc_page_zones ────────────────────────────────────────────────
-      const insertZone = db.prepare(`
-        INSERT INTO bctc_page_zones
-          (report_id, page_number, unit_id, page_type,
-           is_schema_page, is_continuation_page, schema_inherited_from_page,
-           zones_json, extracted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-      `);
-
-      for (const zone of parsed.page_zones) {
-        insertZone.run(
-          reportId,
-          zone.page_number,
-          zone.unit_id,
-          zone.page_type ?? "table",
-          zone.is_schema_page ? 1 : 0,
-          zone.is_continuation_page ? 1 : 0,
-          zone.schema_inherited_from_page ?? null,
-          JSON.stringify(zone.zones),
-        );
-      }
-    })();
-
-    // ── DB-verified counts (write-wedge detection — never echo input length) ─
-    const unitsStored = db
-      .prepare<{ cnt: number }, [string]>(
-        "SELECT COUNT(*) AS cnt FROM bctc_layout_units WHERE report_id = ?",
-      )
-      .get(reportId)?.cnt ?? 0;
-
-    const pagesStored = db
-      .prepare<{ cnt: number }, [string]>(
-        "SELECT COUNT(*) AS cnt FROM bctc_page_zones WHERE report_id = ?",
-      )
-      .get(reportId)?.cnt ?? 0;
+    // ── Transactional write (zero cross-writes) ──────────────────────────────
+    const { unitsStored, pagesStored } = writeBctcLayoutPayload(db, parsed.report_id, parsed);
 
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true, units_stored: unitsStored, pages_stored: pagesStored }));
