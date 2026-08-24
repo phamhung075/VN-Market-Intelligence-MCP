@@ -2014,3 +2014,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-13b · Live /app/data holds 2.36GB of stale market.db forensic copies
+**Severity:** WARN | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** mcp-server:/app/data (host data/live/)
+**Details:** 7 abandoned copies (corrupt-*, pre-salvage, salvage-attempt-failed, live-pre-swap, impoverished-backup), oldest 36d; volume at 95% (14G avail of 234G)
+**Impact:** Reduces headroom on the same volume the live market.db (408MB and growing) writes to; repo has a prior ENOSPC outage class
+**Root cause:** Corruption post-mortems on 2026-07-19 / 07-30 / 08-06 each left their forensic snapshot in the live data dir with no retention or cleanup step
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-24T03:05:34Z (signal sys-20260824T030524-5850, system-auditor -> po, dedup_key=db_integrity_breach:live_data_dir:stale-forensic-db-copies, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
