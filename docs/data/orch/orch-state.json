@@ -132,6 +132,132 @@
     "archive": [],
     "rows": [
       {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-f8f434",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-c37dbc",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-d54b86",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-4c07c7",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-959883",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-15ebde",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-73498a",
         "ts": "2026-08-24T00:00:00Z",
         "from": "chef",
@@ -22088,7 +22214,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T01:55:22Z",
+    "_updated_at": "2026-08-24T02:23:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22269,6 +22395,138 @@
         },
         "createdAt": "2026-08-24T01:54:15Z",
         "drained_at": "2026-08-24T01:54:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5874621a3c5994b04aa25b931723f9aad95e15e2c9dc2dd9b058066d122cb678",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260824T020405Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-24T02:03:16Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "SECOND consecutive 10-day-stale slot this session: alert-commander-market last_fired was 2026-08-14T06:51:20Z against cron '*/15 2-8 * * 1-5' (~7 weekday sessions of misses); news-scout-sentiment showed the same shape at 01:30Z (2026-08-14T01:36:40Z). Both consistent with the known multi-day cron-silence class, not a same-tick fault, but two independent slots sharing a 2026-08-14 cutoff is a pattern worth a dedicated look. CYCLE-SNAPSHOT PROMOTION: cycle_snapshot_promoted=false again — Step 4.7 wrote cycle-snapshot-02:01.json (wall clock, 15606B, valid) at 02:01:24Z and Step 6.0's promoter looked up nominal 02:00 seconds later. Third observation, second same-tick causal proof (first at 01:30Z with 01:33). LOAD-PARSE ROOT CAUSE CORRECTED: an earlier note this session blamed the comma-decimal locale and implied an LC_ALL=C pin was the fix. Measured 2026-08-24T02:02Z on this host, that is backwards — the flow's 'awk -F,' parse assumes LINUX uptime (comma-SEPARATED: 'load average: 0.52, 0.58, 0.59'); macOS emits space-separated. Unpinned French locale yields [2] (truncated but numeric, harmless here); LC_ALL=C yields [2.092.082.02], a non-numeric string that would flip DEGRADED true on any multi-slot tick. Fix is a format-agnostic parse, NOT a locale pin. COMMIT-MISS: news-scout's 01:30Z cycle left docs/agent-memory/notebooks/news-scout.md (c276) and docs/data/coverage-state.json uncommitted; coverage-state.json last committed 2026-08-14 (f5fefabdb), and 7 of the 9 news-scout notebook commits since then excluded it — producer self-commit pathspec is notebook-only, confirming the producer DOES hold Bash+git (commit b2b954f3b, 00:06Z today)."
+        },
+        "createdAt": "20260824T020405Z",
+        "drained_at": "2026-08-24T02:23:59Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e6226bfc62fafb822b6c6d1af276b5c19753e51ad8c40dbc5c831854714ac523",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "classification": "CORRECTION",
+          "reason": "spawned-agent-false-escalation",
+          "tick": "02:00Z",
+          "slot": "alert-commander-market",
+          "note": "ROUTER CORRECTION to alert-commander c200's bug-channel escalation (sent 2026-08-24 ~02:08Z). It escalated TWO size-lint offenders blocking the fleet push and reported the second as 'a new, UNTRACKED offender ... confirmed via jq against orch-state.json, no existing row'. Router verified in source. VERDICT: the second offender is NOT REAL and NO BACKLOG ROW SHOULD BE MINTED.\n\nMEASURED: apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts is 1012L in the WORKING TREE but 906L AT HEAD (git show HEAD:<path> | wc -l). git diff --stat = 107 insertions / 1 deletion, UNCOMMITTED. Last commit touching the file is 86b31eccd, 2026-08-07 — seventeen days ago. The file is tracked, not untracked; the 106-line growth exists only as somebody's in-flight edit and is not in the push range.\n\nROOT CAUSE — this is a live reproduction of an ALREADY-TRACKED P1: FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. The pre-push size-lint gate scans the working tree, so uncommitted peer work trips it and gets misread by the tripping agent as a repo defect. Filing a size-lint row against tasksMdJanitorJob.ts would create a row for a defect that does not exist at HEAD, and it would 'close itself' the moment the 107 lines are committed or discarded — a phantom row that looks legitimately resolved.\n\nDO NOT DISCARD THE 107 LINES. They appear to be live sprint work, not garbage: apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts is modified in the same working tree, and orch-state carries FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX at status=REVIEW plus FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY (BACKLOG, next_agent=architect), both of which cite tasksMdJanitorJob's D4 lock-scan. Those are the 2 orch-state mentions alert-commander's jq found and correctly judged non-matching — its 'no existing row' read was narrowly right but led to the wrong conclusion ('therefore mint one') instead of the right one ('therefore there is nothing to file').\n\nWHAT DOES HOLD from c200: (1) commit 206002e89 is real — verified by hash, notebook-only, 9 insertions/9 deletions; (2) pushBctcLayoutHandler.ts 252L is a genuine offender with a live row (FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH); (3) the push was genuinely blocked.\n\nWHAT DOES NOT HOLD: c200 reported 'Working tree is clean.' It is not — 48 dirty entries at the time of the router's check, including the very file it escalated. That claim is what made the 1012L look like a committed regression.\n\nSECOND FALSE SUB-CLAIM FROM alert-commander THIS SESSION. The first is in docs/signals/alert-commander-20260824T000843Z.json (a claim that could send PO to re-litigate a correctly-closed sprint). Both are correct DETECTIONS with wrong DIAGNOSES attached, and in both cases the wrong diagnosis is the part that gets acted on. Worth an agent-father look at c200's escalation step: before reporting a size-lint offender as new/untracked it must compare HEAD line count against working-tree line count, because the gate it is reacting to scans the working tree.\n\nUnpushed commits on main now 120 (was ~102). Fleet push still blocked on pushBctcLayoutHandler.ts alone.",
+          "verified_claims": [
+            "206002e89 exists, notebook-only, 9+/9-",
+            "pushBctcLayoutHandler.ts 252L offender, row live",
+            "push genuinely blocked"
+          ],
+          "falsified_claims": [
+            "tasksMdJanitorJob.ts is a new untracked offender needing a backlog row",
+            "working tree is clean"
+          ],
+          "head_vs_worktree": {
+            "file": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+            "head_lines": 906,
+            "worktree_lines": 1012,
+            "uncommitted_diff": "+107/-1",
+            "last_commit": "86b31eccd 2026-08-07"
+          },
+          "root_cause_row": "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE",
+          "action_required": "do NOT mint a size-lint row for tasksMdJanitorJob.ts; do NOT discard the uncommitted 107 lines",
+          "dirty_files": 48,
+          "unpushed_commits": 120,
+          "step_5_3_verdict": "0/6 markers, negative control passed, stamp stands"
+        },
+        "createdAt": "2026-08-24T02:13:05Z",
+        "drained_at": "2026-08-24T02:23:59Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "38423e2d5b38c1fdedd0d6ef811e47d365ea7884d1590e487e6bf46978f22c4e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:15",
+          "drift_min": 0,
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "last_fired_timestamp": "2026-08-24T02:19:14Z",
+          "leader_lock": "acquired",
+          "pressure_mode": "adaptive",
+          "pressure_age_min": 13.68,
+          "signal_backlog": 31,
+          "devq": 5,
+          "headroom_mb": 3225,
+          "load_1min": 7.63,
+          "cores": 12,
+          "max_parallel": 4,
+          "degraded": false,
+          "new_signals_seen": 12,
+          "new_signals_marked_read": 0,
+          "new_signals_held": 12,
+          "note": "FOUR FINDINGS.\n\n(1) CCATO BATCH #2 — SAME DEFECTIVE EMITTER, NEW DAY, STILL UNFIXED. All 12 NEW signal_queue rows this tick are to=po type=narrative_contradiction from=chef, ids ntg-20260824T000000Z-technical_indicators-VNM-<6hex>. Every CCATO signature from the 2026-08-13 batch reproduces exactly: (a) dedup_key ABSENT on all 12 (verified by group_by — one bucket, ABSENT, n=12); (b) ts FROZEN identical at 2026-08-24T00:00:00Z on all 12 — local-date midnight labelled Z, not a clock read (host is CEST, so true 00:00Z was 02:00 local); (c) 4 distinct findings re-emitted with EVEN multiplicities — returned_value 60 x2, 61 x4, 62.1 x4, not-found x2 — the same doubling shape as the prior batch; (d) INVERTED VERDICTS: 2 of the 12 carry returned_value=\"not found in database\" while the row summary asserts \"get_technical_indicators returned non-null data\". Those 2 rows contradict themselves in-record.\n\n(2) THE UNDERLYING FINDING IS NEVERTHELESS TRUE — do not dismiss the batch wholesale. Router probed the claim live: get_technical_indicators(code=VNM) returns a full indicator set (MA5=63,420 MA20=61,475 MA50=58,881, RSI(14)=70.1, MACD line +1,371, BB 58,342/61,475/64,608, price 64,100, source_tier 1, fetchedAt 2026-08-24T02:17:15Z). The chef claim \"VNM khong co du lieu ky thuat phien nay\" is FALSE. So the detector is right about chef and wrong about itself. Fix the emitter; keep the finding.\n\n(3) DRAIN DECISION — 12 ROWS HELD NEW, DELIBERATELY, AND THIS IS NOT A CLEAN CALL. work-tick.md Step 0a mandates marking each processed row NEW->READ. For to=po that is documented silent loss: PO selects on NEW, READ cold-evicts at 24h, and there is NO po cowork slot, so \"route to matching agent slot\" is structurally unreachable and mark-READ-without-delivery is the only outcome the step can produce. Router held all 12 rather than execute a lossy mark. COST OF HOLDING, stated plainly: new_signals stays 12, so every subsequent tick returns WORK instead of SILENT and pays a full dispatch body even with no slots due. Neither branch is correct — the drain contract is broken for to=po and needs the delivery-aware fix (mark READ only on actual spawn, or a distinct non-terminal ack status). Explicitly NOT fixable by adding a po cowork slot.\n\n(4) THIRD 10-DAY-STALE SLOT, SAME 2026-08-14 CUTOFF. chef-intraday.last_fired was 2026-08-14T05:22:13Z (cron \"13 2-8 * * 1-5\", cadence 60min). This session has now seen three independent slots frozen on one date: news-scout-sentiment 2026-08-14T01:36:40Z, alert-commander-market 2026-08-14T06:51:20Z, chef-intraday 2026-08-14T05:22:13Z — three different crons, three different cadences. docs/data/coverage-state.json was also last committed 2026-08-14 (f5fefabdb). Four artifacts converging on one date reads as a single event on 2026-08-14, not four independent drifts. Establishing what happened that day should precede any per-slot repair.\n\nALSO: cycle_snapshot_promoted=false again — FOURTH observation, THIRD in-tick causal proof. cycle-snapshot-02:17.json written 02:17:58Z (15728 B, valid); the promoter seconds later looked up nominal 02:15. cycle-snapshot-latest.json is still 4468 B from 2026-08-23T02:09 local — a full day stale.\n\nLOAD-PARSE STATUS: latent this tick, not biting. Flow parse yielded 7, true value 7.63; both pass the <=24 gate so the verdict is unaffected. It only flips a decision near the boundary. Root cause remains the Linux-format -F\",\" assumption on a macOS host — an LC_ALL=C pin makes it strictly worse.\n\nMINOR: chef-intraday.trigger_prompt carries \"MCP: https://zenmidi.com/vn-market/mcp\", which is not the canonical gateway URL (https://zenmidi.com/gateway/mcp per CLAUDE.md). Dispatched verbatim as the flow requires; flagged as schedule-data drift, not altered.\n"
+        },
+        "createdAt": "2026-08-24T02:20:29Z",
+        "drained_at": "2026-08-24T02:23:59Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

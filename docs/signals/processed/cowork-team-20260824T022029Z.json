@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "drift_min": 0,
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "last_fired_timestamp": "2026-08-24T02:19:14Z",
+    "leader_lock": "acquired",
+    "pressure_mode": "adaptive",
+    "pressure_age_min": 13.68,
+    "signal_backlog": 31,
+    "devq": 5,
+    "headroom_mb": 3225,
+    "load_1min": 7.63,
+    "cores": 12,
+    "max_parallel": 4,
+    "degraded": false,
+    "new_signals_seen": 12,
+    "new_signals_marked_read": 0,
+    "new_signals_held": 12,
+    "note": "FOUR FINDINGS.\n\n(1) CCATO BATCH #2 — SAME DEFECTIVE EMITTER, NEW DAY, STILL UNFIXED. All 12 NEW signal_queue rows this tick are to=po type=narrative_contradiction from=chef, ids ntg-20260824T000000Z-technical_indicators-VNM-<6hex>. Every CCATO signature from the 2026-08-13 batch reproduces exactly: (a) dedup_key ABSENT on all 12 (verified by group_by — one bucket, ABSENT, n=12); (b) ts FROZEN identical at 2026-08-24T00:00:00Z on all 12 — local-date midnight labelled Z, not a clock read (host is CEST, so true 00:00Z was 02:00 local); (c) 4 distinct findings re-emitted with EVEN multiplicities — returned_value 60 x2, 61 x4, 62.1 x4, not-found x2 — the same doubling shape as the prior batch; (d) INVERTED VERDICTS: 2 of the 12 carry returned_value=\"not found in database\" while the row summary asserts \"get_technical_indicators returned non-null data\". Those 2 rows contradict themselves in-record.\n\n(2) THE UNDERLYING FINDING IS NEVERTHELESS TRUE — do not dismiss the batch wholesale. Router probed the claim live: get_technical_indicators(code=VNM) returns a full indicator set (MA5=63,420 MA20=61,475 MA50=58,881, RSI(14)=70.1, MACD line +1,371, BB 58,342/61,475/64,608, price 64,100, source_tier 1, fetchedAt 2026-08-24T02:17:15Z). The chef claim \"VNM khong co du lieu ky thuat phien nay\" is FALSE. So the detector is right about chef and wrong about itself. Fix the emitter; keep the finding.\n\n(3) DRAIN DECISION — 12 ROWS HELD NEW, DELIBERATELY, AND THIS IS NOT A CLEAN CALL. work-tick.md Step 0a mandates marking each processed row NEW->READ. For to=po that is documented silent loss: PO selects on NEW, READ cold-evicts at 24h, and there is NO po cowork slot, so \"route to matching agent slot\" is structurally unreachable and mark-READ-without-delivery is the only outcome the step can produce. Router held all 12 rather than execute a lossy mark. COST OF HOLDING, stated plainly: new_signals stays 12, so every subsequent tick returns WORK instead of SILENT and pays a full dispatch body even with no slots due. Neither branch is correct — the drain contract is broken for to=po and needs the delivery-aware fix (mark READ only on actual spawn, or a distinct non-terminal ack status). Explicitly NOT fixable by adding a po cowork slot.\n\n(4) THIRD 10-DAY-STALE SLOT, SAME 2026-08-14 CUTOFF. chef-intraday.last_fired was 2026-08-14T05:22:13Z (cron \"13 2-8 * * 1-5\", cadence 60min). This session has now seen three independent slots frozen on one date: news-scout-sentiment 2026-08-14T01:36:40Z, alert-commander-market 2026-08-14T06:51:20Z, chef-intraday 2026-08-14T05:22:13Z — three different crons, three different cadences. docs/data/coverage-state.json was also last committed 2026-08-14 (f5fefabdb). Four artifacts converging on one date reads as a single event on 2026-08-14, not four independent drifts. Establishing what happened that day should precede any per-slot repair.\n\nALSO: cycle_snapshot_promoted=false again — FOURTH observation, THIRD in-tick causal proof. cycle-snapshot-02:17.json written 02:17:58Z (15728 B, valid); the promoter seconds later looked up nominal 02:15. cycle-snapshot-latest.json is still 4468 B from 2026-08-23T02:09 local — a full day stale.\n\nLOAD-PARSE STATUS: latent this tick, not biting. Flow parse yielded 7, true value 7.63; both pass the <=24 gate so the verdict is unaffected. It only flips a decision near the boundary. Root cause remains the Linux-format -F\",\" assumption on a macOS host — an LC_ALL=C pin makes it strictly worse.\n\nMINOR: chef-intraday.trigger_prompt carries \"MCP: https://zenmidi.com/vn-market/mcp\", which is not the canonical gateway URL (https://zenmidi.com/gateway/mcp per CLAUDE.md). Dispatched verbatim as the flow requires; flagged as schedule-data drift, not altered.\n"
+  },
+  "createdAt": "2026-08-24T02:20:29Z",
+  "_processed": {
+    "fingerprint": "38423e2d5b38c1fdedd0d6ef811e47d365ea7884d1590e487e6bf46978f22c4e",
+    "processedAt": "2026-08-24T02:23:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260824T020405Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-24T02:03:16Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "SECOND consecutive 10-day-stale slot this session: alert-commander-market last_fired was 2026-08-14T06:51:20Z against cron '*/15 2-8 * * 1-5' (~7 weekday sessions of misses); news-scout-sentiment showed the same shape at 01:30Z (2026-08-14T01:36:40Z). Both consistent with the known multi-day cron-silence class, not a same-tick fault, but two independent slots sharing a 2026-08-14 cutoff is a pattern worth a dedicated look. CYCLE-SNAPSHOT PROMOTION: cycle_snapshot_promoted=false again — Step 4.7 wrote cycle-snapshot-02:01.json (wall clock, 15606B, valid) at 02:01:24Z and Step 6.0's promoter looked up nominal 02:00 seconds later. Third observation, second same-tick causal proof (first at 01:30Z with 01:33). LOAD-PARSE ROOT CAUSE CORRECTED: an earlier note this session blamed the comma-decimal locale and implied an LC_ALL=C pin was the fix. Measured 2026-08-24T02:02Z on this host, that is backwards — the flow's 'awk -F,' parse assumes LINUX uptime (comma-SEPARATED: 'load average: 0.52, 0.58, 0.59'); macOS emits space-separated. Unpinned French locale yields [2] (truncated but numeric, harmless here); LC_ALL=C yields [2.092.082.02], a non-numeric string that would flip DEGRADED true on any multi-slot tick. Fix is a format-agnostic parse, NOT a locale pin. COMMIT-MISS: news-scout's 01:30Z cycle left docs/agent-memory/notebooks/news-scout.md (c276) and docs/data/coverage-state.json uncommitted; coverage-state.json last committed 2026-08-14 (f5fefabdb), and 7 of the 9 news-scout notebook commits since then excluded it — producer self-commit pathspec is notebook-only, confirming the producer DOES hold Bash+git (commit b2b954f3b, 00:06Z today)."
+  },
+  "priority": "low",
+  "createdAt": "20260824T020405Z",
+  "_processed": {
+    "fingerprint": "5874621a3c5994b04aa25b931723f9aad95e15e2c9dc2dd9b058066d122cb678",
+    "processedAt": "2026-08-24T02:23:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

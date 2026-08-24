@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "classification": "CORRECTION",
+    "reason": "spawned-agent-false-escalation",
+    "tick": "02:00Z",
+    "slot": "alert-commander-market",
+    "note": "ROUTER CORRECTION to alert-commander c200's bug-channel escalation (sent 2026-08-24 ~02:08Z). It escalated TWO size-lint offenders blocking the fleet push and reported the second as 'a new, UNTRACKED offender ... confirmed via jq against orch-state.json, no existing row'. Router verified in source. VERDICT: the second offender is NOT REAL and NO BACKLOG ROW SHOULD BE MINTED.\n\nMEASURED: apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts is 1012L in the WORKING TREE but 906L AT HEAD (git show HEAD:<path> | wc -l). git diff --stat = 107 insertions / 1 deletion, UNCOMMITTED. Last commit touching the file is 86b31eccd, 2026-08-07 — seventeen days ago. The file is tracked, not untracked; the 106-line growth exists only as somebody's in-flight edit and is not in the push range.\n\nROOT CAUSE — this is a live reproduction of an ALREADY-TRACKED P1: FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. The pre-push size-lint gate scans the working tree, so uncommitted peer work trips it and gets misread by the tripping agent as a repo defect. Filing a size-lint row against tasksMdJanitorJob.ts would create a row for a defect that does not exist at HEAD, and it would 'close itself' the moment the 107 lines are committed or discarded — a phantom row that looks legitimately resolved.\n\nDO NOT DISCARD THE 107 LINES. They appear to be live sprint work, not garbage: apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts is modified in the same working tree, and orch-state carries FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX at status=REVIEW plus FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY (BACKLOG, next_agent=architect), both of which cite tasksMdJanitorJob's D4 lock-scan. Those are the 2 orch-state mentions alert-commander's jq found and correctly judged non-matching — its 'no existing row' read was narrowly right but led to the wrong conclusion ('therefore mint one') instead of the right one ('therefore there is nothing to file').\n\nWHAT DOES HOLD from c200: (1) commit 206002e89 is real — verified by hash, notebook-only, 9 insertions/9 deletions; (2) pushBctcLayoutHandler.ts 252L is a genuine offender with a live row (FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH); (3) the push was genuinely blocked.\n\nWHAT DOES NOT HOLD: c200 reported 'Working tree is clean.' It is not — 48 dirty entries at the time of the router's check, including the very file it escalated. That claim is what made the 1012L look like a committed regression.\n\nSECOND FALSE SUB-CLAIM FROM alert-commander THIS SESSION. The first is in docs/signals/alert-commander-20260824T000843Z.json (a claim that could send PO to re-litigate a correctly-closed sprint). Both are correct DETECTIONS with wrong DIAGNOSES attached, and in both cases the wrong diagnosis is the part that gets acted on. Worth an agent-father look at c200's escalation step: before reporting a size-lint offender as new/untracked it must compare HEAD line count against working-tree line count, because the gate it is reacting to scans the working tree.\n\nUnpushed commits on main now 120 (was ~102). Fleet push still blocked on pushBctcLayoutHandler.ts alone.",
+    "verified_claims": [
+      "206002e89 exists, notebook-only, 9+/9-",
+      "pushBctcLayoutHandler.ts 252L offender, row live",
+      "push genuinely blocked"
+    ],
+    "falsified_claims": [
+      "tasksMdJanitorJob.ts is a new untracked offender needing a backlog row",
+      "working tree is clean"
+    ],
+    "head_vs_worktree": {
+      "file": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+      "head_lines": 906,
+      "worktree_lines": 1012,
+      "uncommitted_diff": "+107/-1",
+      "last_commit": "86b31eccd 2026-08-07"
+    },
+    "root_cause_row": "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE",
+    "action_required": "do NOT mint a size-lint row for tasksMdJanitorJob.ts; do NOT discard the uncommitted 107 lines",
+    "dirty_files": 48,
+    "unpushed_commits": 120,
+    "step_5_3_verdict": "0/6 markers, negative control passed, stamp stands"
+  },
+  "createdAt": "2026-08-24T02:13:05Z",
+  "_processed": {
+    "fingerprint": "e6226bfc62fafb822b6c6d1af276b5c19753e51ad8c40dbc5c831854714ac523",
+    "processedAt": "2026-08-24T02:23:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
