@@ -1,4 +1,96 @@
-# System Auditor — Tier-1 Notebook
+
+## Tier-DATA — DB Integrity Sweep (2026-08-24T22:34:30Z)
+
+DB data-anomaly sweep completed. Pre-gate verdict: SPAWN (7 tables changed).
+
+### Deterministic Counts (db-integrity-counts.sh)
+- ohlc_violations: 336 rows across 20 distinct dates (historical residue, no fresh violations in last 48h)
+- scale_gt100x: 0
+- vnindex_cache_rows: 1
+- low_confidence_reports: 52
+
+### Findings
+
+**High-value tables checked:** daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, price_alerts, alert_engine_records, agent_signals, signal_outcomes, financial_reports, macro_indicators, sbv_rates, fred_series_daily, deep_fetch_queue, deep_fetch_stats, cron_job_runs, scheduler_locks (17 tables total).
+
+**New anomalies: 0**
+- deep_fetch_stats: 0 rows (class a, already-open: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD)
+- deep_fetch_queue: 30 pending rows queued since 2026-08-18 (already-open: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD)
+- daily_ohlcv: 336 OHLC violations (already-open: LINT-OHLCV-WRITE-BYPASS)
+
+All findings matched existing task board entries (dedup pre-gate success).
+
+**Freshness check:** market_prices updated 2026-08-24T21:30:03Z (fresh). Cron jobs: 3157 successful in last 24h. No recent regressions.
+
+### History Entry
+Entry appended to docs/data/db-integrity-history.json. Scan timestamp: 2026-08-24T22:34:42Z. History length: 200 (capped).
+
+## c1009 · 2026-08-24T22:30Z
+### Audit Run Tier-1 (22:57:36Z UTC 2026-08-24)
+- Tier: 1 | Fire tick: 2026-08-24T22:30Z | Pre-gate verdict: FAILURE (launchd_agents) | Spawn decision: SPAWN
+- All runtime checks A-01 through A-33: PASS (non-launchd dimensions)
+- Launchd verdict: FAILURE — signature `launchd_agents:com.vn-market.fleet-push(not-loaded)` (also acknowledged-degraded, tracked: com.vn-market.docker-events(exit-status:143))
+- Anomalies: 0 new findings — EXPECTED-DISABLED case, already tracked at `task_board.ready[108]`
+- Status: KNOWN FALSE POSITIVE — no signal row minted
+
+#### Root Cause — EXPECTED-DISABLED Classification
+
+**Signature:** `launchd_agents:com.vn-market.fleet-push(not-loaded)`
+
+**Evidence — Deliberate Disarm:**
+- **Live installed plist:** `~/Library/LaunchAgents/com.vn-market.fleet-push.plist` (binary plist)
+  - Verified with: `plutil -convert xml1 ~/Library/LaunchAgents/com.vn-market.fleet-push.plist -o -`
+  - Contains: `<key>Disabled</key><true/>`
+  - **Also confirmed:** `launchctl print-disabled gui/501` lists `com.vn-market.fleet-push => disabled`
+
+- **Canonical repo plist:** `launchd/com.vn-market.fleet-push.plist`
+  - Does NOT contain Disabled key (enabled by default)
+  - Repo is SSOT for intended state
+
+- **Conclusion:** The user's local system has intentionally disabled this job via the installed plist's Disabled=true flag. This is not a fault — it is a deliberate local disarm.
+
+#### Debounce History
+
+Per `docs/data/auditor-tier1-spawn-debounce.json`:
+- **signature:** `launchd_agents:com.vn-market.fleet-push`
+- **first_seen_at:** 2026-08-24T16:40:57Z
+- **spawn_count:** 6 (burned six auditor spawns across ~6 hours)
+- **last_healthy_at:** 2026-08-24T16:25:27Z (~6.5h stale — heartbeat has NOT advanced since)
+- **window open to:** 2026-08-24T23:57:36Z
+
+Each of these 6 spawns encountered the same condition: fleet-push is disabled on the user's local system, which the probe correctly detects as not-loaded.
+
+#### Why No Signal Row Was Minted
+
+The root cause is already tracked at **`task_board.ready[108].id = FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED`** (P1, status=READY, next_agent=architect, dispatch_lane=null).
+
+**Acceptance Criteria (from ready[108]):**
+- AC-1: A label whose installed plist carries Disabled=1 must be classified EXPECTED-DISABLED and must not count as an unhealthy launchd label
+- AC-2: Read the flag from the INSTALLED plist (~/Library/LaunchAgents/<label>.plist), not the repo copy; note it is a BINARY plist — use `plutil -p` or PlistBuddy (AC-2 explicitly warns that `grep -i disabled` returns nothing on binary plists)
+- AC-3: Also treat `launchctl print-disabled` membership as EXPECTED-DISABLED
+- AC-4: EXPECTED-DISABLED must still be named in the probe's detail string for transparency
+- AC-5: Once implemented, the fleet-push entry in auditor-launchd-ack.json is removable with zero churn and MUST be removed per the ledger's staleness rule
+
+**Current situation:** The probe has NOT yet implemented AC-1/AC-2. It reads only the repo plist (which lacks Disabled) and reports the intentional disarm as a fresh FAILURE every 30 minutes. This is why 6 spawns have burned re-confirming the same known condition.
+
+**Mechanism:** The ack ledger at `docs/data/auditor-launchd-ack.json` had an entry for fleet-push whose `tracked_by` field pointed to `FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD` (now in archive/DONE_VERIFIED, cold-evicted from orch-state.json). The code-enforced staleness rule correctly detected this as absent-from-every-lane and stopped suppressing. With that suppression gone, the unclassified-as-EXPECTED-DISABLED disarm now fires a fresh FAILURE every tick. The fix is to classify it properly, which is self-expiring and needs no ack entry at all.
+
+#### Dimension Coverage for This Tick
+
+From `docs/data/auditor-tier1-last-trigger.json` (fire_tick 2026-08-24T22:30Z):
+- docker_ps: PASS
+- health_3000: PASS
+- health_3001: PASS
+- disk: PASS
+- mem_creep: PASS
+- launchd_agents: FAIL (expected-disabled case, see above)
+
+**Note:** mem_creep is PASS this tick — neither pdf-extractor nor rag-service is breaching the 85% investigate gate.
+
+#### Next Action
+
+No action required by this cycle. The probe implementation (AC-1/AC-2) is tracked at ready[108] with explicit acceptance criteria. Once that ships, the user's intentional disarm will be properly classified and will stop re-spawning the auditor every 30 minutes.
+
 
 ## Tier-DATA — DB Integrity Sweep (2026-08-24T22:34:30Z)
 
