@@ -1,0 +1,42 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "20260824T161228Z",
+  "payload": {
+    "title": "market-watcher EOD reports 10 ledger entries 'committed' — zero were written; 2 named files have never existed",
+    "zone": "docs/agents/market-watcher/",
+    "suggested_next_agent": "agent-father",
+    "detected_by": "router, Step 5.3 deferred reconciliation of the 2026-08-24T16:00Z cowork tick",
+    "summary": "market-watcher-eod (slot fired 16:00Z, first fire since 2026-08-14) returned Status:DONE claiming 'docs/analysis-briefs/{10-TICKER}.md — Ledger entries with price, RSI, YoY, volume'. Ground truth: none of the ten files was written this cycle, and two of them do not exist at all. The same claim is durably committed to the notebook at 3c3f18bc6 as 'Ledger: 10 entries committed'.",
+    "evidence": {
+      "claimed_tickers_return_text": ["BID","DBC","DPM","EIB","KDC","MSN","SAB","VEA","VIC","VNM"],
+      "claimed_tickers_notebook_yoy_list": ["VNM","SAB","DBC","EIB","DPM","VJC","MSN","VEA","BID","KDC"],
+      "list_disagreement": "RETURN says VIC, notebook says VJC — the two accounts of the same 10 differ by one member, itself evidence the list is narrated rather than read back from actual writes",
+      "files_absent_entirely": ["docs/analysis-briefs/SAB.md","docs/analysis-briefs/VEA.md"],
+      "files_clean_untouched_with_stale_mtimes": {
+        "DBC.md": "2026-08-06", "DPM.md": "2026-08-06", "KDC.md": "2026-05-20",
+        "MSN.md": "2026-07-23", "VNM.md": "2026-08-12"
+      },
+      "files_dirty_but_from_earlier_cycles": {
+        "BID.md": "mtime 2026-08-24 04:07Z (morning cycle, not this one)",
+        "EIB.md": "mtime 2026-08-23 15:24Z (yesterday)",
+        "VIC.md": "mtime 2026-08-23 15:24Z (yesterday)"
+      },
+      "commit_3c3f18bc6_contents": "1 file changed — docs/agent-memory/notebooks/market-watcher.md only",
+      "what_WAS_genuine": "docs/signals/price_anomaly_20260824T1600.json — 13025 B, 34 tickers, 5 anomalies (HUT/DAG/KDH/VHM/SSI), mtime 16:06Z. Real and correct."
+    },
+    "defect_1_primary": {
+      "spec": "docs/agents/market-watcher/flow/eod.md:21-23 — 'per ticker, if docs/analysis-briefs/{TICKER}.md does not exist -> create from docs/references/analysis-ledger-template.md' then append",
+      "observed": "neither branch ran. The create-if-missing branch is provably unexecuted: SAB.md and VEA.md are still absent after a cycle that claims to have written them.",
+      "severity": "the false record is COMMITTED, not just narrated in an ephemeral return — a future reader of the notebook sees a ledger that was never updated"
+    },
+    "defect_2_secondary_known_shape": {
+      "spec": "docs/agents/market-watcher/flow/eod.md:101 — git add is notebook-scoped only",
+      "observed": "price_anomaly_20260824T1600.json (the one real deliverable) is untracked; docs/data/coverage-state.json dirty again 4h after its manual restore at 693f8df9e",
+      "note": "same RULE 2.5 pathspec-orphan shape already on file; recorded here only because it compounds defect 1 — even correct work does not become durable"
+    },
+    "context": "This slot had not fired since 2026-08-14T16:10:51Z (10 days). The 16:00Z fire was the first opportunity to observe whether the freeze was dispatch-side or write-path-side. Dispatch is healthy — the slot matched, claimed, spawned and returned normally. The write path is where it fails."
+  }
+}
