@@ -14552,11 +14552,11 @@
         "size": "S",
         "zone": "cross-service/",
         "owner": "po",
-        "next_agent": "architect",
+        "next_agent": "qa",
         "created_at": "2026-08-23T10:33:27Z",
         "created_by": "po/catchup3-disposition-20260823T1033Z",
-        "updated_at": "2026-08-24T08:01:33Z",
-        "updated_by": "po",
+        "updated_at": "2026-08-24T08:32:38Z",
+        "updated_by": "architect",
         "verification_gate": "Every one of the 6 OPEN rows reaches a terminal status via a named, executable consumer path — and a newly written OPEN row is demonstrated to be picked up by it. Hand-flipping the 6 to READ closes the symptom and leaves the mechanism armed; that is not a fix.",
         "note": "MEASURED AT SOURCE 2026-08-23T10:30Z, three independent probes, no inference. (1) LIVE POPULATION — jq over .signal_queue.rows[] gives status distribution OPEN=6, READ=13, triaged=11. There are ZERO rows at status NEW. The six OPEN rows, all to:ops: sys-20260814T064300-a29m (cron_fire_gap), sys-20260814T064301-a29s1 (cron_fire_gap), sys-20260814T064302-a29s2 (cron_fire_gap), sys-20260814T064303-b06 (vps_route_unhealthy), sys-20260814T160010-b06 (signal_feedback), sys-20260822T213754-audit-tracked-task-absent (launchd_tracking_gap). Oldest is 2026-08-14T06:43:00Z — 9 days. (2) NOT EVICTED — scripts/orch-cold-evict.sh:150 sets TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED. OPEN is absent, so the eviction predicate never matches them and they accumulate in the hot file indefinitely. (3) NOT DRAINED — the router independently searched docs/agents/ops/flow/ and .claude/skills/signal-dashboard/ and found no OPEN-row consumer; the live status distribution corroborates it from the other direction, since if a NEW-only drain were the sole consumer it would find nothing to do here. TWO DISTINCT DEFECTS, DO NOT CONFLATE: (a) a WRITE-side producer is emitting status=OPEN when the consumer contract expects NEW — find that producer, since which one it is determines whether the fix is at the writer or the reader; (b) a LIFECYCLE hole where OPEN is terminal-for-eviction-purposes-but-not-terminal-in-meaning, so even a correctly-written OPEN row can never leave the hot file. Fixing only (a) leaves today's 6 stranded; fixing only (b) evicts unread work, which is worse than leaving it. WHY P1 AND NOT COSMETIC: these are not notifications, they are unread ops findings. cron_fire_gap x3 and launchd_tracking_gap sit in exactly the subject area of the 96.5h Layer-C firing outage that brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md S3 measured, and the 2026-08-22 launchd_tracking_gap row was written the day the host woke from that Standby window. Evidence bearing on a live P1 incident has been sitting unread for up to 9 days in a queue everyone believes is drained. CROSS-REF: project_host_suspension_causes_multiday_cron_silence_backlog_flush (confirmed 2x) and reference_agent_signals_is_a_rolling_2h_ttl_window_not_an_accumulating_log — the latter is the inverse failure (a store people think accumulates but does not), and the pair suggests signal-store lifecycle semantics are not written down anywhere consumers actually read. Surfaced by the router during the 2026-08-23T10:07Z dev-team tick; po verified all three probes independently before minting.",
         "dedup_key": "signalqueue_status_enum:unratified_values_unpickable_and_unevictable",
@@ -14570,7 +14570,16 @@
           "AC-5 CLEAR THE 7 LIVE ROWS. All 7 are triaged/retracted/resolved as of 2026-08-24T07:37Z (po-decision-bug5468 deliberately left at NEW — its mitigation clause is still unactuated and it must not be evicted until to:ops delivery exists per AC-1). Confirm the other 6 reach cold archive on the next orch-cold-evict run and that none re-appears.",
           "AC-6 REGRESSION, ON A VALUE THE FIX WAS NOT WRITTEN FOR. Prove the gate on a THIRD unratified value (not OPEN, not lowercase new) — e.g. status:'Open' or 'pending'. A gate validated only on the two values that caused the incident is the shape recorded in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist."
         ],
-        "po_ruling_20260824T0737Z": "SCOPE WIDENED + WHY NOTHING HAS ROUTED IT. Minted thin 2026-08-23T10:33Z (title only — no dedup_key, no root_cause, no ac) and un-dispatched for a day. The MECHANICAL reason is not priority: next_agent='architect' is a non-dev value, so the BOUNDED-1 NON-DEV-NEXT_AGENT GATE (docs/agents/dev-team/flow/main.md:640) holds it out of idle auto-pickup, and it is NOT plan_only, so the Supervised-Lane Sweep does not see it either. That combination is the documented residual gap: 'a row gated here WITHOUT plan_only is a tracked residual gap (no dedicated sweep lane yet)'. It needs DELIBERATE architect dispatch and will never self-promote. plan_only/supervised deliberately NOT set by this triage — flipping them to force SLS eligibility risks the null-dispatch_lane/unspawnable-head failure recorded in feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head, and hiding a routing gap behind a flag flip is not a fix. Title still says '6 rows' — the live count is 7 (the 7th is lowercase \"new\", not OPEN); title left as minted so the id stays greppable, corrected in .evidence."
+        "po_ruling_20260824T0737Z": "SCOPE WIDENED + WHY NOTHING HAS ROUTED IT. Minted thin 2026-08-23T10:33Z (title only — no dedup_key, no root_cause, no ac) and un-dispatched for a day. The MECHANICAL reason is not priority: next_agent='architect' is a non-dev value, so the BOUNDED-1 NON-DEV-NEXT_AGENT GATE (docs/agents/dev-team/flow/main.md:640) holds it out of idle auto-pickup, and it is NOT plan_only, so the Supervised-Lane Sweep does not see it either. That combination is the documented residual gap: 'a row gated here WITHOUT plan_only is a tracked residual gap (no dedicated sweep lane yet)'. It needs DELIBERATE architect dispatch and will never self-promote. plan_only/supervised deliberately NOT set by this triage — flipping them to force SLS eligibility risks the null-dispatch_lane/unspawnable-head failure recorded in feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head, and hiding a routing gap behind a flag flip is not a fix. Title still says '6 rows' — the live count is 7 (the 7th is lowercase \"new\", not OPEN); title left as minted so the id stays greppable, corrected in .evidence.",
+        "children": [
+          "FIX-ORCHAPPLY-SIGNALROW-STATUS-UNVALIDATED-ADMITS-UNPICKABLE-UNEVICTABLE-VALUES",
+          "FIX-SIGNALQUEUE-STATUS-TO-VOCABULARY-DOCS"
+        ],
+        "depends": [
+          "FIX-ORCHAPPLY-SIGNALROW-STATUS-UNVALIDATED-ADMITS-UNPICKABLE-UNEVICTABLE-VALUES",
+          "FIX-SIGNALQUEUE-STATUS-TO-VOCABULARY-DOCS"
+        ],
+        "architect_ruling_delivered": "Ruling delivered in full — docs/architecture-briefs/2026-08-24-fix-signalqueue-status-and-recipient-vocabulary.md. Row converted to umbrella per the auditor-tier1-spawn-debounce precedent (backlog[], next_agent=qa, depends=children — EPIC-WRAPPER gate + depends-satisfied gate both hold it out of auto-pickup until both children reach DONE_VERIFIED). QA joint check on promotion: pre-deploy live-conformance re-check was run and clean, drift-check script passes, AC-6 regression on a 3rd unseen value rejects, walEscalation.ts repoint has a test, docs child cites the shipped enum byte-for-byte."
       },
       {
         "id": "FOLLOWUP-PROSECEILING-TARGETED-COMPACTION-AND-FROZEN-COHORT-PAYDOWN",
@@ -15967,7 +15976,7 @@
         "zone": "cross-service/",
         "priority": "P1",
         "status": "BACKLOG",
-        "size": "S",
+        "size": "M",
         "next_agent": "developer",
         "owner": "po",
         "depends": [],
@@ -15976,8 +15985,8 @@
         "baseline_pass": true,
         "created_at": "2026-08-24T07:37:00Z",
         "created_by": "po",
-        "updated_at": "2026-08-24T08:01:33Z",
-        "updated_by": "po",
+        "updated_at": "2026-08-24T08:32:38Z",
+        "updated_by": "architect",
         "dedup_key": "orchapply_writetime_validation:signalrow_status_enum",
         "source": "PO signal-queue hygiene triage, dev-team tick 2026-08-24T07:37Z. Router found one row at lowercase \"new\" and asked whether the match is case-sensitive; it is, and the same read found six more rows at OPEN with the identical two-sided failure. Every predicate below read at source this tick.",
         "root_cause": "There is no write-time validation of .signal_queue.rows[].status anywhere. apps/mcp-server/src/infrastructure/orchStateSchema.ts:284 — SignalRowSchema declares status: z.string(), sitting two lines below severity: z.string() whose adjacent comment (:281-282) explicitly defers the same enum ('canonical enum enforced post-signal-cleanup'), so this is a known-deferred gap rather than an oversight. apps/mcp-server/src/infrastructure/orchStateStore.ts:47 declares status: \"NEW\"|\"READ\"|\"RESOLVED\"|\"PARTIAL\"|\"OPEN\"|string — the trailing |string makes the union structurally equal to string, so the type gives readers a false impression of a closed set while enforcing nothing. scripts/orch-apply.sh delegates all schema checking to scripts/orch-validate.mjs, which imports that same Zod schema, so the fleet's single gated write path admits any string. Consequence is two-sided and that is what makes it a black hole rather than mere noise: (a) INVISIBLE — every consumer matches byte-exactly (cowork-tick-preflight.sh:360 select(.status==\"NEW\"); signal-dashboard/dashboard-protocol.md:86 and :92; dev-team/flow/drain-signals.md:24), and (b) IMMORTAL — the evictor at orch-cold-evict.sh:583 matches .status|IN($tsig_arr[]) against the :181 default READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED. A value outside both sets can never be read and can never be removed.",
@@ -15985,9 +15994,11 @@
         "files": [
           "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
           "apps/mcp-server/src/infrastructure/orchStateStore.ts",
-          "scripts/orch-validate.mjs",
+          "apps/mcp-server/src/scheduler/walEscalation.ts",
+          "scripts/audits/signal-queue-vocabulary-drift-check.sh",
           "scripts/orch-apply.sh",
-          "scripts/orch-cold-evict.sh"
+          "scripts/orch-cold-evict.sh",
+          "scripts/orch-validate.mjs"
         ],
         "ac": [
           "AC-1 DO NOT CASE-FOLD THE CONSUMERS. Read scripts/orch-cold-evict.sh:164-172 before writing any code: a case-insensitive comparison was considered there and DELIBERATELY REJECTED, on the record, because it 'would also silently admit any future accidentally-cased status this list has not explicitly ratified'. A case-fold is a ratified non-fix for this exact class. The ratification must happen at the write.",
@@ -15995,10 +16006,41 @@
           "AC-3 GRANDFATHER, DO NOT BREAK THE FLEET. A hard enum applied to the live file rejects the next write from every agent if ANY existing row is non-conforming. Mirror the growth-only pattern already used by scripts/orch-row-prose-ceiling-check.mjs: a pre-existing non-conforming row is a non-blocking WARN; only a NET NEW non-conforming value hard-rejects. Without this the first write after deploy wedges the fleet-wide hot file.",
           "AC-4 FAIL LOUDLY, NEVER DROP. A rejected row must surface with a distinct greppable marker naming the offending id and value. Never silently coerce and never abort in a way that loses the row — same fail-mode hazard as FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID AC-3.",
           "AC-5 SAME TREATMENT FOR severity, OR AN EXPLICIT REFUSAL. severity: z.string() at :283 carries a comment deferring the identical enum, and live data already holds legacy P1/WARN/MEDIUM alongside the canonical five. Either enum it in the same pass or record in the RETURN why it is deliberately out of scope. Do not leave the comment claiming a future cleanup that no row tracks.",
-          "AC-6 REGRESSION ON AN UNSEEN VALUE. Prove the gate against a value neither incident produced — status:'Open' or 'pending', not OPEN and not lowercase new. A gate validated only on the values that caused the incident is the shape recorded in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist."
+          "AC-6 REGRESSION ON AN UNSEEN VALUE. Prove the gate against a value neither incident produced — status:'Open' or 'pending', not OPEN and not lowercase new. A gate validated only on the values that caused the incident is the shape recorded in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
+          "AC-7 (architect ruling, docs/architecture-briefs/2026-08-24-fix-signalqueue-status-and-recipient-vocabulary.md §2) RATIFIED SET: SignalStatusEnum = [\"NEW\",\"READ\",\"RESOLVED\",\"SUPERSEDED\",\"ACUTE-RESOLVED-ROOT-TRACKED\",\"triaged\",\"TRIAGED\",\"RETRACTED\"] (8 members). TERMINAL_SIGNAL_SET = the 7 non-NEW members, byte-identical to orch-cold-evict.sh:181's current TERMINAL_SIGNAL_STATUSES default — zero picker/evictor literal changes required.",
+          "AC-8 (architect ruling §3) OPEN DISPOSITION: OPEN is NOT ratified. Remove it from orchStateStore.ts:47's union entirely (do not carry as a dead member). No sanctioned producer emits it (emit-audit-signal.sh + all 5 TS in-process writers all hardcode NEW). Hard-reject any future write, never quarantine — a quarantine state is the wrong tool for a provable producer mistake vs a not-yet-ratified value. PARTIAL is the same class (zero signal-row producer found anywhere) — also dropped from the type, never admitted to the schema.",
+          "AC-9 (architect ruling §5) to:ops RULING + SignalRecipientEnum: to:\"ops\" is INVALID for signal_queue.rows[] — ops has no polling loop and no push-spawn target (docs/data/cowork-schedule.json has zero ops entries); PO's triage-signals.md already bridges auditor/scheduler findings to owner:ops task-board mints via to:\"po\". apps/mcp-server/src/scheduler/walEscalation.ts:30 (SANCTIONED, shipped, correctly-cased producer, proves the delivery hole empirically) — change to: 'ops' -> to: 'po'. Add SignalRecipientEnum = [\"po\",\"tran-ngoc-bau\",\"alert-commander\",\"unified-agent\"] to SignalRowSchema.to (was z.string().optional()) and OrchStateSignalRow.to (was bare string) — same reject-closed treatment as status, justified by the walEscalation.ts evidence alone. Inline TS enum, NOT a live system-map.json read (avoids coupling two independent hot files' failure modes) — kept honest by AC-10's drift-check instead. Also hand-fix the one live to:\"ops\" row (po-decision-bug5468-2026-08-23T15:27:38Z) to to:\"po\" in the same pass (data cleanup, not mechanism).",
+          "AC-10 (architect ruling §4.4/§6) IMPLEMENTATION NOTES: (a) both status and to enums live in orchStateSchema.ts and are picked up by BOTH write paths for free (orch-validate.mjs's OrchStateSchema.safeParse AND writeOrchStateAtomic's own safeParse call inside appendSignalQueueRow's writeAtomicFn — traced live, one Zod schema, two callers, no duplicate mechanism needed). (b) No dual-file live-vs-candidate grandfather script (unlike orch-row-prose-ceiling-check.mjs's pattern) — live file is already 100% clean (verified 2026-08-24: READ=86/RETRACTED=12/triaged=8/NEW=1, zero OPEN, zero lowercase new) so ship the hard enum directly; re-run that same live-conformance jq check immediately before deploy as the safety margin, escalate rather than silently widen if it is no longer clean. (c) appendSignalQueueRow()'s retry loop has NO try/catch around writeAtomicFn — a Zod-schema throw (which this AC's own enum newly makes reachable) propagates uncaught, contradicting the function's own docstring (\"do NOT throw\"). Wrap that call in try/catch; on a schema-validation error specifically, follow the same warn-and-drop path already used for CAS exhaustion. (d) Ship scripts/audits/signal-queue-vocabulary-drift-check.sh (mirrors guard-signal-type-coverage.sh's SSOT-parsing pattern) asserting TERMINAL_SIGNAL_SET (TS) == orch-cold-evict.sh's TERMINAL_SIGNAL_STATUSES default and SignalRecipientEnum (TS) == system-map.json .project.cowork_signal_recipient; wire into .github/workflows/ci.yml as a new job mirroring signal-type-coverage-guard."
         ],
         "po_not_a_duplicate": "Dedup-checked against every non-terminal lane on the PAYLOAD, not id tokens. Four near neighbours, none covering write-time status validation: (1) FIX-SIGNALQUEUE-OPEN-STATUS-DRAINED-BY-NOTHING-EVICTED-BY-NOTHING (backlog, P1, architect) — the CONSUMER/design half, and the deliberate counterpart of this row: it rules on WHAT the ratified set is and on the to:ops addressee question, this row implements the gate that makes any ruling stick. Enriched with root_cause/evidence/ac in the same triage; the two are explicitly cross-referenced and neither closes the other. (2) FIX-SIGNALQUEUE-DUP-ID-GUARD (backlog, developer) — id-uniqueness at the same choke point, orthogonal dimension: all 7 affected rows have unique ids and would pass it untouched. (3) FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION (backlog, high, architect) — lifecycle question about what follows 'triaged', i.e. transitions BETWEEN ratified statuses; this row is about admitting unratified ones in the first place. (4) FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED (landed 2026-08-08) — the direct precedent: it fixed the identical class by WIDENING the consumer allowlist, which is exactly why the class recurred 16 days later with two new values. Read it first; this row exists because that fix was applied at the wrong end.",
-        "verification_gate": "(a) Paste the ratified enum and cite where each member came from — SKILL.md line or live-data count — no invented members. (b) Show the AC-3 grandfather path exercised: a live-shaped doc containing a pre-existing non-conforming row must WRITE with a WARN, not reject. (c) Show a NET NEW non-conforming row hard-rejecting, with the AC-4 marker in the output. (d) AC-6 negative control on a third, unseen value. (e) Re-run the live measurement and show the dead-letter count (rows in neither the picker set nor TERMINAL_SIGNAL_STATUSES); state the number explicitly rather than asserting zero. (f) READ-ONLY ON EFFECTS: no Telegram from any test run, no write to the live docs/data/orch/orch-state.json outside the normal gated path."
+        "verification_gate": "(a) Paste the ratified enum and cite where each member came from — SKILL.md line or live-data count — no invented members. (b) Show the AC-3 grandfather path exercised: a live-shaped doc containing a pre-existing non-conforming row must WRITE with a WARN, not reject. (c) Show a NET NEW non-conforming row hard-rejecting, with the AC-4 marker in the output. (d) AC-6 negative control on a third, unseen value. (e) Re-run the live measurement and show the dead-letter count (rows in neither the picker set nor TERMINAL_SIGNAL_STATUSES); state the number explicitly rather than asserting zero. (f) READ-ONLY ON EFFECTS: no Telegram from any test run, no write to the live docs/data/orch/orch-state.json outside the normal gated path.",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-08-24-fix-signalqueue-status-and-recipient-vocabulary.md"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-STATUS-TO-VOCABULARY-DOCS",
+        "type": "FIX",
+        "title": "Signal-dashboard docs: ratify status/to vocabulary + to:ops->to:po redirect rule",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": ".claude/skills/signal-dashboard/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "depends": [],
+        "parent": "FIX-SIGNALQUEUE-OPEN-STATUS-DRAINED-BY-NOTHING-EVICTED-BY-NOTHING",
+        "created_at": "2026-08-24T08:32:38Z",
+        "created_by": "architect/FIX-SIGNALQUEUE-OPEN-STATUS-DRAINED-BY-NOTHING-EVICTED-BY-NOTHING",
+        "files": [
+          ".claude/skills/signal-dashboard/SKILL.md",
+          ".claude/skills/signal-dashboard/reference.md"
+        ],
+        "note": "Per docs/architecture-briefs/2026-08-24-fix-signalqueue-status-and-recipient-vocabulary.md §8. Update SKILL.md § Receivers with an explicit negative entry: ops is NOT a valid `to` for signal_queue rows — route ops-actionable findings via to:\"po\" (triage-signals.md already dispatches owner:ops task-board work from there). Update § ACK/CLOSE to cite the now-enforced 8-member SignalStatusEnum (NEW/READ/RESOLVED/SUPERSEDED/ACUTE-RESOLVED-ROOT-TRACKED/triaged/TRIAGED/RETRACTED) as the SSOT, replacing the prior unenforced prose framing. Add a reference.md note documenting the to:ops -> to:po redirect rule and citing walEscalation.ts as the concrete precedent. Parallel-safe with the sibling developer row (depends=[]) — the ratified vocabulary is fixed by the architect brief, not pending developer discretion.",
+        "ac": [
+          "AC-1 SKILL.md § Receivers table gains an explicit ops-invalid entry + to:po redirect rule.",
+          "AC-2 SKILL.md § ACK/CLOSE cites the 8-member SignalStatusEnum verbatim, matching orchStateSchema.ts byte-for-byte (no drift between shipped code and shipped prose).",
+          "AC-3 reference.md gains a short section on the push-vs-pull delivery split (cross-reference FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS, the sibling epic's own docs child, so the two do not silently diverge on the same file)."
+        ],
+        "updated_at": "2026-08-24T08:32:38Z"
       }
     ],
     "closed_sprints": [
