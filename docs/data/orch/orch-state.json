@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T6-TOOL-REGISTRATION",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked CCATO-MCP-T6-TOOL-REGISTRATION — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-24T03:31:39Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-24T03:58:20Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22766,10 +22765,10 @@
         "last_served_tick": "2026-08-24T03:30:56Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-24T00:56:09Z"
+        "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T03:55:24Z",
+    "_updated_at": "2026-08-24T03:58:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23839,6 +23838,25 @@
         },
         "createdAt": "20260824T034749Z",
         "drained_at": "2026-08-24T03:55:24Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "46856123e129f8b509e18726f60bcd04283cc8b884b41158e7a317c633d8bdec",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "156",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T03:58:19Z",
+        "drained_at": "2026-08-24T03:58:39Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
