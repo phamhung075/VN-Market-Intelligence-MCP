@@ -364,5 +364,11 @@
     "cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
     "from": "system-auditor",
     "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
+  },
+  {
+    "ts": "2026-08-24T03:10:55Z",
+    "cycle_tag": "cron:auditor-t3:2026-08-24T02:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=<none>"
   }
 ]
