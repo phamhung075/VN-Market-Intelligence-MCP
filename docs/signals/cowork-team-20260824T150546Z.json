@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-24T15:05:46Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-08-24T15:03:54Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "Step 5.3 off-flow latch detector DEFERRED (BGFAN-1 in-flight at Step 5b); prior last_fired 2026-08-23T15:03:34Z retained for de-stamp if detector fires. cycle_snapshot_promoted=false (cycle-snapshot-latest.json stale since 2026-08-23T00:07:50Z)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-24T15:05:46Z"
+}
