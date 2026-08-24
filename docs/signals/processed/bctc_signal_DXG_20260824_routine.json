@@ -4,20 +4,18 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Phát triển bất động sản khu dân cư/khu đô thị (BĐS)",
-  "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường phía Nam",
-  "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (36+ kỳ liên tiếp) — không có số liệu BCTC gốc để phân tích trực tiếp; ROE so-sánh-ngành 1.9% (dưới median 7.3% ngành BĐS) từ nguồn peer-comparison",
-  "mgmt": "Không đánh giá được (thiếu dữ liệu BCTC gốc); dòng tiền ngoại 5 phiên +21K cp ròng (mạnh hơn ngành -2K cp)",
-  "as_of": "2026-08-24T15:10:00Z",
-  "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày) — get_bctc_full vẫn 'Chưa có dữ liệu' cho MỌI kỳ (không riêng Q2); anomaly đã báo dev-team (c162, chưa xử lý)",
+  "product": "Real estate development — residential projects (HCMC + satellite provinces)",
+  "customer": "Homebuyers and investors in mid-tier residential segment",
+  "ops": "get_bctc_full returns 'Chưa có dữ liệu' — 38th+ consecutive cycle with no extracted BCTC data; get_cash_flow returns astronomically large OCF values (known extraction anomaly, c162, still pending dev-team pickup — do NOT cite these cash-flow figures)",
+  "mgmt": "Valuation AVOID: PE 66.5x vs 16.1x sector median (+312% premium); ROE 1.9% well below 7.3% sector median",
   "valuation": {
     "pe": 66.5,
-    "pb": 1.2,
-    "sector_pe_median": 16.1,
+    "pe_sector_median": 16.1,
     "earning_yield_pct": 1.5,
     "max_deposit_rate_pct": 5,
     "ey_spread_pp": -3.5,
-    "verdict": "AVOID"
+    "valuation_verdict": "AVOID",
+    "roe_pct_sector_annualized": 1.9
   },
   "kinhdich_reading": {
     "que": "Quan (20)",
@@ -25,21 +23,48 @@
     "tin_hieu": "THAN TRONG",
     "do_tin_cay_pct": 13
   },
-  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+  "sentiment_trend": "unavailable (no BCTC-linked sentiment entries this cycle)",
   "esc_gate": {
-    "ESC-1_accounting_manipulation": "UNEVALUABLE — no BCTC data ('Chưa có dữ liệu')",
-    "ESC-2_balance_sheet": "UNEVALUABLE — no BCTC data",
-    "ESC-3_ocf_vs_np": "UNEVALUABLE — no BCTC data",
-    "ESC-4_nonop_share": "UNEVALUABLE — no BCTC data",
-    "ESC-5_refine_confidence": "UNEVALUABLE — no BCTC data, no report_id"
+    "ESC-1": "unevaluable — no source BCTC data",
+    "ESC-2": "not evaluable — no balance-sheet data",
+    "ESC-3": "not evaluable — get_bctc_full data absent despite get_cash_flow anomalous return",
+    "ESC-4": "not evaluable — no P&L data",
+    "ESC-5": "not evaluable — no report_id path attempted (no filed report on record)"
   },
-  "data_quality_note": "valuation_verdict AVOID — do NOT post bullish signal per stage-analyze.md rule",
-  "regime": "NEUTRAL",
-  "carry_regime": "NEUTRAL",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none",
+  "evidence_fragments": [
+    {
+      "id": 1471,
+      "evidence_type": "bctc_valuation_premium",
+      "direction": "bearish",
+      "magnitude": 1,
+      "confidence": 0.6
+    },
+    {
+      "id": 1472,
+      "evidence_type": "bctc_roe_ratio",
+      "direction": "bullish",
+      "magnitude": 0.3,
+      "confidence": 0.6
+    },
+    {
+      "id": 1473,
+      "evidence_type": "bctc_report_overdue",
+      "direction": "bearish",
+      "magnitude": 0.5,
+      "confidence": 0.55
+    }
+  ],
+  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026)",
+  "data_quality_note": "DXG 'Chưa có dữ liệu' unresolved 37th+ cycle; cash-flow anomaly (bctc-analyst-20260813T001500Z.json, c162) still pending dev-team pickup",
+  "cycle_id": "20260824-1800",
   "_processed": {
-    "fingerprint": "7b89b0223cfe61f5bb6f23f40ce24605aea379ee04cac27aaf07199f688b246f",
-    "processedAt": "2026-08-24T15:17:43Z",
+    "fingerprint": "57db23dcc87e9c3f1016a53f6aa58f2c0db0d1b708dec58b7e7d4e54c1fe26b7",
+    "processedAt": "2026-08-24T18:16:08Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

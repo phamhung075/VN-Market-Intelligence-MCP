@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "20260824T180422Z",
-    "matched_slots": ["bctc-analyst-slot-2"],
-    "won_slots": ["bctc-analyst-slot-2"],
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 0,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "bctc-analyst-slot-2": "cron" },
-    "cadence_minutes": { "bctc-analyst-slot-2": null },
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
     "last_fired_timestamp": "2026-08-24T18:03:21Z",
-    "last_fired_slots": ["bctc-analyst-slot-2"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "12 NEW narrative_contradiction rows deliberately NOT drained this tick — all 12 share one subject (ntg-20260824T000000Z-technical_indicators-VNM, 90 rows total, 78% of signal_queue) and reproduce the documented CCATO defects; board row FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (P0, next_agent=developer) already covers them. Emitter produced zero new rows since 17:45Z tick."
   },
   "priority": "low",
-  "createdAt": "20260824T180422Z"
+  "createdAt": "20260824T180422Z",
+  "_processed": {
+    "fingerprint": "5ef88a4f57c8ef757c94120b3be0ccbf20ebcb86594632479a80f4fa2e919c02",
+    "processedAt": "2026-08-24T18:16:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

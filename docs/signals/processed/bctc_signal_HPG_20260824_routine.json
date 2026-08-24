@@ -4,20 +4,18 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Thép xây dựng, ống thép, tôn mạ; nguyên liệu quặng sắt một phần nhập khẩu từ Úc (~5% doanh thu liên quan)",
-  "customer": "Nhà thầu xây dựng, nhà phân phối vật liệu xây dựng nội địa; xuất khẩu thép sang khu vực Đông Nam Á",
-  "ops": "Biên LN gộp 15.8% (8.365 tỷ); ROE so-sánh-ngành 12.7% (trên median 2.9% ngành Thép); Operating Profit báo cáo = 0 tỷ (dữ liệu OCR lỗi/corrupt kéo dài, KHÔNG dùng để tính ESC-4 — flag dữ liệu đã báo dev-team nhiều kỳ)",
-  "mgmt": "Không có cảnh báo quản trị mới; dòng tiền ngoại từ 5 phiên +480K cp ròng (mạnh hơn ngành +13K cp)",
-  "as_of": "2026-08-24T15:10:00Z",
-  "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
+  "product": "Steel production (long + flat products), construction materials, agriculture (feed/livestock)",
+  "customer": "Construction contractors, infrastructure/property developers, domestic + export steel buyers",
+  "ops": "Gross margin 15.8%; operating_profit reported as 0 tỷ VND — known data-quality anomaly (34th+ consecutive cycle, op_profit=0 corrupt while net profit 9,056 tỷ VND remains positive)",
+  "mgmt": "ROE 6.5% (raw quarter, non-annualized) / 12.7% sector-comparison annualized; steel-cycle sensitive, foreign flow +480K cp net (stronger than sector)",
   "valuation": {
     "pe": 14.2,
-    "pb": 1.7,
-    "sector_pe_median": 32.6,
+    "pe_sector_median": 32.6,
     "earning_yield_pct": 7.04,
     "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.04,
-    "verdict": "FAIR"
+    "valuation_verdict": "FAIR",
+    "roe_pct_sector_annualized": 12.7
   },
   "kinhdich_reading": {
     "que": "Tiem (53)",
@@ -25,40 +23,60 @@
     "tin_hieu": "GIU",
     "do_tin_cay_pct": 100
   },
-  "sentiment_trend_30d": {
+  "sentiment_trend": {
+    "window_days": 30,
     "direction": "ỔN ĐỊNH",
     "slope": -0.02,
     "entries": 25
   },
-  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "legal_risk": "Không có tín hiệu rủi ro pháp lý",
   "esc_gate": {
-    "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
-    "ESC-2_balance_sheet": {
+    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+    "ESC-2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "ESC-3_ocf_vs_np": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
-      "coverage_guard_held": true,
-      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
+      "coverage_guard_held": true
     },
-    "ESC-4_nonop_share": {
+    "ESC-4": {
       "result": "DISCARDED",
-      "note": "operating_profit=0 is a known OCR extraction corruption artifact (recurring 30+ cycles), not a genuine one-off signal — non_operating_share would compute to 100% on this corrupt input; do not escalate on corrupt data"
+      "reason": "operating_profit=0 corrupt — non_operating_share calc undefined"
     },
-    "ESC-5_refine_confidence": {
+    "ESC-5": {
       "result": false,
-      "reason": "report_id=null, existing_refine_status=PARTIAL (not DONE)"
+      "reason": "report_id null (refine_status=PARTIAL, not DONE)"
     }
   },
-  "regime": "NEUTRAL",
-  "carry_regime": "NEUTRAL",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none",
+  "evidence_fragments": [
+    {
+      "id": 1467,
+      "evidence_type": "bctc_roe_ratio",
+      "direction": "bullish",
+      "magnitude": 0.508,
+      "confidence": 0.6
+    },
+    {
+      "id": 1468,
+      "evidence_type": "bctc_report_overdue",
+      "direction": "bearish",
+      "magnitude": 0.5,
+      "confidence": 0.55
+    }
+  ],
+  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+  "fetchedAt": "2026-06-07T11:12:22.298Z",
+  "cycle_id": "20260824-1800",
   "_processed": {
-    "fingerprint": "f23d41e06387519f1b501cb0268fed57eddc7c11c7ff3f9240e4d50960cb73c7",
-    "processedAt": "2026-08-24T15:17:43Z",
+    "fingerprint": "30cc871b6199d38297b101aee0cff9a30a763d610377085118f7cb7ad16597dc",
+    "processedAt": "2026-08-24T18:16:08Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

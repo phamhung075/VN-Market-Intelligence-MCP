@@ -140,7 +140,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -161,7 +161,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -182,7 +182,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -203,7 +203,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -224,7 +224,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -245,7 +245,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -266,7 +266,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -287,7 +287,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -308,7 +308,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -329,7 +329,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -350,7 +350,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -371,7 +371,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -392,7 +392,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -413,7 +413,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -434,7 +434,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -455,7 +455,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -476,7 +476,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -497,7 +497,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -23670,7 +23670,10 @@
         "size": "M",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK-COWORK-MUTEX-001",
-        "updated_at": "2026-08-23T00:21:38Z"
+        "updated_at": "2026-08-24T18:18:12Z",
+        "secondary_claimed_at": "2026-08-24T18:18:12Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer"
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
@@ -24276,7 +24279,7 @@
         "last_served_tick": "2026-08-24T16:54:07Z"
       }
     },
-    "_updated_at": "2026-08-24T17:47:42Z",
+    "_updated_at": "2026-08-24T18:16:08Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25090,6 +25093,433 @@
         },
         "createdAt": "2026-08-24T17:42:51Z",
         "drained_at": "2026-08-24T17:47:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "57db23dcc87e9c3f1016a53f6aa58f2c0db0d1b708dec58b7e7d4e54c1fe26b7",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development — residential projects (HCMC + satellite provinces)",
+          "customer": "Homebuyers and investors in mid-tier residential segment",
+          "ops": "get_bctc_full returns 'Chưa có dữ liệu' — 38th+ consecutive cycle with no extracted BCTC data; get_cash_flow returns astronomically large OCF values (known extraction anomaly, c162, still pending dev-team pickup — do NOT cite these cash-flow figures)",
+          "mgmt": "Valuation AVOID: PE 66.5x vs 16.1x sector median (+312% premium); ROE 1.9% well below 7.3% sector median",
+          "valuation": {
+            "pe": 66.5,
+            "pe_sector_median": 16.1,
+            "earning_yield_pct": 1.5,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": -3.5,
+            "valuation_verdict": "AVOID",
+            "roe_pct_sector_annualized": 1.9
+          },
+          "kinhdich_reading": {
+            "que": "Quan (20)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "THAN TRONG",
+            "do_tin_cay_pct": 13
+          },
+          "sentiment_trend": "unavailable (no BCTC-linked sentiment entries this cycle)",
+          "esc_gate": {
+            "ESC-1": "unevaluable — no source BCTC data",
+            "ESC-2": "not evaluable — no balance-sheet data",
+            "ESC-3": "not evaluable — get_bctc_full data absent despite get_cash_flow anomalous return",
+            "ESC-4": "not evaluable — no P&L data",
+            "ESC-5": "not evaluable — no report_id path attempted (no filed report on record)"
+          },
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "insider_signals": "no significant insider activity",
+          "legal_risk": "none",
+          "evidence_fragments": [
+            {
+              "id": 1471,
+              "evidence_type": "bctc_valuation_premium",
+              "direction": "bearish",
+              "magnitude": 1,
+              "confidence": 0.6
+            },
+            {
+              "id": 1472,
+              "evidence_type": "bctc_roe_ratio",
+              "direction": "bullish",
+              "magnitude": 0.3,
+              "confidence": 0.6
+            },
+            {
+              "id": 1473,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026)",
+          "data_quality_note": "DXG 'Chưa có dữ liệu' unresolved 37th+ cycle; cash-flow anomaly (bctc-analyst-20260813T001500Z.json, c162) still pending dev-team pickup",
+          "cycle_id": "20260824-1800"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T18:16:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e314ba3a536d3790c8cae22eaf68d1a02e9ea1b635200f1fd2e145e57468f091",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore, esp. Europe/Japan), SME telecom subscribers",
+          "ops": "Gross margin 34.0%, operating margin 22.0% (Q1-2026); software exports remains core driver, telecom continues to drag blended margin",
+          "mgmt": "Q1-2026 NPAT 2,477 tỷ VND, +13.8% YoY on FTEL equity-method restated basis (raw YoY withheld per PUB-7 period-basis guard); consistent quarterly delivery",
+          "valuation": {
+            "pe": 13.8,
+            "pe_sector_median": 17.3,
+            "earning_yield_pct": 7.25,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.25,
+            "valuation_verdict": "FAIR",
+            "roe_pct_sector_annualized": 28.3
+          },
+          "kinhdich_reading": {
+            "que": "Tuy (17)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "sentiment_trend": {
+            "window_days": 30,
+            "direction": "GIẢM",
+            "slope": -0.22,
+            "entries": 27
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true
+            },
+            "ESC-4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "ESC-5": {
+              "result": true,
+              "low_confidence_units": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "min_confidence": 0.45,
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+            }
+          },
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "insider_signals": "no significant insider activity",
+          "legal_risk": "none",
+          "evidence_fragments": [
+            {
+              "id": 1465,
+              "evidence_type": "bctc_roe_strong",
+              "direction": "bullish",
+              "magnitude": 1,
+              "confidence": 0.6
+            },
+            {
+              "id": 1466,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+          "fetchedAt": "2026-08-24T18:03:22.023Z",
+          "cycle_id": "20260824-1800"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T18:16:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "30cc871b6199d38297b101aee0cff9a30a763d610377085118f7cb7ad16597dc",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (long + flat products), construction materials, agriculture (feed/livestock)",
+          "customer": "Construction contractors, infrastructure/property developers, domestic + export steel buyers",
+          "ops": "Gross margin 15.8%; operating_profit reported as 0 tỷ VND — known data-quality anomaly (34th+ consecutive cycle, op_profit=0 corrupt while net profit 9,056 tỷ VND remains positive)",
+          "mgmt": "ROE 6.5% (raw quarter, non-annualized) / 12.7% sector-comparison annualized; steel-cycle sensitive, foreign flow +480K cp net (stronger than sector)",
+          "valuation": {
+            "pe": 14.2,
+            "pe_sector_median": 32.6,
+            "earning_yield_pct": 7.04,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.04,
+            "valuation_verdict": "FAIR",
+            "roe_pct_sector_annualized": 12.7
+          },
+          "kinhdich_reading": {
+            "que": "Tiem (53)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "sentiment_trend": {
+            "window_days": 30,
+            "direction": "ỔN ĐỊNH",
+            "slope": -0.02,
+            "entries": 25
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true
+            },
+            "ESC-4": {
+              "result": "DISCARDED",
+              "reason": "operating_profit=0 corrupt — non_operating_share calc undefined"
+            },
+            "ESC-5": {
+              "result": false,
+              "reason": "report_id null (refine_status=PARTIAL, not DONE)"
+            }
+          },
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "insider_signals": "no significant insider activity",
+          "legal_risk": "none",
+          "evidence_fragments": [
+            {
+              "id": 1467,
+              "evidence_type": "bctc_roe_ratio",
+              "direction": "bullish",
+              "magnitude": 0.508,
+              "confidence": 0.6
+            },
+            {
+              "id": 1468,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+          "fetchedAt": "2026-06-07T11:12:22.298Z",
+          "cycle_id": "20260824-1800"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T18:16:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3b06e0855e4b827e6ddaac4f573ba2417aef97f03067545d09efbad7aec17a71",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "State-owned commercial bank — corporate + retail lending, trade finance, treasury operations",
+          "customer": "Corporate borrowers, retail depositors, government-linked entities",
+          "ops": "Operating profit 80.9% of net revenue (bank cost structure); ROA 0.4%; foreign flow -97K cp net (weaker than sector)",
+          "mgmt": "ROE 16.7% sector-annualized, below 17.6% sector median; largest SOE bank by market cap, stable profitability",
+          "valuation": {
+            "pe": 14.1,
+            "pe_sector_median": 9,
+            "earning_yield_pct": 7.09,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.09,
+            "valuation_verdict": "FAIR",
+            "roe_pct_sector_annualized": 16.7
+          },
+          "kinhdich_reading": {
+            "que": "Tuy (45)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 63
+          },
+          "sentiment_trend": {
+            "window_days": 30,
+            "direction": "TĂNG",
+            "slope": 0.1,
+            "entries": 15
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "ESC-3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368,
+              "threshold": 0.4
+            },
+            "ESC-4": {
+              "result": "N/A",
+              "reason": "bank — non_operating_share calc not applicable"
+            },
+            "ESC-5": {
+              "result": false,
+              "reason": "report_id null (refine_status=PARTIAL, not DONE)"
+            }
+          },
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "insider_signals": "no significant insider activity",
+          "legal_risk": "none",
+          "evidence_fragments": [
+            {
+              "id": 1469,
+              "evidence_type": "bctc_roe_strong",
+              "direction": "bullish",
+              "magnitude": 0.668,
+              "confidence": 0.6
+            },
+            {
+              "id": 1470,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 14/08/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+          "fetchedAt": "2026-07-19T12:43:43.098Z",
+          "cycle_id": "20260824-1800"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T18:16:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e3f9d7cf329a25a2b8d70650b51515491cf51b46461537a29f0543496398dac7",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/claim-truth-gate/SKILL.md",
+          "line_count": 182,
+          "cap": 200,
+          "byte_count": 13140,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1140,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-24T17:47:44Z",
+        "drained_at": "2026-08-24T18:16:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5ef88a4f57c8ef757c94120b3be0ccbf20ebcb86594632479a80f4fa2e919c02",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260824T180422Z",
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": null
+          },
+          "last_fired_timestamp": "2026-08-24T18:03:21Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "18:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 33,
+          "note": "12 NEW narrative_contradiction rows deliberately NOT drained this tick — all 12 share one subject (ntg-20260824T000000Z-technical_indicators-VNM, 90 rows total, 78% of signal_queue) and reproduce the documented CCATO defects; board row FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (P0, next_agent=developer) already covers them. Emitter produced zero new rows since 17:45Z tick."
+        },
+        "createdAt": "20260824T180422Z",
+        "drained_at": "2026-08-24T18:16:08Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -4,20 +4,18 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
-  "customer": "Doanh nghiệp CNTT trong/ngoài nước (Nhật, Âu, Mỹ), thuê bao viễn thông nội địa, sinh viên hệ thống trường FPT",
-  "ops": "Biên LN gộp 34.0%, LN thuần HĐKD 22.0% (2.748 tỷ); ROE so-sánh-ngành 28.3% (trên median 10.6% ngành Công nghệ); OCF Q1 âm -2.848 tỷ (đầu tư ngắn hạn + phải thu tăng, không phải dấu hiệu mất khả năng thanh toán)",
-  "mgmt": "Đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/2026 (điều chỉnh hồi tố); LNST +13.8% YoY sau điều chỉnh, tăng trưởng nổi bật thị trường Châu Âu (+44.4%) và Nhật Bản",
-  "as_of": "2026-08-24T15:10:00Z",
-  "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày), vẫn chưa trích xuất — dữ liệu dùng là Q1-2026",
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore, esp. Europe/Japan), SME telecom subscribers",
+  "ops": "Gross margin 34.0%, operating margin 22.0% (Q1-2026); software exports remains core driver, telecom continues to drag blended margin",
+  "mgmt": "Q1-2026 NPAT 2,477 tỷ VND, +13.8% YoY on FTEL equity-method restated basis (raw YoY withheld per PUB-7 period-basis guard); consistent quarterly delivery",
   "valuation": {
     "pe": 13.8,
-    "pb": 3.6,
-    "sector_pe_median": 17.3,
+    "pe_sector_median": 17.3,
     "earning_yield_pct": 7.25,
     "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.25,
-    "verdict": "FAIR"
+    "valuation_verdict": "FAIR",
+    "roe_pct_sector_annualized": 28.3
   },
   "kinhdich_reading": {
     "que": "Tuy (17)",
@@ -25,34 +23,31 @@
     "tin_hieu": "GIU",
     "do_tin_cay_pct": 100
   },
-  "sentiment_trend_30d": {
-    "direction": "GIẢM (đang xấu đi)",
+  "sentiment_trend": {
+    "window_days": 30,
+    "direction": "GIẢM",
     "slope": -0.22,
     "entries": 27
   },
-  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "legal_risk": "Không có tín hiệu rủi ro pháp lý",
   "esc_gate": {
-    "ESC-1_accounting_manipulation": "SCOPE-REDUCED (no Bash/Glob grant — 6-pass trick detection unevaluable this agent instance)",
-    "ESC-2_balance_sheet": {
+    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+    "ESC-2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "ESC-3_ocf_vs_np": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
-      "coverage_guard_held": true,
-      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+      "coverage_guard_held": true
     },
-    "ESC-4_nonop_share": {
+    "ESC-4": {
       "result": false,
       "non_operating_share_pct": 2
     },
-    "ESC-5_refine_confidence": {
+    "ESC-5": {
       "result": true,
-      "min_confidence": 0.45,
-      "low_confidence_unit_ids": [
+      "low_confidence_units": [
         "unit-0008",
         "unit-0009",
         "unit-0010",
@@ -61,15 +56,38 @@
         "unit-0013",
         "unit-0014"
       ],
+      "min_confidence": 0.45,
       "escalation_status": "GUARD-HELD",
       "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
     }
   },
-  "regime": "NEUTRAL",
-  "carry_regime": "NEUTRAL",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none",
+  "evidence_fragments": [
+    {
+      "id": 1465,
+      "evidence_type": "bctc_roe_strong",
+      "direction": "bullish",
+      "magnitude": 1,
+      "confidence": 0.6
+    },
+    {
+      "id": 1466,
+      "evidence_type": "bctc_report_overdue",
+      "direction": "bearish",
+      "magnitude": 0.5,
+      "confidence": 0.55
+    }
+  ],
+  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+  "fetchedAt": "2026-08-24T18:03:22.023Z",
+  "cycle_id": "20260824-1800",
   "_processed": {
-    "fingerprint": "0b997b07db22a75974ffdc956bb0c6098196aa425e4ebe5bad95cf3d0df8c158",
-    "processedAt": "2026-08-24T15:17:43Z",
+    "fingerprint": "e314ba3a536d3790c8cae22eaf68d1a02e9ea1b635200f1fd2e145e57468f091",
+    "processedAt": "2026-08-24T18:16:08Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
