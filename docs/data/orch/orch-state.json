@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
+    "_updated_at": "2026-08-24T20:33:31Z",
     "_updated_by": "narrative-truth-gate",
     "archive": [],
     "rows": [
@@ -2716,17 +2716,6 @@
         "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Folded into FIX-CHEF-VNM-TECHNICAL-INDICATOR-CONTRADICTION-10X-AND-GATE-FIRES-ON-AGREEMENT (all 60 are chef/VNM, one claim, one ticker). Archiving on schedule is correct."
       },
       {
-        "id": "tnb-20260823T203146",
-        "ts": "2026-08-23T20:31:46Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "Overall: CRITICAL - L5 false-gap-claim, causal_chains regression, qa-responder orphaned ~89d, fleet push blocked",
-        "severity": "HIGH",
-        "status": "triaged",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
-      },
-      {
         "id": "sys-20260823T213727-1b29",
         "ts": "2026-08-23T21:37:27Z",
         "from": "system-auditor",
@@ -3178,6 +3167,37 @@
         "triaged_at": "2026-08-24T14:05:00Z",
         "triaged_by": "po",
         "triage_note": "Tier-2 cycle-missing detector row. Triaged 2026-08-24T14:05Z: the cycle's two claimed anomalies did not survive source verification (A-29 cluster = market-hours stand-down, A-29b = known name-join gap, both already owned). This row is ALSO the concrete instance of the V1 null-tag defect - it carries audit_cycle_tag:null, which is why V1's independent re-read returned 0 for a row that is present and committed. Filed as FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO."
+      },
+      {
+        "id": "ntg-20260824T203331Z-macro-macro-17a1b6",
+        "ts": "2026-08-24T20:33:31Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: tran-ngoc-bau claimed absence of macro data for macro but get_macro_snapshot returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload": {
+          "agent_id": "tran-ngoc-bau",
+          "claim": "Chu kỳ EOD 2026-08-24: dữ liệu lạm phát (CPI) và dự trữ ngoại hối (VIRA) không có dữ liệu trong chu kỳ này.",
+          "tool": "get_macro_snapshot",
+          "ticker": "macro",
+          "probe_ticker": "VIRA",
+          "returned_value": "2 | [Macro Snapshot] Status: ok Vn Index: 1788.78 Oil Usd: 92.02 Gold Usd: 4710.40 Usd Vnd: 25980 Data Source: live [Signals] [Investment Clock] Tier: VN_DIRECT Score: 8 Phase: CORE_VN [Oil] Impact: NEUTRAL Price USD: 92",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "tra-20260824T203342",
+        "ts": "2026-08-24T20:33:42Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "Overall: NEEDS_ATTENTION (chef-morning stuck + L5 false-gap-claim, both corroborated not remint)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -5845,6 +5865,30 @@
         "disposition_at": "2026-08-23T14:40:00Z",
         "do_not_reopen": false,
         "updated_by": "po/ci-red-83ab26dc-triage"
+      },
+      {
+        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "priority": "high",
+        "status": "CANCELLED",
+        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
+        "type": "SPRINT-S",
+        "zone": "cross-service/",
+        "detail_ref": "docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md",
+        "verify_note": "prior_status=TODO",
+        "owner": "agents-architect",
+        "updated_by": "po (triage Step 0-SIG, architecture_brief envelope c5142439)",
+        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
+        "updated_at": "2026-08-24T20:33:48Z",
+        "promoted_at": "2026-08-23T19:56:22Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect",
+        "claimed_at": "2026-08-24T19:21:01Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "commit": "bb47fea31",
+        "signal_ref": "docs/signals/fix-cadence-cowork-dup-market-watcher-dedup-review.json",
+        "review_note": "Investigated live: DUPLICATE of already-shipped, DONE_VERIFIED work — FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC (commit 5918c55fe) + FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING (commit 662d1fcc3), both DONE_VERIFIED 2026-08-14T17:38-39Z, archived docs/data/orch/archive/2026-08.json. This row was PO-promoted 2026-08-15T00:40Z off the same incident AFTER that fix already shipped same-day. Re-verified live this cycle: cron values unchanged (0 16 * * 1-5 / 0 */4 * * *, still structurally colliding by construction), supersede-mutex test suite re-run 32/0 pass, and confirmed working on TODAY (2026-08-24) real 16:00Z tick (market-watcher-eod fired alone commit 3c3f18bc6, market-watcher-offhours.last_fired stayed 12:04:50Z, did not advance). Recommend PO dedup-close citing the two DONE_VERIFIED rows rather than dispatch new implementation. One non-blocking loose end flagged for agent-father (optional fast-follow, not blocking): stale INERT wording in cowork-schedule.json market-watcher-eod._note (brief §3).",
+        "po_dedup_close_20260824T2050Z": "DEDUP-CLOSED by PO on the agents-architect brief docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md (Pipeline-A architecture_brief envelope c5142439277544f1). PO did NOT take the brief on trust — every leg re-verified at source this tick: (1) the brief file exists (10959B); (2) BOTH cited rows resolve in docs/data/orch/archive/2026-08.json with status DONE_VERIFIED — FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC and FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING; (3) both cited commits resolve in git — 5918c55fe (declare eod supersedes offhours + RULE 2.5 pathspec) and 662d1fcc3 (declarative same-tick supersede mutex + match-slots wiring); (4) today live 16:00Z evidence resolves — commit 3c3f18bc6 is market-watcher-eod alone. This row was PO-promoted 2026-08-15T00:40Z off the 2026-08-14T16:00Z incident, which the two rows above had ALREADY fixed and shipped the SAME day (17:38-39Z) — the promote-dedup was blind to the archive lane, the exact defect recorded in feedback_po_promote_dedup_blind_to_archived_lane_reships_fixed_work. NOT closed as done: no new implementation shipped under this id; closed as a duplicate of already-shipped, already-verified work. RESIDUE NOT LOST: the brief section 3 loose end (stale INERT wording in cowork-schedule.json market-watcher-eod._note) is agent-father-zone doc drift, non-blocking, and is carried forward on this closure rather than dropped — it does not justify holding an entire SPRINT-S row open."
       }
     ],
     "backlog": [
@@ -24305,30 +24349,6 @@
         "dispatch_lane": "architect",
         "ba_spec_ref": "docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md",
         "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec."
-      },
-      {
-        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "priority": "high",
-        "status": "REVIEW",
-        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
-        "type": "SPRINT-S",
-        "zone": "cross-service/",
-        "detail_ref": "docs/architecture-briefs/2026-08-24-market-watcher-cadence-dedup-already-shipped.md",
-        "verify_note": "prior_status=TODO",
-        "next_agent": "po",
-        "owner": "agents-architect",
-        "updated_by": "agents-architect",
-        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
-        "updated_at": "2026-08-24T19:29:06Z",
-        "promoted_at": "2026-08-23T19:56:22Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "agents-architect",
-        "claimed_at": "2026-08-24T19:21:01Z",
-        "claimed_by": "dev-team (design-router sweep)",
-        "commit": "bb47fea31",
-        "signal_ref": "docs/signals/fix-cadence-cowork-dup-market-watcher-dedup-review.json",
-        "review_note": "Investigated live: DUPLICATE of already-shipped, DONE_VERIFIED work — FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC (commit 5918c55fe) + FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING (commit 662d1fcc3), both DONE_VERIFIED 2026-08-14T17:38-39Z, archived docs/data/orch/archive/2026-08.json. This row was PO-promoted 2026-08-15T00:40Z off the same incident AFTER that fix already shipped same-day. Re-verified live this cycle: cron values unchanged (0 16 * * 1-5 / 0 */4 * * *, still structurally colliding by construction), supersede-mutex test suite re-run 32/0 pass, and confirmed working on TODAY (2026-08-24) real 16:00Z tick (market-watcher-eod fired alone commit 3c3f18bc6, market-watcher-offhours.last_fired stayed 12:04:50Z, did not advance). Recommend PO dedup-close citing the two DONE_VERIFIED rows rather than dispatch new implementation. One non-blocking loose end flagged for agent-father (optional fast-follow, not blocking): stale INERT wording in cowork-schedule.json market-watcher-eod._note (brief §3)."
       }
     ],
     "qa": [
@@ -24541,10 +24561,10 @@
         "last_served_tick": "2026-08-24T19:48:05Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-24T16:54:07Z"
+        "last_served_tick": "2026-08-24T20:24:01Z"
       }
     },
-    "_updated_at": "2026-08-24T20:22:24Z",
+    "_updated_at": "2026-08-24T20:24:01Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
