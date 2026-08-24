@@ -20,5 +20,11 @@
       "FIX-DONELANE-SECONDARY-DRAIN-BLIND-TO-ACTIVE-SPRINTS-NESTED-DONE-TASKS (candidate-set breadth - different defect)"
     ],
     "suggested_direction": "Either (a) give Step 1's S3 wrap a same-tick guard that sees SECONDARY-Drain's resolved target, or (b) make SECONDARY-Drain JUMP TO end when its resolved target is po (Step 1 will dispatch po anyway on the next tick), or (c) unify both PO dispatches behind one stable intent key. Architect's call - do NOT assume (b)."
+  },
+  "_processed": {
+    "fingerprint": "622c03db4291f8de42233ae4097604a594749f1ad79d16b0e0332c225285e84f",
+    "processedAt": "2026-08-24T23:13:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
