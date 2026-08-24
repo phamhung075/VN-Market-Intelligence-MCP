@@ -57,5 +57,11 @@
     "note": "3-slot fan-out, MAX_PARALLEL=4 (load1m=11.23/12 cores, headroom 4112MB — not degraded), one batch. Per-slot tokens claimed AND released per spawn-fanout.md try/finally (released=1 each). Pre-spawn cross-mechanism ps-probe 'slot=' returned zero live processes — no guaranteed-firer collision this tick (contrast 19:45Z chef-evening). PRIOR last_fired for DEFERRED de-stamp if Step 5.3 later flags off-flow: news-scout-offhours=2026-08-24T16:04:52Z, market-watcher-offhours=2026-08-24T12:04:50Z, alert-commander-critical=2026-08-24T16:04:52Z; FIRED_AT=2026-08-24T20:05:27Z. RETRACTED (same tick, before drain): an earlier draft of this note called market-watcher-offhours 12:04:50Z-to-20:05Z an 8h gap that MISSED the 16:00Z slot. It did not. cowork-schedule.json declares market-watcher-eod.supersedes=[\"market-watcher-offhours\"], resolved in cowork-match-slots.js finish() BEFORE Step 4b; the 16:05:22Z envelope confirms MATCHES carried market-watcher-eod (fired 16:04:52Z) and NOT -offhours. The gap is the supersedes rule working as designed, not a miss. Drained 6 NEW narrative_contradiction rows (FOLD per triage-signals.md:99 — all share the single dedup triple VNM|get_technical_indicators|2026-08-24, now 108 ntg rows on ONE subject). CORRECTION to this session's earlier ticks: the ntg finding is NOT uniformly false — across 108 rows returned_value is 36x'61', 36x'62.1', 18x'60', 18x'not found in database', i.e. 90/108 record a genuine non-null indicator against chef's absence claim; the earlier 'probe corroborates the absence' reading was a sampling artifact of the 18 'not found' rows. Value progression not-found->60->61->62.1 across one cycle is consistent with claim-time-vs-probe-time pipeline lag (triage-signals.md routes that to pendingObservations[], not a FIX). Step 4.7 wrote cycle-snapshot-20:03.json (wall-clock minute, not nominal 20:00) and emit_pressure_state again returned cycle_snapshot_promoted=false — 12th+ consecutive."
   },
   "priority": "low",
-  "createdAt": "20260824T200635Z"
+  "createdAt": "20260824T200635Z",
+  "_processed": {
+    "fingerprint": "6e8ceba519daa9a810f111032f2a6a933535ced2f26ce507546cf1395fa7922c",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

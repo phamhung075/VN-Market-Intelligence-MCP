@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-24T20:07:46Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: apps/frontend/.dockerignore. actor=ca9c65e5-4659-4425-8f3a-551ff43907de mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "565615a826ec0828bbba66591e1810a0971fb0f9ce8a43730919664fd4b38088",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "20260824T202134Z",
-    "matched_slots": ["tnb-audit"],
-    "won_slots": ["tnb-audit"],
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/tran-ngoc-bau/flow/main.md"],
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 2,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "tnb-audit": "cron" },
-    "cadence_minutes": { "tnb-audit": null },
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
     "last_fired_timestamp": "2026-08-24T20:19:58Z",
-    "last_fired_slots": ["tnb-audit"],
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "Single guaranteed slot (tnb-audit, daily cron 13 20 * * *). signal_queue NEW=0, drain no-op. ps-probe for slot=tnb-audit / guaranteed-firer returned zero live processes before claim. RESOLVED an open question this tick: signal_backlog is NOT the orch-state signal_queue NEW count -- emitPressureStateTool.ts:510 defines it as 'docs/signals/*.json count excl cowork-team-*'. Measured live: 59 files - 21 cowork-team-* = 38, exact match. Consequence worth a board row: 19 of those 38 are stale price_anomaly_*.json dating to 2026-07-02 (53d) with no observed drain, so signal_backlog_tier (thresholds 0=low/3=medium/10=high) is pinned HIGH permanently by undrained residue rather than live pressure -- the adaptive cadence system's input is stuck. Also observed: emit_pressure_state RETURNED cycle_snapshot_promoted=false but PERSISTED null to pressure-state.json (same non-persistence class as pressure_mode), so the file cannot be used to audit promotion history. cycle-snapshot written as 20:18 (wall-clock) vs nominal 20:15 -- promoter found no 20:15 file, cycle_snapshot_promoted=false for the 13th consecutive tick, consistent with the open FIX-CYCLE-SNAPSHOT row (whose consumer premise was falsified 20:00Z; amendment filed 606f35109)."
   },
   "priority": "low",
-  "createdAt": "20260824T202134Z"
+  "createdAt": "20260824T202134Z",
+  "_processed": {
+    "fingerprint": "42ac5efee2a81a86eba0669de598648bffcfe5455ed686e1343d9b27fe145070",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

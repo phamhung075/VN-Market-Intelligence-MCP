@@ -17,5 +17,11 @@
     "impact_measured": "cycle-snapshot-latest.json created_at=2026-08-23T00:07:50Z — 44h stale at time of writing. cycle_snapshot_promoted:false on every emit observed this session (12+ consecutive ticks).",
     "one_line_fix_direction": "Step 4.7 should derive FILE_TICK from the nominal tick already available in the tick context (the same value passed to emit_pressure_state as tick_id), not from date -u +%H:%M."
   },
-  "createdAt": "20260824T201250Z"
+  "createdAt": "20260824T201250Z",
+  "_processed": {
+    "fingerprint": "3af16e23777fe17bd37e33164ab25bc998b192b844230205acac996d8965444e",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

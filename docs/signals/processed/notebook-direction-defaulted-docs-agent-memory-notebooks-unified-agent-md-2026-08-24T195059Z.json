@@ -10,5 +10,11 @@
     "direction_applied": "newest_first",
     "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
     "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "177b053f42893744f44c278249a5926f33852b8dc297603078ffff87321c5f30",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

@@ -15,5 +15,11 @@
     "overage": 0,
     "byte_overage": 5956,
     "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "a62d626c0a0b7162768ef62eb0620b98384ee42ea68f7338d16b6859f297bb76",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

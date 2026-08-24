@@ -20,5 +20,11 @@
     "related_open_row": "the RULE 2.5 coverage-state durable fix (extend agent trailing pathspec to include docs/data/coverage-state.json) — NOTE: that fix as currently scoped would make this exposure WORSE, not better, by putting more agents on the same shared-file commit path. Sequence the CAS helper first.",
     "severity_note": "No data was lost or corrupted in the observed instance — the 34 absorbed stamps were real, correct, and needed committing. The defect is that the commit message misdescribes its own contents, and that the same mechanism could just as easily absorb a peer's half-written or wrong value under an unrelated commit message."
   },
-  "createdAt": "20260824T201112Z"
+  "createdAt": "20260824T201112Z",
+  "_processed": {
+    "fingerprint": "ac698731b5a96a2f165bf472281ade1b071d48cc4ad194b3d69656303b3636ad",
+    "processedAt": "2026-08-24T20:22:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
