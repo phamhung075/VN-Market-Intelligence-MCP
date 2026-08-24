@@ -19,5 +19,11 @@
     "action_taken_this_tick": "Gate SKIPPED deliberately; no revert run; no file touched. Adoption claim taken then released after the Phase B intent:po:triage collision blocked the spawn.",
     "proposed_fix": "Make the gate fail-closed on an unresolvable zone: if task_zone is null/empty -> do NOT run git status/checkout at all; log + escalate instead. Never allow an empty pathspec to widen the revert scope. Optionally also restrict the revert to files whose last-writer can be attributed to the dead session.",
     "related_memory": "feedback_dead_worker_uncommitted_live_file_revert"
+  },
+  "_processed": {
+    "fingerprint": "4cb7d962e9f31d8fb8d18586237653dafc52b43ff5f20cfdecef19a97b6217a0",
+    "processedAt": "2026-08-24T21:41:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
