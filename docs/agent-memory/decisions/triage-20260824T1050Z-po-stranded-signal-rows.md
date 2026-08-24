@@ -108,3 +108,47 @@ wrong; the row is now manual-dispatch-flagged.
 - **`po-decision-bug5468-2026-08-23T15:27:38Z` left at `NEW`.** It is addressed `to: ops`, not
   `to: po`, and its own `po_ruling_20260824T0737Z` explains the hold: its MITIGATION clause is a
   standing, still-unactuated instruction. Not PO's to close.
+
+---
+
+## RULING 5 (added 11:15Z, after the fact) — I was wrong to plan to skip the push, and the gate proved it
+
+The section above says PUSH-BACKSTOP was skipped because the gate was "known red" and another attempt
+would only add noise. I ran it anyway before finalising. That was the right call and the reasoning
+for skipping was wrong in a way worth recording, because it is a general trap:
+
+**A gate that enumerates its own failures is a measurement instrument, not just an obstacle.** One
+`git push origin main` returned the complete offender set in a single line:
+
+```
+[size-lint] FAIL — 2 offending file(s) (scanned 1422):
+apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts — baseline=906L actual=1012L upper=996L
+apps/pdf-extractor/infrastructure/ocr_gateway.py         — baseline=527L actual=594L upper=579L
+```
+
+`pushBctcLayoutHandler.ts` is absent. It measures **85L** in HEAD and worktree, against the 252L its
+P0 row is named after. So for three days, four independent artifacts — the cowork-team `system-issue`
+envelope, the TNB handoff ACK of 01:37Z, two PO notebook carry-overs, and the row **I minted fifteen
+minutes before this measurement** — have all named the same wrong file as the fleet-push blocker.
+Every one of them inherited it from the one before without re-measuring. My own row's
+`po_not_a_duplicate` section confidently rules out a duplicate against a file that had already been
+fixed.
+
+The failure is not that the inherited fact was stale. It is that I re-verified *my* half of the pair
+(`tasksMdJanitorJob.ts`, measured at source before minting, correctly) and took the *other* half on
+trust because it appeared in three places. Corroboration between artifacts that all copy one another
+is not corroboration.
+
+**Consequences filed rather than narrated:** `FIX-SIZELINT-OCRGATEWAY-594L-IS-THE-REAL-SECOND-FLEET-PUSH-BLOCKER`
+(P0, `dev-pdf-extractor`, `apps/pdf-extractor/`) minted; a `po_correction_20260824T1115Z` written onto
+the row I got wrong; a `po_measurement_20260824T1115Z` written onto the stale P0 **without closing it**
+— that row sits `in_progress` under `dev-mcp-server`, the close-out and QA evidence are theirs, and I
+cannot tell from outside whether 252→85 is their shipped work or a side effect of another change.
+What I *can* assert, and did, is that it must stop being cited as the reason the push is blocked.
+
+**Second-order:** the two live offenders are in **different zones with different owners**, so the
+standing "one highest-value dispatch" recommendation is structurally wrong — it needs a coordinated
+two-hop dispatch. And this is the third consecutive serial offender: one file gets fixed, the gate
+immediately surfaces the next. AC-5 on the new row asks whether baseline-tolerance is generating a
+permanent treadmill, because a one-file-per-day unblock cadence against 213 unpushed commits never
+converges.
