@@ -1,0 +1,30 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phát triển bất động sản khu dân cư/khu đô thị (BĐS)",
+  "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường phía Nam",
+  "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (36+ kỳ liên tiếp) — không có số liệu BCTC gốc để phân tích trực tiếp; ROE so-sánh-ngành 1.9% (dưới median 7.3% ngành BĐS) từ nguồn peer-comparison",
+  "mgmt": "Không đánh giá được (thiếu dữ liệu BCTC gốc); dòng tiền ngoại 5 phiên +21K cp ròng (mạnh hơn ngành -2K cp)",
+  "as_of": "2026-08-24T15:10:00Z",
+  "period_extraction_lag": "Q2-2026 PDF trên hệ thống từ 2026-08-01 (~23 ngày) — get_bctc_full vẫn 'Chưa có dữ liệu' cho MỌI kỳ (không riêng Q2); anomaly đã báo dev-team (c162, chưa xử lý)",
+  "valuation": {
+    "pe": 66.5, "pb": 1.2, "sector_pe_median": 16.1,
+    "earning_yield_pct": 1.50, "max_deposit_rate_pct": 5,
+    "ey_spread_pp": -3.50, "verdict": "AVOID"
+  },
+  "kinhdich_reading": {"que": "Quan (20)", "xu_huong": "TRUNG TINH", "tin_hieu": "THAN TRONG", "do_tin_cay_pct": 13},
+  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có tín hiệu rủi ro pháp lý",
+  "esc_gate": {
+    "ESC-1_accounting_manipulation": "UNEVALUABLE — no BCTC data ('Chưa có dữ liệu')",
+    "ESC-2_balance_sheet": "UNEVALUABLE — no BCTC data",
+    "ESC-3_ocf_vs_np": "UNEVALUABLE — no BCTC data",
+    "ESC-4_nonop_share": "UNEVALUABLE — no BCTC data",
+    "ESC-5_refine_confidence": "UNEVALUABLE — no BCTC data, no report_id"
+  },
+  "data_quality_note": "valuation_verdict AVOID — do NOT post bullish signal per stage-analyze.md rule",
+  "regime": "NEUTRAL", "carry_regime": "NEUTRAL"
+}
