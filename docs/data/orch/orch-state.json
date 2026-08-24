@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "UC-SDF-P2 plan-only deliverable landed (ba) and moved to review[] with next_agent=architect. Head released — next dispatch picks from the board normally.",
-    "updated_by": "ba (UC-SDF-P2 lane-move)",
-    "updated_at": "2026-08-24T03:17:29Z"
+    "status": "in_progress",
+    "active_task_id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked CCATO-MCP-T6-TOOL-REGISTRATION — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-24T03:31:39Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22211,26 +22211,6 @@
         "status_note": "Orphan-adopted 2026-08-23T23:01:30Z by dev-team tick 2026-08-23T22:37Z from reaped session 007e33e4. Work is COMPLETE and committed (d569db23a fix + f0ee4481f lane-move); no resume-spawn issued — checkpoint carried no git_sha and board state shows the fix already landed. Row parked at REVIEW awaiting its reviewer. redispatch_count=1."
       },
       {
-        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
-        "type": "IMPL-XS",
-        "status": "REVIEW",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
-        "depends": [
-          "CCATO-MCP-T5-USECASE"
-        ],
-        "next_agent": "qa",
-        "supervised": false,
-        "updated_at": "2026-08-24T02:47:58Z",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-08-24T02:25:39Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server",
-        "status_note": "[dev-mcp-server] Implementation Record: registered narrative_truth_gate (interface/mcp/tools/system/narrativeTruthGateTool.ts + narrativeTruthGateFormat.ts, split for size-lint <=120L) wrapping CCATO-MCP-T5 runNarrativeTruthGate(); wired into registry.ts (#187). Byte-identical [FAIL]/[PASS]/[WARN] lines to scripts/narrative-truth-gate.sh L371-378 (em-dash verified byte-for-byte); isError:true only on CONFIG_ERROR per brief §3.1. Regenerated docs/data/tool-registry.json + docs/data/project-stats.json via canonical generators (toolCount 183->184, cronJobCount unchanged 88). Commit 4a59d67ec (pathspec: registry.ts, narrativeTruthGateTool.ts, narrativeTruthGateFormat.ts, CCATO-MCP-T6-TOOL-REGISTRATION.test.ts, tool-registry.json, project-stats.json). Tests: CCATO-MCP-T6-TOOL-REGISTRATION.test.ts 10/10 pass (registration + registry.ts wiring + CONFIG_ERROR/zero-candidate-PASS through the real handler, I/O-safe only + pure formatGateReport byte-fidelity FAIL/PASS/WARN/mixed) — FAIL verdict deliberately not exercised end-to-end through the registered tool (no deps override -> would write the live orch-state.json; T5s own suite already covers full orchestration+signal-emit). tsc --noEmit clean. Server boot on PORT=3099: /health toolCount=184, zero import errors. tool-registry-parity.test.ts 17/17 pass. Full suite: 15441 pass/51 fail/1 error/1283 files -- failing file-set = documented 15-file baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline) + 1 unrelated new flake (1227-source-health-empty-result.test.ts, globalSourceTracker cross-file ordering, 8/8 pass in isolation, zero narrative_truth_gate/CCATO hits in full log) -- same pattern QAs own T5 verify already hit (their run: baseline-15 + 1 unrelated VPS-fetcher flake). size-lint: 2 pre-existing unrelated offenders (pushBctcLayoutHandler.ts, tasksMdJanitorJob.ts), my new files well under 120L, zero new offenders. NOT DONE: docs/agents/tools/list/INDEX.md + narrative_truth_gate.md stub regen was run then reverted uncommitted -- that path is under docs/agents/** (agent-father exclusive zone per this tasks hard constraint). Follow-up: run `python3 scripts/gen-tool-list-stubs.py && bash scripts/gen-tools-index.sh` (idempotent, zero risk) to sync those 2 files (+1 tool, 183->184)."
-      },
-      {
         "id": "UC-SDF-P2",
         "type": "SPIKE",
         "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
@@ -22427,6 +22407,27 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
+      },
+      {
+        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+        "type": "IMPL-XS",
+        "status": "QA",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
+        "depends": [
+          "CCATO-MCP-T5-USECASE"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-24T03:31:39Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-24T03:31:38Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "status_note": "[dev-mcp-server] Implementation Record: registered narrative_truth_gate (interface/mcp/tools/system/narrativeTruthGateTool.ts + narrativeTruthGateFormat.ts, split for size-lint <=120L) wrapping CCATO-MCP-T5 runNarrativeTruthGate(); wired into registry.ts (#187). Byte-identical [FAIL]/[PASS]/[WARN] lines to scripts/narrative-truth-gate.sh L371-378 (em-dash verified byte-for-byte); isError:true only on CONFIG_ERROR per brief §3.1. Regenerated docs/data/tool-registry.json + docs/data/project-stats.json via canonical generators (toolCount 183->184, cronJobCount unchanged 88). Commit 4a59d67ec (pathspec: registry.ts, narrativeTruthGateTool.ts, narrativeTruthGateFormat.ts, CCATO-MCP-T6-TOOL-REGISTRATION.test.ts, tool-registry.json, project-stats.json). Tests: CCATO-MCP-T6-TOOL-REGISTRATION.test.ts 10/10 pass (registration + registry.ts wiring + CONFIG_ERROR/zero-candidate-PASS through the real handler, I/O-safe only + pure formatGateReport byte-fidelity FAIL/PASS/WARN/mixed) — FAIL verdict deliberately not exercised end-to-end through the registered tool (no deps override -> would write the live orch-state.json; T5s own suite already covers full orchestration+signal-emit). tsc --noEmit clean. Server boot on PORT=3099: /health toolCount=184, zero import errors. tool-registry-parity.test.ts 17/17 pass. Full suite: 15441 pass/51 fail/1 error/1283 files -- failing file-set = documented 15-file baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline) + 1 unrelated new flake (1227-source-health-empty-result.test.ts, globalSourceTracker cross-file ordering, 8/8 pass in isolation, zero narrative_truth_gate/CCATO hits in full log) -- same pattern QAs own T5 verify already hit (their run: baseline-15 + 1 unrelated VPS-fetcher flake). size-lint: 2 pre-existing unrelated offenders (pushBctcLayoutHandler.ts, tasksMdJanitorJob.ts), my new files well under 120L, zero new offenders. NOT DONE: docs/agents/tools/list/INDEX.md + narrative_truth_gate.md stub regen was run then reverted uncommitted -- that path is under docs/agents/** (agent-father exclusive zone per this tasks hard constraint). Follow-up: run `python3 scripts/gen-tool-list-stubs.py && bash scripts/gen-tools-index.sh` (idempotent, zero risk) to sync those 2 files (+1 tool, 183->184).",
+        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -22628,13 +22629,13 @@
         "last_served_tick": "2026-08-24T03:01:50Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-24T00:27:26Z"
+        "last_served_tick": "2026-08-24T03:30:56Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T03:27:30Z",
+    "_updated_at": "2026-08-24T03:30:56Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
