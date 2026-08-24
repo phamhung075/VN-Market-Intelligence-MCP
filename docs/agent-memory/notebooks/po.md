@@ -1,33 +1,34 @@
 # PO Notebook
 
-## 2026-08-24T14:40Z — pre-evict triage of 11 READ signal rows + 22-envelope inbox; 2 mints, 1 self-retraction
+## 2026-08-24T16:53Z — 2 auditor-tier1 defects ruled: 1 mint, 1 promote, 2 handed-me premises corrected
 
-Prior 14:05Z section dropped whole (AC-2a: cap pressure → drop, never rewrite a retained section).
+Prior 14:40Z section dropped whole (OVERWRITE class, preamble+1 section, ≤50L).
 
-### The 11 pre-evict rows: 0 uncovered, but 1 citation was wrong
-All 11 already had owner rows in git HEAD from the 13:20Z tick, so **nothing was lost to the 14:41:44Z evict**. Re-resolved every claim as a `task_board.`-prefixed jq path.
-- **Mis-citation found (rows 1-4, A-29/A-29b):** the 13:20Z note named `FIX-CRONS-FIVE-STALE-...-RAGFTSREBUILD-35-DAYS` as owner. Its title enumerates **six other jobs** and names none of morningBriefing/alertDigest/marketOpen/marketClose. True owners: `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL` (A-29b unresolved-join **is** its "enumerates CRONS config table not the registered scheduler table" defect) + `FIX-A29-CRON-GAP-NO-OUTAGE-WINDOW-DISCRIMINATOR`, plus `FIX-CRON-NONRECOVERY-...-TIER3-MORNINGBRIEFING-BACKTESTRUNS` for morningBriefing.
-- alertDigest coverage **was** real but lived in bespoke key `po_scope_extension_20260824T1320Z` — invisible to every conventional reader. Folded into `status_note`.
-- Flipped all 11 READ→`triaged` only after confirming `triaged` sits in `TERMINAL_SIGNAL_STATUSES` (orch-cold-evict.sh:181) exactly like READ — no stranding. Added target-row-id back-pointers to `disposition`.
+### Both rulings ACTED, not narrated
+One `orch-apply.sh` pipe, both mutations in a single candidate (short read→transform gap, per the CAS-window lesson). `backlog 537→536`, `ready 109→111`, task_total `833→834`, no dup ids, `.head` untouched and still idle (it named neither row).
+- **MINTED** `FIX-AUDITOR-TIER1-PROBE-TEST-INVERTED-ASSERTION-L1422-FALSE-GREEN` → `ready[]`, P1, FIX/S, zone `cross-service/`, next_agent=**developer**.
+- **PROMOTED** `FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED` `backlog→ready`, held P1, next_agent=**architect**.
 
-### Bespoke-field sweep — the anti-pattern is fleet-wide, not a slip
-Deleted `po_triage_20260824T1320Z` from **83** signal rows (folded into `po_triage_note`), plus `po_ruling_20260824T1405`, `po_fold_...`, `po_close_evidence_...`, `po_correction_...`, `po_measurement_...`, `po_occ_...`, `po_scope_extension_...` on 5 board rows. Three agents minted these today; nothing reads any of them.
+### The inverted assertion is real, and I re-derived every number
+`check()` (L30-39) increments PASS **only** on the literal string `"true"`. `grep -c '^check "'` = **264**; `grep -c '&& echo true || echo false'` = **263**; the sole `|| echo true` without a preceding `&& echo true` is **L1422**. So when the timestamps DIFFER (healthy) the substitution is empty → FAIL; when IDENTICAL (broken) → PASS. Exact negation of its own label.
+Consequence that matters: `FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT` went DONE_VERIFIED on a **264/264 run whose greenness depended on the inversion**. The **263/1** run was the correct one. The flakiness IS the bug.
+Exculpatory evidence I recorded in the row so nobody re-derives it: live `auditor-tier1-spawn-debounce.json` entry[0] has `first_seen_at=12:42:19Z` ≠ `last_seen_at=12:45:14Z` — production **does** advance it. Test-only defect; the label is the right expectation.
 
-### I published a false claim at 14:31Z and retracted it at 14:34Z
-Folding the 6 `auto-push-abort` envelopes I wrote into two review rows that they are "the two live size-lint blockers" — **taken from their stale titles without re-measuring**. Then measured:
-- `pushBctcLayoutHandler.ts` **85L** (not 252L; fix landed `079471317`) · `tasksMdJanitorJob.ts` **472L** (not 1012L, cap 906) · `ocr_gateway.py` **515L** (not 594L, cap 527 — only 12L slack, likeliest to re-breach).
-- `size-lint --check` → **EXIT 0, 0 unjustified offenders**. `task-claim-lint` → EXIT 0. `tool-registry-parity` → 17 pass/0 fail. **All three doc-shaped pre-push gates are GREEN.**
-So the standing "a red pre-push gate strands the fleet" story is **stale**. Retracted in-row rather than deleted, so the error stays auditable. Lesson: I re-verified that my *writes landed* but not that my *claim was true* — those are different checks.
+### I refused the one-character fix
+Un-inverting alone re-arms a REAL flake — both ticks can land in the same wall-clock second, making `!=` legitimately false. So AC-2 mandates de-flaking (not just un-inverting), AC-3 mandates **3 consecutive identical-count runs** (one green run proves nothing about a same-second race), AC-4 an opt-IN idiom lint, AC-5 a re-run of the **corrected** suite against the approval it corrupted — filing a NEW row if the ledger misbehaves, never silently reopening the DONE_VERIFIED one.
 
-### Minted (2) — everything else folded
-- `FIX-PO-TRIAGE-BUGESCALATION-HEARTBEAT-GUARD-PAYLOAD-CLASS-UNROUTED` — triage-signals.md enumerates 4 `bug-escalation` payload classes; `[heartbeat-guard]` is a live 5th with **0 grep hits in both the table and the long-tail sibling**. It is the *only* class that HARD-BLOCKS a commit, and it is the one with no rule.
-- `CLEAN-CTXBLOAT-CRON-DETECT-LOOP-REGISTER-12349B-OVER-12000B-BYTECAP` — byte-cap only (173L/200L fine). 6 rows mention the filename; all 6 incidental, none about size.
-- Folded, not minted: notebook-prune 8th+9th → `...AC6-SIGNAL-HEREDOC...` (occ=9; the "Nth CONSECUTIVE" naming **is** the bug); 2 sweep-guard `escalated=true` → occ 29→31; cj dupe pair → CCATO row.
+### Corrected 2 premises I was handed (neither changed the verdict)
+1. **Timeline inverted.** The prompt framed the 16:40:57Z tick as post-ack-removal evidence. It is the reverse: `auditor-tier1-last-trigger.json` `written_at=16:40:57Z` still carries the `elif`/`STALE-ACK(tracked_by=FIX-SIZELINT-…,status=DONE_VERIFIED)` branch, while commit `930297f37` landed **16:44:23Z, 3m26s later**. That tick is a PRE-removal observation; the post-removal prediction is sound by code reading but **has not been observed live**.
+2. **"The ack was the only thing SUPPRESSING the not-loaded line"** — not quite. Only `ack_rc -eq 0` suppresses. The removed ack was *stale*, so it sat in the `elif` branch and was already emitting the entity line; removal was a **no-op on both signature and verdict**. Conclusion survives: `auditor-tier1-probe.sh` L719-731 shows `elif` and `else` emit the byte-identical `printf 'launchd_agents\t%s\n' "$label"`.
 
-### Two over-ceiling rows forced `detail_ref`
-CCATO row (12475B) and sweep-guard row (12502B) reject any inline growth, so evidence went to `backlog-detail.json`. Fixed its `count`/`items` drift while there: **468→472**, `updated_at` unfrozen.
+### Coverage absence re-proven my own way, not inherited
+Resolved `[paths(objects with id and (status or title))]` → **12** row-bearing containers (incl. `active_sprints[].tasks[]`, `closed_sprints[].tasks[]`, `signal_queue.rows`), then matched `id+title+description+status_note+acceptance_criteria+files+notes` — 4 fields wider than the prompt. Zero open owners. The 3 file-naming rows are all DONE_VERIFIED, and one of them (`TASK-CRON-LIVENESS-PROBE-TESTS`) is actually scoped to a **different** file, `cron-marker-liveness-probe.test.sh`. The two `deflake` backlog rows are **not** class-level owners — `FIX-RAG-TEMPORAL-DECAY-TEST-JITTER` pins `135-rag-temporal-decay.test.ts` (zone `apps/mcp-server/`, priority low). `signal_queue.rows[]` created ≥16:00Z = **0**, so the auditor's "recommend minting" recommendation had indeed gone nowhere.
+
+### Constraints written INTO the promoted row, not just obeyed here
+An architect picking that row up could "helpfully" re-arm the job, so `status_note` carries: never re-arm (`plutil -p` verified live — `"Disabled" => 1`, `StartInterval => 1800`, absent from `launchctl list`; the plist is **BINARY** so `grep -i disabled` false-negatives), never add/retarget an ack, don't conflate with `docker-events`(exit 143). Design *hint* only, left to architect: the probe's `obsolete_labels` (L696, single entry `com.vn-market.socat-bridge`) is the wrong semantics — a deliberately-disabled job isn't obsolete; read the plist's own `Disabled` key as EXPECTED-DISABLED and it generalises.
 
 ### Carry-over
-- **`triage-signals.md:52-53` CLEAR block is broken under zsh** — `echo "$json" | jq` mangles `\n`. Hit it live; it **fail-loud aborts** (not the "SILENT-NOOP" its row title claims). Cleared with `printf '%s'`. Row `...ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP` wants renaming.
-- 82/112 signal rows still carry **no `dedup_key`** across **4** producers (chef 78, code-janitor 2, auditor 1, tnb 1) — a chef-only fix leaves it open.
-- `ocr_gateway.py` at 515L/527L is 12L from re-breaching.
+- **Promotion was not cosmetic:** `ready[]` holds only **2** rows with `next_agent=architect`, so this is a shallow queue, not the 109-deep lane the raw count implies.
+- Promoted row carries `owner=developer` but `next_agent=architect` (pre-existing mismatch, inherited from backlog). Dispatch reads `next_agent`, so I left it rather than churn the board a second time — worth a sweep if this shape is common.
+- **Did NOT push** (PUSH-AUTONOMY-1 unsatisfied) and did NOT touch fleet-push, per standing user decision.
+- T1 stays FAILURE ~1 spawn/hour until the architect row ships; debounce window expires 17:40:57Z, then re-arms at spawn_count 1. Bounded, never zero.
