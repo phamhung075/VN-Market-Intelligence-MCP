@@ -17021,6 +17021,54 @@
         ],
         "not_blocking": "P3 — hygiene, blocks nothing. Byte-cap only, 349B over.",
         "root_cause": "context-bloat-backstop-hook fired 2026-08-24T13:30:40Z: class=skill-file, reason=byte-cap, line_count=173 vs cap=200 (LINE CAP IS FINE, overage 0), byte_count=12349 vs byte_cap=12000, byte_overage=349, action_required=prune_or_split. RAW-RE-VERIFIED LIVE with `wc -lc`, NOT read off the signal payload: 173L / 12349B, exactly matching. Breach is BYTE-CAP ONLY. NOT SUPPRESSIBLE as a false positive: `grep -c size-justification` on the file returns 0, so the FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS (task_board.backlog[41]) header-suppression path does not and would not apply. DEDUP EVIDENCE (checked before minting, and this is the reason a new row is correct rather than a fold): the three sibling CLEAN-CTXBLOAT-* rows each cover a DIFFERENT file - CLEAN-CTXBLOAT-NOTEBOOK-WRITE-SKILL-215L-OVER-200L-CAP, CLEAN-CTXBLOAT-CRON-COWORK-TEAM-SKILL-242L-OVER-200L-CAP, CLEAN-SKILL-BLOAT-TASK-LOCK - and none names this file. Six other rows DO mention the string \"cron-detect-loop/register\" somewhere in their bodies (task_board.backlog[501], backlog[511], backlog[512], ready[12], review[25], review[29]) but every one of them is an INCIDENTAL filename mention inside auditor tier-1 spawn-debounce / freshness / sidecar-committer work - not one is about this file's SIZE, so none of them is coverage. AC-1: file <=200L AND <=12000B, or split with a lazy-load pointer per the CLAUDE.md Lazy Load Pattern. AC-2: the /cron-detect-loop re-arm procedure must still execute end-to-end from the trimmed/split file - verify by RUNNING it, not by reading it (this register is loaded by .claude/skills/cron-detect-loop/SKILL.md Step 1 and the 4-cron detect loop is re-armed after every session restart, so a broken split silently costs the whole loop). P3 hygiene, blocks nothing; overage is only 349B so a trim is still viable here, unlike the cron-cowork-team sibling which had to become a split."
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-container-capacity-pressure",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'container_capacity_pressure' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:container_capacity_pressure",
+        "created_at": "2026-08-24T16:18:07Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=container_capacity_pressure routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-24T16:18:08Z"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-launchd-tracking-gap",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'launchd_tracking_gap' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:launchd_tracking_gap",
+        "created_at": "2026-08-24T16:18:08Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=launchd_tracking_gap routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-24T16:18:09Z"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-memory-loop-breach",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'memory_loop_breach' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:memory_loop_breach",
+        "created_at": "2026-08-24T16:18:09Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=memory_loop_breach routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-24T16:18:10Z"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-memory-pressure-transient",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'memory_pressure_transient' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:memory_pressure_transient",
+        "created_at": "2026-08-24T16:18:10Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=memory_pressure_transient routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-24T16:18:11Z"
       }
     ],
     "closed_sprints": [
