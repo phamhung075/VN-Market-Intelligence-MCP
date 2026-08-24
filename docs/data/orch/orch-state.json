@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T5-USECASE",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 2 row(s) (2 from review[], 0 from done[]), highest-ranked CCATO-MCP-T5-USECASE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-23T23:29:49Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-24T00:01:59Z",
+    "updated_by": "dev-team (WF-1b terminal-lane head reset)",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -140,7 +139,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -151,7 +150,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-decbd5",
@@ -266,7 +268,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -277,7 +279,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-5cf0e7",
@@ -392,7 +397,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -403,7 +408,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-728218",
@@ -518,7 +526,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -529,7 +537,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-3e2d77",
@@ -644,7 +655,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -655,7 +666,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-904431",
@@ -770,7 +784,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -781,7 +795,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-301fef",
@@ -896,7 +913,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "READ",
+        "status": "RETRACTED",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -907,7 +924,10 @@
           "returned_value": "not found in database",
           "cycle": "2026-08-24",
           "gate_version": "1"
-        }
+        },
+        "retracted_at": "2026-08-24T00:12:36Z",
+        "retracted_by": "po",
+        "retraction_reason": "VERIFIED FALSE POSITIVE. payload.returned_value is the verbatim string \"not found in database\", which is entry 5 of 10 in docs/data/claim-tool-map.json .tool_null_markers. Both gate engines classify a tool_null_markers hit as NULL (an honest data gap) and emit a signal row ONLY for a FAIL verdict — scripts/narrative-truth-gate.sh:252/270 plus the :414 `if v[\"result\"] != \"FAIL\": continue` guard, and the same SSOT check ported at apps/mcp-server/src/domain/services/narrativeTruthGate/verdictClassifier.ts:63-69. This row's own payload therefore CONFIRMS chef's absence claim while its summary accuses chef of contradicting it. Retracted by PO Step 0-SIG; the emitter defect is owned by FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID."
       },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-c0ed3b",
@@ -9991,7 +10011,10 @@
         ],
         "not_duplicate_of": "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK is the inverse guard hole (HEAD-present/staged-absent heading waved through as an authorized drop). This row is the opposite case: the heading is present on BOTH sides and its BODY was rewritten. FIX-AUDIT-OUTPUT-CONTRACT-...-MISMATCH covers the signal_queue_rows_written field's unsound reconciliation rule; this row covers a different field (signals_posted) mutated by a SECOND COMMIT after publication — but see AC-1, they may share one actuator, in which case fold this row into that one rather than shipping two fixes.",
         "theme_link": "Same failure THEME as FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED, discovered in the same tick from a different signal: a dedup-SKIP cycle gets written into a PERMANENT record (there DASHBOARD.md, here the notebook OUTPUT-CONTRACT line) as though it had emitted. Both inflate apparent alerting coverage and both would mask a real paging gap. Worth one architect look at whether the dedup-SKIP outcome is threaded into ANY of the auditor's post-cycle bookkeeping sinks.",
-        "updated_at": "2026-08-06T21:34:09Z"
+        "updated_at": "2026-08-24T00:12:36Z",
+        "occurrence_count": 2,
+        "status_note": "OCCURRENCE 2, folded by PO Step 0-SIG 2026-08-24T00:12:36Z (no re-mint, per triage-signals.md bug-escalation 4th-class rule): bug-escalation envelope 4bf8d716 from commit-sweep-guard, createdAt 2026-08-23T23:46:32Z, payload `[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c114 · 2026-08-23T21:03Z' has different content staged than at HEAD`. SAME agent (system-auditor), SAME mechanism (a second commit rewriting an already-published retained section), SAME guard still mode=warn so nothing blocked. This row's title records cycle c71; this is cycle c114. The 4th-class rule mints a FIX only on a >=2-cycle repeat for the same agent — that threshold is now met and this row is it, so it should be treated as confirmed-recurring rather than single-occurrence. PO did NOT attempt to reproduce the index-vs-HEAD diff: per the routing rule, a clean worktree read after the fact is OUTCOME evidence and cannot refute the finding.",
+        "updated_by": "po"
       },
       {
         "id": "OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND",
@@ -14846,9 +14869,10 @@
           "AC-3 DONE only when `git rev-list --count origin/main..HEAD` returns to a small number after a real push — i.e. the fleet backlog actually drains. Reporting the gate green while ahead stays at 46 is a false green.",
           "AC-4 DO NOT close this as covered by FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. That row is a DIFFERENT defect (the gate scans the working tree instead of `git diff @{u}..HEAD`, so a live peer's uncommitted mid-edit can block everyone). Its fix would NOT unblock tonight's push: tonight's offender is already COMMITTED and therefore already inside the @{u}..HEAD range. Both rows are real; neither subsumes the other."
         ],
-        "status_note": "PREMISE RE-MEASURED BY PO THIS TICK (2026-08-23T21:08:06Z), not taken from the envelope: the two auto-push-abort envelopes carried ahead=24 and ahead=43 snapshots, both stale; live is ahead=46 behind=0. FALSIFIED SIBLINGS — do not dispatch either as a fix for this: (1) FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE (backlog, ops) blames launchd log rotation; (2) an EXCONFIG/plist-ExitConfig theory that is no longer carried by any live lane row. Neither would move this push. CONVERGING EVIDENCE, all this tick: auto-push-abort x2 (fleet-worktree-push, reason=push-fail, dedup_key auto-push-abort:push-fail); bug-escalation from alert-commander 20:10:16Z naming this exact file and the exact 228/252/250 numbers; tran-ngoc-bau c133 audit findings table, severity HIGH, BUG telegram 5477. CI on origin/main also stays RED until a push advances origin/main, so this row gates the CI-green verification of every other CI row currently open. || PREMISE RE-MEASURED AGAIN BY PO 2026-08-24 (Step 0-SIG, 5 more auto-push-abort envelopes, all reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 95 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelopes' own ahead snapshots (49/58/73/82/92) were all stale as the routing row warns. docs/agent-memory/sessions/fleet-push.log confirms the SAME gate on all 4 most recent attempts: tsc passes, then `[size-lint] FAIL — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts — baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)` -> `[pre-push] BLOCKED`. Backlog has grown 46 -> 95 unpushed commits since this row was minted; still P0, still one 2-line trim or baseline bump, and it now also gates every CI-green verification on the board.",
-        "updated_at": "2026-08-23T23:41:25Z",
-        "occurrence_count": 1
+        "status_note": "PREMISE RE-MEASURED BY PO THIS TICK (2026-08-23T21:08:06Z), not taken from the envelope: the two auto-push-abort envelopes carried ahead=24 and ahead=43 snapshots, both stale; live is ahead=46 behind=0. FALSIFIED SIBLINGS — do not dispatch either as a fix for this: (1) FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE (backlog, ops) blames launchd log rotation; (2) an EXCONFIG/plist-ExitConfig theory that is no longer carried by any live lane row. Neither would move this push. CONVERGING EVIDENCE, all this tick: auto-push-abort x2 (fleet-worktree-push, reason=push-fail, dedup_key auto-push-abort:push-fail); bug-escalation from alert-commander 20:10:16Z naming this exact file and the exact 228/252/250 numbers; tran-ngoc-bau c133 audit findings table, severity HIGH, BUG telegram 5477. CI on origin/main also stays RED until a push advances origin/main, so this row gates the CI-green verification of every other CI row currently open. || PREMISE RE-MEASURED AGAIN BY PO 2026-08-24 (Step 0-SIG, 5 more auto-push-abort envelopes, all reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 95 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelopes' own ahead snapshots (49/58/73/82/92) were all stale as the routing row warns. docs/agent-memory/sessions/fleet-push.log confirms the SAME gate on all 4 most recent attempts: tsc passes, then `[size-lint] FAIL — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts — baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)` -> `[pre-push] BLOCKED`. Backlog has grown 46 -> 95 unpushed commits since this row was minted; still P0, still one 2-line trim or baseline bump, and it now also gates every CI-green verification on the board. || PREMISE RE-MEASURED A THIRD TIME BY PO 2026-08-24T00:12:36Z (Step 0-SIG; 1 more auto-push-abort envelope c733a9e1, reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 101 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelope's own snapshot said ahead=97 — stale on arrival, as this row's routing rule predicts. `wc -l apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` = 252, unchanged; baseline 228, ceiling 250. Trajectory of unpushed commits since mint: 46 -> 95 -> 97 -> 101. Still P0, still a 2-line trim or a baseline bump, and it still gates every CI-green verification on this board. PO did NOT push (router constraint) and did NOT repoint the gateway URL.",
+        "updated_at": "2026-08-24T00:12:36Z",
+        "occurrence_count": 1,
+        "updated_by": "po"
       },
       {
         "id": "FIX-CHEF-EVENING-ZEROCLUSTER-BRANCH-SKIPS-KINHDICH-AND-CAUSALCHAINS",
@@ -15049,6 +15073,80 @@
         "not_duplicate_of": "FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS (backlog, P0, agent-father) covers `recurring-bug` + `sprint_registry_dangling_ids` and does not mention `system_issue` in any form — resolved live before this row was minted. FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (backlog, P1, agent-father) is the prose-frozen 17-day umbrella for this same file (its inline prose is past ORCH_ROW_PROSE_CEILING_BYTES, so it cannot absorb this evidence). FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE owns the structural namespace question and must not absorb this tactical row. Same file and same owner as the P0 row above — land them in ONE agent-father hop.",
         "verification_gate": "qa sign-off against AC-1..AC-4.",
         "baseline_pass": true
+      },
+      {
+        "id": "FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID",
+        "type": "FIX",
+        "title": "42 narrative_contradiction rows landed in signal_queue in 86min carrying _updated_by=\"narrative-truth-gate\", but NEITHER sanctioned engine can have produced them: all 42 share ts 2026-08-24T00:00:00Z to the second across 3 batches ~1h apart (both engines read a real clock), and 7 of them classify a literal tool_null_markers value as a FAIL (both engines map that to NULL). signal_queue.rows[] has no writer authentication and no dedup_key, so 4 distinct findings became 42 rows and 7 false accusations against chef.",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "M",
+        "next_agent": "developer",
+        "owner": "po",
+        "depends": [],
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-24T00:12:36Z",
+        "created_by": "po",
+        "updated_at": "2026-08-24T00:12:36Z",
+        "updated_by": "po",
+        "dedup_key": "signalqueue_emission_integrity:narrative_contradiction",
+        "source": "PO Step 0-SIG 2026-08-24T00:03Z — 6 narrative_contradiction envelopes drained into .dev_team_idle_chain.pending_triage_inbox (4 distinct envelope_ids, 2 of them delivered twice: orch-apply accepted duplicate envelope_ids without complaint). Router flagged the family; PO re-measured every number at source before minting.",
+        "root_cause": "THREE independent defects at ONE choke point — .signal_queue.rows[] append has no producer authentication, no content dedup, and no verdict/SSOT consistency check. (A) FORGED WRITER IDENTITY: the append stamps .signal_queue._updated_by = \"narrative-truth-gate\", which is the exact --arg who literal at scripts/narrative-truth-gate.sh:446. Anything that can run jq | orch-apply.sh can claim to be any producer; orch-apply.sh validates shape, never provenance. (B) NO dedup_key: neither emitter emits one (bash builds the row dict at scripts/narrative-truth-gate.sh:415-437, the TS port at apps/mcp-server/src/infrastructure/signals/narrativeContradictionSignalWriter.ts:60-90 — grep both, zero dedup_key key), and the row id is ntg-{compact_ts}-{dimension}-{ticker}-{uuid4[:6]}, so the random suffix makes every duplicate id-unique BY CONSTRUCTION. The already-open FIX-SIGNALQUEUE-DUP-ID-GUARD is therefore structurally unable to catch this class — see po_not_a_duplicate. (C) HARDCODED SUMMARY vs PAYLOAD: scripts/narrative-truth-gate.sh:421-423 templates the summary as '... but {tool} returned non-null data' unconditionally, never reading v['returned_summary'], so a row whose payload says the opposite still reads as an accusation.",
+        "evidence": "ALL MEASURED AT SOURCE 2026-08-24T00:03-00:09Z, jq/git, not taken from the dispatch. (1) VOLUME + AMPLIFICATION: jq '[.signal_queue.rows[]|select(.id|startswith(\"ntg-\"))]|length' = 42. Grouping those 42 on the content fingerprint [from,type,payload,ts] yields exactly FOUR groups with multiplicities 14 / 14 / 7 / 7. One finding (chef's VNM technical_indicators claim) x 4 probe values = 10.5x amplification. jq '...|has(\"dedup_key\")' = false on all 42. (2) TIMESTAMP IS NOT A CLOCK READ — DECISIVE: all 42 carry ts \"2026-08-24T00:00:00Z\" and .signal_queue._updated_at is the same string. git-traced the count across commits: 0 rows at b0695c074 (committed 00:32:24+02:00 = 22:32Z), 18 at 4145766ac (00:49:52+02:00 = 22:49Z), 36 at 1e476e889 (01:46:52+02:00 = 23:46Z), 42 at b039090c3 (01:58:32+02:00 = 23:58Z). THREE append batches spread over 86 minutes, every row second-identical. scripts/narrative-truth-gate.sh:409 uses python datetime.datetime.now(datetime.timezone.utc); narrativeContradictionSignalWriter.ts:41-66 uses new Date().toISOString(). Neither can emit the same second three times an hour apart. The host is CEST (+02:00), so 2026-08-24T00:00:00Z is the LOCAL date's midnight wearing a Z suffix. (3) SEVEN INVERTED VERDICTS — DECISIVE: 7 of the 42 (e.g. ntg-20260824T000000Z-technical_indicators-VNM-9e3dad) carry payload.returned_value = \"not found in database\" while their own summary asserts 'get_technical_indicators returned non-null data'. \"not found in database\" is a VERBATIM member of docs/data/claim-tool-map.json .tool_null_markers (10 entries; it is the 5th). scripts/narrative-truth-gate.sh:252 + :270 classify any tool_null_markers substring hit as NULL (honest gap), and the emit loop at :414 skips every verdict whose result != FAIL. So those 7 rows are UNREACHABLE through the bash engine's own code path, and equally so through verdictClassifier.ts:63-69 which ports the same SSOT check. Their evidence CONFIRMS chef's absence claim; the row accuses chef anyway. (4) ENGINE ATTRIBUTION: scripts/narrative-truth-gate.sh is referenced by exactly one live invoker, .claude/skills/claim-truth-gate/SKILL.md (agent-invoked, not cron). The TS path is not reachable at all — CCATO-MCP-T6-TOOL-REGISTRATION is still READY, so narrativeTruthGateTool.ts is unregistered. (2)+(3) together mean the rows were composed rather than emitted; PO does NOT claim to have identified which actor did it — that is AC-1's job, and the row must not be closed on a guess.",
+        "files": [
+          "scripts/orch-apply.sh",
+          "scripts/narrative-truth-gate.sh",
+          "docs/data/claim-tool-map.json",
+          "apps/mcp-server/src/infrastructure/signals/narrativeContradictionSignalWriter.ts",
+          "docs/data/orch/orch-state.json"
+        ],
+        "ac": [
+          "AC-1 ATTRIBUTE BEFORE FIXING — DO NOT SKIP. PO proved the rows did not come from either engine's code path but did NOT identify the writer. Determine it from evidence, not inference: check whether scripts/narrative-truth-gate.sh actually ran in the window (its stdout marker is '[INFO] narrative-truth-gate: narrative_contradiction signal(s) appended...'), check agent transcripts/notebooks for chef around 22:32Z / 23:46Z / 23:58Z on 2026-08-23, and check whether any flow doc or skill pastes a copy of the jq append template with a literal ts. If the answer turns out to be that an agent hand-composed the append, say so plainly in the RETURN — that changes AC-2's shape from a script bug to an authentication requirement, and it is the single most load-bearing unknown on this row.",
+          "AC-2 AUTHENTICATE THE PRODUCER AT THE CHOKE POINT, NOT WITH MORE PROSE. Every signal_queue write in the fleet passes through scripts/orch-apply.sh; that is where this belongs. Reject (or at minimum quarantine + loudly mark) a candidate that sets .signal_queue._updated_by to a MACHINE producer id (narrative-truth-gate and friends) when the write did not originate from that script — e.g. require the script to pass a caller-declared env marker, mirroring the existing ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS / ORCH_APPLY_DECLARED_INBOX_TRIAGED pattern already in scripts/orch-conservation-check.mjs. Precedent to read first: FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT-DEFEATS-7D-WINDOW's po_retarget note — a fourth prose instruction to an LLM caller is a KNOWN-FAILED fix for this exact shape.",
+          "AC-3 THE FAIL MODE MUST NOT DROP A REAL FINDING. Same hazard as the AC-3 on FIX-EMITSIGNAL-DEDUPKEY-... : a validator that silently discards a genuine narrative_contradiction is strictly worse than the noise it removes. Quarantine + a NEW distinct greppable marker, never a silent drop, never an abort that loses the row.",
+          "AC-4 SELF-CONSISTENCY GATE ON narrative_contradiction ROWS. Reject at write time any row of type narrative_contradiction whose payload.returned_value matches a docs/data/claim-tool-map.json .tool_null_markers entry — that combination is structurally impossible for a FAIL verdict and is what produced the 7 false accusations. Read the marker list from the SSOT file at runtime; do NOT hardcode the 10 strings (the script itself already refuses to hardcode them — see its header comment lines 26-27).",
+          "AC-5 FIX THE SUMMARY TEMPLATE AT BOTH ENGINES. scripts/narrative-truth-gate.sh:421-423 and narrativeContradictionSignalWriter.ts must derive the summary from the actual returned value rather than asserting 'returned non-null data' unconditionally. Keep the two byte-faithful to each other — CCATO-MCP-T4's QA record certified that equivalence explicitly, so breaking it silently regresses a DONE_VERIFIED row.",
+          "AC-6 EMIT A dedup_key AND HONOUR IT. Key on the finding, not on the emission: {type}:{agent_id}:{tool}:{ticker_or_dim}:{cycle}. On a hit, bump an occurrence counter on the existing row instead of appending a new one. Sanity target from the live data: the 42 rows must collapse to at most 4.",
+          "AC-7 CLOCK. Both engines already read a real UTC clock, so do not 'fix' them blindly — instead add a write-time guard that rejects a signal row whose ts is in the future relative to the orch-apply wall clock, and whose ts is second-identical to an existing row from a different batch. This is the cheap detector that would have caught all 42 at row 2.",
+          "AC-8 CLEAN UP THE LIVE ROWS. 35 ntg-* rows remain in .signal_queue.rows[] at status READ (PO already RETRACTED the 7 inverted ones this tick, with a retraction_reason field). Collapse the 35 to at most 3 representatives + occurrence counts, or evict per .claude/skills/signal-dashboard/SKILL.md § PRUNE. Note the age gate will not help on its own: ts is in the future, so the >24h predicate does not fire until 2026-08-25T00:00Z."
+        ],
+        "po_not_a_duplicate": "Checked every non-terminal lane before minting, on the PAYLOAD SET rather than id tokens. Three near neighbours, none of which covers this: (1) FIX-SIGNALQUEUE-DUP-ID-GUARD (backlog, developer, cross-service/) — 'orch-apply.sh id-uniqueness guard for signal_queue.rows[]/archive[] + normalize auditor ts to full ISO8601'. It is STRUCTURALLY UNABLE to catch this family: the 42 ids are all distinct (uuid4 suffix), so an id-uniqueness guard passes every one of them, and the ts here is well-formed ISO8601 — it is simply FALSE, which a format normaliser cannot detect. Its two dimensions are real and worth shipping; they just do not intersect this row. (2) FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT-DEFEATS-7D-WINDOW (backlog, developer) — same dedup DISEASE, different organ: that row is scripts/emit-audit-signal.sh and the auditor dedup ledger; this one is the signal_queue append path and has no dedup_key at all to validate. Read it first anyway — its AC-3 fail-mode analysis and its po_retarget 'prose is a known-failed fix' argument both transfer verbatim. (3) CCATO-MCP-T6/T7/T8 (ready, dev-mcp-server) — the in-flight migration of this gate into mcp-server. It does NOT close this: T6 registers the tool, it does not authenticate the writer, and the TS writer it exposes reproduces defects (B) and (C) faithfully because CCATO-MCP-T4's ACs demanded byte-faithfulness to the bash row. Fixing this row should be coordinated with T6 but must not wait on it.",
+        "verification_gate": "(a) State the AC-1 attribution finding explicitly, with the evidence that supports it — 'probably the script' is a fail. (b) Replay: reconstruct all 42 live rows as candidate appends and paste the accept/quarantine/reject table; the 7 tool_null_markers rows must be rejected by AC-4 and no genuine contradiction may be rejected. (c) Negative control, mandatory: a correct FAIL row (returned_value '62.1') must pass unchanged — a gate proven only on the family it was written for is the shape recorded in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist. (d) Show .signal_queue.rows[] ntg-* count after AC-8. (e) READ-ONLY ON EFFECTS: no BUG Telegram from any test run."
+      },
+      {
+        "id": "CLEAN-DRAINSIGNALS-BUGESCALATION-DOCUMENTS-2-OF-4-LIVE-PAYLOAD-CLASSES",
+        "type": "CLEAN",
+        "title": "dev-team drain-signals.md:224 documents 2 of the 4 live bug-escalation payload classes — the [notebook-immutability-guard] and [sweep-guard] SAME-FILE DIVERGENCE shapes are absent, and the notebook-immutability one has now fired again (system-auditor, 2026-08-23T23:46Z)",
+        "zone": "docs/agents/",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "agent-father",
+        "owner": "po",
+        "depends": [],
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-24T00:12:36Z",
+        "created_by": "po",
+        "updated_at": "2026-08-24T00:12:36Z",
+        "updated_by": "po",
+        "dedup_key": "doc_drift:drain-signals.md:bug-escalation-payload-classes",
+        "source": "PO Step 0-SIG 2026-08-24T00:03Z — bug-escalation envelope 4bf8d716, payload '[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section ## c114 · 2026-08-23T21:03Z has different content staged than at HEAD'.",
+        "root_cause": "Two docs describe the same signal type and only one was kept current. docs/agents/po/flow/triage-signals.md's bug-escalation row documents FOUR payload classes (BARE / INTERNAL: / SAME-FILE DIVERGENCE / [notebook-immutability-guard], the last added 2026-08-05 precisely because a live fire on system-auditor.md 'reached this row with no matching rule'). docs/agents/dev-team/flow/drain-signals.md:224 still names only BARE and INTERNAL:. NOT A ROUTING FAILURE — PO verified the envelope arrived intact, because the drain row routes every bug-escalation to 'PO Step 0-SIG' unconditionally and the payload-shape prose is descriptive. It is a mis-disposition hazard for a dev-team agent reading the drain doc, and the exact gap has already produced one live incident on this same class.",
+        "evidence": "grep -n 'sweep-guard|notebook-immutability|bug-escalation' docs/agents/dev-team/flow/drain-signals.md returns ONE line (224) naming two shapes. docs/agents/po/flow/triage-signals.md line 30 names four, with a per-class disposition for each. Envelope 4bf8d716 (from commit-sweep-guard, priority high, createdAt 2026-08-23T23:46:32Z) carried the third undocumented shape.",
+        "files": [
+          "docs/agents/dev-team/flow/drain-signals.md"
+        ],
+        "ac": [
+          "AC-1 Sync drain-signals.md:224 to name all four live payload classes, each pointing at triage-signals.md's own row as the authoritative disposition (do NOT duplicate the disposition prose into the drain doc — that is how the two drifted apart in the first place).",
+          "AC-2 State explicitly in the drain doc that the routing target is 'PO Step 0-SIG' for every class, so the payload-shape list can never be read as a filter.",
+          "AC-3 Do not touch triage-signals.md — it is already correct and is the SSOT."
+        ],
+        "po_disposition_of_the_finding_itself": "The [notebook-immutability-guard] occurrence itself is NOT minted here. Per triage-signals.md's own 4th-class rule it is volume-tracked, and it FOLDS into the already-open FIX-AUDITOR-NOTEBOOK-SECOND-COMMIT-RETRO-REWRITES-PUBLISHED-OUTPUT-CONTRACT (backlog, developer, P1), which owns exactly this mechanism on exactly this agent — that row's own title records cycle c71; this tick's fire is cycle c114. PO bumped its occurrence there rather than re-minting."
       }
     ],
     "closed_sprints": [
@@ -21214,6 +21312,35 @@
         "next_agent": "agent-father",
         "triaged_at": "2026-08-23T23:41:24Z",
         "triaged_by": "po (review-lane secondary-drain owner-triage)"
+      },
+      {
+        "id": "TASK_001-WATCHLIST-WRITE-THROUGH-INFRA",
+        "type": "SUBTASK",
+        "size": "M",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
+        "plan_only": false,
+        "supervised": false,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-22T17:45:00Z",
+        "created_by": "pm",
+        "title": "Watchlist write-through infrastructure adapter",
+        "handoff": "docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md",
+        "updated_at": "2026-08-24T00:12:36Z",
+        "updated_by": "po (Step 0-SIG deploy-block retarget)",
+        "dev_completed_at": "2026-08-23T15:11:47Z",
+        "dev_completed_by": "dev-mcp-server",
+        "dev_commit": "ce1f52127",
+        "dev_note": "AC-1 (systemMapWatchlistWriter.ts: upsert/remove, atomic tmp+rename, fail-open, active-default), AC-2 (write-through hooks in add_to_watchlist/remove_from_watchlist, soft warning suffix on failure, DB mutation never blocked), AC-3 (optional sector param + titleCaseDomain fallback), AC-4 (10 unit tests incl. a real-fs tmpdir round-trip — NOT at the handoff's specified path apps/mcp-server/__tests__/unit/test_systemMapWatchlistWriter.ts, which does not exist in this repo and would not be discovered by bun test's default *.test.ts pattern; placed at apps/mcp-server/src/__tests__/TASK_001-watchlist-write-through-infra.test.ts matching this repo convention), AC-6 (119 pass/0 fail across touched suites, tsc clean, tools=183) ALL DONE. Added a test-isolation guard (skip write-through when DB_PATH=\":memory:\" unless _testSystemMapPath injected) that was NOT in the original AC list but was necessary — without it every existing watchlist test would have written real/fake tickers into the live docs/data/system-map.json SSOT on every CI run. Live system-map.json verified byte-identical (md5) before/after this work, still 34 entries, zero drift. NOT DONE this session: AC-5 (integration test paired with TASK_002 — cannot be written before TASK_002s audit script exists, per the ACs own sequencing) and AC-7 (Docker bind-mount round-trip from a live container — requires a running container + external MCP client, out of a code-only dev session; verified the equivalent production codepath instead via a real temp-file round-trip + a direct call against a throwaway copy of the live file, both confirmed working). Status held at REVIEW not DONE_VERIFIED because the closure checklist is not fully satisfied — do not auto-unblock TASK_002 off this row yet.",
+        "claimed_at": "2026-08-23T23:29:49Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "blocked_reason": "DEPLOY-BLOCKED, NOT VERIFY-BLOCKED — the live mcp-server image predates the code.",
+        "status_note": "PO Step 0-SIG 2026-08-24T00:12:36Z: RETARGETED OUT OF qa[]. qa already refused this row on the merits (commit 6163fecee, 2026-08-23T22:08:36Z) and it was re-picked by the review-lane QA-drain 81 minutes later (claimed_at 2026-08-23T23:29:49Z) — so re-dispatching qa reproduces the same refusal indefinitely. PO RE-VERIFIED THE REFUSAL AT SOURCE, not from the handoff prose: `docker image inspect vn-market-intelligence-mcp-mcp-server --format {{.Created}}` = 2026-08-23T13:52:50Z (container created 2026-08-23 15:53:58 +0200 = 13:53:58Z), while the dev commit ce1f52127 landed at 2026-08-23 17:11:08 +0200 = 15:11:08Z. The running image PREDATES the code by 1h18m, so AC-7 (docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md:65,126,148 — bind-mount round-trip via a real add_to_watchlist call from OUTSIDE the container) is not merely unverified, it is structurally unrunnable. NEXT ACTION IS A DEPLOY, NOT A VERIFY: single-service rebuild of mcp-server only. NEVER `docker compose down` (feedback_rebuild_recreate_destroys_peers — it kills every peer container) and verify the new image ID actually changed before claiming the deploy landed (feedback_docker_rebuild_race_pgrep_deadlock). After the rebuild, hand back to qa for AC-5/AC-7. WHY THE LANE MOVED AND NOT JUST THIS NOTE: the QA-drain picker selects on lane + next_agent and is blind to prose it cannot read (feedback_pickers_blind_to_prose_status_note_autoclaim_contraindicated_row) — leaving the row in qa[] with a note would have changed nothing. next_agent=ops is off the DRS-ratified auto-dispatch allowlist, so this row is reachable by manual/PO dispatch; that is deliberate and is the same class as the 10 other live next_agent=ops rows."
       }
     ],
     "review": [
@@ -21891,33 +22018,6 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
-      },
-      {
-        "id": "TASK_001-WATCHLIST-WRITE-THROUGH-INFRA",
-        "type": "SUBTASK",
-        "size": "M",
-        "priority": "P1",
-        "status": "QA",
-        "zone": "apps/mcp-server/",
-        "owner": "qa",
-        "next_agent": "qa",
-        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-22T17:45:00Z",
-        "created_by": "pm",
-        "title": "Watchlist write-through infrastructure adapter",
-        "handoff": "docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md",
-        "updated_at": "2026-08-23T23:29:49Z",
-        "updated_by": "dev-mcp-server/next-agent-fix",
-        "dev_completed_at": "2026-08-23T15:11:47Z",
-        "dev_completed_by": "dev-mcp-server",
-        "dev_commit": "ce1f52127",
-        "dev_note": "AC-1 (systemMapWatchlistWriter.ts: upsert/remove, atomic tmp+rename, fail-open, active-default), AC-2 (write-through hooks in add_to_watchlist/remove_from_watchlist, soft warning suffix on failure, DB mutation never blocked), AC-3 (optional sector param + titleCaseDomain fallback), AC-4 (10 unit tests incl. a real-fs tmpdir round-trip — NOT at the handoff's specified path apps/mcp-server/__tests__/unit/test_systemMapWatchlistWriter.ts, which does not exist in this repo and would not be discovered by bun test's default *.test.ts pattern; placed at apps/mcp-server/src/__tests__/TASK_001-watchlist-write-through-infra.test.ts matching this repo convention), AC-6 (119 pass/0 fail across touched suites, tsc clean, tools=183) ALL DONE. Added a test-isolation guard (skip write-through when DB_PATH=\":memory:\" unless _testSystemMapPath injected) that was NOT in the original AC list but was necessary — without it every existing watchlist test would have written real/fake tickers into the live docs/data/system-map.json SSOT on every CI run. Live system-map.json verified byte-identical (md5) before/after this work, still 34 entries, zero drift. NOT DONE this session: AC-5 (integration test paired with TASK_002 — cannot be written before TASK_002s audit script exists, per the ACs own sequencing) and AC-7 (Docker bind-mount round-trip from a live container — requires a running container + external MCP client, out of a code-only dev session; verified the equivalent production codepath instead via a real temp-file round-trip + a direct call against a throwaway copy of the live file, both confirmed working). Status held at REVIEW not DONE_VERIFIED because the closure checklist is not fully satisfied — do not auto-unblock TASK_002 off this row yet.",
-        "claimed_at": "2026-08-23T23:29:49Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -22102,7 +22202,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-23T23:43:26Z",
+  "_updated_at": "2026-08-24T00:12:36Z",
   "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
@@ -22125,8 +22225,8 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-23T23:57:28Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-24T00:12:36Z",
+    "_updated_by": "po",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -22216,174 +22316,18 @@
         "createdAt": "2026-08-23T22:49:24Z",
         "drained_at": "2026-08-23T22:58:03Z",
         "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6eca2782657f817eaf338a9525a0f750346add0186bf2eb89e6c6c6834c73941",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-23T23:56:33Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f5a48a3a90eb2067935bffeb2c64fd3c8d9f94f4cd0e3aa0d07b92a083a3dfb3",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-23T23:56:33Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f5a48a3a90eb2067935bffeb2c64fd3c8d9f94f4cd0e3aa0d07b92a083a3dfb3",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-23T23:56:33Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9717a5dc444dc55ceaec813e0cf643876f78b9d3a8fc49f93799b330576a523f",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-23T23:56:33Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9717a5dc444dc55ceaec813e0cf643876f78b9d3a8fc49f93799b330576a523f",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-23T23:56:33Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "b4de6e3531f0e73a475b8366b2467874d7de621008239b79398cfcfaa331deb2",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-23T23:56:33Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4bf8d7167a38cf24d0c71f30e328a19118671fd529bd5b66f3a8df9ded555d86",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c114 · 2026-08-23T21:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-23T23:46:32Z",
-        "drained_at": "2026-08-23T23:57:27Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "c733a9e1c79c4e322acc16b617b427be6662334a79a7887c32b693f453d8aca4",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "97",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-23T23:50:44Z",
-        "drained_at": "2026-08-23T23:57:27Z",
-        "routed_to": "PO Step 0-SIG"
       }
     ],
-    "last_po_triage_at": "2026-08-23T12:48:03Z",
-    "last_po_triage_note": "po Step 0-SIG 2026-08-23T12:47Z — 4 envelopes triaged, 0 mints (all DEDUP HIT against rows already on the board). 1x ci_red CI-RED-4b6f60ea (run 32637153628, head 4b6f60ea, failing job signal-type-coverage-guard): DEDUP HIT — FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (ready, READY) and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-prune-dropped-newest-dated-section (backlog, auto-filed 12:23Z by the guard itself) together own both unrouted types this job is red on. 1x cowork-fire 20260823T120552Z: same routing-gap row owns the type; the tick's own execution findings were NOT dropped with the envelope — both flow-doc defects carried in its payload.note are minted as FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION (ready, agent-father). 2x notebook_prune_dropped_newest_dated_section (both docs/agent-memory/notebooks/dev-mcp-server.md line 3, AC-6 same-day-tie class): DEDUP HIT — FIX-NOTEBOOK-AUTOPRUNE-AC6-SAMEDAY-TIE-PROCEEDS-AND-DROPS-LOADBEARING-SECTION (backlog) is the exact owner, and FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) is the parent. SAME CAVEAT AS THE 10:33Z CLEAR: this write removes the cowork-fire envelope that scripts/audits/guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact of the drain, not a fix.",
-    "last_po_triage_consumed": 4,
+    "last_po_triage_at": "2026-08-24T00:12:36Z",
+    "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
+    "last_po_triage_consumed": 6,
     "last_triage_clear": {
       "ts": "2026-08-23T09:07:20Z",
       "consumed_count": 8,
       "triaged_by": "po (router-direct triage, session 007e33e4-b453-4bb3-8ab1-ef31495906a3)",
       "note": "8 envelopes, all bug-escalation/commit-sweep-guard. Cleared by envelope_id subtraction, never a blind = []."
     },
-    "pending_triage_inbox_cleared_at": "2026-08-23T12:48:03Z"
+    "pending_triage_inbox_cleared_at": "2026-08-23T12:48:03Z",
+    "last_po_triage_by": "po"
   }
 }
