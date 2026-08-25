@@ -454,5 +454,29 @@
     "cycle_tag": "cron:auditor-tdata:2026-08-25T02:31:04Z",
     "from": "system-auditor",
     "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-25T02:42:01Z",
+    "cycle_tag": "cron:auditor-t3:2026-08-25T02:00Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=3 independent=1"
+  },
+  {
+    "ts": "2026-08-25T02:42:01Z",
+    "cycle_tag": "cron:auditor-t3:2026-08-25T02:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=3)"
+  },
+  {
+    "ts": "2026-08-25T02:42:01Z",
+    "cycle_tag": "cron:auditor-t3:2026-08-25T02:00Z",
+    "from": "system-auditor",
+    "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
+  },
+  {
+    "ts": "2026-08-25T02:42:02Z",
+    "cycle_tag": "cron:auditor-t3:2026-08-25T02:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
   }
 ]
