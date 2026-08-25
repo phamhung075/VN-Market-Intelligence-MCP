@@ -34,5 +34,11 @@
     },
     "discovered_by": "router executing dev-team tick 2026-08-25T07:07Z — both found by running the flow, neither by any detector",
     "not_written_to_orch_state": "filed as a file-plane signal deliberately: PO was spawned at S3 this same tick and is actively writing orch-state.json. A signal_queue append is a full-doc write and could race its triage."
+  },
+  "_processed": {
+    "fingerprint": "1826de7e86d43337cc0ff9be842a8faa0d58c4664e85fcce64c6863014055fb8",
+    "processedAt": "2026-08-25T07:44:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

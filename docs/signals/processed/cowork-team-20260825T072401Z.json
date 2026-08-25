@@ -97,5 +97,11 @@
     "note": "07:15Z WORK, 2 slots fired as one batch (MAX_PARALLEL=4, DEGRADED=false, headroom 5317MB, load 3.69/24). signal_queue drain was a no-op — 0 NEW rows, down from 7 last tick, all delivered by a peer drain at 07:13:14Z. Step 4b no collision (two distinct agent_ids). Unpushed backlog now 293, still gated on the bctcScalarAggregator.ts size-lint pre-push blocker."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T07:24:01Z"
+  "createdAt": "2026-08-25T07:24:01Z",
+  "_processed": {
+    "fingerprint": "b2bdd320513ef3cc30767e0fb866d027ad4c3e8c5caa3cf633623801f16da5b8",
+    "processedAt": "2026-08-25T07:44:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

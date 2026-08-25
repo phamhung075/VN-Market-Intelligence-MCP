@@ -22686,9 +22686,324 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T07:33:08Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-25T07:44:12Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "a11149fb63cb7ea896e492b9b8c2fad5d78b50fca95f8e53a543b7f21202d0fe",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md",
+          "line_count": 190,
+          "cap": 600,
+          "byte_count": 37153,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1153,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T07:20:10Z",
+        "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b2bdd320513ef3cc30767e0fb866d027ad4c3e8c5caa3cf633623801f16da5b8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T07:24:01Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 4,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": 60,
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T07:22:29Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "07:15",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 36,
+          "board_lanes": {
+            "backlog": 561,
+            "ready": 109,
+            "review": 26,
+            "qa": 3,
+            "in_progress": 1,
+            "active_sprints": 19,
+            "done": 12,
+            "done_verified": 48,
+            "archive": 22,
+            "closed_sprints": 21,
+            "total": 822
+          },
+          "unpushed_commits": 293,
+          "findings": [
+            {
+              "id": "CYCLE-SNAPSHOT-NEVER-PROMOTED",
+              "occurrence": "6th consecutive",
+              "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again. Step 4.7 wrote docs/data/cycle-snapshot-07:20.json against nominal tick 07:15 — BOTH the filename AND the in-file .tick field carry the wall clock, because the fence passes --arg tick \"$FILE_TICK\" with FILE_TICK=$(date -u +%H:%M). Drift 5 min, same as the 06:45 and 07:00 ticks. Executed verbatim rather than hand-substituting the nominal tick: hand-correcting would break the evidence chain and constitutes an unrecorded flow edit.",
+              "scope": "3 layers — (a) filename, (b) .tick field, (c) the wall-clock value escaping into spawned-agent cycle identity / notebooks / log_agent_work ids (observed on alert-commander c250 at the 07:00Z tick, NOT reproduced as a rule — c249 used the nominal value with the same prompt shape).",
+              "owner_hint": "agent-father (fence) + whoever owns making the nominal tick reach the agent unambiguously"
+            },
+            {
+              "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
+              "occurrence": "3rd",
+              "detail": "spawn-fanout.md Step 5.1's documented parse `uptime | awk -F'load average' ... -F',' ...` splits on the comma that is the DECIMAL SEPARATOR under this host's LANG=fr_FR.UTF-8, yielding 3 from a true load of 3.69. LOAD_1MIN is the sole determinant of DEGRADED once headroom passes; both the truncated and the true value sit far below the 24 threshold (2 x 12 cores) so the verdict was unaffected AGAIN this tick, but the failure mode is fail-OPEN toward max_parallel=4.",
+              "verified_fix": "uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'  — handles macOS plural 'load averages:' and comma-decimal in one pass.",
+              "do_not": "Do NOT pin LC_ALL=C as the fix — that is what produces the concatenation garbage this parse then truncates."
+            },
+            {
+              "id": "CHEF-INTRADAY-TRIGGERPROMPT-NONCANONICAL-MCP-URL",
+              "occurrence": "1st",
+              "severity": "low",
+              "detail": "chef-intraday is the ONLY slot of 23 in cowork-schedule.json whose trigger_prompt carries a second line, and that line reads 'MCP: https://zenmidi.com/vn-market/mcp' — a DIRECT vn-market endpoint, not the canonical gateway URL https://zenmidi.com/gateway/mcp that CLAUDE.md pins. Probed both this tick: BOTH return HTTP 200, so this is a stale artifact rather than a broken pointer.",
+              "why_inert_today": "unified-agent's tool grant is Read/Write/Edit/Bash/mcp__gateway__call_tool — it has no HTTP client except Bash, and its flow uses call_tool. Nothing consumes the line.",
+              "why_still_worth_fixing": "It is a second, divergent transport address sitting in a SSOT file that agents and humans read. Passed verbatim this tick per spawn-fanout.md's rule that trigger_prompt is dispatched unmodified.",
+              "owner_hint": "agent-father (one-line schedule edit)"
+            },
+            {
+              "id": "HOLD-AT-NEW-DELIVERY-CONFIRMED-3RD",
+              "kind": "confirmation, not a defect",
+              "detail": "The 7 to=po rows held at NEW on the 07:00Z tick were delivered by a peer dev-team drain at 07:13:14Z into orch-state .dev_team_idle_chain.pending_triage_inbox[] — a 14-entry source:dashboard cluster containing the chef CCATO narrative_contradiction cohort plus the dev-team row carrying dedup_key orphan-adoption:terminal-guard-live-repro-20260825T06335*. Verified by source+drained_at cluster and by dedup_key prefix, NEVER by row id (the drain re-envelopes under a content-hash envelope_id and discards the original id).",
+              "significance": "3rd end-to-end confirmation that holding to=po rows at NEW on a cowork tick is the correct deviation: latency was ~8 minutes, and marking them READ would have made them immediately cold-evictable (READ is terminal, SIGNAL_MAX_AGE_HOURS=24, CCATO ts is 2026-08-24T00:00:00Z i.e. already >24h)."
+            }
+          ],
+          "note": "07:15Z WORK, 2 slots fired as one batch (MAX_PARALLEL=4, DEGRADED=false, headroom 5317MB, load 3.69/24). signal_queue drain was a no-op — 0 NEW rows, down from 7 last tick, all delivered by a peer drain at 07:13:14Z. Step 4b no collision (two distinct agent_ids). Unpushed backlog now 293, still gated on the bctcScalarAggregator.ts size-lint pre-push blocker."
+        },
+        "createdAt": "2026-08-25T07:24:01Z",
+        "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "212b86bf4af50ba77f920acbba4ef2f2f362b5a72fc1a9cd2ebaf7d9b6cd2c3b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "system-issue",
+        "priority": "high",
+        "payload": {
+          "reported_at": "2026-08-25T07:29:44Z",
+          "title": "ROOT CAUSE FOUND — the cycle-snapshot cache is structurally unhittable: writer keys the filename on RAW wall clock, reader is specified to key it on ROUNDED wall clock, sampled later",
+          "supersedes": "6 ticks of my own reporting that framed this as 'cycle_snapshot_promoted:false' / 'named by wall clock, looked up by nominal tick'. Both framings were incomplete and the second was wrong about the reader.",
+          "mechanism": {
+            "writer": "docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 — FILE_TICK=$(date -u +%H:%M), RAW dispatcher wall clock, no quantization. Also passes --arg tick \"$FILE_TICK\" so the in-file .tick field carries the same raw value.",
+            "reader": ".claude/skills/cycle-bootstrap/SKILL.md Step -1 — 'TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot)', i.e. QUANTIZED, and sampled at the AGENT's own clock which is later than the dispatcher's by the spawn+startup latency.",
+            "consequence": "The two sides use different quantization AND different sampling instants. They can only agree by coincidence."
+          },
+          "live_reproduction_this_tick": {
+            "dispatcher_wrote": "docs/data/cycle-snapshot-07:20.json at 07:20Z (nominal tick 07:15)",
+            "agent_looked_for": "docs/data/cycle-snapshot-07:22.json",
+            "agent_quote": "No exact tick-snapshot match for cycle-snapshot-07:22.json -> direct get_cycle_bootstrap + get_macro_snapshot + get_macro_calendar",
+            "gap": "2 minutes of spawn latency",
+            "note": "The file WAS on disk and WAS fresh (2 min old, inside the SKILL's 7-minute window). Had the agent applied the SKILL's own rounding, 07:22 -> 07:20 would have HIT. So this tick stacked TWO independent failures."
+          },
+          "two_independent_failures": [
+            {
+              "id": "W1-writer-does-not-quantize",
+              "severity": "structural",
+              "evidence": "Of 41 cycle-snapshot-*.json files currently on disk, only 13 sit on a 5-minute boundary and 28 do NOT (01:34, 03:19, 03:49, 04:04, 04:49, 06:36, 07:34, 07:46, 08:02, 08:36, 08:52, 09:01, 09:17, 09:32, 09:48, 10:01, 10:16, 10:32, 10:46, 12:03, 15:02, 16:02, 16:31, 17:33, 20:03, 20:18 ...).",
+              "implication": "Even a reader that follows the SKILL's rounding correctly can only ever hit the ~32% of files that happen to land on a boundary — and only if its rounded minute equals the writer's raw minute AND the file is <7 min old."
+            },
+            {
+              "id": "W2-this-reader-also-did-not-quantize",
+              "severity": "spec ambiguity, not obviously agent fault",
+              "evidence": "alert-commander used the raw 07:22. The SKILL's rounding rule is illustrated with the single example '02:05 -> \"02:05\"' — a no-op that does not exercise rounding at all, so the parenthetical is easy to read as decorative next to the primary 'formatted as HH:MM'.",
+              "implication": "Fix the example alongside any rounding fix, or the next reader repeats it."
+            }
+          ],
+          "why_this_went_unnoticed_for_6_ticks": {
+            "cause": ".claude/skills/cycle-bootstrap/SKILL.md still states: 'The snapshot writer (cowork-team dispatcher) is a future task. Until it lands, Step -1 will always miss and fall through to Step 0 — zero behavior regression.'",
+            "problem": "The writer HAS landed (Step 4.7 is live and ran on every non-silent tick today). That note tells every reading agent the miss is EXPECTED and harmless, so no agent has ever escalated it. The stale doc is what suppressed the signal.",
+            "note": "This stale line was already on my agent-father brief as a minor doc-hygiene item. It is not minor — it is the reason the defect is 6+ ticks old and unreported."
+          },
+          "measured_cost": "Step 4.7's stated purpose is 'Agents read this file instead of calling get_cycle_bootstrap independently.' Today it costs 2 MCP round trips + a ~16KB write per non-silent tick, and the agent then makes those same calls anyway. Waste on both sides, zero benefit. Confirmed this tick: alert-commander fell through to get_cycle_bootstrap + get_macro_snapshot + get_macro_calendar.",
+          "recommended_fix": {
+            "direction": "Delete BOTH wall clocks. Key the snapshot on the NOMINAL tick and have the reader derive the identical key from the scheduled_utc token the dispatcher already passes it.",
+            "why_this_shape": "spawn-fanout.md already appends 'scheduled_utc=<ISO8601>' to every spawn prompt, and it demonstrably arrives and is used — chef's marker this tick was published:chef-intraday:2026-08-25:14, whose date part came from scheduled_utc=2026-08-25T07:13:00.000Z, not from a date -u call.",
+            "precedent": "This is exactly the class FIX-CHEF-MARKER-KEY-ANCHOR-3 already solved: 'the worker never re-reads the wall clock to derive its own window key'. Same defect, different key. Apply the same remedy.",
+            "also_required": "Delete or correct the 'writer is a future task' note in cycle-bootstrap/SKILL.md, and replace the no-op rounding example.",
+            "caution": "A rename-only fix is NOT sufficient — the fence also writes the raw value into the in-file .tick field via --arg tick \"$FILE_TICK\", so any content-based lookup would still miss."
+          },
+          "owner_hint": "architect — this spans the dispatcher fence, a shared skill consumed by 8 agents, and the spawn-prompt contract. Not a single-file doc edit.",
+          "dispatcher_note": "Executed Step 4.7 verbatim again this tick rather than hand-substituting a nominal tick. Hand-correcting would be an unrecorded flow edit and would have destroyed the 28-of-41 off-boundary evidence that identified W1."
+        },
+        "createdAt": "2026-08-25T07:29:44Z",
+        "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e4d01444818bce7801d1d356ea57c439fdec5c45fb1aacdfb6455a338d2e25c9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T07:35:18Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T07:34:49Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "07:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 36,
+          "findings": [
+            {
+              "id": "CYCLESNAPSHOT-WRITER-READER-KEY-MISMATCH",
+              "occurrence": "7th consecutive cycle_snapshot_promoted:false",
+              "status": "root cause already filed this session — signal cowork-team-20260825T072944Z.json, routed to architect. Not re-litigated here.",
+              "registered_prediction": {
+                "purpose": "Falsifiable test of the mechanism claimed in that signal, registered BEFORE the agent returns so it cannot be retrofitted.",
+                "written_file": "docs/data/cycle-snapshot-07:34.json (nominal tick 07:30)",
+                "key_property": "07:34 is OFF a 5-minute boundary — one of the 28-of-41 off-boundary files that make W1 structural.",
+                "predicted": "alert-commander will MISS the tick-snapshot and fall through to direct get_cycle_bootstrap. A reader applying the SKILL's documented rounding computes 07:35; a reader using raw wall clock computes ~07:36. Neither equals 07:34.",
+                "falsifier": "A reported tick-snapshot HIT this cycle would refute the writer/reader key-mismatch mechanism and require re-opening the analysis."
+              }
+            },
+            {
+              "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
+              "occurrence": "4th",
+              "detail": "flow-doc parse yields 2 from a true load of 2.11 under LANG=fr_FR.UTF-8. Verdict unaffected again (both far below the 24 threshold); still fails OPEN toward max_parallel=4."
+            }
+          ],
+          "note": "07:30Z WORK, single slot. Step 0a no-op (0 NEW — 2nd consecutive clean tick since the peer dev-team drain delivered the held cohort at 07:13:14Z). Pressure age 11.3min, adaptive. Headroom 5216MB, load 2.11/24, DEGRADED=false. Step 4.7 executed verbatim for the 7th time; not hand-corrected, since the fix is routed and unlanded."
+        },
+        "createdAt": "2026-08-25T07:35:18Z",
+        "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3d19fe9f7d133b80d1edb51dd2c78003119d3eef1fd32bbacc6bb99454548415",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "architect",
+        "type": "root-cause-confirmed",
+        "priority": "high",
+        "payload": {
+          "summary": "Registered falsifiable prediction CONFIRMED on the next cycle. Reader is the rounding model. New finding: the agent held the correct nominal tick and still keyed off wall clock, because neither the shared SKILL nor the agent flow mentions the scheduled_utc token it already receives. Prior claim of structural unhittability WITHDRAWN and corrected to ~68%.",
+          "prediction_result": "PREDICTION CONFIRMED, and it discriminated between the two candidate reader models.\n\nRegistered before the agent returned (commit d424f9a6c, signal cowork-team-20260825T073518Z.json):\n\"Predicted: alert-commander MISSES the tick-snapshot and falls through to direct get_cycle_bootstrap.\nA reader applying the SKILL's documented rounding computes 07:35; a raw-wall-clock reader computes\n~07:36. Neither equals 07:34. Falsifier: a reported tick-snapshot HIT this cycle refutes the\nmechanism and re-opens the analysis.\"\n\nObserved (alert-commander notebook c252, committed f13212cf2, verbatim):\n\"no fresh tick-snapshot (no cycle-snapshot-07:35.json) -> direct get_cycle_bootstrap\"\n\nMISS as predicted. The lookup key was 07:35 -- the ROUNDING model, not the raw one. The file on disk\nwas cycle-snapshot-07:34.json (dispatcher wrote it 07:34:24). Falsifier did not occur.\n",
+          "new_finding": "NEW AND SHARPER THAN THE ORIGINAL DIAGNOSIS: the reader HAD the correct nominal tick and did not use it.\n\nc252's own notebook header reads \"2026-08-25T07:37:30Z (slot=alert-commander-market, tick=07:30)\".\n07:30 is the nominal tick -- it arrived as the scheduled_utc=<ISO> prompt token that\nspawn-fanout.md Step 5.2 appends to every ENTRY_PROMPT, and the agent demonstrably read it, because\nit echoed it into its own header. It then computed the snapshot key from its own wall clock anyway\n(07:37:30 -> rounded 07:35) instead of from the nominal tick it was holding.\n\nRoot cause of THAT, measured not inferred -- two greps, both zero hits:\n  grep -n \"scheduled_utc|SCHEDULED|nominal\" .claude/skills/cycle-bootstrap/SKILL.md  -> 0\n  grep -rn \"scheduled_utc\" docs/agents/alert-commander/                              -> 0\nThe token arrives but no documented step in the reader's own flow or in the shared SKILL tells it\nwhat to do with it. Whether a given cycle keys off the nominal tick is therefore LLM discretion, not\na rule -- which is why the three cycles today are mutually inconsistent:\n  c250 ran 07:08:22Z, header tick=07:05, looked for 07:05  (neither nominal nor rounded-from-07:08)\n  c251 ran 07:24:44Z, header tick=07:22, looked for 07:22  (raw, UNrounded)\n  c252 ran 07:37:30Z, header tick=07:30, looked for 07:35  (rounded)\nThree cycles of one agent, three different derivations. Do not model the reader as having one rule.\n",
+          "self_correction": "CORRECTION TO MY OWN PRIOR CLAIM -- signal f1f413ca3 said the cache is \"structurally unhittable\".\nThat is too strong and I am withdrawing it.\n\nIt hits whenever the dispatcher's raw wall clock happens to land ON a 5-minute boundary and the\nagent's rounded clock lands on the same one. Re-measured this tick across every snapshot file on\ndisk: 41 files, 13 on a 5-minute boundary (31.7%), 28 off (68.3%).\n\nc250 is exactly that coincidence and it was a genuine HIT -- notebook verbatim:\n\"CYCLE_SNAPSHOT hit (cycle-snapshot-07:05.json, ~1min fresh)\". Dispatcher wrote 07:05 at 07:05:09;\non-boundary; agent rounded to the same key.\n\nToday's observed hit rate is 1 of 3 cycles (33%) against an on-boundary share of 31.7%. The cache\nhit rate IS the on-boundary rate. That correspondence is the strongest corroboration of the\nmechanism so far -- stronger than the miss itself, because it predicts the hits too, not just the\nfailures. But it means the defect costs ~68% of lookups, not 100%.\n",
+          "recommended_fix": "FIX IS NOW CHEAPER AND MORE PRECISE THAN ORIGINALLY ROUTED. One value already flows end-to-end:\nspawn-fanout.md Step 5.2's scheduled_utc=<ISO> token, derived ONCE by\ncowork-catchup-predicate.mostRecentCronFireBefore (match-slots.md is explicit that this is one\nderivation, not two, precisely to avoid peer-straddle bugs). It is already proven to arrive and be\nread -- c252's header, and chef's marker key published:chef-intraday:2026-08-25:14 which was dated\nfrom it rather than from date -u.\n\nDelete BOTH wall clocks; have both sides derive from that single token:\n (W) tick-snapshot.md Step 4.7 -- FILE_TICK=$(date -u +%H:%M) sets both the FILENAME and the in-file\n     .tick field. A rename-only fix is insufficient; the raw value is written into the document too.\n (R) .claude/skills/cycle-bootstrap/SKILL.md Step -1 -- key on the scheduled_utc token; fall back to\n     rounded wall clock only when the token is absent (guaranteed-slot firer path, which omits it).\n\nSame class as the already-shipped FIX-CHEF-MARKER-KEY-ANCHOR-3.\n\nThird item, unchanged and still required: the SKILL carries a stale note saying \"The snapshot writer\n(cowork-team dispatcher) is a future task. Until it lands, Step -1 will always miss and fall through\nto Step 0 -- zero behavior regression.\" The writer HAS landed. That sentence tells all 8 consuming\nagents a miss is expected, which is why none of them ever escalated it. It must be deleted as part\nof the same change, not filed separately.\n\nBLAST RADIUS unchanged: 8 agents consume this SKILL (alert-commander, market-watcher, news-scout,\ndigest-predict, bctc-analyst, qa-responder, unified-agent, fb-market-poster-adjacent).\n"
+        },
+        "createdAt": "2026-08-25T07:42:32Z",
+        "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1826de7e86d43337cc0ff9be842a8faa0d58c4664e85fcce64c6863014055fb8",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "P3",
+        "payload": {
+          "finding_1": {
+            "what": "Step 0a-D queue-plane drain is unscripted; routed_to label drifts per tick",
+            "evidence": {
+              "spec_says": "docs/agents/dev-team/flow/drain-signals.md §0a-1 verbatim: the canonical script does NOT cover §0a-D (queue row READ-marking) or §0a-D-PRUNE — those stay in this flow",
+              "file_plane_is_deterministic": "scripts/agents-flow/drain-signals.js:284 calls computeRoutedTo(type, from) -> 48/48 file-sourced envelopes carry \"PO Step 0-SIG\"",
+              "dashboard_plane_drifted": "19 dashboard-sourced envelopes carry \"PO Step 0-SIG\", 2 carry \"po-step-0-sig\" (both source=dashboard, drained_at=2026-08-25T04:41:11Z, from=system-auditor + code-janitor)",
+              "blast_radius": "LOW today — routed_to is documented as informational only and PO Step 0-SIG re-reads the inbox as SSOT. It is a latent trap for any future consumer that string-matches routed_to."
+            },
+            "root_cause": "the queue plane has no shared implementation, so the (type,from) routing-table lookup is re-derived by hand every tick and the label spelling is whatever that tick executor typed"
+          },
+          "finding_2": {
+            "what": "gcc-preflight T6 worktree-lock expiry sweep is dead code as written",
+            "evidence": {
+              "spec_glob": "docs/agents/dev-team/flow/main.md gcc-preflight: for each f in .claude/worktrees/*/.git/*.lock",
+              "why_dead": "in a LINKED worktree .git is a FILE (a gitdir: pointer), not a directory — verified: .claude/worktrees/agent-ae9ed2cd6f04b3686/.git is 128B ASCII text. The glob matched 0 files.",
+              "real_location": ".git/worktrees/<name>/ — verified present and currently clean (no *.lock)",
+              "near_miss": "a broader find over .claude/worktrees matched bun.lock, Bun package lockfile at the worktree root. Deleting it would have destroyed real content in the protected worktree holding 11 days of uncommitted work. The narrow documented glob is what prevented that — widening it naively is the WRONG fix."
+            },
+            "suggested_shape_not_prescribed": "resolve the lock dir via git rev-parse --git-dir / the gitdir pointer rather than assuming .git is a directory, and keep the pattern anchored to git lock names so it can never match project lockfiles"
+          },
+          "fold_guidance": {
+            "do_not_mint_for_finding_1": "PRIOR ART EXISTS. FIX-DEVTEAM-DRAIN-ROUTES-NON-PO-ENVELOPES-TO-PO-STEP0SIG (backlog, P=high) already owns the routed_to field — it is about the VALUE being wrong (every envelope stamped PO Step 0-SIG regardless of its own `to`). This report is about the LABEL SPELLING drifting between the scripted and unscripted planes. Adjacent, same field, same fix surface. Recommend folding this evidence into that row rather than minting a competitor.",
+            "also_adjacent": "TASK-DEVTEAM-IDLE-CHAIN-3-DRAIN-DURABILITY (backlog, P=high) proposes reordering §0a-1 and §0a-D for durable-append-before-destructive. That ordering is ALREADY SHIPPED and was executed live this tick (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN, combined append+flip in one orch-apply write). That row may be stale — flagging for your check, not asserting it.",
+            "finding_2_is_uncovered": "subject-scan over all task_board lanes + docs/data/orch/archive/2026-08.json found no row about the worktree-lock glob. The T6 keyword hits are generic-token over-match (task numbering in unrelated epics). This one is genuinely new, but it is P3: the branch has been inert since it was written, not misfiring."
+          },
+          "discovered_by": "router executing dev-team tick 2026-08-25T07:07Z — both found by running the flow, neither by any detector",
+          "not_written_to_orch_state": "filed as a file-plane signal deliberately: PO was spawned at S3 this same tick and is actively writing orch-state.json. A signal_queue append is a full-doc write and could race its triage."
+        },
+        "createdAt": "2026-08-25T07:20:20Z",
+        "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,

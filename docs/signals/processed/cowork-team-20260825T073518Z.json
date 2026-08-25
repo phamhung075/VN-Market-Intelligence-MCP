@@ -65,5 +65,11 @@
     "note": "07:30Z WORK, single slot. Step 0a no-op (0 NEW — 2nd consecutive clean tick since the peer dev-team drain delivered the held cohort at 07:13:14Z). Pressure age 11.3min, adaptive. Headroom 5216MB, load 2.11/24, DEGRADED=false. Step 4.7 executed verbatim for the 7th time; not hand-corrected, since the fix is routed and unlanded."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T07:35:18Z"
+  "createdAt": "2026-08-25T07:35:18Z",
+  "_processed": {
+    "fingerprint": "e4d01444818bce7801d1d356ea57c439fdec5c45fb1aacdfb6455a338d2e25c9",
+    "processedAt": "2026-08-25T07:44:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -50,5 +50,11 @@
     "dispatcher_note": "Executed Step 4.7 verbatim again this tick rather than hand-substituting a nominal tick. Hand-correcting would be an unrecorded flow edit and would have destroyed the 28-of-41 off-boundary evidence that identified W1."
   },
   "priority": "high",
-  "createdAt": "2026-08-25T07:29:44Z"
+  "createdAt": "2026-08-25T07:29:44Z",
+  "_processed": {
+    "fingerprint": "212b86bf4af50ba77f920acbba4ef2f2f362b5a72fc1a9cd2ebaf7d9b6cd2c3b",
+    "processedAt": "2026-08-25T07:44:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
