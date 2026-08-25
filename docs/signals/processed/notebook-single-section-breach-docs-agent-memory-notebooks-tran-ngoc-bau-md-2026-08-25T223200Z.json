@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_single_section_overage_breach",
+  "priority": "high",
+  "createdAt": "2026-08-25T22:32:00Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+    "line_count": 37,
+    "cap": 200,
+    "byte_count": 12860,
+    "byte_cap": 12000,
+    "section_count": 1,
+    "reason": "only preamble+1 section remain; cannot prune further without data loss",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "2acd5de2d0fa6ab6606ecbe4e4e2d84a23849ac078d2d28d93c8cca5c7fa9dee",
+    "processedAt": "2026-08-25T22:42:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
