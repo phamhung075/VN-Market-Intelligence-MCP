@@ -1,0 +1,50 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "priority": "high",
+  "severity": "high",
+  "createdAt": "2026-08-25T16:52:00Z",
+  "payload": {
+    "title": "S2/ILC resume-key ttl_seconds:3600 lapses while the dispatched agent is still running, re-opening the double-spawn window it exists to close",
+    "summary": "Both dispatch paths that spawn onto .head use a fixed 3600s lock as their ONLY duplicate-spawn guard, with no heartbeat renewal. A specialist that runs longer than 60 minutes outlives its own guard while still holding the row.",
+    "mechanism": [
+      "docs/agents/dev-team/flow/main.md Incident-Lane Consumer: resume_key = 'task:' + row.id, task_claim ttl_seconds:3600, deliberately NOT released on the success path.",
+      "docs/agents/dev-team/flow/main.md S2 dispatcher-wrap: identical shape, identical ttl_seconds:3600.",
+      "Both carry the LOCK-LIFETIME comment (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION) naming ttl_seconds:3600 as the lock's lifetime bound and 'TTL lapse' as the crash-recovery backstop that re-opens resume.",
+      "Nothing heartbeats this lock. task_list_held shows heartbeat_at == claimed_at for it, so the 3600s is wall-clock from dispatch, not from last activity.",
+      "Consequence: for any agent whose runtime exceeds 60min, there is an open window between TTL expiry and the agent's own close-out during which .head is still in_progress and outer_claim succeeds -> a SECOND agent is spawned onto a row that is genuinely still being worked."
+    ],
+    "live_evidence_this_tick": {
+      "row": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
+      "ilc_dispatched_at": "2026-08-25T15:35:59Z",
+      "resume_key_expired_at": "2026-08-25T16:35:59Z",
+      "agent_actually_finished_at": "2026-08-25T16:43:49Z",
+      "unguarded_window": "7m50s",
+      "tick_that_landed_inside_the_window": "2026-08-25T16:37Z",
+      "state_at_that_tick": "head.status=in_progress, head.next_agent=dev-pdf-extractor, row IN_PROGRESS in in_progress[] claimed_at=15:35:59Z, head.resume_attempts=0, task:FIX-PDFX-... ABSENT from task_list_held(kind=sprint-task)",
+      "why_no_duplicate_fired": "The router held out-of-band harness knowledge that the subagent process was still alive and declined the S2 spawn, then re-claimed the resume key manually. No in-flow guard would have stopped it.",
+      "guards_that_did_NOT_catch_it": [
+        "WF-4 stale-age: threshold 7200s, pin age at tick was 4087s -> did not fire (correctly, the agent was alive).",
+        "WF-3 resume-attempt bound: allows 3 attempts, counter was 0.",
+        "S2 outer_claim peer-held check: the lock it probes had already expired, so it would have returned claimed=true."
+      ]
+    },
+    "why_this_is_not_hypothetical": "The 16:37Z dev-team tick fired INSIDE the unguarded window. The window was open and a tick landed in it on the same day the defect was found.",
+    "not_duplicate_of": {
+      "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE": "same CLASS (a TTL constant shorter than the real-world interval it must span) but a different subject, lock and call site. Cite as class precedent, do not merge.",
+      "devteam-secondary-drain-po-double-spawn-20260825T161841Z": "different mechanism — that one is a row-scoped key failing to guard a second instance of the same AGENT on a DIFFERENT row. This one is a correctly-scoped key EXPIRING under a live agent on the SAME row."
+    },
+    "candidate_directions_not_a_ruling": [
+      "Heartbeat the resume_key each tick while .head remains in_progress on the same active_task_id (cheapest, keeps the crash backstop intact since a dead router stops heartbeating).",
+      "Derive the lock lifetime from head-in_progress rather than a fixed TTL.",
+      "Raise the TTL above realistic max specialist runtime -- weakest option, it only moves the cliff and this agent ran 68min against a 60min bound.",
+      "Any fix must preserve the crash-recovery property the TTL currently provides: a genuinely dead dispatcher must still release the row."
+    ],
+    "affected_call_sites": [
+      "docs/agents/dev-team/flow/main.md - S2 dispatcher-wrap",
+      "docs/agents/dev-team/flow/main.md - Incident-Lane Consumer (ILC)"
+    ],
+    "note_on_coverage": "scripts/audits/devteam-dispatch-gate-satisfiability.sh asserts ILC dispatch eligibility but carries no assertion about resume_key lifetime vs agent runtime -- this defect class is outside its current coverage."
+  }
+}
