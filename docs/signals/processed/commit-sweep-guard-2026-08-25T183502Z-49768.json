@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-25T18:35:02Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid49767:git commit -m chore(memory/system-auditor): notebook 2026-08-25 tier-2 c7 — freshness sweep, cron fire gaps check, data endpoints missing ]<-[pid49764:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
+  "_processed": {
+    "fingerprint": "fd9eeff47f54767d58355205fd6bdfe590829853927d0e469b69ad02136be57a",
+    "processedAt": "2026-08-25T18:51:04Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_defaulted",
+  "priority": "normal",
+  "createdAt": "2026-08-25T18:39:35Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-pdf-extractor.md",
+    "tied_sections": "9:20260825000000000:## Cycle 2026-08-25 — OCR-PADDLE-VI-LANG-FIX-AND-REBENCH\n87:20260825000000000:## Cycle 2026-08-25 — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS\n171:20260825000000000:## Cycle 2026-08-25 (2) — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS (dispatch #2, measurement-only)",
+    "direction_applied": "newest_first",
+    "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "4b39d3fcb1a4a56d501ceeb70c2a99b10543495ba1748670d82d2b721e856e9d",
+    "processedAt": "2026-08-25T18:51:04Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,25 +1,54 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
+  "quarter": "N/A",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Residential real estate development and brokerage",
-  "customer": "Homebuyers/investors in HCMC and satellite provinces",
-  "ops": "NO BCTC EXTRACTED DATA — get_bctc_full returns 'Chưa có dữ liệu' (41st+ consecutive cycle, unresolved extraction gap; dev-team pickup pending since c162 cash-flow-anomaly signal). Sector-comparison-only view: ROE 1.9% vs sector median 7.3% — well below peers.",
-  "mgmt": "EY_SPREAD -3.50pp → AVOID (PE 66.5 vs sector median 16.1, +312% premium — do NOT post bullish signal per valuation_verdict=AVOID rule). KinhDich: Que Tuy (45), THUAN LOI/THAN TRONG, 75% confidence — notably high-confidence cautious-positive reading that DIVERGES from the AVOID fundamental valuation verdict; flag for human review, do not reconcile automatically.",
-  "supporting": {
-    "esc_gates": "not evaluable — no BCTC data extracted for this ticker",
-    "confidence_pct": null,
-    "refine_status": "no report filed / no data",
-    "insider_signal": "none material",
-    "legal_risk": "none",
-    "overdue": "Q2-2026 report overdue since 2026-07-30 (no prior quarter ever successfully extracted)"
+  "product": "Real-estate development (residential projects, southern VN focus)",
+  "customer": "Homebuyers/investors in DXG-developed residential projects",
+  "ops": "get_bctc_full returns \"Chua co du lieu\" — 42nd+ consecutive cycle with no extracted BCTC data despite DXG_2026_Q2.pdf on file since 2026-08-01. Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median).",
+  "mgmt": "No BCTC-derived management track-record data available this cycle (extraction gap).",
+  "cycle_id": "20260825-1800",
+  "slot": "bctc-analyst-slot-2",
+  "valuation": {
+    "pe": 66.5,
+    "pb": 1.2,
+    "earning_yield_pct": 1.5,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID",
+    "sector": "Bat dong san",
+    "sector_pe_median": 16.1
   },
-  "generated_at": "2026-08-25T15:20:00Z",
+  "kinhdich": {
+    "que": "Tuy (45)",
+    "xu_huong": "THUAN LOI",
+    "khuyen_nghi": "THAN TRONG",
+    "do_tin_cay_pct": 75,
+    "note": "diverges from AVOID valuation verdict — flagged, not reconciled (recurring pattern)"
+  },
+  "esc_gate": {
+    "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+    "ESC-2": "N/A (no BCTC data — Chua co du lieu)",
+    "ESC-3": "N/A (no BCTC data)",
+    "ESC-4": "N/A (no BCTC data)",
+    "ESC-5": "N/A (no report_id resolvable — no BCTC data)"
+  },
+  "escalation_status": "N/A",
+  "insider_signal": "no significant activity",
+  "legal_risk": "none",
+  "overdue": true,
+  "data_quality_flag": "Chua co du lieu — 42nd+ cycle, cash-flow-anomaly (c162) still pending dev-team pickup",
+  "evidence_fragment_ids": [
+    1541,
+    1542,
+    1543
+  ],
+  "regime": "NEUTRAL (fallback)",
+  "carry_regime": "NEUTRAL",
+  "generated_at": "2026-08-25T18:20:00Z",
   "_processed": {
-    "fingerprint": "32fb3839a031deac7bfad5f8304da1b497cfbe6fe5da99f9a182900fbfda3f41",
-    "processedAt": "2026-08-25T15:30:58Z",
+    "fingerprint": "dd7183a7c8d9d443f9f7f04f3550a027f8fd9a01ef5ffe00ae07916ea8158bec",
+    "processedAt": "2026-08-25T18:51:04Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
