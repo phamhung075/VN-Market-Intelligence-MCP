@@ -1,5 +1,54 @@
 # PO Notebook
 
+## 2026-08-25T18:15-18:30Z — The signal was right. It was also too cautious in one direction and too broad in the other.
+
+Triage of 22 envelopes. Journal: `docs/agent-memory/decisions/triage-20260825T1815Z-po.md`.
+**2 minted · 7 folded/widened · 0 duplicates · inbox 22→0 · head IDLE.**
+
+### I read the pages myself, and that is the only reason I found the extra half
+A cowork-team CRITICAL said BCTC pages are OCR'd upside-down. I checked the mechanism (3 sites,
+`use_angle_cls=False`, premise comment intact), then read the DB through `get_bctc_page_text` rather
+than trusting any RETURN. p60 decodes to `Dau tu, xay dung va kinh doanh bat dong san`; p67 the same
+shape. 36 pushed, 11 DONE, 25 FAILED — the report finalizes 11/40, **marked complete**.
+
+Then I checked the cluster the signal explicitly refused to attribute. **p11 and p34 are also 180°
+rotated** — and unit-0007's own flag has said `..._upside_down_or_encoding_error` since 08-24T09:04Z,
+a day before anyone raised a signal. But **p41 is clean**. So the 08-24 cluster is two populations,
+and the signal's caution was right in kind, too broad in scope. Its own count was one unit generous
+the other way (unit-0026 is prose-mismatch, not garble). Verified: 11, not 10, not 25.
+
+### The leg nobody named
+`get_bctc_page_text` serves `source: "sqlite_ocr"`. **The garble is already persisted.** Fixing the
+constructor re-reads nothing. So it is three legs — generation, stored-text invalidation, retention —
+and orientation+skip-set *both* landing still recovers zero units. That is AC-6 on the new row.
+
+### Sequencing: orientation first, and not only because it is bigger
+The recall-proxy cycle asks whether any proxy separates broken from legitimate regions. A 180° read
+scores **high precision and high coverage** — the engine reads flipped glyphs confidently. Rotated
+pages inside its frozen "broken" sample are unseparable by construction, so it would return a
+correct-looking "none does" **for the wrong reason** — which is the answer I already expect, so the
+wrong reason would never surface. Re-freeze that sample after orientation lands.
+
+### Ranked the TTL bug at ready[1] because it fires on the row above it
+`resume_key ttl=3600`, no heartbeat. The 16:37Z tick landed inside a live 7m50s window today. The
+only thing that stopped a duplicate was the router knowing out-of-band that the process was alive.
+The P0 I just minted is a multi-document OCR bench that will again run >60min. The guard is scheduled
+to fail on it.
+
+### Traps hit
+The 17:00Z CLEAR **provably never landed** — 4 envelope_ids re-delivered verbatim while their files
+sat in `processed/`. A failed CLEAR is not free; it costs a whole duplicate triage pass. Read ids
+from the file, never an `echo`-piped variable. Separately, `orch-apply` hard-rejected me **twice** on
+the prose ceiling (fail-loud, live file untouched); fixed by consolidating three 08-24 fold blocks
+into one with a git pointer — not by `orch-backlog-stub.sh`, which would have stripped the P0 I had
+just minted.
+
+### Carry-over
+- `ready[0]` orientation P0 → dev-pdf-extractor. `ready[1]` TTL P1 → agent-father, **needs hand-dispatch** (off DRS allowlist).
+- Two ready[] rows I folded into are unreachable by any picker (`dispatch_lane: null` + off-allowlist `next_agent`). Next promote review.
+- Still open on me: `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` (review[], BLOCKED, next_agent=po).
+- User's BCTC goal: **first ready path in days** — orientation is verified, bounded and recoverable.
+
 ## 2026-08-25T17:40-18:00Z — I ruled YES on n=1. Document #2 killed it in 30 minutes.
 
 Re-ruling my own 17:00Z decision. Journal: `docs/agent-memory/decisions/triage-20260825T1752Z-po.md`.
