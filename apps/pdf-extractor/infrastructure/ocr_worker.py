@@ -208,11 +208,15 @@ def _rasterize_and_ocr_page_worker(pdf_path: str, page_num: int) -> str:
     # the duration of the ProcessPoolExecutor; safe to cache here).
     if _paddle_ocr_worker_instance is None:
         logger.info(
-            "_rasterize_and_ocr_page_worker: loading PaddleOCR (lang=en, CPU-only) — first call"
+            "_rasterize_and_ocr_page_worker: loading PaddleOCR (lang=vi, CPU-only) — first call"
         )
+        # lang='vi': PEK-OCR-ROOTCAUSE — was "en", whose rec-model character dictionary has
+        # no Vietnamese diacritics and cannot emit them. BCTC text requires the Vietnamese
+        # model; mirrors the same fix already applied to ocr_adapter.py and the table path
+        # (pek_engine_adapter.py).
         _paddle_ocr_worker_instance = PaddleOCR(
             use_angle_cls=False,
-            lang="en",
+            lang="vi",
             use_gpu=False,
             show_log=False,
         )

@@ -567,14 +567,18 @@ class PdfOcrAdapter:
         # repeated model loading — PaddleOCR load is expensive ~5-10s first call).
         if not hasattr(self, "_paddle_ocr_instance") or self._paddle_ocr_instance is None:
             logger.info(
-                "_rasterize_and_ocr_page: loading PaddleOCR (lang=en, CPU-only) — first call"
+                "_rasterize_and_ocr_page: loading PaddleOCR (lang=vi, CPU-only) — first call"
             )
             # use_angle_cls=False: BCTC tables are not rotated.
-            # lang='en': PaddleOCR 'en' model handles digits + Latin + basic diacritics.
+            # lang='vi': PEK-OCR-ROOTCAUSE — was "en", whose rec-model character dictionary
+            # has no Vietnamese diacritics and therefore cannot emit them at all (it does NOT
+            # "handle basic diacritics" — that was a false premise). BCTC text requires the
+            # Vietnamese model. Same fix already applied to the table path
+            # (pek_engine_adapter.py) — this propagates it to the text path.
             # use_gpu=False: enforced — host has no CUDA (D6 Mac host safety).
             self._paddle_ocr_instance = PaddleOCR(
                 use_angle_cls=False,
-                lang="en",
+                lang="vi",
                 use_gpu=False,
                 show_log=False,
             )
