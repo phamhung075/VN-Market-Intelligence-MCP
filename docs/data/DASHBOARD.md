@@ -2338,3 +2338,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-03 · data_stale: polymarket
+**Severity:** CRITICAL | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** prediction_markets table
+**Details:** polymarket stale 1344.7h (56.0d) since 2026-06-30T22:00:02Z, re-confirmed live this cycle
+**Impact:** prediction-market signal permanently absent from analysis
+**Root cause:** source fetch pipeline appears dead/discontinued, no open FIX task
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:43:59Z (signal sys-20260825T224040-0a0d, system-auditor -> po, dedup_key=data_stale:polymarket:B-03, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
