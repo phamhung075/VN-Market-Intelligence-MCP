@@ -36,7 +36,7 @@ Note: does NOT skip predictions entirely — predictions are still useful in TIG
 **P-2. Prerequisite** `get_evidence_summary(stock)` for ≥1 ticker
 All "No evidence" → `send_telegram(channel="work", message="[digest-predict] Daily prediction skipped: zero evidence.")` → EXIT
 
-**P-3. Market indicators context** (run at start of evidence gathering):
+**P-2.5. Market indicators context** (MANDATORY — run BEFORE P-3 evidence gathering; duplicate "P-3" label on this step and the next confirmed live 2026-08-25 to have contributed to it being skipped entirely for one cycle — renumbered to remove the ambiguity, no step content changed):
 ```
 call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
