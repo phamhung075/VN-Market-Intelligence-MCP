@@ -16543,7 +16543,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T0212",
         "created_at": "2026-07-31T02:12:46Z",
-        "updated_at": "2026-08-23T13:38:01Z",
+        "updated_at": "2026-08-25T08:15:01Z",
         "origin_signal_id": "dev-20260731T020908",
         "dedup_key": "git-isolation:shared-working-dir|symptom:branch-checkout-hijacks-peer-commits",
         "verification_gate": "live_two_agent_concurrent_branch_scenario_no_cross_attribution",
@@ -16572,7 +16572,10 @@
           "TASK-BRANCHGUARD-ENFORCE-FLIP"
         ],
         "pm_decomposition_complete": true,
-        "pm_closeout_note": "CLOSED AS DECOMPOSED, NOT AS DELIVERED — pm 2026-08-23. All of this row's remaining scope is delegated to children[]; the umbrella itself has no residual work and is_epic_wrapper() already made it non-dispatchable, so leaving it in ready[] only re-routed it to pm every manual-dispatch sweep (the defect this closeout ends). Delivery is tracked on the children, NOT here — do not read this DONE as 'the underlying defect is fixed'. Children: TASK-BRANCHGUARD-POSTCHECKOUT-HOOK, TASK-BRANCHGUARD-ENFORCE-FLIP."
+        "pm_closeout_note": "CLOSED AS DECOMPOSED, NOT AS DELIVERED — pm 2026-08-23. All of this row's remaining scope is delegated to children[]; the umbrella itself has no residual work and is_epic_wrapper() already made it non-dispatchable, so leaving it in ready[] only re-routed it to pm every manual-dispatch sweep (the defect this closeout ends). Delivery is tracked on the children, NOT here — do not read this DONE as 'the underlying defect is fixed'. Children: TASK-BRANCHGUARD-POSTCHECKOUT-HOOK, TASK-BRANCHGUARD-ENFORCE-FLIP.",
+        "secondary_claimed_at": "2026-08-25T08:15:01Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
