@@ -1,0 +1,101 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "dedup_key": "cowork-chef-intraday-triggerprompt-noncanonical-mcp-url",
+  "payload": {
+    "fire_time": "2026-08-25T07:24:01Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-25T07:22:29Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 36,
+    "board_lanes": {
+      "backlog": 561,
+      "ready": 109,
+      "review": 26,
+      "qa": 3,
+      "in_progress": 1,
+      "active_sprints": 19,
+      "done": 12,
+      "done_verified": 48,
+      "archive": 22,
+      "closed_sprints": 21,
+      "total": 822
+    },
+    "unpushed_commits": 293,
+    "findings": [
+      {
+        "id": "CYCLE-SNAPSHOT-NEVER-PROMOTED",
+        "occurrence": "6th consecutive",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again. Step 4.7 wrote docs/data/cycle-snapshot-07:20.json against nominal tick 07:15 — BOTH the filename AND the in-file .tick field carry the wall clock, because the fence passes --arg tick \"$FILE_TICK\" with FILE_TICK=$(date -u +%H:%M). Drift 5 min, same as the 06:45 and 07:00 ticks. Executed verbatim rather than hand-substituting the nominal tick: hand-correcting would break the evidence chain and constitutes an unrecorded flow edit.",
+        "scope": "3 layers — (a) filename, (b) .tick field, (c) the wall-clock value escaping into spawned-agent cycle identity / notebooks / log_agent_work ids (observed on alert-commander c250 at the 07:00Z tick, NOT reproduced as a rule — c249 used the nominal value with the same prompt shape).",
+        "owner_hint": "agent-father (fence) + whoever owns making the nominal tick reach the agent unambiguously"
+      },
+      {
+        "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
+        "occurrence": "3rd",
+        "detail": "spawn-fanout.md Step 5.1's documented parse `uptime | awk -F'load average' ... -F',' ...` splits on the comma that is the DECIMAL SEPARATOR under this host's LANG=fr_FR.UTF-8, yielding 3 from a true load of 3.69. LOAD_1MIN is the sole determinant of DEGRADED once headroom passes; both the truncated and the true value sit far below the 24 threshold (2 x 12 cores) so the verdict was unaffected AGAIN this tick, but the failure mode is fail-OPEN toward max_parallel=4.",
+        "verified_fix": "uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'  — handles macOS plural 'load averages:' and comma-decimal in one pass.",
+        "do_not": "Do NOT pin LC_ALL=C as the fix — that is what produces the concatenation garbage this parse then truncates."
+      },
+      {
+        "id": "CHEF-INTRADAY-TRIGGERPROMPT-NONCANONICAL-MCP-URL",
+        "occurrence": "1st",
+        "severity": "low",
+        "detail": "chef-intraday is the ONLY slot of 23 in cowork-schedule.json whose trigger_prompt carries a second line, and that line reads 'MCP: https://zenmidi.com/vn-market/mcp' — a DIRECT vn-market endpoint, not the canonical gateway URL https://zenmidi.com/gateway/mcp that CLAUDE.md pins. Probed both this tick: BOTH return HTTP 200, so this is a stale artifact rather than a broken pointer.",
+        "why_inert_today": "unified-agent's tool grant is Read/Write/Edit/Bash/mcp__gateway__call_tool — it has no HTTP client except Bash, and its flow uses call_tool. Nothing consumes the line.",
+        "why_still_worth_fixing": "It is a second, divergent transport address sitting in a SSOT file that agents and humans read. Passed verbatim this tick per spawn-fanout.md's rule that trigger_prompt is dispatched unmodified.",
+        "owner_hint": "agent-father (one-line schedule edit)"
+      },
+      {
+        "id": "HOLD-AT-NEW-DELIVERY-CONFIRMED-3RD",
+        "kind": "confirmation, not a defect",
+        "detail": "The 7 to=po rows held at NEW on the 07:00Z tick were delivered by a peer dev-team drain at 07:13:14Z into orch-state .dev_team_idle_chain.pending_triage_inbox[] — a 14-entry source:dashboard cluster containing the chef CCATO narrative_contradiction cohort plus the dev-team row carrying dedup_key orphan-adoption:terminal-guard-live-repro-20260825T06335*. Verified by source+drained_at cluster and by dedup_key prefix, NEVER by row id (the drain re-envelopes under a content-hash envelope_id and discards the original id).",
+        "significance": "3rd end-to-end confirmation that holding to=po rows at NEW on a cowork tick is the correct deviation: latency was ~8 minutes, and marking them READ would have made them immediately cold-evictable (READ is terminal, SIGNAL_MAX_AGE_HOURS=24, CCATO ts is 2026-08-24T00:00:00Z i.e. already >24h)."
+      }
+    ],
+    "note": "07:15Z WORK, 2 slots fired as one batch (MAX_PARALLEL=4, DEGRADED=false, headroom 5317MB, load 3.69/24). signal_queue drain was a no-op — 0 NEW rows, down from 7 last tick, all delivered by a peer drain at 07:13:14Z. Step 4b no collision (two distinct agent_ids). Unpushed backlog now 293, still gated on the bctcScalarAggregator.ts size-lint pre-push blocker."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-25T07:24:01Z"
+}
