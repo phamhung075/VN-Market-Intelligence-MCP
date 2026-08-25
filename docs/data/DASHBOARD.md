@@ -2086,3 +2086,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-32 · mcp-server running outdated image vs verified fix
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server
+**Details:** Commit 0f6891872 (reaper orphan-lock fix) landed 2026-08-25T01:54:59Z but image is 13h older. Defect reproduced 03:03Z/03:06Z. No rebuild since fix.
+**Impact:** Running system executes code with known defect; expected recurrence at ~04:49Z
+**Root cause:** (not yet determined)
+**Zone owner:** ops
+**Last reported:** 2026-08-25T03:56:13Z (signal sys-20260825T035603-1fb9, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
