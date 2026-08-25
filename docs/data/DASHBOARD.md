@@ -2134,3 +2134,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · brokerSanctionsSweep STALE (607h overdue)
+**Severity:** CRITICAL | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** cron-scheduler
+**Details:** Cron job brokerSanctionsSweep last ran 2026-07-31, now 25 days overdue (threshold 36h)
+**Impact:** Broker sanctions updates suspended for 3.5 weeks
+**Root cause:** Job definition missing or host-level execution failure
+**Zone owner:** dev-team
+**Last reported:** 2026-08-25T14:39:15Z (signal sys-20260825T143900-0a9e, system-auditor -> po, dedup_key=auditor-a29-fire-gap:brokerSanctionsSweep, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
