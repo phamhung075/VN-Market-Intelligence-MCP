@@ -1,0 +1,39 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "bug-escalation",
+  "priority": "P1",
+  "createdAt": "2026-08-25T04:21:16Z",
+  "payload": {
+    "subject": "hot orch-state row and cold backlog-detail map disagree on next_agent; effective_next_agent() prefers cold, silently misrouting rows",
+    "dedup_key": "resolver:effective_next_agent|hot-cold-next_agent-divergence",
+    "module": "scripts/lib/devteam-eligibility.jq :: effective_next_agent()",
+    "detected_by": "dev-team tick 2026-08-25T04:07Z (router)",
+    "mechanism": "effective_next_agent($detail_items) returns $detail_items[.id].next_agent whenever it is a non-empty string, and falls back to the hot rows .next_agent only when that is absent. Nothing reconciles the two, and nothing warns when they disagree.",
+    "live_instances": [
+      {
+        "id": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+        "hot_next_agent": "qa",
+        "hot_owner": "developer",
+        "cold_next_agent": "developer",
+        "cold_owner": "developer",
+        "consequence": "PRIMARY QA-drain predicate effective_next_agent == qa evaluates FALSE, so the row is invisible to the qa lane its own closeout routed it to. It was NOT picked this tick despite qa[]=3 against QA_CAP=10 and 5 budget remaining. It instead falls into the SECONDARY owner-triage set, whose resolver targets developer, which would re-spawn a developer on already-finished work."
+      },
+      {
+        "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+        "hot_next_agent": "architect",
+        "hot_owner": "po",
+        "cold_next_agent": "dev-mcp-server",
+        "cold_owner": "ops",
+        "consequence": "SECONDARY-drain dispatched dev-mcp-server this tick per the cold value. Correct by the resolvers stated design, but a human or any picker reading the hot row would expect architect. Divergence passed explicitly to the spawned agent rather than hidden."
+      }
+    ],
+    "why_this_is_systemic": "Both instances arose from agents cold-storing narrative into docs/data/orch/archive/backlog-detail.json as part of their own closeout, while writing a different next_agent on the hot row in the same cycle. The 12000B prose ceiling actively pushes agents toward cold-storing, so the write pattern that produces this divergence is the one the system rewards. Two independent instances in a single tick.",
+    "asks": [
+      "Decide the SSOT: should effective_next_agent prefer hot or cold, or refuse to resolve and escalate when they disagree?",
+      "Add a divergence detector so a hot/cold next_agent mismatch is visible rather than silently deciding routing.",
+      "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED needs its cold next_agent corrected to qa, or it will not reach QA on any future tick."
+    ],
+    "router_note": "Router does not author task rows. Filed as a signal for architect triage."
+  }
+}
