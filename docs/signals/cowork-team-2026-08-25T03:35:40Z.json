@@ -1,0 +1,32 @@
+{
+  "createdAt": "2026-08-25T03:35:40Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "priority": "P3",
+  "payload": {
+    "nominal_tick": "03:30",
+    "classification": "FIRE",
+    "reason": "cron",
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "one_shots": [],
+    "errors": [],
+    "new_signals": 0,
+    "signal_backlog": 34,
+    "devq": 109,
+    "dev_head": "idle",
+    "pressure_mode": "adaptive",
+    "suppressed_cadence": [],
+    "fanout_gate": "NORMAL",
+    "headroom_mb": 2928,
+    "load_1min": 2.28,
+    "cores": 12,
+    "max_parallel": 4,
+    "last_fired_prewrite": "2026-08-25T03:20:12Z",
+    "last_fired_timestamp": "2026-08-25T03:35:09Z",
+    "cycle_snapshot_promoted": false,
+    "note": "03:30Z WORK tick, 1 of 1 slot fired: alert-commander-market spawned run_in_background with scheduled_utc=2026-08-25T03:30:00.000Z, last_fired stamped 2026-08-25T03:35:09Z (prewrite 2026-08-25T03:20:12Z retained for a possible Step 5.3 de-stamp). Slot token cowork-slot:alert-commander-market claimed at ttl_seconds=180 and released after the spawn ({ok:true,released:1}). Step 5.2 consistency check PASS (trigger_prompt line-1 capture docs/agents/alert-commander/flow/main.md == flow_path) and existence check PASS. Drain a genuine no-op: preflight new_signals=0 and the live queue census reads NEW 0 (READ 12, triaged 6), so nothing was held and nothing marked READ this tick. Note the queue itself shrank from 25 rows to 18 between 03:15Z and 03:30Z — a prune ran; not investigated this tick, flagged only. Step 4.2 pressure-state emitted_at 2026-08-25T03:20:17.405Z against now 03:34:08Z is ~13.9 min old versus the 20-minute _staleness_threshold_minutes with stale_warning=false, so adaptive mode held rather than downgrading to legacy. suppressed_cadence empty this tick — chef-intraday, suppressed at 03:15Z, is no longer suppressed, consistent with the 60-minute interval its policy resolves for calendar_status=open having elapsed since its 02:21:39Z fire. Step 5.1 fan-out gate computed live from the cadence-policy.json _fanout SSOT, never hardcoded: container_vm_headroom_mb 2928 >= headroom_floor_mb 1500, and load_1min 2.28 < 24 from 12 cores times load_per_core_factor 2, so NORMAL with max_parallel 4. SNAPSHOT NAMING DEFECT reproduction #10, server-confirmed cycle_snapshot_promoted=false: Step 4.7 wrote docs/data/cycle-snapshot-03:34.json at mtime 2026-08-25T03:34:28Z from wall-clock date -u +%H:%M, while emit_pressure_state looks up the nominal tick 03:30. This tick is also a deliberate live test of the consumer-side race characterized in the 03:15Z correction (commit fca953ee4): the write landed 32 seconds before the minute rolled, so if the spawned agent's bootstrap runs after 03:35:00Z it will resolve 03:35, miss, and fall through to live get_cycle_bootstrap and get_macro_snapshot calls. The outcome will be recorded on this spawn's return and is a second sample on whether HIT/MISS tracks the minute boundary. Do NOT read the 03:15Z REFINEMENT paragraph as current — it was retracted in the same file; the consumer path is a sub-minute race, not a working path, and the correct fix names the file by the NOMINAL tick in all three places (dispatcher write, agent read, promotion lookup) rather than repairing the promotion alone. last_regime emitted as the live-measured NEUTRAL read from macro_snapshot.data.signals.carry.regime in this tick's own snapshot — a deliberate, stated deviation from cycle-snapshot-latest.json, which remains frozen at tick 00:00 created_at 2026-08-23T00:07:50Z serving regime UNKNOWN to any agent that falls back to it. last_volatility_level sent as unknown truthfully: a full scalar-path scan of the snapshot returns zero keys matching volatil. dev_head read from canonical top-level .head (idle, updated_at 2026-08-25T03:29:36Z), never the deprecated .task_board.head stub. PUSH BACKLOG 193 unpushed commits, up from 189 at 03:22Z and 176 at 02:52Z — the acceleration continues unbroken across every tick this session. ready[] 109. Both covering rows remain unpickable at dispatch_lane=null: FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS (P1, next_agent=dev-mcp-server) and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, next_agent=developer); the first row's own title still says 117 commits against a measured 193, understating its blast radius by 76 and widening every tick."
+  }
+}
