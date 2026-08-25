@@ -1400,6 +1400,16 @@ SIG1=$(printf '%s' "$OUT1" | jq -r '.signature')
 
 STUB_MEM_PDFX="86.56"
 STUB_MEM_RAG="90.80"
+# AC-2 de-flake (FIX-AUDITOR-TIER1-PROBE-TEST-INVERTED-ASSERTION-L1422-FALSE-GREEN):
+# _now_iso() in the probe (auditor-tier1-probe.sh) is second-granularity
+# (`date -u +%Y-%m-%dT%H:%M:%SZ`). Without forced clock separation, tick1 and
+# tick2 frequently land inside the same wall-clock second, making
+# last_seen_at == first_seen_at even though the ledger write path is correct
+# (it unconditionally sets last_seen_at = $now on every matching-signature
+# write) — that is a timestamp-granularity artifact of this test's speed, not
+# a production defect. Force >=1s separation so the two ticks always land in
+# different seconds and the assertion below is deterministic, not flaky.
+sleep 1
 OUT2=$(run_probe); RC2=$?
 VERDICT2=$(printf '%s' "$OUT2" | jq -r '.verdict')
 SPAWN2=$(printf '%s' "$OUT2" | jq -r '.spawn_decision')
@@ -1419,7 +1429,7 @@ check "T-DEBOUNCE-1 tick2 signature BYTE-IDENTICAL to tick1 despite 86.90->86.56
 check "T-DEBOUNCE-1 tick2 spawn_decision DEBOUNCED (same signature, inside the 60min window)" "$([ "$SPAWN2" = "DEBOUNCED" ] && echo true || echo false)"
 check "T-DEBOUNCE-1 ledger holds exactly 1 entry (same signature reused, never duplicated)" "$([ "$(jq '.entries | length' "$SPAWN_DEBOUNCE_FILE_PATH")" -eq 1 ] && echo true || echo false)"
 check "T-DEBOUNCE-1 ledger spawn_count stays 1 (a DEBOUNCED tick never increments it)" "$([ "$(jq -r '.entries[0].spawn_count' "$SPAWN_DEBOUNCE_FILE_PATH")" = "1" ] && echo true || echo false)"
-check "T-DEBOUNCE-1 ledger last_seen_at advanced on the DEBOUNCED tick (still tracks liveness)" "$([ "$(jq -r '.entries[0].last_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")" != "$(jq -r '.entries[0].first_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")" ] || echo true)"
+check "T-DEBOUNCE-1 ledger last_seen_at advanced on the DEBOUNCED tick (still tracks liveness)" "$([ "$(jq -r '.entries[0].last_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")" != "$(jq -r '.entries[0].first_seen_at' "$SPAWN_DEBOUNCE_FILE_PATH")" ] && echo true || echo false)"
 
 # ── T-DEBOUNCE-2: ack-expiry hazard — rag-service's ack going STALE (tracked_by
 # no longer resolves live) moves it OUT of the acked-transparency clause and
@@ -1708,6 +1718,25 @@ check "T-LOG7 Tier-2/3 AC-4/AC-5: unwritable log destination -> verdict still SK
   "$([ "$(printf '%s' "$OUT_TLOG7B" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
 check "T-LOG7 Tier-2/3 AC-4/AC-5: unwritable log destination -> exit code still the real run_tiered_probe rc (0)" \
   "$([ "$RC_TLOG7B" -eq 0 ] && echo true || echo false)"
+
+# ── T-LINT-1: regression guard (AC-4, FIX-AUDITOR-TIER1-PROBE-TEST-INVERTED-
+# ASSERTION-L1422-FALSE-GREEN) — every `check "..."` call's second argument
+# must terminate in the `&& echo true || echo false` idiom. A bare
+# `[ cond ] || echo true` short-circuits: it echoes nothing (empty !=
+# "true" -> FAIL) when cond succeeds, and echoes "true" (-> PASS) when cond
+# FAILS, i.e. it silently inverts pass/fail (the exact L1422 defect this task
+# fixed). Opt-IN scan of THIS file's own source only — never an opt-out
+# allowlist (see feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.md).
+# Backslash-continued two-line `check` calls (e.g. the T-LOG* block above) are
+# rejoined before matching so they are not false-flagged as non-conforming.
+SELF_SRC="${BASH_SOURCE[0]:-$0}"
+LINT_JOINED=$(awk '{
+  if (cont) { line = line $0 } else { line = $0 }
+  if (line ~ /\\$/) { sub(/\\$/, "", line); cont = 1 } else { print line; cont = 0; line = "" }
+}' "$SELF_SRC")
+LINT_TOTAL_CHECKS=$(printf '%s\n' "$LINT_JOINED" | grep -c '^check "')
+LINT_CONFORMING_CHECKS=$(printf '%s\n' "$LINT_JOINED" | grep -c '^check ".*&& echo true || echo false)"$')
+check "T-LINT-1 every check() call in this file uses the && echo true || echo false idiom ($LINT_CONFORMING_CHECKS/$LINT_TOTAL_CHECKS conforming)" "$([ "$LINT_TOTAL_CHECKS" -eq "$LINT_CONFORMING_CHECKS" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
