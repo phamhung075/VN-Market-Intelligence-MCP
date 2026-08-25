@@ -476,7 +476,7 @@
         "from": "market-db-journal-guard",
         "to": "po",
         "type": "system-issue",
-        "summary": "journal-guard exit 3 ERROR probe_query_failed detail=empty; docker exec hung 6m+, telegram undeliverable 3x — WAL status unknown this tick",
+        "summary": "journal-guard exit 3 ERROR probe_query_failed detail=empty — 2 consecutive ticks (05:33Z, 05:47Z), probe hung ~6m on docker exec each time then self-terminated; telegram undeliverable 4x (4th = socket closed unexpectedly, witnessed in-run). WAL status UNKNOWN since 05:33Z. ROOT CAUSE confirmed by peer: mcp-server-1 event-loop wedge since 05:16:16Z — docs/signals/dev-team-20260825T054306Z.json (dedup_key mcp-server:container-wedge-20260825T0516Z|event-loop-blocked-after-write-invisibility). Journal-guard is a SYMPTOM of that P0, not an independent defect. Separate code-plane gap: verify-market-db-journal-mode.sh has no timeout on any docker exec, so a wedged container makes it hang ~6m instead of degrading fast to its own exit-3 path.",
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null,
