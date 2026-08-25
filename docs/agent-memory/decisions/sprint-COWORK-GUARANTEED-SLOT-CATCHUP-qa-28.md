@@ -151,3 +151,6 @@
 - whether OOM-Class Durability Gate or BCTC Eval Gate apply — neither: no crash/memory/durability claim, no BCTC report in scope. N/A both.
 **why-decision:** all 5 ACs independently verified against the diff and 3 fresh runs, not inherited: AC-1 idiom conformed (read at source), AC-2 de-flake mechanism present and sound (`sleep 1` forces >=1s separation vs. second-granularity `_now_iso()`), AC-3's 3-consecutive-identical-run bar met by my own re-runs (265/0 x3), AC-4's opt-in lint present and self-passing (265/265), AC-5's re-verification claim (debounce-1 ledger genuinely advances `last_seen_at`) is directly witnessed by my own T-DEBOUNCE-1 PASS in all 3 runs — no need to take the review_note's word for it.
 **why-change:** none — verdict `vc-approved`. Lane-move `qa[] -> done_verified[]` + RC-VERIF `raw_probe` to land in one `orch-apply.sh` write, dry-run rehearsed via `ORCH_APPLY_LIVE_FILE_OVERRIDE` first.
+
+### CAP-REACHED · 2026-08-25T04:30:00Z
+Byte cap breached (context-bloat-backstop.sh fired at 04:24:05Z: 46349B/36000B, pre-existing, before this sentinel). Per § Cap Check: STOP writing here. Rolled to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md` (STEP qa-S205 onward).
