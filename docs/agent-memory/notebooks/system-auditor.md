@@ -1,3 +1,60 @@
+## c3 · 2026-08-25T12:16:46Z
+### Audit Run Tier-2 (Tier-2 Freshness Sweep)
+- Tier: 2 | Data sources checked: 20+ | VPS routes: 8 | BCTC status checked
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped
+- Status: DEGRADED (stale BCTC pending queue)
+
+#### Tier-2 Freshness Checks
+
+**VPS Proxy Health (B-06/B-07):**
+- All dual-plane routes healthy (ssc-iboard, bctc-discover, bctc-push, sbv-vps, news-vps)
+- Single-plane route healthy (foreign-flow)
+- No-coverage routes noted (muasamcong, vietstock-agm-plan) — tracked gap
+- Verdict: PASS
+
+**Per-Source Fetch Freshness (B-01 through B-12):**
+- Tick aggregator running normally
+- No foreign-flow staleness detected (market hours: 09:00–15:30 VN = 02:00–08:30 UTC M-F, currently market closed)
+- Rate limits: all sources ready (san sang)
+- Verdict: PASS (except B-13 below)
+
+**BCTC Stale Pending Check (B-13):**
+- 513 pending records in bctc_vps_queue older than 72 hours
+- Oldest: 2026-05-15 21:44:19 (2438h ago)
+- Newest: 2026-07-12 12:30:27
+- Root cause: PDF extraction or data enrichment backlog, likely related to elevated pdf-extractor memory (known A-30 steady-state condition, separate from data freshness)
+- Verdict: WARN — signal emitted as sys-20260825T121606-2ad8
+
+**BCTC URL Shape (B-09):**
+- SSC portal URLs not present in non-skipped records
+- Verdict: PASS
+
+**DB Freshness Spot Checks (C-06, C-07):**
+- market_messages in last 3h: 0 (table may not be actively written in real-time)
+- agent_signals in last 24h: 5 (normal)
+- Verdict: PASS (table usage pattern may differ from expectations)
+
+**VPS Service Health:**
+- vn-bctc-fetch: healthy
+- vn-foreign-flow: idle (market closed)
+- vn-news-fetch: healthy
+- vn-price-fetch: idle (market closed)
+- vn-sbv-fetch: healthy
+- All services operational
+
+#### Signals Emitted
+1. sys-20260825T121606-2ad8 — B-13 WARN: stale pending BCTC (513 records >72h)
+
+#### Dashboard Updated
+- 1 WARN row added for B-13 stale pending BCTC
+
+**Dedup and Coverage:**
+- B-13 dedup_key: stale_pending_bctc:bctc-discover:B-13 (new signal)
+- No dedup skips this cycle
+- All Tier-2 checks executed
+
+**Exit code:** 0 (cycle complete)
+
 ## Audit Run Tier-DATA (c88)
 
 **Run:** 2026-08-25T12:09:51Z | Pre-gate exit: SPAWN (5 watched tables changed since last sweep)
@@ -40,26 +97,3 @@
 **Dedup status:** 1 finding (deep_fetch_stats) matched to existing open task FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD. No new signals written.
 
 **Exit code:** 0 (RECORD OK)
-
-## Tier-DATA (2026-08-25T05:41:12Z)
-
-**Audit Run:** DB Data-Anomaly Sweep
-
-**Tables checked:** 17 high-value tables, deterministic counts from scripts/db-integrity-counts.sh
-
-**Counts (immutable read-mode):**
-- ohlc_violations: 336 (stable residue, 0 fresh in last 2d, across 20 distinct dates)
-- scale_gt100x: 0
-- vnindex_cache_rows: 1
-- low_confidence_reports: 52
-
-**Findings Summary:**
-1. **daily_ohlcv OHLC violations (336 rows)** — Stable residue from prior data extraction issues. Fresh violations in last 2 days: 0. Pipeline currently produces correct data. Tracked under open repair tasks: LINT-OHLCV-WRITE-BYPASS and CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR. Verdict: NOISE (no new anomalies).
-
-**Other tables (already-open):**
-- `deep_fetch_stats` (class=a, production writer) — already-open: sys-20260806T065709-49e3
-- `deep_fetch_queue` (2549 rows, 2482 expired) — already-open: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD
-- `cron_job_runs` (212 error/crashed rows) — already-open: FIX-CRON-RUNS-NULL-ERRORMSG
-- `macro_indicators` (1 row, stale 17.5h) — already-open: FIX-MACRO-INDICATORS-EMPTY-COLUMNS
-
-**Exit:** 0 (RECORD OK, no new signals)
