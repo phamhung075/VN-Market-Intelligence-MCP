@@ -2122,3 +2122,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30-INVESTIGATION · pdf-extractor memory pressure at cap
+**Severity:** INFO | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-pdf-extractor-1
+**Details:** Deep cgroup analysis: working set 2028 MiB (76% of 2.5 GiB cap), 5857 hard limit hits, file cache 143 MiB (6.7%). Kernel page reclaimer active. Not leak or cache artifact.
+**Impact:** Container operating under sustained memory pressure; performance may degrade. Risk: kernel page swapping. No OOM kills yet.
+**Root cause:** (not yet determined)
+**Zone owner:** developer
+**Last reported:** 2026-08-25T14:23:37Z (signal sys-20260825T142316-4385, system-auditor -> po, INFO Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
