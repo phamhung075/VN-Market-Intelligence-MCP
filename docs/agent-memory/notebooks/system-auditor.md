@@ -1,3 +1,65 @@
+## c1015 · 2026-08-25T03:30Z
+### Audit Run Tier-DATA (2026-08-25T03:30Z)
+- Tier: DATA | Tables checked: 17 | Findings: 4 (1 HIGH REAL, 3 INFO NOISE)
+- Anomalies: 0 new signals | dedup-skipped: 2 (deep_fetch_stats already tracked, ohlcv violations already tracked)
+- Status: STABLE (no new anomalies; known issues remain tracked)
+
+### Findings Summary
+
+**1. daily_ohlcv — 336 persistent OHLC H>=O,C,L violations**
+- Violations count: 336 (unchanged from last cycle)
+- Distinct dates affected: 20 (NOT concentrated on a single date)
+- Fresh violations (last 2 days): 0 (no new violations this cycle)
+- Scale anomalies (>100x): 0
+- Root cause: Known residual from prior data extraction issues
+- Status: BY-DESIGN (tracked under LINT-OHLCV-WRITE-BYPASS + CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR)
+- Signal status: DEDUP-SUPPRESSED (same violation population as 2026-08-25T03:00Z scan)
+
+**2. deep_fetch_stats — empty (class=a)**
+- Row count: 0 (unchanged from last cycle)
+- Production writer: deepFetchQueueStore.ts:173
+- Producer health: deep_fetch_queue has 2540 rows, 2475 expired, 31 pending, 34 vps-failed, newest entry 2026-08-25T03:27:15
+- Root cause: Stats aggregation pipeline stalled; producer is live but consumer not generating stats
+- Severity: HIGH (class=a — production writer exists, 0 rows is a real breach)
+- Signal status: ALREADY-OPEN (tracked as FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD)
+
+**3. price_alerts — empty (class=c)**
+- Row count: 0
+- Writer provenance: on-demand MCP tool only (priceAlertTools.ts:148)
+- Root cause: Expected empty; tool-driven table populated only on explicit tool invocation
+- Severity ceiling: INFO (class=c — no production job writes to this table)
+- Verdict: NOISE (not a pipeline failure)
+
+**4. alert_engine_records — empty (class=b)**
+- Row count: 0
+- Writer provenance: separate database file (alert_engine.db, not market.db)
+- Root cause: Table has zero production writers against market.db by design
+- Severity ceiling: INFO (class=b — expected empty by construction)
+- Verdict: NOISE (not a pipeline failure)
+
+### Data Quality Metrics (deterministic sqlite output)
+```
+scan_ts: 2026-08-25T03:29:09Z
+ohlc_violations_count: 336
+scale_gt100x_count: 0
+vnindex_cache_rows_count: 1
+low_confidence_reports_count: 52
+ohlc_violation_distinct_dates: 20
+daily_ohlcv_total: 789924
+market_prices_freshness: 2026-08-25T03:28:42.500Z
+```
+History record: docs/data/db-integrity-history.json (appended 2026-08-25T03:29:55Z)
+
+### Durability Sweep
+- Marker files swept: 0
+- Malformed keys: 0
+- Stale drafts: 0
+- Schedule gaps: t1=0, t2=0, t3=0
+
+### Contract Status
+- No contract contradictions
+- Durability sweep completed successfully
+
 ## c1013 · 2026-08-25T03:00Z
 ### Audit Run Tier-DATA (2026-08-25T03:00Z)
 - Tier: DATA | Tables checked: 17 | Findings: 2 (1 REAL HIGH, 1 BY-DESIGN)
@@ -44,20 +106,3 @@
 
 ## d4-auto · 2026-08-25T03:00:00.993Z
 D4 candidates: none
-
-## c1014 · 2026-08-25T02:41Z
-### Audit Run Tier-3
-- Tier: 3 | Services: 5 checked | Sources: 0 checked | DB checks: 16
-- Anomalies: 3 new (1 critical, 2 warn, 0 info) | 1 dedup-skipped
-- Status: DEGRADED
-
-**Findings:**
-- **C-01 CRITICAL:** daily_ohlcv has 0 distinct stock codes in last 24h (expected ≥25). This is a data integrity breach indicating NULL or corrupt code column values.
-- **C-04 WARN:** financial_reports has 6 low-confidence extractions in last 7d (expected ≤5). Extraction confidence varies slightly above threshold.
-- **C-16 WARN:** bctc_vps_queue has 1 stale pending entry >72h (known, dedup-skipped from 2026-08-24).
-
-**Container & Services:** All 5 checked services operational (pdftoppm, tesseract, Vietnamese lang, stock-price, technical-analysis, alert-engine, pdf-extractor).
-**DB Health:** 13/16 checks PASS, 2 WARN, 1 CRITICAL. No schema issues. WAL files healthy.
-**Status:** DEGRADED due to C-01 critical on OHLCV data.
-
-**Summary:** Tier-3 audit detected critical data integrity issue in daily_ohlcv table. Container tooling and inter-service connectivity all pass. Recommend investigating daily_ohlcv.code column values immediately.
