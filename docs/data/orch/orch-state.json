@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-25T21:20:04Z",
-    "updated_by": "dev-team (router: head reset after terminal qa return)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-25T22:13:41Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12515,29 +12516,6 @@
         "updated_at": "2026-08-14T21:30:21Z"
       },
       {
-        "id": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT",
-        "type": "FIX",
-        "title": "DRS claim script sets head.next_agent from the CACHED dispatch_lane field instead of re-resolving effective_next_agent at claim time — 2 live mis-dispatches same day (FIX-CHEF-BIZCTX 02:21Z, UC-CDC-P1 22:35Z), both caught only by router hand-correction",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "size": "S",
-        "created_at": "2026-08-14T23:00:56Z",
-        "created_by": "po-triage-20260814T2300Z",
-        "origin_signal_id": "dev-team-20260814T223711Z",
-        "supervised": false,
-        "baseline_pass": false,
-        "files": [
-          "scripts/devteam-backlog-claim-design-router-sweep.jq",
-          "scripts/lib/devteam-eligibility.jq"
-        ],
-        "status_note": "AC: scripts/devteam-backlog-claim-design-router-sweep.jq resolves next_agent via effective_next_agent($detail_items) at claim time (the same resolution RLC already performs) and NEVER reads a persisted dispatch_lane value; regression fixture proves a row whose dispatch_lane predates a later next_agent change claims to the LATER agent. Priority: MEDIUM->P1 on 2nd same-day occurrence. Evidence occurrence 1: FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING carried dispatch_lane='ba' stamped 2026-08-12T08:57:41Z, which predates ba_completed_at=2026-08-12T12:03:37Z; DRS claimed it to ba at 2026-08-14T02:21Z; router hand-corrected head.next_agent to architect at 02:22Z (see that row's own stale_dispatch_lane_note field). Evidence occurrence 2: UC-CDC-P1 2026-08-14T22:35Z, same shape, corrected in commit 0f20cfd61. Root cause is a stale-cache read, so the failure is SILENT whenever no router happens to be watching — both catches so far were incidental, not mechanised. Reference: feedback_drs_claim_script_trusts_stale_dispatch_lane_field.md. || SCOPE WIDENED by po triage 2026-08-23T17:37Z (bug-escalation envelope 24514c8c, action=widen-existing-row-do-not-mint-duplicate - honoured, no duplicate minted). SECOND failure mode on the SAME line, not covered by this row's stale-value framing or its regression fixture: dispatch_lane == NULL. scripts/devteam-backlog-claim-design-router-sweep.jq:73-81 selects $swept[0] (FIRST DRS-stamped ready[] row in ARRAY ORDER, no priority sort), binds ($picked.dispatch_lane) as $lane with NO null-guard, and writes head.next_agent = $lane verbatim. A null $lane yields head.next_agent=null => an unspawnable head, and the row re-strands every sweep. Add to AC: a regression fixture for dispatch_lane==null (refuse-or-fallback-to-effective_next_agent), alongside the existing stale-value fixture. Cross-ref: feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head records the same null-lane=>unspawnable-head shape on the SLS sweep, i.e. this is a two-sweep defect class, not one script.\n\nLIVE INSTANCE 2026-08-25T20:56Z (dev-team tick 20:37Z, DRS rotation turn) — ESCALATED P1->P0.\nThe claim script fired on its ONLY predicate, line 73 `select(.promoted_by == \"dev-team (design-router sweep)\")`,\nand picked FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE whose DRS stamp dated\n2026-08-14T22:35:15Z — 11 days stale. That row now carries next_agent=developer (dev-role, which\n`is_non_dev_next_agent_unrouted` excludes from DRS by construction) and dispatch_lane=null, so the claim\nset .head.next_agent=null: an UNSPAWNABLE head, a state the flow-doc asserts cannot occur (\"never a\n`developer` fallback\"). Rolled back same tick (row returned to ready[], stamp voided, head reset idle);\nno agent was spawned from the undefined state.\n\nSEVERITY IS HIGHER THAN A NULL HEAD. Auditing all 8 DRS-stamped ready[] rows found 3 where the cached\ndispatch_lane DISAGREES with the row own next_agent:\n  FIX-BCTC-BANK-SUMMARY-MAPPING                lane=ba        next_agent=architect\n  FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY  lane=architect next_agent=pm\n  FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN           lane=architect next_agent=developer\nA null lane fails LOUDLY (unspawnable head, noticed immediately). These three fail SILENTLY — the claim\nsucceeds and dispatches the work to the WRONG specialist, which no gate downstream can detect. That is\nthe real damage class, and it is live on 3 rows right now.\n\nSECOND, SEPARABLE DEFECT found in the same audit (may warrant its own row): the claim selects by stamp\npresence with no ordering, so a freshly promoted row loses to any older stamp. This tick promoted\nFIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS (P0, lane=architect, well-formed) and the\nclaim ignored it in favour of the 11-day-old row. That P0 is still unclaimed in ready[]. Stale stamps\ntherefore STARVE fresh DRS P0s indefinitely, one rotation turn each.\n\nAC ADDENDUM: the fix must also VOID or re-resolve the 8 pre-existing stamps — resolving at claim time\nfixes new rows but leaves these 8 mis-stamped, and 3 of them still route wrong on the next DRS turn.",
-        "updated_at": "2026-08-25T20:58:28Z",
-        "updated_by": "dev-team (live instance + escalation)"
-      },
-      {
         "id": "FIX-BCTC-REPARSE-STRANDED-LIST-GATE-STILL-QUERIES-STALE-FILENAME-PERIOD",
         "type": "FIX",
         "title": "FIX-BCTC-REPARSE-PERIOD-KEY-...-QUARANTINE fixed the WRITE side only: buildStrandedList's already-filed dedup gate still queries financial_reports under the filename-derived yq the same fix just proved systematically stale — re-enqueues already-stored periods forever",
@@ -23912,9 +23890,38 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-25T20:56:11Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-25T22:13:39Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT",
+        "type": "FIX",
+        "title": "DRS claim script sets head.next_agent from the CACHED dispatch_lane field instead of re-resolving effective_next_agent at claim time — 2 live mis-dispatches same day (FIX-CHEF-BIZCTX 02:21Z, UC-CDC-P1 22:35Z), both caught only by router hand-correction",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "size": "S",
+        "created_at": "2026-08-14T23:00:56Z",
+        "created_by": "po-triage-20260814T2300Z",
+        "origin_signal_id": "dev-team-20260814T223711Z",
+        "supervised": false,
+        "baseline_pass": false,
+        "files": [
+          "scripts/devteam-backlog-claim-design-router-sweep.jq",
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "status_note": "AC: scripts/devteam-backlog-claim-design-router-sweep.jq resolves next_agent via effective_next_agent($detail_items) at claim time (the same resolution RLC already performs) and NEVER reads a persisted dispatch_lane value; regression fixture proves a row whose dispatch_lane predates a later next_agent change claims to the LATER agent. Priority: MEDIUM->P1 on 2nd same-day occurrence. Evidence occurrence 1: FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING carried dispatch_lane='ba' stamped 2026-08-12T08:57:41Z, which predates ba_completed_at=2026-08-12T12:03:37Z; DRS claimed it to ba at 2026-08-14T02:21Z; router hand-corrected head.next_agent to architect at 02:22Z (see that row's own stale_dispatch_lane_note field). Evidence occurrence 2: UC-CDC-P1 2026-08-14T22:35Z, same shape, corrected in commit 0f20cfd61. Root cause is a stale-cache read, so the failure is SILENT whenever no router happens to be watching — both catches so far were incidental, not mechanised. Reference: feedback_drs_claim_script_trusts_stale_dispatch_lane_field.md. || SCOPE WIDENED by po triage 2026-08-23T17:37Z (bug-escalation envelope 24514c8c, action=widen-existing-row-do-not-mint-duplicate - honoured, no duplicate minted). SECOND failure mode on the SAME line, not covered by this row's stale-value framing or its regression fixture: dispatch_lane == NULL. scripts/devteam-backlog-claim-design-router-sweep.jq:73-81 selects $swept[0] (FIRST DRS-stamped ready[] row in ARRAY ORDER, no priority sort), binds ($picked.dispatch_lane) as $lane with NO null-guard, and writes head.next_agent = $lane verbatim. A null $lane yields head.next_agent=null => an unspawnable head, and the row re-strands every sweep. Add to AC: a regression fixture for dispatch_lane==null (refuse-or-fallback-to-effective_next_agent), alongside the existing stale-value fixture. Cross-ref: feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head records the same null-lane=>unspawnable-head shape on the SLS sweep, i.e. this is a two-sweep defect class, not one script.\n\nLIVE INSTANCE 2026-08-25T20:56Z (dev-team tick 20:37Z, DRS rotation turn) — ESCALATED P1->P0.\nThe claim script fired on its ONLY predicate, line 73 `select(.promoted_by == \"dev-team (design-router sweep)\")`,\nand picked FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE whose DRS stamp dated\n2026-08-14T22:35:15Z — 11 days stale. That row now carries next_agent=developer (dev-role, which\n`is_non_dev_next_agent_unrouted` excludes from DRS by construction) and dispatch_lane=null, so the claim\nset .head.next_agent=null: an UNSPAWNABLE head, a state the flow-doc asserts cannot occur (\"never a\n`developer` fallback\"). Rolled back same tick (row returned to ready[], stamp voided, head reset idle);\nno agent was spawned from the undefined state.\n\nSEVERITY IS HIGHER THAN A NULL HEAD. Auditing all 8 DRS-stamped ready[] rows found 3 where the cached\ndispatch_lane DISAGREES with the row own next_agent:\n  FIX-BCTC-BANK-SUMMARY-MAPPING                lane=ba        next_agent=architect\n  FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY  lane=architect next_agent=pm\n  FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN           lane=architect next_agent=developer\nA null lane fails LOUDLY (unspawnable head, noticed immediately). These three fail SILENTLY — the claim\nsucceeds and dispatches the work to the WRONG specialist, which no gate downstream can detect. That is\nthe real damage class, and it is live on 3 rows right now.\n\nSECOND, SEPARABLE DEFECT found in the same audit (may warrant its own row): the claim selects by stamp\npresence with no ordering, so a freshly promoted row loses to any older stamp. This tick promoted\nFIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS (P0, lane=architect, well-formed) and the\nclaim ignored it in favour of the 11-day-old row. That P0 is still unclaimed in ready[]. Stale stamps\ntherefore STARVE fresh DRS P0s indefinitely, one rotation turn each.\n\nAC ADDENDUM: the fix must also VOID or re-resolve the 8 pre-existing stamps — resolving at claim time\nfixes new rows but leaves these 8 mis-stamped, and 3 of them still route wrong on the next DRS turn.",
+        "updated_at": "2026-08-25T22:13:41Z",
+        "updated_by": "dev-team (live instance + escalation)",
+        "promoted_at": "2026-08-25T22:13:39Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-25T22:13:39Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -23928,7 +23935,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-25T06:54:09Z"
+        "last_served_tick": "2026-08-25T22:13:30Z"
       },
       "sls": {
         "last_served_tick": "2026-08-25T14:22:46Z"
@@ -23946,8 +23953,8 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-25T21:54:19Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-25T22:13:30Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
