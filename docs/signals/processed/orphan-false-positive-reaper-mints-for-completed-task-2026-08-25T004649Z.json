@@ -38,5 +38,11 @@
       "gap": "All three are ADOPTER-side. None addresses the upstream generator: the reaper cannot distinguish an abandoned lock from a completed one whose lock was intentionally left to expire. Fixing only the adopter suppresses the symptom; the false-orphan stream continues and burns Step 0a-B on every tick."
     },
     "action_required": "po_triage"
+  },
+  "_processed": {
+    "fingerprint": "d89d8226b2fe011d379ffddea1a2c0d646a1c4b4779400d00d70c78dfdad3711",
+    "processedAt": "2026-08-25T01:11:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
