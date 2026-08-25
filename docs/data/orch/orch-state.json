@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-25T01:56:34Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-25T02:19:32Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21852,7 +21853,10 @@
         "status": "REVIEW",
         "id": "FACTORY-APP-split-pollNews",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-pollNews",
-        "updated_at": "2026-08-23T00:21:38Z"
+        "updated_at": "2026-08-25T02:17:41Z",
+        "secondary_claimed_at": "2026-08-25T02:17:40Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-mcp-server"
       },
       {
         "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
@@ -22216,47 +22220,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
         "updated_at": "2026-08-24T23:45:23Z",
         "updated_by": "developer"
-      },
-      {
-        "id": "FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "qa",
-        "created_at": "2026-08-25T01:26:42Z",
-        "created_by": "po/triage-20260825T0107Z",
-        "updated_at": "2026-08-25T01:56:34Z",
-        "dedup_key": "reaper:orphan-mint-no-session-presence-liveness-check",
-        "title": "server-reaper mints orphan-signals keyed ONLY on lock TTL expiry with ZERO liveness check — gcExpiredLocks' Phase-1 scan never consults session-presence, so a presence-REGISTERED, demonstrably-live session's long-running task is falsely orphaned the moment its TTL lapses",
-        "desc": "CONFIRMED AT SOURCE by po triage 2026-08-25T01:07Z (session 036ceaf1) — read verbatim from the implementation, NOT inferred from the signal. Two dev-team recurring-bug envelopes (d89d8226 and its correction 4a5a8e12, carrying corrects_envelope_id) collapse to ONE finding; envelope 2 supersedes envelope 1's root cause and ONLY envelope 2's premise is built on here.\n\nTHE PREDICATE (apps/mcp-server/src/infrastructure/db/coordinationStore.ts, gcExpiredLocks() Phase 1 pre-GC scan):\n  WHERE expires_at + ? < unixepoch('now')\n    AND task_kind IN (ORPHAN_EMIT_ALLOW_LIST)\n    AND task_id NOT LIKE 'published:%'\n    AND task_id NOT LIKE 'cron:%'\n    AND task_id NOT LIKE 'cron-registration:%'\n    AND task_id != 'dev-team-cron-singleton'\nTTL expiry is the SOLE liveness proxy. The row's own owner_client_session IS selected by that query — but only to be copied into the emitted signal payload as original_owner_client_session. It is never used to ask whether that session is still alive. There is no join, no subquery and no lookup against task_kind='session-presence' anywhere in the function.\n\nLIVE EVIDENCE: orphan-signal:task:FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING was minted 2026-08-24T23:59:49Z against a lock owned by session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb — a session that was presence-REGISTERED and LIVE at mint time (started_at 2026-08-24T21:09:38Z, heartbeat_at 2026-08-25T01:09:58Z, continuously running, executed ticks 00:37Z / 00:54Z / 01:07Z) and was still live when this row was written. Observed re-trips of the same false orphan: 00:37Z and 01:07Z.\n\nWHY ENVELOPE 1'S FRAMING IS INSUFFICIENT (deliberately NOT built on): 'the S2 dispatch convention leaves the sprint-task lock unreleased on the success path' is a real contributing factor but NOT the generator. A fix designed against it would leave the defect fully intact for any task that legitimately outlives its TTL — the reaper would still falsely orphan a correctly-behaving, mid-flight, long-running agent.\n\nCRITICAL DESIGN CONSTRAINT — THE GUARD MUST BE SUPPRESS-ONLY, NEVER ASSERT-DEAD. Sibling row SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS (backlog, P2) measured task_list_held(kind=session-presence) returning 1 row while >=3 sessions were demonstrably live, and presence registration is OPT-IN, so an ABSENT presence row does NOT mean the session is dead. Required polarity: presence row PRESENT and unexpired => SUPPRESS the mint; presence ABSENT => fall through to exactly today's behaviour. Under that polarity an undercounting roster can only make the guard weaker, never wrong — which is why this row deliberately does NOT depend_on the SPIKE and must not be blocked behind it.\n\nCHEAP TO IMPLEMENT: session-presence rows live in the SAME task_locks table (task_kind='session-presence'), so the guard is one NOT EXISTS correlated subquery added to the existing Phase-1 SELECT — same transaction, no new I/O, no new table, no schema change.\n\nDO NOT COPY THE CRON STEP 1b.1 ORACLE VERBATIM: envelope 2 proposes mirroring the oracle in .claude/skills/cron-detect-loop/SKILL.md Step 1b.1. Open row FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE (ready[], P0) documents at source that that oracle is broken in BOTH directions across 3 cron families and cost an 8h10m dispatcher outage on 2026-08-23. Take the SHAPE (cross-check presence before acting on lock state); never that implementation.",
-        "acceptance": "AC-1 gcExpiredLocks' Phase-1 scan must NOT emit an orphan-signal for an expired row whose owner_client_session matches a task_kind='session-presence' row with expires_at > unixepoch('now'). Phase-2 DELETE behaviour is UNCHANGED — the expired lock itself still GCs; only the adoption-signal mint is suppressed.\nAC-2 POLARITY TEST (the load-bearing one): an expired row whose owner_client_session has NO presence row MUST still emit exactly as today. Absence of presence is never treated as proof of life or of death — it is simply not a suppression trigger. A patch that inverts this (emit only when presence is absent-and-confirmed) is a REJECT.\nAC-3 NULL-safety: an expired row with owner_client_session IS NULL must not accidentally match a presence row whose own owner_client_session is NULL; it emits as today.\nAC-4 regression test reproducing the live incident: claim a sprint-task under session S with a short TTL, register a session-presence row for S with a long TTL, let the sprint-task lock expire, run gcExpiredLocks — assert ZERO orphan-signal rows for that task_id AND assert the expired sprint-task row was still deleted.\nAC-5 no regression in the existing reaper/coordination suites — compare the failing FILE SET against the documented pre-existing baseline, never the exit code (reference_mcpserver_fullsuite_preexisting_failure_baseline).",
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
-        ],
-        "baseline_pass": "cd apps/mcp-server && bun test src/__tests__/task-lock-reaper-timer.test.ts src/__tests__/FU-LOCKSTORE-EXPIRED-GC.test.ts src/infrastructure/__tests__/coordinationStore.test.ts — green BEFORE and AFTER; full-suite comparison by failing-FILE-SET vs the documented pre-existing baseline, never by exit code.",
-        "related_to": [
-          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-          "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
-          "FIX-ORPHANADOPTION-TREEHYGIENE-EMPTY-ZONE-REPOWIDE-REVERT",
-          "SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS",
-          "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
-          "FIX-SPRINT-TASK-HEARTBEAT-LOCK"
-        ],
-        "depends_on": [],
-        "discovered_by": "dev-team ticks 2026-08-24T23:59Z / 2026-08-25T00:37Z / 01:07Z (recurring-bug envelopes d89d8226 + correction 4a5a8e12); routed + source-verified by po triage 2026-08-25T01:07Z",
-        "coverage_verified_by_po": "Re-verified independently this tick via scripts/po-board-dedup-search.sh over the NON-TERMINAL lanes on 'reaper', 'orphan', 'presence' and 'liveness', then by READING each candidate in full rather than trusting its title. RESULT: no row covers the MINTING side. Rebuttals of the near-misses, each checked at source: (a) backlog FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD's title does say 'stop false-orphaning long agents', which looks like coverage — but its own audit_ref.note scopes that clause to fix_spec(b)/AC2, whose successor row is FIX-SPRINT-TASK-HEARTBEAT-LOCK; (b) that successor's four subtasks are owner_client_session binding, sprint-task TTL raise, a heartbeat loop in execute-tier.md, and INV-GATEWAY-1 cleanup — i.e. keep the CLAIMANT's lock fresh so it never expires. That is the opposite end of the same symptom and leaves the reaper's own predicate untouched: any task outliving even a raised TTL is still falsely orphaned. (c) backlog SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS is the INVERSE direction (roster misses live sessions; here the roster HAS the session and the reaper never looks). (d) backlog FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS is the same DEFECT CLASS (lock possession read as liveness) in a different component (the SF-1 singleton gate), not this call site. (e) ready[] FIX-ORPHAN-FR4-FR5-*, backlog FIX-ORPHANADOPTION-TREEHYGIENE-* are both adopter-side. Cold archive docs/data/orch/archive/2026-08.json also carries no reaper-side row.",
-        "promoted_at": "2026-08-25T01:44:34Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-25T01:44:57Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_by": "dev-mcp-server",
-        "commit_sha": "0f6891872",
-        "notebook_commit_sha": "a2e52c745",
-        "implementation_note": "Added SUPPRESS-ONLY NOT EXISTS presence-liveness guard to gcExpiredLocks() Phase-1 SELECT in coordinationStore.ts. AC-1..AC-4 satisfied: 5 new tests in task-lock-coordination-store.test.ts (AC-1 suppress-on-live-presence, AC-2 polarity absent-presence-still-emits, AC-2b expired-presence-still-emits, AC-3 NULL-safety, AC-4 live-incident regression). Targeted suite 89/89 pass (baseline 84/0). tsc clean. Tool count 184 / cron count 88 unchanged. Phase-2 DELETE unaffected."
       }
     ],
     "qa": [
@@ -22420,6 +22383,48 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
+      },
+      {
+        "id": "FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK",
+        "type": "FIX",
+        "status": "QA",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "created_at": "2026-08-25T01:26:42Z",
+        "created_by": "po/triage-20260825T0107Z",
+        "updated_at": "2026-08-25T02:19:32Z",
+        "dedup_key": "reaper:orphan-mint-no-session-presence-liveness-check",
+        "title": "server-reaper mints orphan-signals keyed ONLY on lock TTL expiry with ZERO liveness check — gcExpiredLocks' Phase-1 scan never consults session-presence, so a presence-REGISTERED, demonstrably-live session's long-running task is falsely orphaned the moment its TTL lapses",
+        "desc": "CONFIRMED AT SOURCE by po triage 2026-08-25T01:07Z (session 036ceaf1) — read verbatim from the implementation, NOT inferred from the signal. Two dev-team recurring-bug envelopes (d89d8226 and its correction 4a5a8e12, carrying corrects_envelope_id) collapse to ONE finding; envelope 2 supersedes envelope 1's root cause and ONLY envelope 2's premise is built on here.\n\nTHE PREDICATE (apps/mcp-server/src/infrastructure/db/coordinationStore.ts, gcExpiredLocks() Phase 1 pre-GC scan):\n  WHERE expires_at + ? < unixepoch('now')\n    AND task_kind IN (ORPHAN_EMIT_ALLOW_LIST)\n    AND task_id NOT LIKE 'published:%'\n    AND task_id NOT LIKE 'cron:%'\n    AND task_id NOT LIKE 'cron-registration:%'\n    AND task_id != 'dev-team-cron-singleton'\nTTL expiry is the SOLE liveness proxy. The row's own owner_client_session IS selected by that query — but only to be copied into the emitted signal payload as original_owner_client_session. It is never used to ask whether that session is still alive. There is no join, no subquery and no lookup against task_kind='session-presence' anywhere in the function.\n\nLIVE EVIDENCE: orphan-signal:task:FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING was minted 2026-08-24T23:59:49Z against a lock owned by session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb — a session that was presence-REGISTERED and LIVE at mint time (started_at 2026-08-24T21:09:38Z, heartbeat_at 2026-08-25T01:09:58Z, continuously running, executed ticks 00:37Z / 00:54Z / 01:07Z) and was still live when this row was written. Observed re-trips of the same false orphan: 00:37Z and 01:07Z.\n\nWHY ENVELOPE 1'S FRAMING IS INSUFFICIENT (deliberately NOT built on): 'the S2 dispatch convention leaves the sprint-task lock unreleased on the success path' is a real contributing factor but NOT the generator. A fix designed against it would leave the defect fully intact for any task that legitimately outlives its TTL — the reaper would still falsely orphan a correctly-behaving, mid-flight, long-running agent.\n\nCRITICAL DESIGN CONSTRAINT — THE GUARD MUST BE SUPPRESS-ONLY, NEVER ASSERT-DEAD. Sibling row SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS (backlog, P2) measured task_list_held(kind=session-presence) returning 1 row while >=3 sessions were demonstrably live, and presence registration is OPT-IN, so an ABSENT presence row does NOT mean the session is dead. Required polarity: presence row PRESENT and unexpired => SUPPRESS the mint; presence ABSENT => fall through to exactly today's behaviour. Under that polarity an undercounting roster can only make the guard weaker, never wrong — which is why this row deliberately does NOT depend_on the SPIKE and must not be blocked behind it.\n\nCHEAP TO IMPLEMENT: session-presence rows live in the SAME task_locks table (task_kind='session-presence'), so the guard is one NOT EXISTS correlated subquery added to the existing Phase-1 SELECT — same transaction, no new I/O, no new table, no schema change.\n\nDO NOT COPY THE CRON STEP 1b.1 ORACLE VERBATIM: envelope 2 proposes mirroring the oracle in .claude/skills/cron-detect-loop/SKILL.md Step 1b.1. Open row FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE (ready[], P0) documents at source that that oracle is broken in BOTH directions across 3 cron families and cost an 8h10m dispatcher outage on 2026-08-23. Take the SHAPE (cross-check presence before acting on lock state); never that implementation.",
+        "acceptance": "AC-1 gcExpiredLocks' Phase-1 scan must NOT emit an orphan-signal for an expired row whose owner_client_session matches a task_kind='session-presence' row with expires_at > unixepoch('now'). Phase-2 DELETE behaviour is UNCHANGED — the expired lock itself still GCs; only the adoption-signal mint is suppressed.\nAC-2 POLARITY TEST (the load-bearing one): an expired row whose owner_client_session has NO presence row MUST still emit exactly as today. Absence of presence is never treated as proof of life or of death — it is simply not a suppression trigger. A patch that inverts this (emit only when presence is absent-and-confirmed) is a REJECT.\nAC-3 NULL-safety: an expired row with owner_client_session IS NULL must not accidentally match a presence row whose own owner_client_session is NULL; it emits as today.\nAC-4 regression test reproducing the live incident: claim a sprint-task under session S with a short TTL, register a session-presence row for S with a long TTL, let the sprint-task lock expire, run gcExpiredLocks — assert ZERO orphan-signal rows for that task_id AND assert the expired sprint-task row was still deleted.\nAC-5 no regression in the existing reaper/coordination suites — compare the failing FILE SET against the documented pre-existing baseline, never the exit code (reference_mcpserver_fullsuite_preexisting_failure_baseline).",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
+        ],
+        "baseline_pass": "cd apps/mcp-server && bun test src/__tests__/task-lock-reaper-timer.test.ts src/__tests__/FU-LOCKSTORE-EXPIRED-GC.test.ts src/infrastructure/__tests__/coordinationStore.test.ts — green BEFORE and AFTER; full-suite comparison by failing-FILE-SET vs the documented pre-existing baseline, never by exit code.",
+        "related_to": [
+          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+          "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
+          "FIX-ORPHANADOPTION-TREEHYGIENE-EMPTY-ZONE-REPOWIDE-REVERT",
+          "SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS",
+          "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+          "FIX-SPRINT-TASK-HEARTBEAT-LOCK"
+        ],
+        "depends_on": [],
+        "discovered_by": "dev-team ticks 2026-08-24T23:59Z / 2026-08-25T00:37Z / 01:07Z (recurring-bug envelopes d89d8226 + correction 4a5a8e12); routed + source-verified by po triage 2026-08-25T01:07Z",
+        "coverage_verified_by_po": "Re-verified independently this tick via scripts/po-board-dedup-search.sh over the NON-TERMINAL lanes on 'reaper', 'orphan', 'presence' and 'liveness', then by READING each candidate in full rather than trusting its title. RESULT: no row covers the MINTING side. Rebuttals of the near-misses, each checked at source: (a) backlog FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD's title does say 'stop false-orphaning long agents', which looks like coverage — but its own audit_ref.note scopes that clause to fix_spec(b)/AC2, whose successor row is FIX-SPRINT-TASK-HEARTBEAT-LOCK; (b) that successor's four subtasks are owner_client_session binding, sprint-task TTL raise, a heartbeat loop in execute-tier.md, and INV-GATEWAY-1 cleanup — i.e. keep the CLAIMANT's lock fresh so it never expires. That is the opposite end of the same symptom and leaves the reaper's own predicate untouched: any task outliving even a raised TTL is still falsely orphaned. (c) backlog SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS is the INVERSE direction (roster misses live sessions; here the roster HAS the session and the reaper never looks). (d) backlog FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS is the same DEFECT CLASS (lock possession read as liveness) in a different component (the SF-1 singleton gate), not this call site. (e) ready[] FIX-ORPHAN-FR4-FR5-*, backlog FIX-ORPHANADOPTION-TREEHYGIENE-* are both adopter-side. Cold archive docs/data/orch/archive/2026-08.json also carries no reaper-side row.",
+        "promoted_at": "2026-08-25T01:44:34Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-25T02:19:32Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "0f6891872",
+        "notebook_commit_sha": "a2e52c745",
+        "implementation_note": "Added SUPPRESS-ONLY NOT EXISTS presence-liveness guard to gcExpiredLocks() Phase-1 SELECT in coordinationStore.ts. AC-1..AC-4 satisfied: 5 new tests in task-lock-coordination-store.test.ts (AC-1 suppress-on-live-presence, AC-2 polarity absent-presence-still-emits, AC-2b expired-presence-still-emits, AC-3 NULL-safety, AC-4 live-incident regression). Targeted suite 89/89 pass (baseline 84/0). tsc clean. Tool count 184 / cron count 88 unchanged. Phase-2 DELETE unaffected.",
+        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -22457,7 +22462,7 @@
         "last_served_tick": "2026-08-25T01:44:16Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-24T22:13:13Z"
+        "last_served_tick": "2026-08-25T02:15:21Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-24T23:15:15Z"
@@ -22472,7 +22477,7 @@
         "last_served_tick": "2026-08-25T01:16:34Z"
       }
     },
-    "_updated_at": "2026-08-25T02:12:55Z",
+    "_updated_at": "2026-08-25T02:15:21Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
