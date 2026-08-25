@@ -2194,3 +2194,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-02 · ssc-iboard vnstock data stale 0.6h
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** data-source/vnstock
+**Details:** Last fetch 2026-08-25 18:13:15, expected 15-min cadence
+**Impact:** Market data for Vietnamese stocks may be delayed
+**Root cause:** vnstock_fetch_log shows 0.6h delay beyond expected 6-min SLA
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T18:50:53Z (signal sys-20260825T185015-4f55, system-auditor -> po, dedup_key=data_stale:ssc-iboard:B-02, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
