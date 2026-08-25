@@ -22732,7 +22732,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T07:44:12Z",
+    "_updated_at": "2026-08-25T08:10:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23047,6 +23047,132 @@
         },
         "createdAt": "2026-08-25T07:20:20Z",
         "drained_at": "2026-08-25T07:44:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d65af058475a7d3280d32768de2f4691388a5bc0f34f03263d26e400e0fdf203",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=c6581d0a-1104-40e4-8b55-16c563969d28 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-25T08:01:59Z",
+        "drained_at": "2026-08-25T08:10:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dc43257045afa02d1d336db6bb86542b7ca8a55274dd3d693ff8305e323795ec",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T07:51:46Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T07:50:38Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "07:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 36,
+          "note": "07:45Z FIRE, single slot. Step 0a no-op (0 NEW — 3rd consecutive clean tick). Pressure 14.5min, under the 20min threshold.\n\nRECURRENCE COUNTS THIS TICK:\n- cycle_snapshot_promoted:false — 8th consecutive.\n- Step 4.7 wrote cycle-snapshot-07:49.json against nominal 07:45 — 8th off-boundary occurrence. Executed VERBATIM by deliberate choice: a unilateral writer-side switch to the nominal key would still MISS, because the reader independently computes rounded-wall-clock (~07:50). Fixing one side alone buys nothing and creates an undocumented divergence, so it stays verbatim until the paired fix lands.\n- Step 5.1 load parse yielded '2' against a true 2.56 (locale fr_FR comma decimal) — 5th occurrence. Verdict unaffected both times: 2.56 and 2 are both far under the 24 threshold (12 cores x factor 2), so the gate fails open toward MAX_PARALLEL=4 rather than wrongly degrading.\n\nNEW THIS TICK — a FOURTH party disagrees on .tick, and the evidence is in the promotion target itself.\ndocs/data/cycle-snapshot-latest.json carries .tick=\"00:00\" with created_at=\"2026-08-23T00:07:50Z\". Step 4.7's writer sets BOTH fields from a single `date -u` invocation, so it can never emit a pair that disagrees — under that writer this file would read .tick=\"00:07\". Therefore Step 4.7 did not write it; whatever did stamped a NOMINAL tick over a wall-clock-created payload. The promoter (emit_pressure_state, consumer R1) is the only party in the chain that works from the nominal tick, which makes it the likely author. Stated as an inference with its basis, not as fact — I did not read the promoter's source this tick.\n\nIf that inference holds, the writer/reader mismatch already filed is not the whole story: the PROMOTER also rewrites .tick to a different value than the writer put there, so the same field carries different semantics depending on which party last touched the file. A consumer reading .tick off cycle-snapshot-latest.json gets a nominal tick; reading it off cycle-snapshot-<HH:MM>.json gets a raw wall clock. Architect should confirm against emit_pressure_state's source before designing the fix, because a fix that unifies only the writer and reader would leave this third semantic in place.\n\nCorroborating detail: latest is 4468 B vs 16668 B for this tick's real snapshot — same 4 top-level keys, ~3.7x smaller payload. Stale by 2 days, so it is also serving stale macro to any consumer that reads it.\n"
+        },
+        "createdAt": "2026-08-25T07:51:46Z",
+        "drained_at": "2026-08-25T08:10:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fd38028f390efc08f789d6a3413a74b5e3a486e9196a2f1f95919d064e871da3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "architect",
+        "type": "root-cause-corrected",
+        "priority": "high",
+        "payload": {
+          "self_correction": "CORRECTION to my own 07:42Z signal. Its headline claim -- \"the reader holds scheduled_utc and ignores it\" -- is FALSIFIED by the very next cycle. c253 (07:45Z tick) probed cycle-snapshot-07:45.json: the NOMINAL tick, i.e. it USED the token. Same agent, same flow, consecutive cycles, token present in the header both times (c252 tick=07:30, c253 tick=07:45), used for the probe only in c253. The reader is NON-DETERMINISTIC, not uniformly token-blind.\n",
+          "evidence_ledger": "FOUR cycles, FOUR derivations (all one agent, alert-commander, one flow, one hour):\n  c250 header tick=07:05 -> probed 07:05  (rounded wall clock)   -> HIT\n  c251 header tick=07:22 -> probed 07:22  (RAW wall clock)       -> MISS\n  c252 header tick=07:30 -> probed 07:35  (rounded wall clock)   -> MISS\n  c253 header tick=07:45 -> probed 07:45  (NOMINAL / scheduled_utc) -> MISS\n\nWriter side, same hour, ls-confirmed: 07:05, 07:20, 07:34, 07:49 against nominal 07:00/07:15/07:30/07:45 -- drift +5/+5/+4/+4 min, i.e. the dispatcher's own latency to reach Step 4.7 is stable at ~4-5 min. cycle-snapshot-07:45.json does NOT exist (ls-confirmed).\n\nTwo of the three misses were within 1-2 minutes of a file that DID exist (c251 probed 07:22, 07:20 was on disk; c252 probed 07:35, 07:34 was on disk).\n\nWhy the narrated filename is the ACTUAL probed key and not a restatement of the header: in c252 the narrated key (07:35) DIFFERS from its own header tick (07:30). So the notebook line tracks the probe, not the header. That makes c253's narrated 07:45 credible as a real nominal-keyed probe rather than an echo.\n",
+          "fix_design_impact": "SECOND self-correction, on the fix design itself. Last tick I justified running Step 4.7 verbatim with: \"a writer-only switch to the nominal key buys no hit, because the reader independently computes rounded wall clock.\" That reasoning is now wrong. On c253 a nominal-keyed writer would have written cycle-snapshot-07:45.json and the reader WOULD have hit.\n\nThe correct reason to still land writer+reader together is different, and narrower: a writer-only change is NOT strictly hit-increasing. c250's hit was coincidental -- reader rounded to 07:05 and the writer's raw clock happened to land on 07:05 too. Move the writer to nominal (07:00) and that same cycle MISSES. So a unilateral writer fix TRADES coincidental hits for deterministic ones; it only nets out positive once the reader is also pinned. Land the pair, but not because the writer half is inert.\n\nPractical consequence for design: the reader half is about DETERMINISM, not capability. The agent is already able to key on the nominal tick and does so unprompted some of the time. Pinning it is a matter of removing the discretion -- neither the SKILL nor the agent flow names scheduled_utc (both greps still 0 hits), so which key gets used is currently decided per-cycle by the model.\n",
+          "unchanged": "Writer defect unchanged: docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 sets BOTH the filename and the in-file .tick from a single raw `date -u +%H:%M`. Rename-only is insufficient.",
+          "still_open": "The FOURTH-party finding from a129bf541 stands and is still an INFERENCE, not a fact: cycle-snapshot-latest.json carries .tick=00:00 with created_at=2026-08-23T00:07:50Z, a pair Step 4.7 cannot emit. emit_pressure_state is the likely author but its source has NOT been read. Confirm before designing."
+        },
+        "createdAt": "2026-08-25T07:58:05Z",
+        "drained_at": "2026-08-25T08:10:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "61048600b1d116a1bef103cfe451febdf0157e75ec10eb5c8eeb43f437aa7982",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:00",
+          "drift_min": 3,
+          "leader_lock": "acquired",
+          "slots_fired": 4,
+          "slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "collision_warn": "Step 4b fired: agent_id=alert-commander matched 2 slots (alert-commander-market, cron */15 2-8 * * 1-5; alert-commander-critical, cron 0 */4 * * *). No declared supersedes/superseded_by between them, so both spawned per R3. WARN sent to work channel, non-blocking as specified.",
+          "new_signals": 0,
+          "drain": "no-op, 4th consecutive clean tick",
+          "pressure_age_min": 13.9,
+          "calendar_status": "open",
+          "headroom_mb": 5287,
+          "degraded": false,
+          "max_parallel": 4,
+          "snapshot_written": "cycle-snapshot-08:05.json (16567 B, .tick=08:05, created_at=08:05:08Z) against nominal 08:00 — ON a 5-min boundary but OFF the nominal, the inverse of c253",
+          "registered_prediction": "REGISTERED BEFORE THE AGENTS RETURN. This tick spawns FOUR agents against ONE snapshot, which turns the reader-derivation question from one sample per tick into four samples in one tick, across three distinct agent types (news-scout, market-watcher, alert-commander x2).\n\nWriter key this tick: cycle-snapshot-08:05.json (raw wall clock 08:05:08Z). Nominal tick: 08:00.\n\nNote the polarity is INVERTED from c253: 08:05 is ON a 5-min boundary but OFF the nominal. So this tick a NOMINAL-keyed reader probes 08:00 and MISSES, while a ROUNDED-wall-clock reader spawning ~08:07-08:12 probes 08:05 or 08:10 and HITS only on 08:05. c253 was the exact opposite. Whatever the four agents do, one of the two models is falsified for this tick.\n\nPredictions: (1) the four returns will NOT all use the same derivation -- if they do agree, the \"per-cycle LLM discretion\" model is weakened and something agent-specific is in play; (2) alert-commander-market and alert-commander-critical, being the SAME agent and flow spawned in the same second, are the cleanest pair -- if THEY disagree, derivation is per-invocation, not per-agent.\nFalsifier for (1): all four report the same probed key.\n",
+          "promoter_finding": "NEW, and it materially changes the fix framing. Step 6.0 emitted at 08:06:45Z with cycle-snapshot-08:05.json already on disk since 08:05:08Z -- 97 seconds old -- and still returned cycle_snapshot_promoted:false (9th consecutive). So the promoter is NOT failing for want of a fresh file.\n\nStronger: cycle-snapshot-latest.json is 4468 B while every Step 4.7 snapshot today is ~16.6 KB, with the SAME four toplevel keys. A promoter that copied the writer's file would produce ~16 KB. It does not. It BUILDS its own smaller payload.\n\nImplication: \"unify the writer and reader keys\" may not even be the right frame for the promoter -- it may not read the writer's snapshot files at all, in which case latest's .tick=00:00 is its own construction and there is nothing to unify, only a third semantic to delete or document. This remains an INFERENCE: emit_pressure_state's source has still not been read. Architect must read it before designing. Do not carry this forward as established.\n",
+          "token_contract_finding": "spawn-fanout.md's own Consumer Contract for the token reads: \"derives its window key from the token's leading 10 characters\". That is the DATE portion, for publish-marker keys -- and the two wired consumers named there (unified-agent chef.md Step 0.5, digest-predict main.md) are both marker-key consumers.\n\nSo the token is not merely unwired for the snapshot case; the documented contract does not COVER it. Nothing anywhere tells a consumer to use the HH:MM portion for a snapshot filename. The fix is therefore not \"wire the existing contract into cycle-bootstrap\" -- it is to extend the contract to the time portion first, then wire it. A reader that follows the contract as written today still cannot key a snapshot correctly.\n",
+          "deferred_destamp": "DEFERRED reconciliation owed on all four slots when their task notifications arrive (BGFAN-1 TIMING CONTRACT). Step 5b stamped last_fired=2026-08-25T08:06:37Z for all four. Prior values, for de-stamp only on a genuine MARKER_HITS>=2 and only if the field still equals this tick's stamp:\n  news-scout-offhours      <- 2026-08-25T04:05:33Z\n  market-watcher-offhours  <- 2026-08-25T04:05:33Z\n  alert-commander-market   <- 2026-08-25T07:50:38Z\n  alert-commander-critical <- 2026-08-25T04:05:33Z\nNote the three 04:05:33Z values are identical to the second because those three slots share cron \"0 */4 * * *\" and genuinely fired in one batch at 04:00Z -- this is a same-batch fire, NOT the bulk-restore signature that identical mtimes usually indicate.\n",
+          "recurring": {
+            "cycle_snapshot_promoted_false": "9th consecutive",
+            "load_parse_locale_defect": "6th occurrence. uptime yielded a comma-decimal (\"1,90\") through the flow's parse. Verdict unaffected this tick (1.90 vs threshold 24 — fails open). Verified fix:\n  uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'\nDo NOT pin LC_ALL=C — pinning it is what produces the concatenation garbage.\n",
+            "regime_status_wrong_key": "Reconfirmed. telemetry.md Step 6.0's documented lookup key regime_status does not exist anywhere in the snapshot. The live value is at macro_snapshot.data.signals.carry.regime — NEUTRAL this tick. Consequence: pressure-state.last_regime has read \"unknown\" on every emit.\n"
+          }
+        },
+        "createdAt": "2026-08-25T08:08:00Z",
+        "drained_at": "2026-08-25T08:10:32Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

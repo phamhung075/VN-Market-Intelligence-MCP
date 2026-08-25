@@ -36,5 +36,11 @@
       "load_parse_locale_defect": "6th occurrence. uptime yielded a comma-decimal (\"1,90\") through the flow's parse. Verdict unaffected this tick (1.90 vs threshold 24 — fails open). Verified fix:\n  uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'\nDo NOT pin LC_ALL=C — pinning it is what produces the concatenation garbage.\n",
       "regime_status_wrong_key": "Reconfirmed. telemetry.md Step 6.0's documented lookup key regime_status does not exist anywhere in the snapshot. The live value is at macro_snapshot.data.signals.carry.regime — NEUTRAL this tick. Consequence: pressure-state.last_regime has read \"unknown\" on every emit.\n"
     }
+  },
+  "_processed": {
+    "fingerprint": "61048600b1d116a1bef103cfe451febdf0157e75ec10eb5c8eeb43f437aa7982",
+    "processedAt": "2026-08-25T08:10:32Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
