@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T07:13:14Z",
+    "_updated_at": "2026-08-25T08:12:20Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -588,7 +588,7 @@
         "type": "system-issue",
         "summary": "DATA-tier history trail: (A) findings[] membership is unstable on identical data, so absence from the\ntrail is ambiguous between \"checked, clean\" and \"checked, anomalous, not recorded\"; (B) the `table`\nfield accepts a comma-joined multi-table string that flows unvalidated into the dedup key AND the\nemitted signal's check-id. Both found by router raw-verification of the 07:59:48Z sweep. Neither is\ncovered by the six existing db-integrity rows (scan method below).\n\n(A) MEMBERSHIP INSTABILITY. Two sweeps 29 minutes apart, byte-identical canonical counts:\n      07:30:26Z counts={\"ohlc_violations_count\":336,\"scale_gt100x_count\":0,\n                        \"vnindex_cache_rows_count\":1,\"low_confidence_reports_count\":52}  findings=7\n      07:59:48Z counts={\"ohlc_violations_count\":336,\"scale_gt100x_count\":0,\n                        \"vnindex_cache_rows_count\":1,\"low_confidence_reports_count\":52}  findings=1\n    Recorded findings across the day, same DB: 0, 7, 1, 4, 7, 1 (04:30, 05:03, 05:41, 07:00, 07:30,\n    07:59). Table sets differ, not just counts: 05:41 recorded only daily_ohlcv; 07:59 recorded only\n    deep_fetch_stats; 05:03 was the only sweep to record macro_indicators at all.\n    DISTINCT FROM backlog[560] (VERDICT-LABEL-UNBOUND) — that row governs the verdict VALUE on a\n    finding already present in findings[]. This is the table never entering findings[], so it never\n    reaches the verdict field and binding the verdict vocabulary would not catch it. Do not fold.\n    CONSEQUENCE: the trail cannot answer \"was table X anomalous at time T\". Any regression detector\n    built on it reads a not-recorded table as clean.\n    NOT ATTRIBUTING BAD FAITH: the 07:59 sweep omitted known residues deliberately, reasoning they\n    were already owned. That is defensible triage of what to SIGNAL; it is applied to what to RECORD.\n\n(B) MULTI-TABLE `table` FIELD, unvalidated into two keys. Verbatim from the 07:00:48Z entry:\n      \"table\": \"price_alerts, alert_engine_records\"\n    scripts/db-integrity-history-append.sh guards only emptiness -- line 74:\n      if [ \"$verdict\" = \"REAL\" ] && [ -n \"$table\" ] && [ \"$table\" != \"null\" ]; then\n    A comma-joined string passes. It then flows into BOTH:\n      line 75: bash \"$DEDUP_SH\" --table \"$table\"        -> queries a table name that cannot exist,\n                                                           so already_open is false by construction\n      line 92: --check-id \"${table}-${CLASS_TXT}\"       -> malformed E3 idempotency key containing a\n                                                           comma and a space\n    In the observed instance verdict was BY-DESIGN so neither fired. That is luck, not protection:\n    the same shape under verdict=REAL yields a guaranteed dedup miss (duplicate row minted) keyed on\n    a malformed check-id. Cheap deterministic fix: reject a table value that is not a single name\n    present in the watched-table list, same place the emptiness guard already lives.\n\nDEDUP -- method stated so the verdict is auditable, per the lesson that keyword hits are not\ncoverage. Scanned all 15 array lanes of task_board (backlog 568, ready 108, review 28, qa 3,\nin_progress 1, done 12, done_verified 48, active_sprints 19, closed_sprints 21, archive 22) plus\narchive/2026-06|07|08.json and backlog-detail.json, regex\ndb-integrity-history|integrity-history|history-append|db_integrity|history schema|dbintegrity.\nSix hits, ALL inspected, NONE covering: backlog[334]/[335]/[342] are payload_ref size/scoping;\nbacklog[348] is durable-inbox inlining; backlog[401] is the low_confidence_reports_count population\nfilter; backlog[560] is the verdict label (see (A) above). Archive hits\nFIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS and FIX-DRAIN-STATEFILE-DATALOSS are whole-file data loss,\nand FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is the empty-table writer discriminator --\nadjacent, not covering.\n\nCANDIDATE I KILLED, recorded so nobody re-derives it: I suspected entry-schema instability after\nseeing 14 distinct keys across the 200 entries with synonym pairs (counts/canonical_counts,\nfindings/anomalies). FALSE. Per-key last-appearance check shows every variant is June residue --\nanomalies/status/tier/audit_type last at idx 104 (2026-06-25), canonical_counts/new_signals at idx\n63 (2026-06-24), summary idx 65, note idx 13. Current shape counts/findings/tables_checked/context\nholds 195-197 of 200 and is stable. Those rows age out of the 200-cap on their own. NOT A DEFECT.\nRelated note, not a defect either: `status` has not been written since 2026-06-25, so the 07:59\nsweep's \"DEGRADED->HEALTHY state change\" that gated its notebook write cannot have come from this\nfile. It came from the notebook's own prior section. Flagging only so a reader of the trail does not\nexpect to find that transition recorded here.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "scripts/db-integrity-history-append.sh",
         "payload": {
           "dedup_key": "datatier:history-findings-membership-unstable-and-multitable-table-field",
@@ -22732,7 +22732,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T08:10:32Z",
+    "_updated_at": "2026-08-25T08:12:20Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23173,6 +23173,46 @@
         },
         "createdAt": "2026-08-25T08:08:00Z",
         "drained_at": "2026-08-25T08:10:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d1bbc0f8c0c0a543d647655a732cdab79293960719fa52fb7ee471efe3f40565",
+        "source": "dashboard",
+        "from": "router",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "MED",
+        "payload": {
+          "dedup_key": "datatier:history-findings-membership-unstable-and-multitable-table-field",
+          "defect_a": "findings[] membership is free judgment; identical counts yielded 7 findings at 07:30:26Z and 1 at 07:59:48Z; day sequence 0,7,1,4,7,1; absence from trail is ambiguous between clean and unrecorded",
+          "defect_b": "table field accepts comma-joined multi-table string; flows unvalidated into dedup-check --table (line 75) and emitted signal --check-id (line 92)",
+          "instance_b_verbatim": "price_alerts, alert_engine_records",
+          "source_evidence": [
+            "scripts/db-integrity-history-append.sh:74",
+            "scripts/db-integrity-history-append.sh:75",
+            "scripts/db-integrity-history-append.sh:92"
+          ],
+          "identical_counts_both_sweeps": {
+            "ohlc_violations_count": 336,
+            "scale_gt100x_count": 0,
+            "vnindex_cache_rows_count": 1,
+            "low_confidence_reports_count": 52
+          },
+          "findings_len_by_scan_ts": {
+            "2026-08-25T04:30:50Z": 0,
+            "2026-08-25T05:03:23Z": 7,
+            "2026-08-25T05:41:12Z": 1,
+            "2026-08-25T07:00:48Z": 4,
+            "2026-08-25T07:30:26Z": 7,
+            "2026-08-25T07:59:48Z": 1
+          },
+          "not_covered_by": "backlog[560] governs the verdict VALUE on a finding already in findings[]; this is the finding never entering findings[] — do not fold",
+          "coverage_scan_method": "all 15 task_board array lanes + archive/2026-06|07|08.json + backlog-detail.json; 6 hits all inspected and rejected as non-covering",
+          "killed_candidate": "entry-schema instability — FALSE, all variant keys are June residue aging out of the 200-cap; current shape stable at 195-197/200",
+          "discovered_by": "router raw-verification of the 07:59:48Z DATA sweep — no detector caught either"
+        },
+        "createdAt": "2026-08-25T08:05:55Z",
+        "drained_at": "2026-08-25T08:12:20Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
