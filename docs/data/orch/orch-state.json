@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T20:16:01Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-25T20:54:44Z",
+    "_updated_by": "dev-team (0a-D: envelope cb87e557 already durably present from same-tick file drain, identical envelope_id — flip only, no duplicate append)",
     "archive": [],
     "rows": [
       {
@@ -940,7 +940,7 @@
         "type": "audit-handoff",
         "summary": "Overall: CRITICAL",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
