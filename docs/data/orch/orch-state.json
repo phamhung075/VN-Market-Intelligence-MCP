@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T06:48:20Z",
+    "_updated_at": "2026-08-25T06:53:05Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -550,6 +550,27 @@
           "ac3_evidence": "that row AC-3 requires sustained probe-blindness to escalate on its own axis; 7 ticks / ~74 min blind produced zero escalation",
           "data_plane_status": "UNAFFECTED — post-recovery journal_mode=delete, no -wal/-shm, market.db intact",
           "discovered_by": "router, cron market-db-journal-guard ticks 1-7 2026-08-25"
+        }
+      },
+      {
+        "id": "orphanrepro-20260825T065305Z",
+        "ts": "2026-08-25T06:53:05Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "FIRST LIVE REPRODUCTION of the orphan-adoption terminal-guard defect — evidence only, NOT a new work item; existing coverage already owns the fix (FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD epic in backlog[] BLOCKED, child FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD in ready[] P1). At 06:33:55Z, 63s after the Docker VM outage ended, server-reaper minted an orphan-signal for a DONE_VERIFIED task already cold-evicted to archive/2026-08.json. Phase A gates adoption ONLY on redispatch_count>=N_MAX (1>=3 false) and has no terminal-state check, so it would have spawned dev-mcp-server in adopt-resume mode against shipped, QA-verified work. Withheld by hand; nothing automatic stopped it. KEY DESIGN NOTE for the FR-4 implementation: the row was unresolvable in the HOT board at adoption time (already cold-evicted), so a hot-only read-guard sees not-found rather than terminal — not-found MUST NOT be treated as adoptable.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/2026-08-25-orphan-adoption-terminal-guard-live-reproduction.md",
+        "payload": {
+          "dedup_key": "orphan-adoption:terminal-guard-live-repro-20260825T063355Z",
+          "kind": "evidence-for-existing-row",
+          "do_not_mint_new_task": true,
+          "existing_coverage": [
+            "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+            "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD"
+          ],
+          "ask": "Attach this reproduction to the FR4/FR5 child and decide whether it changes that child priority. Router did NOT promote it — position noted only: ready[21] of 109, P1, dispatch_lane null, 8 P0s ahead in band. Evidence could not be written onto the row inline: it is 11947B against ORCH_ROW_PROSE_CEILING_BYTES=12000, and the bulk is five bespoke po_triage_*/po_corroboration_* keys (10.5KB) that are PO-owned, so dev-team did not restructure them."
         }
       }
     ],
