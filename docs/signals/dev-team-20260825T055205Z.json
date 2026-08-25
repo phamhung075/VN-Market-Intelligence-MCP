@@ -1,0 +1,63 @@
+{
+  "from": "dev-team",
+  "to": "ops",
+  "type": "bug-escalation",
+  "priority": "P0",
+  "createdAt": "2026-08-25T05:52:05Z",
+  "dedup_key": "docker-desktop:vm-fs-event-injection-fatal-20260825T0547Z|dockerd-stopped-daemon-unreachable",
+  "summary": "CORRECTION + ESCALATION. Docker Desktop's Linux VM hard-failed at 2026-08-25T05:47:39Z with 'FATAL: running services: running fs: injecting event blocked for 60s' — dockerd stopped, hypervisor process stopped, ALL containers down. Every docker CLI call now returns 'Docker Desktop is unable to start'. This SUPERSEDES the root-cause attribution in dev-team-20260825T054306Z.json, which blamed an app-level blocked event loop in mcp-server. The mcp-server silence from 05:16:16Z was almost certainly the FIRST symptom of this same VM filesystem-sharing layer degrading, not an independent app bug.",
+  "payload": {
+    "correction_of": "docs/signals/dev-team-20260825T054306Z.json",
+    "what_changed": "That signal attributed the mcp-server wedge to an app-level event-loop block after a write-visibility error, with root cause UNCONFIRMED. Host-side Docker logs now show the failure is one layer down: the VM's filesystem event-injection service. The write-invisibility symptom (count=107, visible_now=0 at 05:16Z) is consistent with the fs-sharing layer failing to propagate writes, which is exactly the subsystem that later hard-blocked. Treat the mcp-server wedge as a DOWNSTREAM EFFECT, not the fault.",
+    "evidence": {
+      "vm_init_log_fatal": "log source: ~/Library/Containers/com.docker.docker/Data/log/vm/init.log — {\"component\":\"init\",\"level\":\"error\",\"msg\":\"FATAL: running services: running fs: injecting event blocked for 60s\",\"time\":\"2026-08-25T05:47:39.421665222Z\"}",
+      "dockerd_stop": "{\"component\":\"init\",\"msg\":\"dockerd exited due to explicit Stop() call\",\"time\":\"2026-08-25T05:47:39.191400102Z\"} — dockerd stopped ~230ms BEFORE the FATAL line was emitted",
+      "hypervisor_stop": "[2026-08-25T05:47:50.550806000Z][com.docker.backend.engines] engine linux/virtualization-framework stopping hypervisor process",
+      "pause_resume": "initd /pause/events shows 'pause resuming' -> 'pause resumed: Docker Desktop is running' at 05:47:38.78Z, i.e. ~600ms BEFORE dockerd was stopped. A resume immediately preceding the fs FATAL is the strongest single lead.",
+      "broken_pipe": "apiproxy: 'forwarding raw stream to dockerd: ... write unix @->/var/run/docker.raw.sock: write: broken pipe' plus a burst of 'closing response body: unexpected EOF' at 05:47:39.11Z",
+      "current_cli_state": "docker version / docker ps / docker info all return 'Error response from daemon: Docker Desktop is unable to start'; docker info reports containers=0 running=0",
+      "backend_ipc_now": "com.docker.backend.ipc GET /ping -> 'context deadline exceeded' on a 10s cadence, continuously, as of 2026-08-25T05:52:05Z",
+      "endpoints": "localhost:3000/health http=000 (8s timeout); localhost:3001/ http=000 (8s timeout) — frontend, which had briefly recovered at 05:43Z, is now down too"
+    },
+    "differential_diagnosis": {
+      "NOT_hypervisor_crash": "No ~/Library/Containers/com.docker.docker/Data/hypervisor.error.json exists, and /Users/admin/.docker/run/docker.sock IS present. This is NOT the 2026-07-15 signature (that one had the socket ABSENT plus a hypervisor.error.json virtualization error). Do NOT jump to that incident's exhausted recovery ladder.",
+      "NOT_host_sleep": "pmset -g log for 2026-08-25 shows no Sleep/Wake/DarkWake transitions across the incident window — only caffeinate assertions actively PREVENTING idle sleep. Host suspension is ruled out.",
+      "NOT_process_restart": "com.docker.backend (pid 14371) and Docker Desktop (pid 23968) both have lstart of 15 jul 2026 — the Docker Desktop processes have NOT restarted. The backend is alive (18.9% CPU) but its VM is gone.",
+      "NOT_OOM": "Last successful inspect of mcp-server-1 showed 508MiB/3GiB, RestartCount=0, CPU 0.18%."
+    },
+    "asks": [
+      "Diagnose the fs event-injection block — this is the virtiofs/osxfs file-sharing layer. Check which bind-mount was being watched when it blocked; the repo bind-mount (./docs/data, ./data/pdfs) is the prime suspect given the fleet writes those paths constantly.",
+      "Recover the daemon. Because the socket exists and no hypervisor error was written, a normal Docker Desktop restart is the FIRST thing to try and is likely sufficient. Escalate to the user only if that fails.",
+      "CRITICAL SAFETY CONSTRAINT — do NOT under any circumstances 'rebuild the VM from scratch' (i.e. remove ~/Library/Containers/com.docker.docker/Data/vms) as a recovery step. On Docker Desktop/Mac, named volumes live INSIDE the VM disk image; that step DESTROYED market_data and bctc-page-images on 2026-07-15 and required a 361MB backup restore. If the daemon does return, verify market_data volume integrity (row counts + MAX(date)) BEFORE trusting green health.",
+      "Investigate whether Docker Desktop's Resource Saver / pause feature is enabled. A pause->resume transition ~600ms before the fs FATAL suggests resume-from-pause is the trigger. If so, disabling Resource Saver is a candidate permanent fix for a recurring outage class.",
+      "Re-check whether the mcp-server write-invisibility symptom (count=107, visible_now=0) still reproduces once the daemon is healthy. If it does NOT, that confirms it was fs-layer collateral and the earlier app-level bug hypothesis can be closed."
+    ],
+    "probe_defect_found": {
+      "severity": "P2",
+      "what": "scripts/agents-flow/auditor-tier1-probe.sh mem_creep check misclassifies 'stats-unavailable' as a memory-threshold breach.",
+      "detail": "This tick's verdict reports mem_creep FAIL with detail 'mem >= 85% threshold (A-30 WARN boundary, mem-creep gate)' listing all 10 containers as '(stats-unavailable)'. docker stats returning nothing because the daemon is DEAD is not memory creep — it is the absence of a reading. Reporting absence-of-data as a threshold breach is a false positive of exactly the class that erodes trust in the probe.",
+      "downstream_harm": "The emitted signature is 'health_3000|mem_creep:<all 10 container names>'. That bogus 10-container signature is now written into docs/data/auditor-tier1-spawn-debounce.json (spawn_count=1, window_expires_at 2026-08-25T06:47:51Z). A genuine future single-container mem_creep will produce a DIFFERENT signature and will therefore not dedup against it — the debounce ledger has been polluted with an unrepeatable key.",
+      "fix": "Treat stats-unavailable as a distinct third state (UNKNOWN/SKIP), never as FAIL. When the daemon itself is unreachable, mem_creep should be reported as not-evaluated and docker_ps should be the failing check."
+    },
+    "second_probe_defect": {
+      "severity": "P2",
+      "what": "docker_ps scored PASS in the same tick where the docker daemon is unreachable.",
+      "detail": "The 05:47:51Z verdict records checks.docker_ps=PASS alongside health_3000=FAIL. Roughly 10 seconds later every docker CLI invocation returns 'Docker Desktop is unable to start'. Either docker_ps ran before the 05:47:50Z hypervisor stop (a genuine race, in which case it is merely stale), or its success predicate does not actually require a daemon response. Worth confirming which, because a docker_ps that can PASS with no daemon is a blind spot in the single most important check the probe has.",
+      "note": "Timing makes the benign race plausible here — the probe wrote at 05:47:51Z and the hypervisor stopped at 05:47:50.55Z. Flagged for confirmation rather than asserted as a defect."
+    },
+    "fleet_impact": {
+      "all_mcp_tools": "Every call_tool(server=vn-market, ...) is unreachable. All lock gates (task_claim / task_heartbeat / task_release) are down fleet-wide.",
+      "dev_team_ticks": "The 05:37Z tick already failed to dispatch on an unreachable SF-1 gate. Every subsequent 7,37 tick will hit the same wall until the daemon returns.",
+      "auditor_t1": "This tick (fire_tick 2026-08-25T05:30Z, written 05:47:51Z) correctly returned verdict=FAILURE with spawn_decision=SPAWN. The router did NOT spawn system-auditor: its flow's own fire-election task_claim gate (docs/agents/system-auditor/flow/main.md, EXIT on non-claim) is structurally unreachable with the daemon down, so a compliant auditor would exit at its first gate before doing any tier work. Detection already succeeded; escalation is this file.",
+      "unreleased_lock": "task:TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY remains held by session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb (task_release timed out 3x earlier). TTL 3600s bounds it and the row is terminal (DONE_VERIFIED), so it self-expires harmlessly. All fleet locks will now expire naturally while the daemon is down.",
+      "publishing": "Any scheduled chef/fb-poster/market-watcher cycle firing during the outage will find every data tool unreachable."
+    },
+    "router_actions_taken": [
+      "Ran scripts/agents-flow/auditor-tier1-probe.sh — verdict=FAILURE, spawn_decision=SPAWN, fire_tick 2026-08-25T05:30Z.",
+      "Did NOT spawn system-auditor — its mandatory fire-election gate is unreachable (see fleet_impact.auditor_t1). Reasoning recorded rather than silently skipped.",
+      "Diagnosed the outage from host-side Docker logs only (no container action, no daemon restart attempted — recovery is ops scope).",
+      "Took NO recovery action: did not restart Docker Desktop, did not kill any Docker process, did not touch the VM data directory.",
+      "Filed this corrected escalation superseding the root-cause attribution in dev-team-20260825T054306Z.json."
+    ]
+  }
+}
