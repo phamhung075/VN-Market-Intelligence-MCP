@@ -42,5 +42,11 @@
       "reading": "The transport-gated-shut prediction is holding at 18 minutes. Not yet proof it will exit cleanly — it has not exited. Keep the readback going; the failure mode to watch for is a late narrated notebook entry describing a dish that was never produced."
     },
     "NOTHING_ELSE_IS_NEW": "Findings A, B and C from cowork-team-20260825T052633Z are unchanged and not restated here. Deliberately not re-filing per-tick evidence for them — the original row carries the full diagnosis."
+  },
+  "_processed": {
+    "fingerprint": "c12445ec435053f5fe55ae0941f328723e5ad372e6fd08e702e39c148378ff06",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

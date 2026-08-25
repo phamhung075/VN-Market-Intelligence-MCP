@@ -40,5 +40,11 @@
       "Either way, add a regression assertion to scripts/audits/devteam-dispatch-gate-satisfiability.sh: when $SELECTED == step1_triage and QA-Drain-HD dispatches, PO triage must still be reachable OR the stamp must not have advanced."
     ],
     "router_note": "Router does not author task rows. Filed as a signal for architect/PO triage. Router followed the flow as written this tick (dispatched qa, skipped Step 1) rather than improvising around the documented JUMP TO end."
+  },
+  "_processed": {
+    "fingerprint": "0dc1e375c8bf141e0424bde5b62855b7148edd1499c2ce50580cb61a80f6463d",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

@@ -78,5 +78,11 @@
       "no_URL_edit": "CLAUDE.md forbids repointing the canonical gateway URL as an outage workaround, and Finding B is a calling-convention defect, not a string typo."
     },
     "RECOMMENDED_NEXT": "Restart vn-market-intelligence-mcp-mcp-server-1 (single service only — never docker compose down/up, per feedback_rebuild_recreate_destroys_peers). Capture a stack/heap dump BEFORE the restart if the deadlock is to be root-caused, because a restart destroys the only evidence. Then mint rows for Findings B, C, D — all three are live regardless of this outage."
+  },
+  "_processed": {
+    "fingerprint": "dc84a960d146c4094917981b77772323add27f8ea4e15b3c4a137dcf82676480",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

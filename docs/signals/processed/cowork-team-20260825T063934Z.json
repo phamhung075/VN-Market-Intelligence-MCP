@@ -49,5 +49,11 @@
     "outage_losses_final": "6 ticks lost (05:15Z, 05:30Z, 05:45Z, 06:00Z, 06:15Z aborted; 06:30Z is this one, recovered). alert-commander-market missed 5 consecutive fires. chef-morning for 2026-08-25 (guaranteed daily, 15 5 * * 1-5) was never produced and is unrecoverable — Layer C coalesces missed intervals, it does not replay them. Next guaranteed slot chef-eod 08:45Z should fire normally now."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T06:39:34Z"
+  "createdAt": "2026-08-25T06:39:34Z",
+  "_processed": {
+    "fingerprint": "a77e5cbf5da0b8b6b0c563396d18de1ac9f73f71fcb96c04e2ca14c56fb568b4",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

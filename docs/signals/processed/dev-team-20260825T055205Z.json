@@ -110,5 +110,11 @@
       "why_this_still_matters": "The fs event-injection FATAL is UNFIXED. Recovery was a manual relaunch, not a repair. The same pause->resume transition can re-wedge the VM at any time, and the first relaunch attempt FAILING to bootstrap means recovery is not reliably one-click. Asks 0, 2, 3 below remain fully open."
     },
     "priority_change_note": "Downgraded P0 -> P1 at 2026-08-25T06:43:41Z: the live outage is over and the fleet is healthy, so nothing is currently blocked. The root cause is unaddressed and the recurrence risk is real, so this stays open rather than being closed."
+  },
+  "_processed": {
+    "fingerprint": "d9dae6f47e5b27aaabd021b299a61ecc7266b7e44b17c75434d5d6d95a6ddd63",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

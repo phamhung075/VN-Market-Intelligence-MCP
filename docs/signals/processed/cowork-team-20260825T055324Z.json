@@ -66,5 +66,11 @@
       "not_a_disk_problem": "Checked: host / has 28Gi free, Docker.raw is 20G actual (233G is only the sparse apparent size). Host swap is tight (5312/6144M used) — noted, not diagnosed as the cause."
     },
     "WHAT_I_DID_NOT_DO": "No Docker restart, no VM touch, no agent spawn. Router-only, and this is host-level infra with a documented destructive-recovery trap one step away. Surfacing for a host action decision."
+  },
+  "_processed": {
+    "fingerprint": "4dd386801440bba8f081e0b84dde5738a31693ed906c3c5c41397da4ea55e808",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

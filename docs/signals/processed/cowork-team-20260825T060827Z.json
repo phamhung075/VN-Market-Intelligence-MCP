@@ -74,5 +74,11 @@
       "after_recovery": "Verify market.db row counts and MAX(date) BEFORE trusting green health — the mcp-server died mid-write at 05:16:16Z with `market_prices invisibility confirmed count:107 visible_now:0`. And per Finding G, verify with a real vn-market tool call, not list_servers.",
       "not_a_disk_problem": "28Gi free on /. Docker.raw is 20G actual against a 233G sparse apparent size."
     }
+  },
+  "_processed": {
+    "fingerprint": "cd5c88ad3c0f16f65b6a43ef18ce02289cd9432798c80d698d2bfbab11aa5f0f",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

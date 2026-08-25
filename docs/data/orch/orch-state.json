@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787606164,
-    "last_linecount": 135
+    "last_mtime": 1787640487,
+    "last_linecount": 23
   },
   "decision_journal": [
     {
@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T04:41:18Z",
+    "_updated_at": "2026-08-25T06:48:20Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -477,7 +477,7 @@
         "type": "system-issue",
         "summary": "journal-guard exit 3 ERROR probe_query_failed detail=empty — 2 consecutive ticks (05:33Z, 05:47Z), probe hung ~6m on docker exec each time then self-terminated; telegram undeliverable 4x (4th = socket closed unexpectedly, witnessed in-run). WAL status UNKNOWN since 05:33Z. ROOT CAUSE confirmed by peer: mcp-server-1 event-loop wedge since 05:16:16Z — docs/signals/dev-team-20260825T054306Z.json (dedup_key mcp-server:container-wedge-20260825T0516Z|event-loop-blocked-after-write-invisibility). Journal-guard is a SYMPTOM of that P0, not an independent defect. Separate code-plane gap: verify-market-db-journal-mode.sh has no timeout on any docker exec, so a wedged container makes it hang ~6m instead of degrading fast to its own exit-3 path.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:market-db-journal-guard:2026-08-25T05:33:08Z",
@@ -491,7 +491,7 @@
         "type": "system-issue",
         "summary": "FLEET DOWN — Docker Desktop is not running: `docker ps` returns \"Docker Desktop is unable to start\", and Docker Desktop UI / com.docker.backend / vpnkit are ALL at zero processes. Only a stale /Users/admin/.docker/run/docker.sock (dated 15 jul) remains. Every container is therefore down, which supersedes the 05:16Z mcp-server event-loop wedge (docs/signals/dev-team-20260825T054306Z.json) — that container no longer exists to be wedged. DISCRIMINATED against the 2026-07-15 hypervisor-crash class: hypervisor.error.json is ABSENT and the socket file is present, so this is NOT the user-only recovery ladder; it is a plain not-started daemon. Do NOT rebuild the VM and do NOT remove ~/Library/Containers/com.docker.docker/Data/vms — that destroys every named volume incl. market_data (see feedback_vm_rebuild_destroys_named_volumes_restore_then_launch). Detected by the journal guard, whose own verdict said reason=container_not_found — MISDIAGNOSIS worth fixing: the script conflates a down daemon with a missing container.\nCORROBORATION 2026-08-25T05:58:32Z (db-integrity-probe.sh, CADRAT-2 Job A tick): probe returned exit 0, verdict=SKIP-SPAWN, \"all 17 watched tables' COUNT(*) match the last snapshot exactly\", tables_changed=0, read_mode=immutable. With every writer container down this is the EXPECTED shadow of a stopped pipeline, NOT a healthy-quiet DB — independent confirmation that market.db has taken zero writes across the outage. RECOVERY IN FLIGHT at 05:58Z: ops agent adf97eb66483b7921 has Docker Desktop processes back up (UI=8, com.docker.backend=3, vpnkit=0) but `docker ps` STILL returns \"Docker Desktop is unable to start\" — daemon has not accepted connections yet; vpnkit at 0 is the notable laggard.\n\nSECOND-ORDER DEFECT SURFACED, NO BOARD ROW YET (detector blindness, same class as feedback_probe_fails_on_dimension_the_spawned_auditor_cannot_see): the CADRAT-2 gate in scripts/agents-flow/db-integrity-probe.sh decides SKIP-SPAWN purely on row-count delta vs the last snapshot, so for the ENTIRE duration of any fleet outage it suppresses the DB-integrity sweep — the audit goes silent exactly when the write path is most likely to be dropping or corrupting data, and every suppressed tick looks identical to a calm one in the log. The gate cannot distinguish \"nothing changed because all is calm\" from \"nothing changed because nothing is running\". Fix direction: consult writer liveness (or the same container-presence check verify-market-db-journal-mode.sh already performs) before scoring a zero-delta tick as SKIP-SPAWN; a no-delta tick with a dead writer should FAIL-OPEN to SPAWN or emit its own distinct verdict, never SKIP silently.\n\nRECOVERY EXHAUSTED — USER HOST ACTION REQUIRED (2026-08-25T06:08Z). ops agent adf97eb66483b7921 ran the CLI ladder ONCE per protocol and reported NOT-RECOVERED: (1) `open -a Docker` + 240s socket poll -> failed; (2) killall -9 / pkill -9 teardown + fresh `open -a Docker` + 240s poll -> failed. Docker log line, repeating hourly from 05:47:59Z: \"[E] failed to listen to docker events: Error response from daemon: Docker Desktop is unable to start\". A GUI error dialog appeared that cannot be dismissed from CLI.\n\nROUTER RAW-VERIFICATION (do not trust the agent self-report): ops claimed \"No processes remain\" — FALSE at verification time, /Applications/Docker.app=3 and com.docker.backend=3-4 were running. The CLI error ALSO CHANGED between ops's report and verification, from \"Error response from daemon: Docker Desktop is unable to start\" to \"Cannot connect to the Docker daemon at unix:///Users/admin/.docker/run/docker.sock\" — a different failure mode (no listener vs reached-and-refused), so the router ran an independent bounded 100s poll (10 samples, 06:06:29Z-06:08:01Z): daemon never bound; steady-state app=3, backend=3, vpnkit=0. vpnkit never starting is the distinguishing symptom.\n\nSTILL NOT the 2026-07-15 hypervisor-crash class by its own discriminators (hypervisor.error.json ABSENT; docker.sock present, stale 15 jul 16:55; ~/Library/Containers/com.docker.docker/Data/vms/0 INTACT — the VM disk was NOT destroyed). But the OUTCOME now matches: CLI recovery exhausted -> user host action only. Per feedback_docker_hypervisor_crash_cli_recovery_exhausted_user_only, do NOT re-dispatch ops for a further CLI ladder. Required: GUI quit of Docker Desktop (dismissing the error dialog) + relaunch, or a macOS reboot.\n\nDATA IS SAFE — VERIFIED DAEMON-DOWN, NO DOCKER NEEDED: data/live/market.db 445,104,128 bytes (mtime 2026-08-25 07:16 local), NO -wal and NO -shm present (clean shutdown, nothing stranded in a journal), read via file:...?immutable=1 -> daily_ohlcv=789926, market_prices=116, financial_reports=263. All plausible and non-empty.\n\nROUTER-SELF-CORRECTION (defect in the incident brief, not in ops): the brief handed ops a hard gate \"if market_data is MISSING: STOP, do NOT compose up\", derived from feedback_vm_rebuild_destroys_named_volumes_restore_then_launch. That named volume was RETIRED 2026-07-15 in commit 5ba622eca — docker-compose.yml now bind-mounts ./data/live:/app/data for every service — so `docker volume ls` reads market_data MISSING on a perfectly healthy fleet and the gate would have FALSE-STOPPED a correct recovery had ops reached Step 4. The correct data-safety gate is the host-file check above, which has the added virtue of working while the daemon is down. Memory corrected 2026-08-25 (scope-narrowed + cross-linked to the already-SUPERSEDED feedback_live_db_is_named_volume_not_host_data).\n\n--- 2026-08-25T06:22Z tick 6 (fold-in, same outage; NOT a new incident) ---\nProbe exit=3 verdict verbatim:\n  MARKET_DB_JOURNAL_MODE verdict=ERROR reason=container_not_found container=vn-market-intelligence-mcp-mcp-server-1\nsend_telegram(bug) attempted exactly once per contract -> \"socket connection was closed unexpectedly\".\n7th consecutive alert failure. Root is structural, not transient: send_telegram executes ON the\nmcp-server that is itself down, so the BUG alert channel is unreachable for the whole duration of\nany fleet outage. Every exit-2/exit-3 alert this cron is designed to raise is therefore guaranteed\nundeliverable in precisely the situation it most needs to fire. Recorded as an observation only --\nno board row (router-only).\n\nVERDICT PROGRESSION recovered from this session's probe-output mtimes (local=UTC+2), oldest first:\n  05:31Z probe_query_failed detail=empty   <- container PRESENT, sqlite query returned empty\n  05:47Z probe_query_failed detail=empty\n  05:52Z container_not_found               <- container GONE\n  06:10Z container_not_found\n  06:22Z container_not_found\nReading: this is deterioration, not recovery. It also supplies evidence for the timing shift noted\nat tick 5 -- the earlier ~6-minute probe hangs were `docker exec` blocking on a WEDGED-BUT-PRESENT\ncontainer; the current seconds-fast failure is a FULLY-ABSENT daemon. Two materially different\nsystem states that the script collapses into the same exit code 3, distinguished only by the\nfree-text `reason=` field. Strengthens the already-recorded container_not_found misdiagnosis defect\n(commit 39e9e6b41): `container_not_found` is emitted both when the daemon is down (container state\nunknowable) and when the daemon is up but the container is genuinely absent.\n\nIncident remains BLOCKED ON USER HOST ACTION (unchanged since tick 5): quit Docker Desktop via GUI\nto clear the error dialog, relaunch -- or reboot. CLI recovery ladder already exhausted; per\nfeedback_docker_hypervisor_crash_cli_recovery_exhausted_user_only, ops is deliberately NOT\nre-dispatched. Data safety re-confirmed unchanged: market.db 445MB / 789,926 daily_ohlcv rows,\nno -wal/-shm pair (clean shutdown, nothing stranded in a journal).\n\n\n--- TICK 7 -- RECOVERY. Incident window CLOSED. ---\nProbe exit 0. Verdict line verbatim:\nMARKET_DB_JOURNAL_MODE verdict=PASS journal_mode=delete wal_present=false shm_present=false container=vn-market-intelligence-mcp-mcp-server-1 db=/app/data/market.db reason=\"journal_mode=delete, no live -wal/-shm pair\"\n\nFleet confirmed up INDEPENDENTLY of the probe: docker ps = 13/13 containers Up, all (healthy),\nUNIFORM 5-minute uptime. The uniformity is the discriminator that rules out the exit-0\nrestart-loop mode (feedback_container_exit0_restart_loop_invisible_to_health_and_compose_ps),\nwhich also renders as \"healthy\" but shows seconds-scale, ragged uptimes. This is a single clean\nbring-up.\n\nUSER-BLOCKED CONDITION IS CLEARED -- no host action is pending any more. Outage window approx\n05:31Z (first probe_query_failed) -> ~06:45Z (fleet up), ~74 minutes.\n\nThe invariant this guard exists to protect SURVIVED the crash intact: journal_mode=delete, no\n-wal/-shm pair. The WAL re-arm vector never fired. Data safety unchanged.\n\nSTATUS DELIBERATELY LEFT NEW, NOT RESOLVED. The outage is over; this row's durable code-plane\ncontent is not. Three defects, now ROUTED as mdjgfix-20260825T064500Z -> dev-team so that closing\nthis row on \"docker is back\" cannot bury them:\n  (a) the BUG alert channel is structurally dead for the whole duration of any mcp-server\n      outage -- 7/7 alerts undelivered across the ~74 min; the user was never notified through\n      the intended channel by ANY tick;\n  (b) a down daemon is mislabelled container_not_found;\n  (c) no timeout on the script's docker exec calls.\n\nNO catch-up telegram sent. The PASS branch authorises no alert, and the 7 lost verdict lines\ncannot be re-sent without reconstructing them from memory -- which this cron's contract\nexplicitly forbids (\"never paraphrased, summarized, or reconstructed from memory\").\n",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:market-db-journal-guard:2026-08-25T05:54:25Z",
@@ -505,7 +505,7 @@
         "type": "system-issue",
         "summary": "CHEF degraded-floor recovery path writes BOTH its notebook section AND its synthesis JSON to\nNON-CANONICAL paths, orphaning an already-PUBLISHED dish from every downstream consumer.\n\nOBSERVED (router, 2026-08-25T06:26Z, incidental to a db-integrity SKIP-SPAWN tick — found via\n`git status`, not via any detector):\n  docs/agent-memory/notebooks/chef-intraday.md                                (untracked, 04:25Z)\n  docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json (untracked, 04:24Z)\nBoth belong to the 04:13Z chef-intraday cycle, whose notebook header reads:\n  \"**Status:** SENT (degraded-floor recovery) | **Quality:** degraded | **Clusters:** 1 qualified\"\n  \"Recovery reason: token_budget_optimization — Steps 1.5-6 partial completion\"\n\nCANONICAL PATHS ARE UNTOUCHED BY THAT CYCLE:\n  - docs/agent-memory/notebooks/unified-agent.md still reports latest cycle = 02:13Z; `grep -c 04:13`\n    against it returns 0.\n  - docs/data/ holds only the 02:13Z slot file (75 synthesis JSONs total, none for 04:13Z).\nCONSEQUENCE: a dish that was SENT to MARKET has ZERO canonical record. Every consumer that reads\nthe canonical paths -- fb-market-poster, digest-predict, tran-ngoc-bau (whose entire job is\nauditing chef narrative for TNB 6-layer completeness against the notebook), market-analyst -- will\nnever see the 04:13Z dish. tran-ngoc-bau in particular would score the day on 02:13Z alone and\nreport a complete walk while a degraded 1-cluster dish went out unaudited.\n\nNOT the same defect as the existing P1 backlog row FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-\nSYNTHESIS-JSON (2026-08-07). APTNESS NOTE: that row is about Step 8e's git-add PATHSPEC omitting\nthe synthesis JSON -- a COMMIT gap. It explains why these two files are untracked, and is real,\nbut it does NOT cover WRONG-DIRECTORY SELECTION. Discriminator: the SAME agent, SAME day, on the\n02:13Z full-quality cycle, wrote docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json\nto the CORRECT path AND got it committed (dca608eb2). So both the path logic and Step 8e work on\nthe normal path and diverge only on the degraded-floor path. Fixing the pathspec row alone would\nleave this open; the two should be fixed together but are distinct root causes.\n\nROOT-CAUSE HYPOTHESIS (unverified -- code not read, router does not implement): the degraded-floor\nrecovery branch (referenced in the notebook as \"chef-telemetry.md §\") composes its own output\nfilenames from the slot id rather than reusing the CYCLE_DATE-pinned canonical path constants that\nthe full recipe (chef-dish.md Step 7.6 / 8e) uses -- yielding notebooks/<slot>.md instead of an\nappend to unified-agent.md, and notebooks/<synthesis>.json instead of docs/data/<synthesis>.json.\nNeeds a read of the degraded-floor branch to confirm.\n\nCONTAINMENT DONE BY ROUTER (evidence preservation ONLY, no fix): both stray files committed AS-IS\nin their wrong locations so the only surviving record of a published dish is not lost to an\nuntracked-file sweep. They are deliberately NOT relocated -- a `git mv` is part of the fix and\nbelongs to the owning dev, not the router.\n\nSUGGESTED VERIFICATION FOR THE FIX: force a degraded-floor cycle and assert (a) unified-agent.md\ngained a section for that cycle, (b) docs/data/ gained the slot's synthesis JSON, (c) no new file\nappeared under docs/agent-memory/notebooks/ other than the unified-agent.md edit.\n",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/agent-memory/notebooks/chef-intraday.md",
         "payload": {
           "dedup_key": "chef:degraded-floor-recovery:noncanonical-output-paths",
@@ -531,7 +531,7 @@
         "type": "system-issue",
         "summary": "market-db-journal-guard: the BUG alert channel is structurally dead for the exact duration of\nevery outage it is built to report -- demonstrated live, 7/7 alerts undelivered across a ~74-min\nCRITICAL mcp-server outage on 2026-08-25 (approx 05:31Z -> 06:45Z). Plus two probe-robustness\ndefects in the same script that the existing P2 row does NOT cover.\n\nDEFECT 1 (the important one) -- ALERT CHANNEL DEAD EXACTLY WHEN NEEDED. The cron's exit-2/exit-3\nbranch alerts via call_tool(server=\"vn-market\", tool=\"send_telegram\"). send_telegram EXECUTES ON\nTHE mcp-server CONTAINER. So whenever mcp-server is down -- which is precisely the condition that\nmakes the probe emit exit 3 -- the alert transport is down too. Every alert this guard exists to\nraise is undeliverable at the moment it fires. This is not a flaky-transport problem; it is a\ntopology problem, and it is self-cancelling by construction.\n  EVIDENCE, not inference: ticks 1-7 of 2026-08-25 each attempted exactly one send_telegram per\n  contract. All 7 failed (\"The socket connection was closed unexpectedly.\"). The user was never\n  notified of a CRITICAL fleet outage through the intended channel by ANY tick. The outage was\n  ultimately resolved by host action, not by any alert this system delivered.\n  The 7 verdict lines are permanently lost: the cron contract forbids reconstructing a verdict\n  line from memory, so they cannot be replayed after recovery either.\n  SHAPE OF FIX IS A DESIGN QUESTION, NOT PRESCRIBED HERE -- an out-of-band transport that does\n  not depend on the monitored plane (direct Telegram HTTP from the host, or a host-side spool\n  that flushes on recovery) is the obvious family, but choosing belongs to the implementer.\n  DEDUP: NOT COVERED. Whole-board scan for send_telegram / telegram deliver|fail / alert channel\n  returned 6 rows, all inapt on inspection: FIX-SYSTEMMAP-TELEGRAM-ENVVAR-NAMES-WRONG is env-var\n  naming; FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER is the alert-engine poller; the rest are\n  gateway/grant/lag rows. None is about routing outage alerts through the box that is down.\n\nDEFECT 2 -- DOWN DAEMON MISLABELLED container_not_found. The script emits\nreason=container_not_found both when the daemon is down (container state is UNKNOWABLE) and when\nthe daemon is up but the container is genuinely absent. Those demand different responses and the\nverdict line cannot tell them apart. Observed both states today: earlier ticks hung ~6 min in\ndocker exec against a wedged-but-PRESENT container, later ticks fast-failed with the daemon fully\nabsent -- the script collapsed both into the same exit 3.\n  DEDUP: PARTIAL vs FIX-JOURNALGUARD-PROBE-FAILURE-EMITTED-AS-JOURNAL-MODE-VERDICT (backlog, P2,\n  zone apps/mcp-server, next_agent dev-mcp-server, created 2026-08-14). Read in full before\n  judging -- its AC-1 separates the PROBE-FAILED bucket from the MODE-VERDICT axis, which is one\n  level ABOVE this. Distinguishing sub-modes WITHIN the probe-failed bucket is not in any of its\n  three ACs. Widen that row rather than duplicating it.\n\nDEFECT 3 -- NO TIMEOUT ON docker exec. The script's docker exec calls are unbounded; against a\nwedged container they hung ~6 minutes, long enough to exceed a foreground tool limit and to\noverlap the next 15-min tick.\n  DEDUP: NOT COVERED by the P2 row (its AC-2 is SQLITE_BUSY retry/backoff, a different failure).\n  PRIOR ART for the fix pattern already exists and is already cited in that row's own .related:\n  FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE -- same defect shape, different script.\n\nALSO OBSERVED, feeding the P2 row rather than this one: that row's AC-3 requires a SUSTAINED\ninability to determine journal_mode to escalate on its own dedicated axis. Today it went 7\nconsecutive ticks / ~74 min blind and never escalated -- it just repeated an identical exit 3.\nThat is live evidence for an AC filed 11 days ago and still unbuilt.\n\nNOT A DATA-PLANE INCIDENT. The invariant itself held throughout: post-recovery verdict is\njournal_mode=delete, wal_present=false, shm_present=false. market.db intact. The WAL re-arm\nvector never fired. This row is entirely about the guard's own reporting plane.\n",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "scripts/audits/verify-market-db-journal-mode.sh",
         "payload": {
           "dedup_key": "market-db-journal-guard:alert-transport-shares-fate-with-monitored-plane",
@@ -18694,58 +18694,6 @@
             "observed_at": "2026-08-24T18:34:35Z"
           }
         }
-      },
-      {
-        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
-        "type": "TASK",
-        "status": "DONE_VERIFIED",
-        "priority": "P0",
-        "size": "S",
-        "zone": "scripts/",
-        "owner": "dev-mcp-server",
-        "supervised": false,
-        "plan_only": false,
-        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
-        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
-        "files": [
-          "scripts/audits/guard-signal-type-coverage.sh",
-          ".github/workflows/ci.yml"
-        ],
-        "ac": [
-          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
-          "each rule is tagged by source pipeline (A or B) in the derived registry",
-          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
-          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
-          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
-          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
-        ],
-        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
-        "related": [
-          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
-        ],
-        "created_at": "2026-08-23T09:00:00Z",
-        "created_by": "pm",
-        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
-        "updated_at": "2026-08-25T05:19:50Z",
-        "status_note": "dev-mcp-server DONE: scripts/audits/guard-signal-type-coverage.sh extended to parse BOTH Pipeline-A (triage-signals.md pendingSignals[] table vs .dev_team_idle_chain.pending_triage_inbox[]) and Pipeline-B (existing .signal_queue.rows[] table+longtail), each tagged by source pipeline so a rule from ONE pipeline never false-passes coverage for the OTHER (verified both directions live). On any unrouted type (either pipeline), in addition to the pre-existing exit 1, mints a dedup-keyed task_board.backlog[] row (type=routing-gap) via the real scripts/orch-apply.sh -- verified end-to-end against disposable fixtures (mint succeeds, repeat detection dedup-skips, no duplicate row). guard-signal-type-coverage.test.sh expanded 7->24 assertions, all GREEN; real-doc/live-orch-state.json integration smoke test also GREEN. orchStateSchema.ts diff confirmed empty (git diff, 0 lines) -- schema-untouched constraint held. .github/workflows/ci.yml job comment amended to describe dual-pipeline scope + honest note that the mint substep needs bun (not installed in that job; degrades to a logged non-fatal skip there, exit-1 gate unaffected). next_agent corrected from dead-end \"developer\" (Task-tool subagent, cannot spawn zone specialists) to \"qa\".\n\n[QA] Review Record (direct-commit verify, commit 4e7aa7eaf) — CHANGES_REQUESTED. Detection/dedup half of AC-4 verified live (guard --check FAIL correctly names unrouted Pipeline-A types flow_actuator_fix/system-issue; dedup-skip confirmed on repeat). ISSUE: scripts/audits/guard-signal-type-coverage.sh:249-250 mint_routing_gap_row() hardcodes owner=\"po\", zone=\"docs/agents/po/flow/\", and never sets next_agent on the minted task_board.backlog[] row -- undispatchable by any picker. Live-verified 3-for-3: FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire, -flow-actuator-fix, -system-issue all minted with next_agent absent. PO's own manual disposition of the cowork-fire row (status_note 10:33Z) independently confirms this exact defect -- had to hand-patch next_agent=agent-father because \"no dispatch lane resolves\" on next_agent UNSET, and had to move off owner=po because po \"may not edit its own agent flow files per its own boundary_rules\". This contradicts this task's own stated purpose (desc: close \"manual intervention required on each, 7x\") -- as committed, self-filed rows still require manual next_agent/owner patching before actionable, same defect class relocated not closed. Other checks: mock-guard PASS, orchStateSchema.ts diff=0 (AC-5 held), .test.sh 23/24 (TEST10 fails only due to the 2 new live unrouted types, test's own comment says this is expected/correct guard behavior, not a regression). FIX: mint template must set a resolvable next_agent (e.g. agent-father, matching POs own manual correction) and an owner/zone combo PO can actually act on, or route directly to agent-father like PO did by hand.\n\n[dev-mcp-server 2026-08-25T04:50:18Z] REWORK complete (commit 796a2fc58) -- fixed mint_routing_gap_row() per QA CHANGES_REQUESTED + PO scope amendment 20260823T1157Z: minted rows now set next_agent=agent-father (was unset), owner=agent-father (was hardcoded \"po\", structurally unactionable per POs own commit_zone boundary), zone=cross-service/ (was hardcoded \"docs/agents/po/flow/\" -- a bare path, not one of dev-team Step 3s three accepted zone values {apps/<service>/, multi, cross-service/}, rejected at batch build), and priority=P1 (was unset). Matches PO/agent-father own manual disposition of the 4 prior broken-template live instances (evidence: agent-father shipped the identical fix on this same file under TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION, commit 735dfa815). Added AC per POs amendment: paired .test.sh TEST2/TEST8 now assert next_agent/priority/owner populated + zone in the accepted set on every minted row -- 31/32 pass (only fail is TEST10s real-live integration smoke check, expected/pre-existing per its own comment, unrelated to this fix, same acceptance QA already gave it). Live-verified end-to-end against the REAL orch-state.json (not just fixtures): re-running the guard minted 2 genuinely-new-unrouted types (notebook_undroppable_remainder_over_cap_breach, signal_feedback) through the CORRECTED template -- both landed with owner/next_agent=agent-father, zone=cross-service/, priority=P1; repeat run confirmed dedup (no duplicate). Did NOT touch the 5 pre-existing FIX-SIGNAL-TYPE-ROUTING-GAP-* rows still carrying the stale zone=docs/agents/po/flow/ value (container-capacity-pressure, launchd-tracking-gap, memory-loop-breach, memory-pressure-transient, bug) -- out of scope: their own status_note shows PO deliberately grouped them for ONE-HOP consolidated dispatch under umbrella row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS (still BACKLOG, undispatched) -- touching their zone field would be uncoordinated interference with that live plan, not a fix. orchStateSchema.ts diff = 0 lines (AC-5 held, re-verified). Handing to qa for re-review sign-off.\n[QA] Review Record (direct-commit verify): APPROVED (2nd pass, rework). Verified commit 796a2fc58 (exactly 2 files: guard-signal-type-coverage.sh, guard-signal-type-coverage.test.sh) is on main ancestry and touches only those files. Prior CHANGES_REQUESTED issue (mint_routing_gap_row hardcoded owner=po/zone=docs/agents/po/flow//no next_agent) is fixed: diff confirms owner=agent-father, next_agent=agent-father, zone=cross-service/, priority=P1 now literal in the jq template. Re-ran guard-signal-type-coverage.test.sh fresh: 31/32 (sole fail TEST10, live-data integration smoke naming currently-unrouted types, matches prior QA acceptance, not a regression). TEST2/TEST8 dispatchability assertions (next_agent/priority/owner populated, zone in accepted set) all PASS. orchStateSchema.ts diff = 0 (AC-5 held, independently confirmed via git diff HEAD). Spot-checked minted rows directly against LIVE orch-state.json (not fixtures) both from dev-mcp-server's own live-verification pass (signal-feedback) and from my own fresh test execution moments ago (flow-defect, telemetry, both newly-unrouted since the rework's own pass) -- all 3 carry owner=agent-father/next_agent=agent-father/zone=cross-service//priority=P1, dedup confirmed (repeat run mints zero duplicates across all 9 currently-live unrouted types). RULING on router's discrepancy: (a) verifying the mint path against the live orch-state.json is acceptable and in fact required here -- the self-filing fallback's whole purpose is to write real backlog rows on real detection, and acceptance_notes item 1 explicitly calls for a live --check verification; the underlying reason --check mutates on every invocation (rather than being a true dry-run) is a real but PRE-EXISTING, already-tracked, out-of-scope defect (FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-FLAG-MISLEADING-NOT-DRYRUN, filed 2026-08-23 by po, owner=developer) -- confirmed present on the live board, not something this task introduced or needs to fix. (b) the resulting new P1 backlog rows need no special disposition beyond normal dispatch: all are well-formed/dispatchable (next_agent=agent-father) and represent genuine currently-unrouted types this guard is designed to catch -- this is the AC working as intended, not an artifact needing cleanup. Also independently confirmed via the umbrella row's own status_note (po, 2026-08-24T18:29:19Z) that the 5 pre-existing stale-zone FIX-SIGNAL-TYPE-ROUTING-GAP-* rows dev-mcp-server left untouched are explicitly named PO's own umbrella-row members for a coordinated one-hop dispatch (FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS, still BACKLOG) -- leaving their zone field alone was correct scope discipline, not an omission.",
-        "claimed_at": "2026-08-25T05:11:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "dev-mcp-server",
-        "redispatch_count": 1,
-        "po_scope_amendment_20260823T1157Z": "PO SCOPE AMENDMENT (explicit, so the redispatch does not land half the fix). mint_routing_gap_row() at scripts/audits/guard-signal-type-coverage.sh:249-250 must set FOUR things the current template omits or hardcodes wrong: (1) next_agent — currently NEVER set, so no dispatch lane resolves the row; (2) priority — currently NEVER set, not mentioned in QA's earlier note, and BOUNDED-1/RLC rank on it; (3) owner — hardcoded \"po\", but PO's own commit surface (po/flow/main.md commit-mutex own_paths) is notebook+journal+orch-state.json only and excludes its own flow docs, so owner=po is structurally unactionable for a docs/agents/po/flow/ fix; (4) zone — hardcoded \"docs/agents/po/flow/\", a PATH, which is not one of dev-team Step 3's three accepted zone values {apps/<service>/, multi, cross-service/} and is therefore rejected at batch build. Correct target for all four: owner/next_agent=agent-father (evidence: agent-father shipped the identical fix on this exact file under TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION, commit 735dfa815, and agent-father/init.md commit_zone.allowed contains docs/agents/), priority P1 default, zone cross-service/. FOURTH LIVE INSTANCE this tick: FIX-SIGNAL-TYPE-ROUTING-GAP-sprint-registry-unresolved-journal-ids minted 11:53Z with next_agent=null, joining -flow-actuator-fix and -system-issue (11:23Z) and -cowork-fire (09:25Z). PO hand-corrected all four this tick (see their folded_into/po_fold_note fields) — that is remediation of the OUTPUT, not the defect, and PO will not keep doing it. ADD AN AC: a minted row must be dispatchable with zero manual patching, asserted by the paired .test.sh reading the minted row back out of the fixture and checking next_agent/priority/owner/zone are all populated and zone is in the accepted set.",
-        "secondary_claimed_at": "2026-08-25T04:43:56Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "dev-mcp-server",
-        "drain_source_lane": "review",
-        "qa_verified_at": "2026-08-25T05:19:49Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bash scripts/audits/guard-signal-type-coverage.test.sh + git diff HEAD -- orchStateSchema.ts + live jq spot-check of minted backlog rows",
-            "args": "commit=796a2fc58; files=scripts/audits/guard-signal-type-coverage.sh,scripts/audits/guard-signal-type-coverage.test.sh",
-            "live_value_observed": "merge-base ancestor=yes; show --stat touches exactly 2/2 claimed files; test suite 31/32 pass (TEST10 sole fail, live-data expected per its own comment), TEST2+TEST8 dispatchability assertions all PASS; orchStateSchema.ts diff=0 lines; live-minted rows (signal-feedback, flow-defect, telemetry) all carry owner=agent-father/next_agent=agent-father/zone=cross-service//priority=P1; dedup confirmed zero duplicates across 9 live unrouted types on repeat run",
-            "observed_at": "2026-08-25T05:19:49Z"
-          }
-        }
       }
     ],
     "head": {
@@ -22504,7 +22452,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T05:10:32Z",
+    "_updated_at": "2026-08-25T06:47:52Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23971,6 +23919,667 @@
         },
         "createdAt": "2026-08-25T04:46:23Z",
         "drained_at": "2026-08-25T05:09:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f76ecab99d355a42d8d42ba17f54c2a4238a9095d7a50ec472736bf530099dc5",
+        "source": "dashboard",
+        "from": "market-db-journal-guard",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "WARN",
+        "payload": "journal-guard exit 3 ERROR probe_query_failed detail=empty — 2 consecutive ticks (05:33Z, 05:47Z), probe hung ~6m on docker exec each time then self-terminated; telegram undeliverable 4x (4th = socket closed unexpectedly, witnessed in-run). WAL status UNKNOWN since 05:33Z. ROOT CAUSE confirmed by peer: mcp-server-1 event-loop wedge since 05:16:16Z — docs/signals/dev-team-20260825T054306Z.json (dedup_key mcp-server:container-wedge-20260825T0516Z|event-loop-blocked-after-write-invisibility). Journal-guard is a SYMPTOM of that P0, not an independent defect. Separate code-plane gap: verify-market-db-journal-mode.sh has no timeout on any docker exec, so a wedged container makes it hang ~6m instead of degrading fast to its own exit-3 path.",
+        "createdAt": "2026-08-25T05:33:08Z",
+        "drained_at": "2026-08-25T06:47:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0a21d71e7c9d12860782fcb98a134e5e47ed6c944bea8171cf71f4b8b94e4f92",
+        "source": "dashboard",
+        "from": "market-db-journal-guard",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "CRITICAL",
+        "payload": "FLEET DOWN — Docker Desktop is not running: `docker ps` returns \"Docker Desktop is unable to start\", and Docker Desktop UI / com.docker.backend / vpnkit are ALL at zero processes. Only a stale /Users/admin/.docker/run/docker.sock (dated 15 jul) remains. Every container is therefore down, which supersedes the 05:16Z mcp-server event-loop wedge (docs/signals/dev-team-20260825T054306Z.json) — that container no longer exists to be wedged. DISCRIMINATED against the 2026-07-15 hypervisor-crash class: hypervisor.error.json is ABSENT and the socket file is present, so this is NOT the user-only recovery ladder; it is a plain not-started daemon. Do NOT rebuild the VM and do NOT remove ~/Library/Containers/com.docker.docker/Data/vms — that destroys every named volume incl. market_data (see feedback_vm_rebuild_destroys_named_volumes_restore_then_launch). Detected by the journal guard, whose own verdict said reason=container_not_found — MISDIAGNOSIS worth fixing: the script conflates a down daemon with a missing container.\nCORROBORATION 2026-08-25T05:58:32Z (db-integrity-probe.sh, CADRAT-2 Job A tick): probe returned exit 0, verdict=SKIP-SPAWN, \"all 17 watched tables' COUNT(*) match the last snapshot exactly\", tables_changed=0, read_mode=immutable. With every writer container down this is the EXPECTED shadow of a stopped pipeline, NOT a healthy-quiet DB — independent confirmation that market.db has taken zero writes across the outage. RECOVERY IN FLIGHT at 05:58Z: ops agent adf97eb66483b7921 has Docker Desktop processes back up (UI=8, com.docker.backend=3, vpnkit=0) but `docker ps` STILL returns \"Docker Desktop is unable to start\" — daemon has not accepted connections yet; vpnkit at 0 is the notable laggard.\n\nSECOND-ORDER DEFECT SURFACED, NO BOARD ROW YET (detector blindness, same class as feedback_probe_fails_on_dimension_the_spawned_auditor_cannot_see): the CADRAT-2 gate in scripts/agents-flow/db-integrity-probe.sh decides SKIP-SPAWN purely on row-count delta vs the last snapshot, so for the ENTIRE duration of any fleet outage it suppresses the DB-integrity sweep — the audit goes silent exactly when the write path is most likely to be dropping or corrupting data, and every suppressed tick looks identical to a calm one in the log. The gate cannot distinguish \"nothing changed because all is calm\" from \"nothing changed because nothing is running\". Fix direction: consult writer liveness (or the same container-presence check verify-market-db-journal-mode.sh already performs) before scoring a zero-delta tick as SKIP-SPAWN; a no-delta tick with a dead writer should FAIL-OPEN to SPAWN or emit its own distinct verdict, never SKIP silently.\n\nRECOVERY EXHAUSTED — USER HOST ACTION REQUIRED (2026-08-25T06:08Z). ops agent adf97eb66483b7921 ran the CLI ladder ONCE per protocol and reported NOT-RECOVERED: (1) `open -a Docker` + 240s socket poll -> failed; (2) killall -9 / pkill -9 teardown + fresh `open -a Docker` + 240s poll -> failed. Docker log line, repeating hourly from 05:47:59Z: \"[E] failed to listen to docker events: Error response from daemon: Docker Desktop is unable to start\". A GUI error dialog appeared that cannot be dismissed from CLI.\n\nROUTER RAW-VERIFICATION (do not trust the agent self-report): ops claimed \"No processes remain\" — FALSE at verification time, /Applications/Docker.app=3 and com.docker.backend=3-4 were running. The CLI error ALSO CHANGED between ops's report and verification, from \"Error response from daemon: Docker Desktop is unable to start\" to \"Cannot connect to the Docker daemon at unix:///Users/admin/.docker/run/docker.sock\" — a different failure mode (no listener vs reached-and-refused), so the router ran an independent bounded 100s poll (10 samples, 06:06:29Z-06:08:01Z): daemon never bound; steady-state app=3, backend=3, vpnkit=0. vpnkit never starting is the distinguishing symptom.\n\nSTILL NOT the 2026-07-15 hypervisor-crash class by its own discriminators (hypervisor.error.json ABSENT; docker.sock present, stale 15 jul 16:55; ~/Library/Containers/com.docker.docker/Data/vms/0 INTACT — the VM disk was NOT destroyed). But the OUTCOME now matches: CLI recovery exhausted -> user host action only. Per feedback_docker_hypervisor_crash_cli_recovery_exhausted_user_only, do NOT re-dispatch ops for a further CLI ladder. Required: GUI quit of Docker Desktop (dismissing the error dialog) + relaunch, or a macOS reboot.\n\nDATA IS SAFE — VERIFIED DAEMON-DOWN, NO DOCKER NEEDED: data/live/market.db 445,104,128 bytes (mtime 2026-08-25 07:16 local), NO -wal and NO -shm present (clean shutdown, nothing stranded in a journal), read via file:...?immutable=1 -> daily_ohlcv=789926, market_prices=116, financial_reports=263. All plausible and non-empty.\n\nROUTER-SELF-CORRECTION (defect in the incident brief, not in ops): the brief handed ops a hard gate \"if market_data is MISSING: STOP, do NOT compose up\", derived from feedback_vm_rebuild_destroys_named_volumes_restore_then_launch. That named volume was RETIRED 2026-07-15 in commit 5ba622eca — docker-compose.yml now bind-mounts ./data/live:/app/data for every service — so `docker volume ls` reads market_data MISSING on a perfectly healthy fleet and the gate would have FALSE-STOPPED a correct recovery had ops reached Step 4. The correct data-safety gate is the host-file check above, which has the added virtue of working while the daemon is down. Memory corrected 2026-08-25 (scope-narrowed + cross-linked to the already-SUPERSEDED feedback_live_db_is_named_volume_not_host_data).\n\n--- 2026-08-25T06:22Z tick 6 (fold-in, same outage; NOT a new incident) ---\nProbe exit=3 verdict verbatim:\n  MARKET_DB_JOURNAL_MODE verdict=ERROR reason=container_not_found container=vn-market-intelligence-mcp-mcp-server-1\nsend_telegram(bug) attempted exactly once per contract -> \"socket connection was closed unexpectedly\".\n7th consecutive alert failure. Root is structural, not transient: send_telegram executes ON the\nmcp-server that is itself down, so the BUG alert channel is unreachable for the whole duration of\nany fleet outage. Every exit-2/exit-3 alert this cron is designed to raise is therefore guaranteed\nundeliverable in precisely the situation it most needs to fire. Recorded as an observation only --\nno board row (router-only).\n\nVERDICT PROGRESSION recovered from this session's probe-output mtimes (local=UTC+2), oldest first:\n  05:31Z probe_query_failed detail=empty   <- container PRESENT, sqlite query returned empty\n  05:47Z probe_query_failed detail=empty\n  05:52Z container_not_found               <- container GONE\n  06:10Z container_not_found\n  06:22Z container_not_found\nReading: this is deterioration, not recovery. It also supplies evidence for the timing shift noted\nat tick 5 -- the earlier ~6-minute probe hangs were `docker exec` blocking on a WEDGED-BUT-PRESENT\ncontainer; the current seconds-fast failure is a FULLY-ABSENT daemon. Two materially different\nsystem states that the script collapses into the same exit code 3, distinguished only by the\nfree-text `reason=` field. Strengthens the already-recorded container_not_found misdiagnosis defect\n(commit 39e9e6b41): `container_not_found` is emitted both when the daemon is down (container state\nunknowable) and when the daemon is up but the container is genuinely absent.\n\nIncident remains BLOCKED ON USER HOST ACTION (unchanged since tick 5): quit Docker Desktop via GUI\nto clear the error dialog, relaunch -- or reboot. CLI recovery ladder already exhausted; per\nfeedback_docker_hypervisor_crash_cli_recovery_exhausted_user_only, ops is deliberately NOT\nre-dispatched. Data safety re-confirmed unchanged: market.db 445MB / 789,926 daily_ohlcv rows,\nno -wal/-shm pair (clean shutdown, nothing stranded in a journal).\n\n\n--- TICK 7 -- RECOVERY. Incident window CLOSED. ---\nProbe exit 0. Verdict line verbatim:\nMARKET_DB_JOURNAL_MODE verdict=PASS journal_mode=delete wal_present=false shm_present=false container=vn-market-intelligence-mcp-mcp-server-1 db=/app/data/market.db reason=\"journal_mode=delete, no live -wal/-shm pair\"\n\nFleet confirmed up INDEPENDENTLY of the probe: docker ps = 13/13 containers Up, all (healthy),\nUNIFORM 5-minute uptime. The uniformity is the discriminator that rules out the exit-0\nrestart-loop mode (feedback_container_exit0_restart_loop_invisible_to_health_and_compose_ps),\nwhich also renders as \"healthy\" but shows seconds-scale, ragged uptimes. This is a single clean\nbring-up.\n\nUSER-BLOCKED CONDITION IS CLEARED -- no host action is pending any more. Outage window approx\n05:31Z (first probe_query_failed) -> ~06:45Z (fleet up), ~74 minutes.\n\nThe invariant this guard exists to protect SURVIVED the crash intact: journal_mode=delete, no\n-wal/-shm pair. The WAL re-arm vector never fired. Data safety unchanged.\n\nSTATUS DELIBERATELY LEFT NEW, NOT RESOLVED. The outage is over; this row's durable code-plane\ncontent is not. Three defects, now ROUTED as mdjgfix-20260825T064500Z -> dev-team so that closing\nthis row on \"docker is back\" cannot bury them:\n  (a) the BUG alert channel is structurally dead for the whole duration of any mcp-server\n      outage -- 7/7 alerts undelivered across the ~74 min; the user was never notified through\n      the intended channel by ANY tick;\n  (b) a down daemon is mislabelled container_not_found;\n  (c) no timeout on the script's docker exec calls.\n\nNO catch-up telegram sent. The PASS branch authorises no alert, and the 7 lost verdict lines\ncannot be re-sent without reconstructing them from memory -- which this cron's contract\nexplicitly forbids (\"never paraphrased, summarized, or reconstructed from memory\").\n",
+        "createdAt": "2026-08-25T05:54:25Z",
+        "drained_at": "2026-08-25T06:47:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "99ba25b9ef0a4fa78ff2d74306aa091d67e32aa1761711d6c0adb2961f4728c4",
+        "source": "dashboard",
+        "from": "router",
+        "to": "dev-team",
+        "type": "system-issue",
+        "priority": "HIGH",
+        "payload": "CHEF degraded-floor recovery path writes BOTH its notebook section AND its synthesis JSON to\nNON-CANONICAL paths, orphaning an already-PUBLISHED dish from every downstream consumer.\n\nOBSERVED (router, 2026-08-25T06:26Z, incidental to a db-integrity SKIP-SPAWN tick — found via\n`git status`, not via any detector):\n  docs/agent-memory/notebooks/chef-intraday.md                                (untracked, 04:25Z)\n  docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json (untracked, 04:24Z)\nBoth belong to the 04:13Z chef-intraday cycle, whose notebook header reads:\n  \"**Status:** SENT (degraded-floor recovery) | **Quality:** degraded | **Clusters:** 1 qualified\"\n  \"Recovery reason: token_budget_optimization — Steps 1.5-6 partial completion\"\n\nCANONICAL PATHS ARE UNTOUCHED BY THAT CYCLE:\n  - docs/agent-memory/notebooks/unified-agent.md still reports latest cycle = 02:13Z; `grep -c 04:13`\n    against it returns 0.\n  - docs/data/ holds only the 02:13Z slot file (75 synthesis JSONs total, none for 04:13Z).\nCONSEQUENCE: a dish that was SENT to MARKET has ZERO canonical record. Every consumer that reads\nthe canonical paths -- fb-market-poster, digest-predict, tran-ngoc-bau (whose entire job is\nauditing chef narrative for TNB 6-layer completeness against the notebook), market-analyst -- will\nnever see the 04:13Z dish. tran-ngoc-bau in particular would score the day on 02:13Z alone and\nreport a complete walk while a degraded 1-cluster dish went out unaudited.\n\nNOT the same defect as the existing P1 backlog row FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-\nSYNTHESIS-JSON (2026-08-07). APTNESS NOTE: that row is about Step 8e's git-add PATHSPEC omitting\nthe synthesis JSON -- a COMMIT gap. It explains why these two files are untracked, and is real,\nbut it does NOT cover WRONG-DIRECTORY SELECTION. Discriminator: the SAME agent, SAME day, on the\n02:13Z full-quality cycle, wrote docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json\nto the CORRECT path AND got it committed (dca608eb2). So both the path logic and Step 8e work on\nthe normal path and diverge only on the degraded-floor path. Fixing the pathspec row alone would\nleave this open; the two should be fixed together but are distinct root causes.\n\nROOT-CAUSE HYPOTHESIS (unverified -- code not read, router does not implement): the degraded-floor\nrecovery branch (referenced in the notebook as \"chef-telemetry.md §\") composes its own output\nfilenames from the slot id rather than reusing the CYCLE_DATE-pinned canonical path constants that\nthe full recipe (chef-dish.md Step 7.6 / 8e) uses -- yielding notebooks/<slot>.md instead of an\nappend to unified-agent.md, and notebooks/<synthesis>.json instead of docs/data/<synthesis>.json.\nNeeds a read of the degraded-floor branch to confirm.\n\nCONTAINMENT DONE BY ROUTER (evidence preservation ONLY, no fix): both stray files committed AS-IS\nin their wrong locations so the only surviving record of a published dish is not lost to an\nuntracked-file sweep. They are deliberately NOT relocated -- a `git mv` is part of the fix and\nbelongs to the owning dev, not the router.\n\nSUGGESTED VERIFICATION FOR THE FIX: force a degraded-floor cycle and assert (a) unified-agent.md\ngained a section for that cycle, (b) docs/data/ gained the slot's synthesis JSON, (c) no new file\nappeared under docs/agent-memory/notebooks/ other than the unified-agent.md edit.\n",
+        "createdAt": "2026-08-25T06:26:00Z",
+        "drained_at": "2026-08-25T06:47:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fb47a4f39091be990cc3807bd4387d438c33b7f102f56bcf8860dce98e105b23",
+        "source": "dashboard",
+        "from": "router",
+        "to": "dev-team",
+        "type": "system-issue",
+        "priority": "HIGH",
+        "payload": "market-db-journal-guard: the BUG alert channel is structurally dead for the exact duration of\nevery outage it is built to report -- demonstrated live, 7/7 alerts undelivered across a ~74-min\nCRITICAL mcp-server outage on 2026-08-25 (approx 05:31Z -> 06:45Z). Plus two probe-robustness\ndefects in the same script that the existing P2 row does NOT cover.\n\nDEFECT 1 (the important one) -- ALERT CHANNEL DEAD EXACTLY WHEN NEEDED. The cron's exit-2/exit-3\nbranch alerts via call_tool(server=\"vn-market\", tool=\"send_telegram\"). send_telegram EXECUTES ON\nTHE mcp-server CONTAINER. So whenever mcp-server is down -- which is precisely the condition that\nmakes the probe emit exit 3 -- the alert transport is down too. Every alert this guard exists to\nraise is undeliverable at the moment it fires. This is not a flaky-transport problem; it is a\ntopology problem, and it is self-cancelling by construction.\n  EVIDENCE, not inference: ticks 1-7 of 2026-08-25 each attempted exactly one send_telegram per\n  contract. All 7 failed (\"The socket connection was closed unexpectedly.\"). The user was never\n  notified of a CRITICAL fleet outage through the intended channel by ANY tick. The outage was\n  ultimately resolved by host action, not by any alert this system delivered.\n  The 7 verdict lines are permanently lost: the cron contract forbids reconstructing a verdict\n  line from memory, so they cannot be replayed after recovery either.\n  SHAPE OF FIX IS A DESIGN QUESTION, NOT PRESCRIBED HERE -- an out-of-band transport that does\n  not depend on the monitored plane (direct Telegram HTTP from the host, or a host-side spool\n  that flushes on recovery) is the obvious family, but choosing belongs to the implementer.\n  DEDUP: NOT COVERED. Whole-board scan for send_telegram / telegram deliver|fail / alert channel\n  returned 6 rows, all inapt on inspection: FIX-SYSTEMMAP-TELEGRAM-ENVVAR-NAMES-WRONG is env-var\n  naming; FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER is the alert-engine poller; the rest are\n  gateway/grant/lag rows. None is about routing outage alerts through the box that is down.\n\nDEFECT 2 -- DOWN DAEMON MISLABELLED container_not_found. The script emits\nreason=container_not_found both when the daemon is down (container state is UNKNOWABLE) and when\nthe daemon is up but the container is genuinely absent. Those demand different responses and the\nverdict line cannot tell them apart. Observed both states today: earlier ticks hung ~6 min in\ndocker exec against a wedged-but-PRESENT container, later ticks fast-failed with the daemon fully\nabsent -- the script collapsed both into the same exit 3.\n  DEDUP: PARTIAL vs FIX-JOURNALGUARD-PROBE-FAILURE-EMITTED-AS-JOURNAL-MODE-VERDICT (backlog, P2,\n  zone apps/mcp-server, next_agent dev-mcp-server, created 2026-08-14). Read in full before\n  judging -- its AC-1 separates the PROBE-FAILED bucket from the MODE-VERDICT axis, which is one\n  level ABOVE this. Distinguishing sub-modes WITHIN the probe-failed bucket is not in any of its\n  three ACs. Widen that row rather than duplicating it.\n\nDEFECT 3 -- NO TIMEOUT ON docker exec. The script's docker exec calls are unbounded; against a\nwedged container they hung ~6 minutes, long enough to exceed a foreground tool limit and to\noverlap the next 15-min tick.\n  DEDUP: NOT COVERED by the P2 row (its AC-2 is SQLITE_BUSY retry/backoff, a different failure).\n  PRIOR ART for the fix pattern already exists and is already cited in that row's own .related:\n  FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE -- same defect shape, different script.\n\nALSO OBSERVED, feeding the P2 row rather than this one: that row's AC-3 requires a SUSTAINED\ninability to determine journal_mode to escalate on its own dedicated axis. Today it went 7\nconsecutive ticks / ~74 min blind and never escalated -- it just repeated an identical exit 3.\nThat is live evidence for an AC filed 11 days ago and still unbuilt.\n\nNOT A DATA-PLANE INCIDENT. The invariant itself held throughout: post-recovery verdict is\njournal_mode=delete, wal_present=false, shm_present=false. market.db intact. The WAL re-arm\nvector never fired. This row is entirely about the guard's own reporting plane.\n",
+        "createdAt": "2026-08-25T06:45:00Z",
+        "drained_at": "2026-08-25T06:47:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d4955b4c6743ca5f93f282fbfd10ed7e70f13f00c9ffba78fb917d1b314d85d9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow_defect",
+        "priority": "P2",
+        "payload": {
+          "step_5_3": {
+            "markers_hit": 0,
+            "of": 6,
+            "preamble_echo": false,
+            "verdict": "CLEAN — stamp holds"
+          },
+          "verified": {
+            "commit": "a907cda71 real, 1 file, notebook only",
+            "retention": "agent claimed c244 pruned / c245+c246+c247 kept — confirmed exactly",
+            "last_fired": "2026-08-25T05:05:19Z unchanged",
+            "ahead_count": "agent said 250, actual now 251 — peer commits land continuously, its figure was right when measured; NOT scored as an error"
+          },
+          "THE_MEASURED_COST_end_to_end_inside_one_window_I_CONTROLLED": {
+            "why_this_instance_is_worth_more_than_the_earlier_ones": "I wrote the file, I have its mtime, I spawned the reader, and I have the reader's cycle timestamp. Nothing here is inferred from an agent's account of its own behaviour.",
+            "wrote": "docs/data/cycle-snapshot-05:04.json, 16628 B, mtime 2026-08-25T05:04:51Z (Step 4.7 of this tick)",
+            "read_attempt": "alert-commander c247 at 2026-08-25T05:08:06Z — file was 3m15s old, fresh by any window",
+            "agent_claim": "'no fresh tick-snapshot (cycle-snapshot-05:0x.json absent)'",
+            "claim_status": "FALSE AS STATED — 05:04 is in the 05:0x range the agent itself named",
+            "the_actual_waste": "The snapshot caches exactly two payloads: market_context <- get_cycle_bootstrap, macro_snapshot <- get_macro_snapshot. The agent reported making BOTH of those calls directly. The two calls the snapshot exists to avoid were both re-made.",
+            "per_tick_cost": "16628 B written and discarded + 2 redundant MCP round-trips, every tick, for at least 16 consecutive ticks"
+          },
+          "SECOND_DISTINCT_DEFECT_the_one_that_hides_the_first": {
+            "finding": "The reader narrates a RANGE-absence it never tested. It computes one key, misses, and then reports 'no cycle-snapshot-<range>x.json' as though it had scanned the range.",
+            "instance_1": "c245 @ 04:39:01Z — claimed 'no cycle-snapshot-04:3x.json'; cycle-snapshot-04:35.json existed at 16564 B",
+            "instance_2": "c247 @ 05:08:06Z — claimed 'cycle-snapshot-05:0x.json absent'; cycle-snapshot-05:04.json existed at 16628 B",
+            "why_it_matters_more_than_it_looks": "This is the mechanism by which the naming defect stays invisible. 'No snapshot in this range' reads to any human or auditor as 'the writer did not run'. The writer ran fine every time. A reader that said 'I looked for cycle-snapshot-05:05.json and it was not there' would have exposed the whole defect on its first occurrence.",
+            "remedy": "Have the reader report the LITERAL key it computed, not a range gloss. Cheap, and it is the difference between a self-reporting defect and a silent one."
+          },
+          "WHAT_THIS_DOES_NOT_PROVE_stated_explicitly": {
+            "does_not_discriminate": "At run-time 05:08, BOTH candidate reader rules miss: rounding -> 05:05 or 05:10 (absent), raw-minute -> 05:08 (absent). So c247 is NOT a test of rounding-vs-raw-minute and I am not scoring it as one.",
+            "what_still_carries_the_reader_rule": "c244 naming 04:22 remains the only proof of the raw-minute reader — no rounding rule can emit 04:22.",
+            "discipline_note": "Recording this limit explicitly because mixing 'the lookup failed' with 'the rule is X' is exactly the inference error that would let a wrong remedy ship."
+          },
+          "consolidated_state_of_the_snapshot_finding": {
+            "writer": "raw run-minute — 0 of 46 live names on a nominal quarter",
+            "reader_SPEC": "round to nearest 5 (cycle-bootstrap/SKILL.md:58)",
+            "reader_ACTUAL": "raw run-minute (c244 = 04:22)",
+            "promoter": "nominal quarter, read at source this tick (emitPressureStateTool.ts L397-399/L263/L264), 16 consecutive not-found",
+            "downstream": "cycle-snapshot-latest.json frozen at tick 00:00 since 2026-08-23 — consequence, not a separate bug",
+            "remedy": "ONE writer-side line in tick-snapshot.md; nominal tick already in hand at Step 4.7; zero server change",
+            "status": "COMPLETE — writer measured, reader observed, promoter read at source, cost measured, remedy specified. Ready to mint."
+          },
+          "carried_unchanged": {
+            "stranded_push": "251 ahead; alert-commander hit the size-lint gate live again and correctly declined to bypass. Both owning rows still dispatch_lane:null.",
+            "chef_0413Z": "filed 04:59Z, unchanged.",
+            "kinhdich": "c247 evaluated HPG GIU 25% / VIC GIU 81% — eighth consecutive cycle, still no gate, still no task row."
+          }
+        },
+        "createdAt": "2026-08-25T05:12:40Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dc84a960d146c4094917981b77772323add27f8ea4e15b3c4a137dcf82676480",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "P0",
+        "payload": {
+          "TICK_OUTCOME": {
+            "tick": "2026-08-25T05:15Z",
+            "verdict": "ERROR",
+            "drift_min": 3,
+            "action_taken": "ABORTED — did NOT run preflight-error-fallback.md",
+            "why_fallback_was_not_run": "Every step of that chain (0a drain, 0b presence, 0b.2 election, 4.6 claims, 4.7 snapshot, 4.8 emit, 6 release) requires MCP. Transport is hard-down on every path. Running it would have produced a cascade of undefined states and half-written locks, not a dispatch.",
+            "election_lock": "cron:cowork:2026-08-25T05:15Z — NO claim landed (both URLs failed before reaching the server). UNVERIFIABLE while transport is down, but leader-lock TTL is 600s so it self-expires by ~05:28Z either way. No manual cleanup needed or possible.",
+            "slots_lost": {
+              "chef-morning": "cron '15 5 * * 1-5' — due EXACTLY at this tick (2026-08-25 is Tuesday, dow=2). guaranteed:true. last_fired 2026-08-24T05:17:39Z.",
+              "alert-commander-market": "cron '*/15 2-8 * * 1-5' — due. last_fired 2026-08-25T05:05:19Z."
+            }
+          },
+          "FINDING_A_THE_OUTAGE": {
+            "what": "vn-market-intelligence-mcp-mcp-server-1 is Up 17 hours (unhealthy) — alive but hung. Every MCP path to vn-market is dead.",
+            "hung_at": "2026-08-25T05:16:16.453Z — last log line emitted, then TOTAL silence (docker logs --since 05:16:17Z returns nothing 8+ min later)",
+            "health": "FailingStreak 8 at 05:21:59Z, 10 by 05:23:24Z. Checks every ~40s, all 'Health check exceeded timeout (10s)'. First failure back-computes to ~05:17:09Z.",
+            "NOT_the_known_memory_signature": {
+              "mem": "503.8MiB / 3GiB = 16.4% — nowhere near pressure",
+              "cpu": "0.13% — idle, not spinning",
+              "RestartCount": 0,
+              "OOMKilled": false,
+              "ExitCode": 0,
+              "StartedAt": "2026-08-24T12:41:53Z (17h, never restarted)",
+              "conclusion": "This is a DEADLOCK / blocked event loop, not resource exhaustion. Do NOT triage it as A-30 memory pressure — every A-30 discriminator axis reads clean."
+            },
+            "last_log_line_before_silence": {
+              "line": "05:16:16.216Z level=error [push-prices] ASYNC: market_prices invisibility confirmed  count=107 visible_now=0",
+              "immediately_preceded_by": "05:16:14.725Z [push-prices] post-upsert verify inserted:107 visible:107 lag_ms:909  +  [push-prices] WAL checkpoint forced count:107",
+              "reading": "107 rows verified visible at write time, then 0 visible on the async re-check ~1.5s after a FORCED WAL checkpoint — and the process went silent immediately after logging it. Correlation is tight but causation is NOT established; I am flagging it as the last observable state, not naming it the cause.",
+              "related_prior_art": "project_mcp_server_write_wedge, feedback_same_db_tools_diverge_rowcount, feedback_integrity_helper_readonly_wal_blinded — same SQLite/WAL visibility family."
+            },
+            "blast_radius": "Fleet-wide. Every agent, every bash mcp_call, every cron preflight, both dispatchers. The gateway itself is HEALTHY (see Finding B proof) — only the downstream is dead."
+          },
+          "FINDING_B_STRUCTURAL_NEW_the_failover_URL_is_the_wrong_server": {
+            "claim": "scripts/agents-flow/mcp-call.sh's mcp_call() advertises 2-URL resilience: primary http://localhost:3000/mcp, failover https://zenmidi.com/vn-market/mcp. The failover is NOT vn-market. It is the GATEWAY. It cannot serve any vn-market tool, and never could.",
+            "proof_1_identity": "initialize against the failover URL returns instructions: 'This server is a gateway / proxy in front of m...' — that is the gateway's own instructions string, not vn-market's.",
+            "proof_2_tool_surface": "tools/call name=task_list_held on that URL -> {'code':-32602,'message':'unknown tool \"task_list_held\"'}. The gateway exposes only meta-tools (list_servers / list_server_tools / search_tools / call_tool).",
+            "proof_3_protocol": "It is STATEFUL — requires initialize -> notifications/initialized -> tools/call with the minted mcp-session-id. mcp_call() posts tools/call bare, by design ('POST to /mcp works STATELESS' per its own header comment).",
+            "the_irony": "mcp-call.sh's OWN header documents this exact error string as the signature of the stateful gateway endpoint, in a comment explaining why mcp_call_gateway_meta() had to be a separate function. The failover URL inside mcp_call() points at precisely the endpoint that comment warns about.",
+            "consequence": "The '2-URL failover' is 1 URL. Whenever localhost:3000 is down — i.e. exactly when failover is supposed to save you — there is no fallback at all. Affects every bash MCP caller fleet-wide: cowork-tick-preflight.sh, dev-team-tick-preflight.sh, coverage-stamp.sh, every agent's bash path.",
+            "NOT_a_URL_typo_to_hand_edit": "Do not 'fix' this by swapping in another host. The gateway CAN reach vn-market, but only through its call_tool wrapper with a full handshake — that is a different calling convention, not a different string. Any real fix is a code change with an owner, per CLAUDE.md's canonical-URL rule."
+          },
+          "FINDING_C_STRUCTURAL_NEW_the_error_reporting_hides_the_actual_fault": {
+            "what": "When URL1 fails at transport level and URL2 returns any 2xx, mcp_call() returns URL2's parse error and SILENTLY DISCARDS URL1's last_err.",
+            "mechanism": "In the for-url loop: URL1 curl_rc!=0 sets last_err then continues. URL2 gets HTTP 200, so the 2?? branch runs '_mcp_call_parse ...; return $?' — returning from INSIDE the loop. The final 'echo [mcp-call] ERROR: $last_err' after the loop is never reached.",
+            "observed_cost_today": "The preflight's detail field read 'fire-election claim transport error: ... method \"tools/call\" is invalid during session initialization'. That message is about an MCP HANDSHAKE. The actual fault was 'primary timed out after 10s, 0 bytes'. It took 6 separate probes to get from the reported error to the real one.",
+            "why_it_is_deterministic_not_flaky": "The gateway always answers 200 with that JSON-RPC error. So whenever the primary is down, the operator is ALWAYS shown the session-init red herring and NEVER shown the timeout. Not intermittent — structural.",
+            "remedy_shape": "Accumulate per-URL errors and surface all of them, or at minimum prepend last_err when a later URL also fails. One-line-ish, but it is a code change with an owner — filing, not touching."
+          },
+          "FINDING_D_EXPOSURE_guaranteed_slot_firer_has_no_MCP_health_precondition": {
+            "what": "launchd Layer C (com.vn-market.cowork-guaranteed-slot-firer, StartInterval=900) fired chef-morning INTO the dead environment.",
+            "evidence": "PID 93455, 'claude --dangerously-skip-permissions -p run docs/agents/unified-agent/flow/chef.md slot=chef-morning', ELAPSED 07:48 at 05:24:20Z -> started ~05:16:34Z — within ~20s of the server going silent.",
+            "current_state_measured_not_assumed": "STAT=S, 0.0% CPU — blocked, not spinning. Write surfaces UNTOUCHED: docs/agent-memory/notebooks/unified-agent.md mtime is still 2026-08-25T02:26:11Z (a previous cycle). Zero writes so far.",
+            "why_this_is_bounded_and_why_I_did_not_kill_it": "chef cannot publish (send_telegram needs MCP) and cannot claim or leak a published marker (task_claim needs MCP). So the documented fabrication/marker-leak failure modes are transport-gated shut. Killing it would be an intervention with no upside over letting it block and exit.",
+            "the_real_residual_risk": "If chef's no-MCP path degrades to narrating rather than exiting, it could still write a notebook entry or synthesis file describing a morning dish that was never produced — which then pollutes fb-market-poster and tran-ngoc-bau downstream. Worth a readback next tick. Related: feedback_chef_fabricated_publish, feedback_chef_leaks_published_marker_on_silent_exit.",
+            "structural_gap": "Layer C has no liveness precondition on the thing every one of its agents depends on. It will keep firing guaranteed slots into a dead MCP every 900s for as long as the outage lasts."
+          },
+          "DISCRIMINATOR_THAT_SETTLED_IT": {
+            "test": "Through the gateway session: list_servers (gateway-local, no downstream hop) vs call_tool -> vn-market/task_list_held (requires the downstream).",
+            "list_servers": "ANSWERED INSTANTLY — {'servers':[{'name':'vn-market','cached_tool_count':184,'tools_cached':true,'transport':'sse'}]}",
+            "call_tool": "TIMED OUT at 25s, 0 bytes",
+            "conclusion": "Gateway healthy, TLS bridge healthy, canonical URL correct. The fault is 100% the vn-market downstream container. This rules out the entire 'gateway 502 / stale /etc/hosts / repoint the URL' family of prior incidents — do NOT go there."
+          },
+          "WHAT_I_DID_NOT_DO_and_why": {
+            "no_container_restart": "Router-only — never implement. A rebuild/restart is ops work with real destructive precedent (feedback_rebuild_recreate_destroys_peers, feedback_vm_rebuild_destroys_named_volumes). PO holds autonomous authority for deploy/rebuild (feedback_po_deploy_rebuild_full_autonomy_no_user_gate); this row is the handoff.",
+            "no_agent_spawn": "Session instruction in force: do not call the Agent tool unless the user requested it. Also, the cowork dispatcher must never spawn dev-team agents (ops/po included).",
+            "no_URL_edit": "CLAUDE.md forbids repointing the canonical gateway URL as an outage workaround, and Finding B is a calling-convention defect, not a string typo."
+          },
+          "RECOMMENDED_NEXT": "Restart vn-market-intelligence-mcp-mcp-server-1 (single service only — never docker compose down/up, per feedback_rebuild_recreate_destroys_peers). Capture a stack/heap dump BEFORE the restart if the deadlock is to be root-caused, because a restart destroys the only evidence. Then mint rows for Findings B, C, D — all three are live regardless of this outage."
+        },
+        "createdAt": "2026-08-25T05:26:33Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c12445ec435053f5fe55ae0941f328723e5ad372e6fd08e702e39c148378ff06",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "P0",
+        "payload": {
+          "CORRECTION_to_my_own_filed_claim": {
+            "what_I_wrote": "In cowork-team-20260825T052633Z, Finding D structural_gap: 'It will keep firing guaranteed slots into a dead MCP every 900s for as long as the outage lasts.'",
+            "why_that_is_WRONG": "StartInterval=900 is how often the firer WAKES, not how often it fires a slot. It fires only slots whose cron says they are DUE. chef-morning is daily ('15 5 * * 1-5'), so it fired once at ~05:16:34Z and will not fire again today.",
+            "measured_disproof": "At 05:34:38Z — 18 minutes and one full Layer-C wake after the first spawn — ps shows exactly ONE agent process (PID 93455, the original chef-morning). Zero accumulation.",
+            "next_guaranteed_slot_actually_due": "chef-eod at 08:45Z, roughly 3 hours out. Full guaranteed roster: chef-eod 08:45Z, fb-daily 09:15Z, digest-daily 17:30Z, chef-evening 19:45Z, tnb-audit 20:13Z; digest-sunday and fb-weekend are weekend-only.",
+            "what_survives_of_Finding_D": "The real gap is unchanged and still worth a row: Layer C has NO liveness precondition on MCP, so any guaranteed slot that happens to come due during an outage is spawned into a dead environment. That is a correctness gap. It is NOT a compounding one — do not scope the response as if agents are piling up, because they are not.",
+            "why_I_am_filing_a_correction_rather_than_letting_it_stand": "The overclaim would push whoever picks up the P0 toward an urgency and a shape the evidence does not support. A wrong blast-radius in a P0 is worse than no blast-radius."
+          },
+          "TICK_0530Z": {
+            "tick": "2026-08-25T05:30Z",
+            "verdict": "ERROR",
+            "drift_min": 3,
+            "action": "ABORTED — same reasoning as 05:15Z. preflight-error-fallback.md not run; every step of it needs MCP.",
+            "slots_lost": "alert-commander-market (cron '*/15 2-8 * * 1-5'). chef-morning was 05:15-only and is already lost/spawned separately by Layer C.",
+            "election_lock": "cron:cowork:2026-08-25T05:30Z — no claim landed. TTL 600s, self-expires ~05:43Z.",
+            "consecutive_aborted_ticks": 2
+          },
+          "OUTAGE_CONTINUITY_measured_not_assumed": {
+            "at_05_34_38Z": "health=unhealthy, FailingStreak=26, RestartCount=0, StartedAt unchanged 2026-08-24T12:41:53Z",
+            "log_silence": "docker logs --since 05:16:17Z returns 0 lines, 18 minutes after the last emission. Total, not intermittent.",
+            "memory_drift": "503.8MiB (05:24Z) -> 515.4MiB (05:34Z). +11.6MiB over 10min while serving nothing. Slight, and NOT pressure (16.8% of 3GiB) — noted only so nobody later reads it as a leak signature.",
+            "cpu": "0.41% — still idle. Consistent with a blocked event loop, not a spin.",
+            "verdict_unchanged": "Deadlock, not exhaustion. Nothing observed since the first filing changes that reading."
+          },
+          "CHEF_MORNING_readback_as_promised": {
+            "state": "PID 93455 still alive, ELAPSED 18:08, STAT=S, 0.0% CPU — still blocked.",
+            "writes": "STILL ZERO. docs/agent-memory/notebooks/unified-agent.md mtime is 2026-08-25T02:26:11Z, unchanged from a prior cycle. No new synthesis file for chef-morning.",
+            "reading": "The transport-gated-shut prediction is holding at 18 minutes. Not yet proof it will exit cleanly — it has not exited. Keep the readback going; the failure mode to watch for is a late narrated notebook entry describing a dish that was never produced."
+          },
+          "NOTHING_ELSE_IS_NEW": "Findings A, B and C from cowork-team-20260825T052633Z are unchanged and not restated here. Deliberately not re-filing per-tick evidence for them — the original row carries the full diagnosis."
+        },
+        "createdAt": "2026-08-25T05:35:37Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4dd386801440bba8f081e0b84dde5738a31693ed906c3c5c41397da4ea55e808",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "P0",
+        "payload": {
+          "ESCALATION": {
+            "what_changed": "At the 05:45Z tick the preflight error text changed from the session-init message to 'transport failure calling https://zenmidi.com/vn-market'. That was not noise — it was the SECOND URL dying too. docker ps now returns nothing: 'Docker Desktop is unable to start'. All 13 containers are down, not just mcp-server.",
+            "scope": "frontend, pdf-extractor, mcp-server, alert-engine, rag-service, news-fetch, api-gateway, stock-price, macro-indicators, mcp-gateway, flaresolverr, technical-analysis, kinh-dich-service.",
+            "why_URL2_also_failed": "mcp-gateway is itself a container. It went down with the VM. That is why the failover URL flipped from answering-with-an-error to not answering at all."
+          },
+          "ROOT_CAUSE_from_the_backend_log": {
+            "chain": [
+              "05:46:37Z — Docker API still HEALTHY. Container event streams serving normally.",
+              "05:46:38Z — filesystem-sharing service blocks on event injection.",
+              "05:47:38.710Z — engine linux/virtualization-framework shutdown requested; state running -> stopping. Exactly +60s.",
+              "05:47:50.550Z — stopping hypervisor process.",
+              "05:47:50.556Z — com.docker.virtualization: process terminated due to explicit cancel.",
+              "05:47:50.572Z — [E] engine linux/virtualization-framework run error: 'service fs failed: injecting event blocked for 60s'."
+            ],
+            "reading": "A 60-second watchdog on Docker's host<->VM file-sharing service fired and the engine shut ITSELF down. This was an orderly self-shutdown triggered by an fs-layer stall, not a crash.",
+            "current_state": "Docker Desktop is running a GUI process '--name=error-dialog' (PID 2974, up 4m46s) — an error dialog is on screen awaiting a human."
+          },
+          "THIS_IS_NOT_THE_2026_07_15_HYPERVISOR_CLASS_checked_explicitly": {
+            "why_it_matters": "feedback_docker_hypervisor_crash_cli_recovery_exhausted_user_only says CLI recovery is exhausted and user-only for THAT signature. Applying it here without checking would be cargo-culting a conclusion from a different failure.",
+            "discriminator_1_socket": "2026-07-15: docker.sock ABSENT. Now: /Users/admin/.docker/run/docker.sock EXISTS (srwxr-xr-x).",
+            "discriminator_2_hypervisor_error": "2026-07-15: hypervisor.error.json showed 'Internal Virtualization error, VM stopped unexpectedly'. Now: that file DOES NOT EXIST anywhere under the Docker Data dir.",
+            "discriminator_3_backend": "2026-07-15: backend respawned but socket never bootstrapped. Now: backend is alive and answering IPC; it is the ENGINE that stopped, by its own request.",
+            "conclusion": "Different class. The engine performed a clean self-shutdown after an fs watchdog. Do NOT declare CLI recovery exhausted on the strength of the July incident — that ladder was climbed against a different fault."
+          },
+          "THE_LINK_TO_THE_0516Z_HANG_IS_NOT_ESTABLISHED_stated_as_a_limit": {
+            "temptation": "mcp-server hung at 05:16:16Z with a write-visibility error, and the VM's fs service wedged later. It is very tempting to call these one fault.",
+            "why_I_am_NOT_claiming_that": "They are 30 minutes apart, and the Docker API was demonstrably HEALTHY in between — container event streams were serving normally right up to 05:46:37Z. A single fs-layer fault that had already blocked mcp-server at 05:16 should not have left the engine healthy for the next half hour.",
+            "what_is_fair_to_say": "Both are filesystem/IO-layer symptoms and a shared root cause is a live hypothesis worth testing. It is NOT established, and must not be written into a remedy.",
+            "correction_to_my_own_earlier_filing": "In cowork-team-20260825T052633Z I called the 05:16Z hang a 'DEADLOCK / blocked event loop' — which implied an mcp-server APPLICATION bug and an mcp-server owner. That attribution is now unsafe: an equally consistent explanation is that the container was blocked on host-side IO. The observations (CPU 0.13%, flat memory, silent-on-a-write) fit both. Do not assign that row to a dev-* zone on the strength of my earlier wording."
+          },
+          "CHEF_MORNING_FINAL_READBACK_prediction_held": {
+            "outcome": "PID 93455 has EXITED. It wrote NOTHING — docs/agent-memory/notebooks/unified-agent.md mtime is still 2026-08-25T02:26:11Z from a prior cycle, and no chef-morning synthesis file exists.",
+            "significance": "The two-tick prediction is confirmed end to end: with MCP down, chef could neither publish nor claim a marker, and it exited clean rather than narrating a dish it never produced. The documented fabrication and marker-leak failure modes did NOT fire.",
+            "what_this_retires": "The 'watch for a late notebook entry narrating a dish that was never produced' item from the 05:30Z filing is CLOSED, negative. No cleanup needed.",
+            "what_it_does_not_retire": "chef-morning is still a LOST daily deliverable for 2026-08-25. Nothing produced the morning dish."
+          },
+          "TICKS_LOST_SO_FAR": {
+            "count": 3,
+            "list": [
+              "2026-08-25T05:15Z (chef-morning + alert-commander-market)",
+              "2026-08-25T05:30Z (alert-commander-market)",
+              "2026-08-25T05:45Z (alert-commander-market)"
+            ],
+            "note": "All three ABORTED, not dispatched. No election lock was ever claimed on any of them; all self-expire on the 600s TTL. No lock residue to clean up.",
+            "forward_exposure": "Every 15-min tick will keep returning ERROR until the VM is back. Next guaranteed slot due is chef-eod at 08:45Z."
+          },
+          "RECOVERY_and_the_TRAP": {
+            "likely_sufficient": "Quit Docker Desktop fully and relaunch it (the error dialog on screen may itself offer Restart). This is a stopped engine, not a faulted hypervisor.",
+            "THE_TRAP_do_not_do_this": "Do NOT 'rebuild the VM from scratch' by removing ~/Library/Containers/com.docker.docker/Data/vms. On Docker Desktop/Mac, named volumes live INSIDE the VM disk image, so that step DESTROYS market_data and bctc-page-images. It happened on 2026-07-15 and required restoring a 361MB backup. Host bind-mounts (./docs/data, ./data/pdfs) survive; named volumes do not.",
+            "if_it_does_come_back": "Verify volume integrity BEFORE trusting green health — row counts and MAX(date) on market.db. Green health on an empty DB masks total data loss (feedback_vm_rebuild_destroys_named_volumes_restore_then_launch).",
+            "not_a_disk_problem": "Checked: host / has 28Gi free, Docker.raw is 20G actual (233G is only the sparse apparent size). Host swap is tight (5312/6144M used) — noted, not diagnosed as the cause."
+          },
+          "WHAT_I_DID_NOT_DO": "No Docker restart, no VM touch, no agent spawn. Router-only, and this is host-level infra with a documented destructive-recovery trap one step away. Surfacing for a host action decision."
+        },
+        "createdAt": "2026-08-25T05:53:24Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cd5c88ad3c0f16f65b6a43ef18ce02289cd9432798c80d698d2bfbab11aa5f0f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "P0",
+        "payload": {
+          "TICK": {
+            "verdict": "ERROR",
+            "tick": "2026-08-25T06:00Z",
+            "drift_min": 3,
+            "action": "ABORTED",
+            "consecutive_aborts": 4,
+            "ticks_lost": [
+              "05:15Z",
+              "05:30Z",
+              "05:45Z",
+              "06:00Z"
+            ]
+          },
+          "FINDING_E_THE_RELAUNCH_WAS_AUTOMATIC_NOT_HUMAN": {
+            "claim": "Docker Desktop relaunched at 2026-08-25T06:00:41Z with NO human intervention. I initially read the relaunch as possible operator recovery; it is not. Nobody has touched this host.",
+            "mechanism": "PID 5892 `/usr/local/bin/docker-compose up` started 06:00:40Z. Its parent PID 67718 is `/bin/bash '/Users/admin/Documents/Claude/Projects/mcp server gatway/start-gateway-respawn.sh'`, alive since 2026-07-15T19:58:14. That script is a 12-line `while true; do docker-compose up; sleep 5; done` loop. On macOS the docker CLI auto-starts Docker Desktop, so the compose invocation is what relaunched the app one second later.",
+            "why_it_matters": "Any report that says 'the operator restarted Docker' is false, and waiting for a human who has not been asked wastes the outage. The error-dialog process (PID 2974) disappearing is explained by this relaunch, not by someone dismissing it."
+          },
+          "FINDING_F_THE_ENGINE_STALLED_RELAUNCH_DID_NOT_RECOVER": {
+            "claim": "The relaunch did NOT restore the daemon. Six minutes in, the engine has not started at all.",
+            "evidence": [
+              "com.docker.backend.log was ROTATED at 06:00:41Z (old file kept as com.docker.backend.log.20260825-080041.412). Fresh log reached `unholding Engines, they will start now` at 06:00:41.463Z and `onApplicationDidFinishLaunching` at 06:00:41.507Z.",
+              "supervisor.log's last entry is 06:00:41.273Z `sysctl sysctl.proc_translated kern.hv_support`. No `starting hypervisor`, no engine state transition, ever.",
+              "Between 06:05:38Z and 06:06:03Z the backend log grew 17 -> 19 lines; both new lines were `analytics.marlin` batches. The backend process is ALIVE but is not booting a VM.",
+              "`docker ps` returned `Cannot connect to the Docker daemon` at 06:03Z, 06:04:37Z, 06:05:17Z, 06:06:03Z, 06:06:13Z, 06:06:52Z."
+            ],
+            "still_not_the_2026_07_15_class": "hypervisor.error.json still does NOT exist and docker.sock still exists — the two discriminators that ruled out the July hypervisor incident last tick are unchanged. Do not import that incident's 'CLI recovery exhausted' conclusion.",
+            "backend_pids_alive": [
+              5809,
+              5827,
+              5828
+            ]
+          },
+          "FINDING_G_LAYER_D_EXISTS_AND_COVERS_1_OF_14_SERVICES": {
+            "claim": "There is a session-independent, host-level auto-restart layer for the gateway that the fleet's own durability inventory says does not exist — and its coverage is one service.",
+            "the_layer": "`/Users/admin/Documents/Claude/Projects/mcp server gatway/start-gateway-respawn.sh` — out-of-repo, so no repo-scoped audit or size-lint or script-persistence check has ever seen it. Not launchd-managed; a bare bash loop running since 2026-07-15.",
+            "contradicts": ".claude/skills/cron-cowork-team/SKILL.md's durability-layer inventory enumerates Layers A (retired), B (session-scoped CronCreate), C (launchd guaranteed-slot firer, awake-scoped) and states 'There is no layer that survives a sleeping host.' This one survives session exit AND self-restarts. The inventory is incomplete, not merely stale.",
+            "THE_TRAP": "That compose project declares exactly ONE service, `gateway`. This repo's docker-compose.yml declares 14. So when the daemon does come back, this loop restores the gateway ALONE. The gateway answers gateway-local meta-calls (list_servers, list_server_tools, search_tools) from its own cache, so a probe will look healthy, while EVERY mcp__gateway__call_tool(server='vn-market', ...) still fails — the same misleading shape as the failover finding filed at 05:26Z. Whoever recovers this MUST run the repo's own compose for the other 13 services and MUST verify with a real vn-market tool call, never with list_servers."
+          },
+          "ERROR_CLASS_CHANGED_BUT_IT_IS_NOT_A_RECOVERY_SIGNAL": {
+            "observed": "preflight detail moved from `curl exit=28 Operation timed out` (05:45Z) to `curl exit=52 Empty reply from server` (06:00Z).",
+            "reading": "The socat TLS bridge (launchd com.vn-market.socat-tls-bridge, PID 65862, a HOST process that never went down) still LISTENs on *:443 and forwards to 127.0.0.1:4040. /etc/hosts maps zenmidi.com -> 127.0.0.1. So the TLS accept still succeeds and the upstream to the dead gateway container fails. The class change is bridge-local.",
+            "LIMIT": "I did NOT establish the precise reason the class moved 28 -> 52 rather than staying 28. Treat the class change as uninformative, not as evidence of partial recovery. Do not build a remedy on it."
+          },
+          "DELIVERABLES_LOST_THIS_TICK": {
+            "due_at_0600Z": "alert-commander-market (*/15 2-8 * * 1-5) — last_fired 2026-08-25T05:05:19Z, now its 4th consecutive miss (05:15/05:30/05:45/06:00).",
+            "nothing_else_due": "The `0 */4` slots (news-scout-offhours, market-watcher-offhours, alert-commander-critical) fire at 04:00/08:00Z; hour 06 does not match. Next guaranteed slot is chef-eod at 08:45Z.",
+            "still_lost_from_earlier": "chef-morning for 2026-08-25 (guaranteed daily) was never produced and cannot be backfilled by any layer — Layer C coalesces missed intervals, it does not replay them."
+          },
+          "WHAT_I_DID_NOT_DO": {
+            "no_error_fallback_run": "The cron prompt mandates docs/agents/cowork-team/flow/preflight-error-fallback.md on verdict=ERROR. I did not run it, for the 4th time and for the same reason: every one of its steps (0a drain, 0b.1 presence, 0b.2 fire-election, 0b.3 one-shots, 0c blind-guard, 1-4b slot match, 4.2-4.8 pressure, 5 spawn, 5b last-fired, 6 telemetry) requires MCP. Running it against a dead transport manufactures half-written locks and undefined state instead of a dispatch.",
+            "no_refile": "Findings A/B/C (mcp-server hang, failover-URL-is-the-gateway, error-masking in mcp_call) are already filed and unchanged. Not re-emitted.",
+            "no_host_action": "I did not kill, restart, or reconfigure Docker, the respawn loop, or the socat bridge. Host recovery is the operator's call and I hold router scope.",
+            "no_election_lock": "No cron:cowork:<tick> claim was made on any of the 4 aborted ticks — the transport was down before the claim. Nothing to release; the 600s TTL is moot because no lock exists."
+          },
+          "RECOVERY_GUIDANCE_UNCHANGED_TRAP_RESTATED": {
+            "likely_sufficient": "Fully quit Docker Desktop (the backend PIDs 5809/5827/5828 survive an app quit and may need `pkill -f com.docker.backend` after) and relaunch. The engine is stopped, not faulted.",
+            "THE_TRAP": "Do NOT rebuild the VM by removing ~/Library/Containers/com.docker.docker/Data/vms. On Docker Desktop for Mac, named volumes live INSIDE the VM disk image — that destroys market_data and bctc-page-images. It happened 2026-07-15 and required restoring a 361MB backup. Host bind-mounts (./docs/data, ./data/pdfs) survive; named volumes do not.",
+            "after_recovery": "Verify market.db row counts and MAX(date) BEFORE trusting green health — the mcp-server died mid-write at 05:16:16Z with `market_prices invisibility confirmed count:107 visible_now:0`. And per Finding G, verify with a real vn-market tool call, not list_servers.",
+            "not_a_disk_problem": "28Gi free on /. Docker.raw is 20G actual against a 233G sparse apparent size."
+          }
+        },
+        "createdAt": "2026-08-25T06:08:27Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a77e5cbf5da0b8b6b0c563396d18de1ac9f73f71fcb96c04e2ca14c56fb568b4",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T06:39:34Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "legacy",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T06:38:21Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "06:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 138,
+          "signal_backlog": 37,
+          "note": "FIRST SUCCESSFUL TICK AFTER A 6-TICK FLEET OUTAGE (05:15Z-06:15Z all ERROR/ABORT, whole Docker VM down since 05:47:38Z engine self-shutdown on `service fs failed: injecting event blocked for 60s`). Stack verified genuinely recovered before dispatch: 13/13 containers healthy, and the data plane checked through the RUNTIME not host CLI — get_market_snapshot returned live fresh values (VN-Index 1798.81 +0.56%, breadth dated 2026-08-25, HPG/VNM/VIC/DBC all plausible with real volumes), clearing the 05:16:16Z mid-write death that logged `market_prices invisibility confirmed count:107 visible_now:0`. Finding G's predicted trap (respawn loop restores gateway ALONE, health reads green over 13 dead services) did NOT materialise — the operator brought up the full stack.",
+          "drain_deviation_signal_queue": "2 cowork-addressed NEW rows, both to=po (mdjg-20260825T053308, mdjg-20260825T055425, from market-db-journal-guard). HELD AT NEW, deliberately NOT marked READ — work-tick.md Step 0a's 'route to matching agent slot at Step 5 or log for PO' branch is structurally unreachable for po (re-verified this tick: 0 po slots in cowork-schedule.json), so the only reachable outcome is mark-READ-without-delivery, and READ is terminal for 24h cold-eviction. The dev-team/dashboard drain has a pending_triage_inbox re-envelope step that delivers these; the cowork drain still does not. Same decision as 2026-08-24T00:45Z / 20:45Z. Verify delivery by source+drained_at cluster, NEVER by row id (the re-envelope discards the original id).",
+          "NEW_DEFECT_step51_load_parse_is_linux_only": "spawn-fanout.md Step 5.1's LOAD_1MIN parse is `uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'`. The second awk splits on COMMA, which is Linux `uptime` format ('load average: 1.0, 2.0, 3.0'). macOS emits 'load averages: 3.73 3.42 2.63' — SPACE separated, no commas — so $1 is the whole field and the gsub concatenates all three into a single garbage token. Measured live this tick: LOAD_1MIN='4.653.562.66' then '3.733.422.63' against a true 1-min load of 4.65/3.73 on 12 cores. Consequence: the `LOAD_1MIN > load_per_core_factor * CORES` half of the DEGRADED predicate compares a non-numeric string and is DEAD on this host — it can never fire. Masked because PRESSURE_MODE=legacy already nulls HEADROOM_MB and forces DEGRADED=true on its own, so the broken half never changes an outcome and never surfaces. CORRECTION TO PRIOR RECORD: this was previously carried as 'pin LC_ALL=C on Step 5.1's load parse'. LC_ALL=C is NOT the fix and does not help — the fault is the field separator, not decimal-comma locale. Fix direction: split on whitespace after `-F'load averages?:'` and take the first numeric field.",
+          "RECONFIRMED_cycle_snapshot_never_promoted": "Step 4.7 wrote docs/data/cycle-snapshot-06:36.json (16647 B) — named from `date -u +%H:%M` WALL CLOCK, while the nominal tick is 06:30. Step 6.0's emit_pressure_state then returned cycle_snapshot_promoted:false, and docs/data/cycle-snapshot-latest.json still carries tick '00:00' created_at 2026-08-23T00:07:50Z — TWO DAYS STALE. Live end-to-end confirmation of the known writer-side naming defect: the only ticks that ever promote are those where wall-clock minute happens to equal the nominal tick (00:00). Every consumer reading cycle-snapshot-latest.json has been served 2-day-old market context. One-line writer-side fix in tick-snapshot.md (FILE_TICK -> nominal tick), zero server change.",
+          "outage_losses_final": "6 ticks lost (05:15Z, 05:30Z, 05:45Z, 06:00Z, 06:15Z aborted; 06:30Z is this one, recovered). alert-commander-market missed 5 consecutive fires. chef-morning for 2026-08-25 (guaranteed daily, 15 5 * * 1-5) was never produced and is unrecoverable — Layer C coalesces missed intervals, it does not replay them. Next guaranteed slot chef-eod 08:45Z should fire normally now."
+        },
+        "createdAt": "2026-08-25T06:39:34Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0dc1e375c8bf141e0424bde5b62855b7148edd1499c2ce50580cb61a80f6463d",
+        "source": "file",
+        "from": "dev-team",
+        "to": "architect",
+        "type": "bug-escalation",
+        "priority": "P1",
+        "payload": {
+          "observed_live_at": "2026-08-25T05:13:35Z",
+          "observed_tick": "2026-08-25T05:07Z",
+          "what_happened": "Rotation selected step1_triage (oldest stamp, 01:16:34Z). Its stamp was advanced to 05:09Z immediately, per spec (unconditional, before dispatch). Control flow then reached Review-Lane QA-Drain Head-Decoupled, which claimed a row and dispatched qa, then executed its documented `JUMP TO end   # a batch was dispatched this tick; do not also fall through to Step 1/PO triage same tick`. PO triage never ran. step1_triage went from oldest stamp to newest without doing any work.",
+          "cost_this_tick": {
+            "pending_triage_inbox_depth": 40,
+            "includes": "the P0 resolver hot/cold divergence escalation (dedup_key resolver:effective_next_agent|hot-cold-next_agent-divergence) drained into the inbox this same tick",
+            "deferral": "step1_triage cannot be re-selected until the other 5 candidates have each had a turn — up to 6 idle ticks, roughly 3 hours at the 7,37 cadence"
+          },
+          "structural_asymmetry": {
+            "claim": "step1_triage is the ONLY one of the 6 rotation candidates exposed to this. The other 5 are structurally immune.",
+            "evidence_line_numbers_in_docs_agents_devteam_flow_main_md": {
+              "rotation_selection_and_stamp": 573,
+              "bounded1": 615,
+              "sls": 647,
+              "rlc": 737,
+              "drs": 794,
+              "qa_drain_idle_tick": 859,
+              "session_gate": 930,
+              "ilc_headdecoupled": 936,
+              "secondary_drain": 1021,
+              "qa_drain_headdecoupled": 1076,
+              "step1_triage_body": 1139
+            },
+            "why": "The 5 other candidates bodies all sit BEFORE the session gate (930), so they execute before any head-decoupled lane can jump to end. step1_triage has no body at the rotation site at all — the spec says so explicitly (its actual dispatch stays at line 1139 because it needs pendingSignals/reports gathered upstream and must stay reachable from Step 0b busy-tick bypass paths). That placement puts it downstream of ILC and QA-Drain-HD, both of which JUMP TO end on a successful dispatch."
+          },
+          "why_the_spec_does_not_cover_this": "The no-same-tick-cascade rationale at line 573 addresses the case where $SELECTED s OWN gate/promote/claim is a genuine no-op — there the burned turn is intentional and harmless. It does not contemplate $SELECTED being PREEMPTED by a different, unconditional lane after its stamp was already consumed. The stamp-before-dispatch choice is separately well-argued (single call site vs five duplicated writes at each lane exit), so the defect is the interaction, not either decision alone.",
+          "frequency_expectation": "Not rare. review[] is chronically non-empty (26 rows at time of writing), so QA-Drain-HD has work on most ticks. Any tick where step1_triage wins rotation AND QA-Drain-HD or ILC dispatches will burn the triage turn. That biases the inbox toward growing rather than draining.",
+          "asks": [
+            "Decide whether a preempting head-decoupled dispatch should roll back (or not consume) the selected candidates rotation stamp. Rolling back only in the preemption case preserves the existing no-op-turn semantics untouched.",
+            "Alternatively, exempt step1_triage from the JUMP TO end of ILC/QA-Drain-HD, since it neither writes .head nor competes for the WIP slot — the stated reason those lanes jump to end is to avoid a same-tick cascade among dispatching lanes, which PO triage is not.",
+            "Either way, add a regression assertion to scripts/audits/devteam-dispatch-gate-satisfiability.sh: when $SELECTED == step1_triage and QA-Drain-HD dispatches, PO triage must still be reachable OR the stamp must not have advanced."
+          ],
+          "router_note": "Router does not author task rows. Filed as a signal for architect/PO triage. Router followed the flow as written this tick (dispatched qa, skipped Step 1) rather than improvising around the documented JUMP TO end."
+        },
+        "createdAt": "2026-08-25T05:13:35Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "55a689c9697b45940c3d20e48e7461bafd93099dfb25d8f8e35b0f365d7b6df5",
+        "source": "file",
+        "from": "dev-team",
+        "to": "ops",
+        "type": "bug-escalation",
+        "priority": "P3",
+        "payload": {
+          "observed_live_at": "2026-08-25T05:43:49Z",
+          "incident_start": "2026-08-25T05:16:16Z",
+          "silence_duration_min_at_filing": 25,
+          "blast_radius": {
+            "wedged": [
+              "vn-market-intelligence-mcp-mcp-server-1"
+            ],
+            "flapping_secondary": [
+              "vn-market-intelligence-mcp-frontend-1 — unhealthy 05:21Z-~05:41Z (streak peaked 9), recovered to Health=healthy, :3001/ now 200 in 2.03s but healthchecks still intermittently timing out (exit=0 at 05:41:45Z, exit=-1 at 05:42:23Z and 05:43:03Z). Slow-but-alive, likely downstream of the wedged mcp-server rather than independently broken."
+            ],
+            "healthy": [
+              "mcp-gateway (200 in 2ms)",
+              "docker daemon v29.5.2 responsive",
+              "all other containers healthy"
+            ],
+            "conclusion": "single isolated container wedge (mcp-server) with a flapping dependent (frontend) — NOT a hypervisor or daemon-level event"
+          },
+          "evidence": {
+            "health_failing_streak_mcp_server": "39 and climbing at 05:43Z",
+            "health_failing_streak_frontend": "peaked 9 while unhealthy; recovered, streak=2, Health=healthy at 05:43Z",
+            "healthcheck_output": "Health check exceeded timeout (10s), exit=-1, continuous",
+            "direct_probe_3000": "http=000 at 6s and 8s timeouts, repeated across 05:27Z-05:39Z",
+            "direct_probe_3001": "http=200 in 2.026s at 05:43Z (RECOVERED — was http=000 at 05:27Z-05:39Z)",
+            "memory": "mcp-server 508.4MiB/3GiB (16.55%), frontend 40.41MiB/512MiB (7.89%) - NOT memory pressure",
+            "oom_killed": false,
+            "restart_count": 0,
+            "cpu": "mcp-server 0.18%, frontend 0.00% - blocked, not spinning",
+            "docker_exec": "hangs indefinitely (>110s, had to be killed) - wedged at process level, not merely HTTP",
+            "last_log_line_before_silence": "level=error message='[push-prices] ASYNC: market_prices invisibility confirmed' count=107 visible_now=0 @ 2026-08-25T05:16:16.453Z",
+            "mcp_server_log_silence": "docker logs --since 05:17:00Z returns 0 lines — 27 minutes of total silence, last line 2026-08-25T05:16:16.453Z"
+          },
+          "suspected_root_cause": "A write-visibility failure (107 rows written, 0 visible) immediately preceding total process silence is the signature of a SQLite write wedge taking the event loop with it - see memory project_mcp_server_write_wedge and feedback_same_db_tools_diverge_rowcount. UNCONFIRMED: docker exec hangs, so DB handle state could not be inspected from inside the container.",
+          "fleet_impact": {
+            "dev_team_tick_05_37Z": "preflight verdict=ERROR - SF-1 claim returned JSON-RPC code:0 message: method tools/call is invalid during session initialization (MCP handshake never completes because downstream is wedged). Lock state undefined. Tick did NOT dispatch.",
+            "why_not_dispatched": "SF-1 and P3-FIRE-ELECTION are both hard gates in preflight-fallback.md and both are structurally unreachable. gateway-call-contract section 6 Degraded Mode does NOT authorize this path - its trigger is mcp__gateway__* being categorically ABSENT from the tool binding (a client-side session-transport gap); here the binding is present and the downstream server is wedged. No sanctioned path dispatches without SF-1, and doing so risks the concurrent-dispatch harm those gates exist to prevent.",
+            "unreleased_lock": "task:TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY still held by router session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb - task_release timed out 3x. TTL 3600s bounds it and the row is terminal (DONE_VERIFIED), so it self-expires harmlessly.",
+            "auditor_t1": "The 05:30Z Tier-1 probe had NOT fired at filing time (last_trigger still 05:15:44Z) - session-scoped crons only fire when the REPL is idle. The 05:15:44Z ALL_GREEN was NOT a false green: healthcheck failures began ~05:17Z, ~90s after that probe ran. Verified the probe's own 6s curl now fails, so whenever it next fires it will correctly score health_3000=FAIL + health_3001=FAIL."
+          },
+          "asks": [
+            "Diagnose the wedge BEFORE restarting - a restart discards the evidence and this has a plausible write-wedge root cause that will recur. Capture process/DB state first if any path into the container exists.",
+            "Confirm or refute the SQLite write-wedge hypothesis against the market_prices invisibility error at 05:16:16.216Z.",
+            "A-32 (mcp-server running stale code, remedy = container rebuild) is still open and may interact with this - a rebuild would address both, but decide deliberately rather than as an incident reflex.",
+            "Restart/rebuild is ops scope. Router did not restart anything: docker down && up has destroyed peer containers before (memory feedback_rebuild_recreate_destroys_peers)."
+          ],
+          "router_actions_taken": [
+            "Verified qa return for TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY against artifacts - all claims held; lane-move landed and board committed (f086451f9).",
+            "cron-detect-loop self-arm: local CronList classify found all 4 crons present-and-correct -> no-op. Cross-session marker guard (Steps 1a-1c) could not run (gateway), but is moot when no CronCreate fires.",
+            "Did NOT dispatch the 05:37Z tick. Did NOT restart any container. Did NOT re-arm com.vn-market.fleet-push."
+          ],
+          "correction_note": "An earlier draft of this signal described frontend-1 as wedged alongside mcp-server. That was true at 05:27Z-05:39Z but had ceased to be true by 05:43Z; corrected before filing. Only mcp-server is wedged.",
+          "superseded_by": {
+            "signal": "docs/signals/dev-team-20260825T055205Z.json",
+            "marked_at": "2026-08-25T06:44:09Z",
+            "reason": "This signal blamed an app-level blocked event loop in mcp-server. That root cause is WRONG. The real fault was the Docker VM fs event-injection layer (FATAL at 05:47:39.42Z); the count=107/visible_now=0 write-invisibility this signal reported is exactly what a failing fs-sharing layer produces, i.e. it was collateral, not the cause.",
+            "action_for_ops": "Do NOT investigate mcp-server application code on the basis of this signal. Read the superseding signal instead. Retained rather than deleted so the corrected diagnosis has an audit trail."
+          }
+        },
+        "createdAt": "2026-08-25T05:43:06Z",
+        "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d9dae6f47e5b27aaabd021b299a61ecc7266b7e44b17c75434d5d6d95a6ddd63",
+        "source": "file",
+        "from": "dev-team",
+        "to": "ops",
+        "type": "bug-escalation",
+        "priority": "P1",
+        "payload": {
+          "correction_of": "docs/signals/dev-team-20260825T054306Z.json",
+          "what_changed": "That signal attributed the mcp-server wedge to an app-level event-loop block after a write-visibility error, with root cause UNCONFIRMED. Host-side Docker logs now show the failure is one layer down: the VM's filesystem event-injection service. The write-invisibility symptom (count=107, visible_now=0 at 05:16Z) is consistent with the fs-sharing layer failing to propagate writes, which is exactly the subsystem that later hard-blocked. Treat the mcp-server wedge as a DOWNSTREAM EFFECT, not the fault.",
+          "evidence": {
+            "vm_init_log_fatal": "log source: ~/Library/Containers/com.docker.docker/Data/log/vm/init.log — {\"component\":\"init\",\"level\":\"error\",\"msg\":\"FATAL: running services: running fs: injecting event blocked for 60s\",\"time\":\"2026-08-25T05:47:39.421665222Z\"}",
+            "dockerd_stop": "{\"component\":\"init\",\"msg\":\"dockerd exited due to explicit Stop() call\",\"time\":\"2026-08-25T05:47:39.191400102Z\"} — dockerd stopped ~230ms BEFORE the FATAL line was emitted",
+            "hypervisor_stop": "[2026-08-25T05:47:50.550806000Z][com.docker.backend.engines] engine linux/virtualization-framework stopping hypervisor process",
+            "pause_resume": "initd /pause/events shows 'pause resuming' -> 'pause resumed: Docker Desktop is running' at 05:47:38.78Z, i.e. ~600ms BEFORE dockerd was stopped. A resume immediately preceding the fs FATAL is the strongest single lead.",
+            "broken_pipe": "apiproxy: 'forwarding raw stream to dockerd: ... write unix @->/var/run/docker.raw.sock: write: broken pipe' plus a burst of 'closing response body: unexpected EOF' at 05:47:39.11Z",
+            "current_cli_state": "docker version / docker ps / docker info all return 'Error response from daemon: Docker Desktop is unable to start'; docker info reports containers=0 running=0",
+            "backend_ipc_now": "com.docker.backend.ipc GET /ping -> 'context deadline exceeded' on a 10s cadence, continuously, as of 2026-08-25T05:52:05Z",
+            "endpoints": "localhost:3000/health http=000 (8s timeout); localhost:3001/ http=000 (8s timeout) — frontend, which had briefly recovered at 05:43Z, is now down too"
+          },
+          "differential_diagnosis": {
+            "NOT_hypervisor_crash": "No ~/Library/Containers/com.docker.docker/Data/hypervisor.error.json exists, and /Users/admin/.docker/run/docker.sock IS present. This is NOT the 2026-07-15 signature (that one had the socket ABSENT plus a hypervisor.error.json virtualization error). Do NOT jump to that incident's exhausted recovery ladder.",
+            "NOT_host_sleep": "pmset -g log for 2026-08-25 shows no Sleep/Wake/DarkWake transitions across the incident window — only caffeinate assertions actively PREVENTING idle sleep. Host suspension is ruled out.",
+            "NOT_process_restart": "com.docker.backend (pid 14371) and Docker Desktop (pid 23968) both have lstart of 15 jul 2026 — the Docker Desktop processes have NOT restarted. The backend is alive (18.9% CPU) but its VM is gone.",
+            "NOT_OOM": "Last successful inspect of mcp-server-1 showed 508MiB/3GiB, RestartCount=0, CPU 0.18%."
+          },
+          "asks": [
+            "Diagnose the fs event-injection block — this is the virtiofs/osxfs file-sharing layer. Check which bind-mount was being watched when it blocked; the repo bind-mount (./docs/data, ./data/pdfs) is the prime suspect given the fleet writes those paths constantly.",
+            "[SATISFIED 06:32:52Z — daemon recovered via a manual cold start from outside this session. NOTE the original text below was WRONG and is retained only as a correction record: a normal restart was NOT sufficient — the 06:00:41Z relaunch failed to bootstrap the engine and a SECOND full launch was required.] Original: Recover the daemon. Because the socket exists and no hypervisor error was written, a normal Docker Desktop restart is the FIRST thing to try and is likely sufficient. Escalate to the user only if that fails.",
+            "CRITICAL SAFETY CONSTRAINT — do NOT under any circumstances 'rebuild the VM from scratch' (i.e. remove ~/Library/Containers/com.docker.docker/Data/vms) as a recovery step. On Docker Desktop/Mac, named volumes live INSIDE the VM disk image; that step DESTROYED market_data and bctc-page-images on 2026-07-15 and required a 361MB backup restore. If the daemon does return, verify market_data volume integrity (row counts + MAX(date)) BEFORE trusting green health.",
+            "Investigate whether Docker Desktop's Resource Saver / pause feature is enabled. A pause->resume transition ~600ms before the fs FATAL suggests resume-from-pause is the trigger. If so, disabling Resource Saver is a candidate permanent fix for a recurring outage class.",
+            "[NOW TESTABLE — daemon is healthy as of 06:32:52Z] Re-check whether the mcp-server write-invisibility symptom (count=107, visible_now=0) still reproduces. If it does NOT, that confirms it was fs-layer collateral and the earlier app-level bug hypothesis (superseded signal dev-team-20260825T054306Z.json) can be formally closed.",
+            "RECURRENCE GUARD (new, promoted to primary ask now that the outage itself is over): the failure chain is reproducible-looking — pause->resume at 05:47:38.78Z, apiproxy broken-pipe burst, dockerd explicit Stop at 05:47:39.19Z, fs FATAL at 05:47:39.42Z. Capture Resource Saver / auto-pause settings state BEFORE changing anything, then treat ask 3 as the permanent fix candidate. Also worth noting: the first relaunch not bootstrapping means any runbook that says \"just restart Docker Desktop\" is insufficient — document the two-launch recovery."
+          ],
+          "probe_defect_found": {
+            "severity": "P2",
+            "what": "scripts/agents-flow/auditor-tier1-probe.sh mem_creep check misclassifies 'stats-unavailable' as a memory-threshold breach.",
+            "detail": "This tick's verdict reports mem_creep FAIL with detail 'mem >= 85% threshold (A-30 WARN boundary, mem-creep gate)' listing all 10 containers as '(stats-unavailable)'. docker stats returning nothing because the daemon is DEAD is not memory creep — it is the absence of a reading. Reporting absence-of-data as a threshold breach is a false positive of exactly the class that erodes trust in the probe.",
+            "downstream_harm": "The emitted signature is 'health_3000|mem_creep:<all 10 container names>'. That bogus 10-container signature is now written into docs/data/auditor-tier1-spawn-debounce.json (spawn_count=1, window_expires_at 2026-08-25T06:47:51Z). A genuine future single-container mem_creep will produce a DIFFERENT signature and will therefore not dedup against it — the debounce ledger has been polluted with an unrepeatable key.",
+            "fix": "Treat stats-unavailable as a distinct third state (UNKNOWN/SKIP), never as FAIL. When the daemon itself is unreachable, mem_creep should be reported as not-evaluated and docker_ps should be the failing check.",
+            "scope_refinement": "STILL VALID but narrower than first described. mem_creep only emits the false \"mem >= 85% threshold\" text in the TRANSIENT window where `docker ps -q` still lists containers but `docker stats` cannot read them. Once the daemon is fully unreachable (06:13:21Z tick) mem_creep degrades correctly, reporting \"docker ps -q returned no output (docker unreachable?)\". So the bug is a partial-daemon-failure path, not a total-outage path — which makes it harder to notice and worth fixing on its own merits."
+          },
+          "second_probe_defect": {
+            "severity": "P2",
+            "what": "docker_ps scored PASS in the same tick where the docker daemon is unreachable.",
+            "detail": "The 05:47:51Z verdict records checks.docker_ps=PASS alongside health_3000=FAIL. Roughly 10 seconds later every docker CLI invocation returns 'Docker Desktop is unable to start'. Either docker_ps ran before the 05:47:50Z hypervisor stop (a genuine race, in which case it is merely stale), or its success predicate does not actually require a daemon response. Worth confirming which, because a docker_ps that can PASS with no daemon is a blind spot in the single most important check the probe has.",
+            "note": "Timing makes the benign race plausible here — the probe wrote at 05:47:51Z and the hypervisor stopped at 05:47:50.55Z. Flagged for confirmation rather than asserted as a defect.",
+            "RESOLVED": "CLOSED at 2026-08-25T06:13:21Z — this was the benign race, NOT a blind spot. It was filed as needs-confirmation rather than asserted, and the 06:13:21Z tick supplies the confirmation: with the daemon fully gone, docker_ps correctly returns FAIL with detail \"docker ps returned no output (docker unreachable?)\". The 05:47:51Z PASS was genuinely stale by ~1s against the 05:47:50.55Z hypervisor stop. No fix needed; ops should NOT spend time here."
+          },
+          "fleet_impact": {
+            "all_mcp_tools": "Every call_tool(server=vn-market, ...) is unreachable. All lock gates (task_claim / task_heartbeat / task_release) are down fleet-wide.",
+            "dev_team_ticks": "The 05:37Z tick already failed to dispatch on an unreachable SF-1 gate. Every subsequent 7,37 tick will hit the same wall until the daemon returns.",
+            "auditor_t1": "This tick (fire_tick 2026-08-25T05:30Z, written 05:47:51Z) correctly returned verdict=FAILURE with spawn_decision=SPAWN. The router did NOT spawn system-auditor: its flow's own fire-election task_claim gate (docs/agents/system-auditor/flow/main.md, EXIT on non-claim) is structurally unreachable with the daemon down, so a compliant auditor would exit at its first gate before doing any tier work. Detection already succeeded; escalation is this file.",
+            "unreleased_lock": "task:TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY remains held by session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb (task_release timed out 3x earlier). TTL 3600s bounds it and the row is terminal (DONE_VERIFIED), so it self-expires harmlessly. All fleet locks will now expire naturally while the daemon is down.",
+            "publishing": "Any scheduled chef/fb-poster/market-watcher cycle firing during the outage will find every data tool unreachable."
+          },
+          "router_actions_taken": [
+            "Ran scripts/agents-flow/auditor-tier1-probe.sh — verdict=FAILURE, spawn_decision=SPAWN, fire_tick 2026-08-25T05:30Z.",
+            "Did NOT spawn system-auditor — its mandatory fire-election gate is unreachable (see fleet_impact.auditor_t1). Reasoning recorded rather than silently skipped.",
+            "Diagnosed the outage from host-side Docker logs only (no container action, no daemon restart attempted — recovery is ops scope).",
+            "Took NO recovery action: did not restart Docker Desktop, did not kill any Docker process, did not touch the VM data directory.",
+            "Filed this corrected escalation superseding the root-cause attribution in dev-team-20260825T054306Z.json."
+          ],
+          "post_filing_update": {
+            "observed_at": "2026-08-25T06:10:59Z",
+            "headline": "A clean Docker Desktop relaunch was attempted and FAILED to bootstrap the VM. Ask #2 of this signal (\"a normal restart is the FIRST thing to try and is likely sufficient\") is now empirically FALSIFIED — do not spend a cycle on it.",
+            "evidence": {
+              "relaunch": "com.docker.backend.log 2026-08-25T06:00:41Z — onApplicationDidFinishLaunching, auth.enforcer \"unholding Engines, they will start now\". Backend pids changed from 14369/14371/14372 to 5809/5827/5828, confirming a genuine process relaunch (not a reconnect).",
+              "vm_never_started": "vm/init.log has NOT advanced a single line past the 05:47:39.421Z FATAL in the 7+ minutes since the relaunch. The VM is not booting at all — this is not a slow bootstrap.",
+              "backend_idle": "After 06:00:41Z the backend log contains only analytics traffic (06:05:39Z marlin batch). No engine-start progress of any kind.",
+              "cli_surface_changed": "docker CLI error moved from \"Docker Desktop is unable to start\" (backend answering, refusing) to \"Cannot connect to the Docker daemon at unix:///Users/admin/.docker/run/docker.sock\" (nothing listening). The socket FILE is still present; no process is bound to it.",
+              "still_not_hypervisor_signature": "hypervisor.error.json is STILL absent, so this remains distinct from the 2026-07-15 incident despite the relaunch failure."
+            },
+            "revised_recommendation": "Escalate toward host-level action sooner than this signal originally implied. The remaining bounded CLI step is the comprehensive teardown-to-zero (killall -9 Docker \"Docker Desktop\" com.docker.backend com.docker.build com.docker.dev-envs vpnkit; pkill -9 -i docker) followed by one clean `open -a Docker` — worth EXACTLY ONE attempt. If the socket still does not bootstrap after that, STOP and escalate to the user for GUI recovery / reboot. Do NOT re-run the ladder repeatedly; that failure mode is already documented.",
+            "constraint_reaffirmed": "The do-NOT-rebuild-the-VM constraint in asks[2] is UNCHANGED and becomes MORE important as pressure to escalate rises. Removing ~/Library/Containers/com.docker.docker/Data/vms destroys every named volume including market_data.",
+            "tick_status": "dev-team 06:07Z tick also did not dispatch — preflight verdict=ERROR, SF-1 gate unreachable (curl exit=52, empty reply). Third consecutive blocked tick. Per docs/standards/gateway-call-contract.md de-escalation guidance, no fresh P0 was raised for the recurrence; this update amends the existing one instead.",
+            "tick_status_latest": {
+              "observed_at": "2026-08-25T06:14:22Z",
+              "t1_0613Z": "verdict=FAILURE, spawn_decision=SPAWN, signature=docker_ps|health_3000|health_3001|mem_creep. checks: docker_ps=FAIL health_3000=FAIL health_3001=FAIL disk=PASS mem_creep=FAIL launchd_agents=PASS. Heartbeat last_healthy_at 2026-08-25T05:15:44Z, age 57min.",
+              "spawn_withheld": "system-auditor NOT spawned, same reasoning as the 05:47Z tick: its flow opens with a fire-election task_claim (docs/agents/system-auditor/flow/main.md ~L215, EXIT on non-claim) which is unreachable while the daemon is down. A compliant auditor exits before any tier work. Detection has already succeeded and is fully captured in this signal.",
+              "docker_unchanged": "vm/init.log still has not advanced past the 05:47:39Z FATAL. Backend log still shows nothing after the 06:05:39Z analytics batch. No recovery progress since the failed 06:00:41Z relaunch."
+            }
+          },
+          "third_probe_defect": {
+            "severity": "P2",
+            "what": "Signature churn defeats spawn-debounce across a multi-phase outage.",
+            "evidence": "docs/data/auditor-tier1-spawn-debounce.json now holds two entries for ONE incident, each spawn_count=1, neither suppressing the other: \"health_3000|mem_creep:<10 container names>\" (05:47:51Z) and \"docker_ps|health_3000|health_3001|mem_creep\" (06:13:21Z).",
+            "why": "The signature is composed from the SET of currently-failing checks. A progressive infra failure changes that set at each phase, so every tick mints a fresh key and debounce never engages. Debounce only works for a failure that presents identically each time.",
+            "harm": "Each T1 tick during a prolonged outage returns spawn_decision=SPAWN for what is one continuous incident. Absent a router-side judgement call, that is one subagent spawned per 30 minutes for the entire duration of the outage.",
+            "fix_direction": "Debounce on incident identity rather than exact check-set equality — e.g. suppress when the new failing set is a SUPERSET of a still-in-window signature, or key on the most-severe failing check rather than the full concatenation."
+          },
+          "resolution": {
+            "status": "OUTAGE_RESOLVED_ROOT_CAUSE_UNADDRESSED",
+            "recorded_at": "2026-08-25T06:43:41Z",
+            "resolved_at": "2026-08-25T06:32:52Z",
+            "outage_window": "05:47:39.42Z (fs FATAL) -> 06:32:52.49Z (engine running) = 45m13s",
+            "how_it_recovered": "NOT a self-heal. Backend log shows a FRESH COLD START at 06:32:51.230Z (desktop state:InitState + two pidfile \"assuming pid re-use, removing it\" warnings + feature-flag refetch + cli-context re-switch). This is a distinct, second launch — the 06:00:41Z relaunch reached onApplicationDidFinishLaunching but NEVER started the engine (no starting-engine line until 06:32:51.426Z). Router took no daemon action at any point (router-only scope); the second launch came from outside this session.",
+            "verification": {
+              "engine": "06:32:51.426Z starting -> 06:32:52.485Z running (linux/virtualization-framework)",
+              "containers": "13/13 Up and (healthy) — alert-engine, api-gateway, flaresolverr, frontend, kinh-dich-service, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis, mcp-gateway",
+              "named_volumes_intact": [
+                "vn-market-intelligence-mcp_market_data",
+                "vn-market-intelligence-mcp_bctc-page-images"
+              ],
+              "health_endpoints": "localhost:3000/health=200, localhost:3001/=200",
+              "gateway": "https://zenmidi.com/gateway/mcp=200; task_heartbeat round-trip OK",
+              "data_loss": "none detected — both named volumes present, all services healthy on first boot, no restore step needed"
+            },
+            "why_this_still_matters": "The fs event-injection FATAL is UNFIXED. Recovery was a manual relaunch, not a repair. The same pause->resume transition can re-wedge the VM at any time, and the first relaunch attempt FAILING to bootstrap means recovery is not reliably one-click. Asks 0, 2, 3 below remain fully open."
+          },
+          "priority_change_note": "Downgraded P0 -> P1 at 2026-08-25T06:43:41Z: the live outage is over and the fleet is healthy, so nothing is currently blocked. The root cause is unaddressed and the recurrence risk is real, so this stays open rather than being closed."
+        },
+        "createdAt": "2026-08-25T05:52:05Z",
+        "drained_at": "2026-08-25T06:47:52Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

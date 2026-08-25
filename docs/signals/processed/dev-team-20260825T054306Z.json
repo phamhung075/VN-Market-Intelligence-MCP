@@ -63,5 +63,11 @@
       "reason": "This signal blamed an app-level blocked event loop in mcp-server. That root cause is WRONG. The real fault was the Docker VM fs event-injection layer (FATAL at 05:47:39.42Z); the count=107/visible_now=0 write-invisibility this signal reported is exactly what a failing fs-sharing layer produces, i.e. it was collateral, not the cause.",
       "action_for_ops": "Do NOT investigate mcp-server application code on the basis of this signal. Read the superseding signal instead. Retained rather than deleted so the corrected diagnosis has an audit trail."
     }
+  },
+  "_processed": {
+    "fingerprint": "55a689c9697b45940c3d20e48e7461bafd93099dfb25d8f8e35b0f365d7b6df5",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

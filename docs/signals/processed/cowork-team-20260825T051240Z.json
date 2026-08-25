@@ -56,5 +56,11 @@
       "chef_0413Z": "filed 04:59Z, unchanged.",
       "kinhdich": "c247 evaluated HPG GIU 25% / VIC GIU 81% — eighth consecutive cycle, still no gate, still no task row."
     }
+  },
+  "_processed": {
+    "fingerprint": "d4955b4c6743ca5f93f282fbfd10ed7e70f13f00c9ffba78fb917d1b314d85d9",
+    "processedAt": "2026-08-25T06:47:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
