@@ -1,0 +1,32 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-08-25T01:26:00Z",
+  "payload": {
+    "title": "auditor-tier1-probe.sh is invocation-mutating: any double-run within a tick silently downgrades SPAWN to DEBOUNCED",
+    "observed_at": "2026-08-25T01:26:00Z",
+    "fire_tick": "2026-08-25T01:00Z",
+    "severity": "high",
+    "summary": "scripts/agents-flow/auditor-tier1-probe.sh performs a read-modify-write of docs/data/auditor-tier1-spawn-debounce.json inside _spawn_debounce_decision() on EVERY invocation. The script is therefore not idempotent: calling it twice in one cron tick consumes the spawn slot on run 1 and returns DEBOUNCED on run 2. The downgrade is one-directional (SPAWN to DEBOUNCED, never the reverse), so a careless re-run can only ever SUPPRESS a legitimate audit, never cause a spurious one. Failure is silent - both runs emit well-formed JSON and nothing marks the second as a re-derivation.",
+    "evidence": {
+      "script": "scripts/agents-flow/auditor-tier1-probe.sh",
+      "write_path": "_spawn_debounce_decision() at :910, ledger mutation at :931-940 (last_spawn_at, spawn_count+1, window_expires_at)",
+      "called_from": ":1084 spawn_decision=$(_spawn_debounce_decision <signature>)",
+      "live_reproduction": "2026-08-25T01:00Z tick. Run 1 at 01:21:47Z gave spawn_decision=SPAWN and stamped the ledger last_spawn_at=2026-08-25T01:21:47Z spawn_count=8 window_expires_at=2026-08-25T02:21:47Z. Run 2 at 01:23:02Z, same tick, same signature, gave spawn_decision=DEBOUNCED. Only last_seen_at moved; the ledger itself stayed correct.",
+      "signature": "launchd_agents:com.vn-market.fleet-push"
+    },
+    "why_it_matters": "The tier-1 cron prompt explicitly instructs the caller to read spawn_decision from THIS tick own JSON directly and NOT to re-derive it. That instruction is currently the ONLY thing standing between a re-run and a suppressed audit - the safety lives in prose in a cron prompt, not in the script. The same prompt carries a deliberate fail-open clause for a missing or unparseable spawn_decision, which shows the design intent is that a read fault must never silently suppress. An invocation-mutating probe defeats that intent through a different door: the decision is not missing, it is silently WRONG.",
+    "contributing_factor": "The probe conflates two jobs in one entrypoint - emitting a health verdict (naturally idempotent, safe to call for any reason: debugging, shape-checking, piping to jq) and consuming a rate-limit token (inherently single-shot). Anyone who treats it as the former corrupts the latter.",
+    "proposed_remedy": "Split the two jobs. Options in order of preference: (a) add a --decide flag so the ledger write happens only under --decide, making the bare invocation a pure read; (b) have callers READ docs/data/auditor-tier1-last-trigger.json, which the probe already writes with the full verdict, rather than re-invoking; (c) make the ledger write idempotent per fire_tick by keying the entry on (signature, fire_tick) so a second run in the same tick is a no-op rather than a downgrade. Option (c) is the most robust because it fixes the hazard even for callers who never read the docs.",
+    "do_not": "Do NOT address this by re-arming com.vn-market.fleet-push or by adding or retargeting an ack-ledger entry for it - both are explicitly FORBIDDEN by task_board.ready.106 status_note. This row is about the probe entrypoint contract only, NOT about the fleet-push signature that happened to expose it.",
+    "related_rows": {
+      "ready.106": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED owns the fleet-push FALSE POSITIVE that generated the signature. Different defect, same script. Currently dispatch_lane=null so it is unpickable.",
+      "backlog.506": "FIX-AUDITOR-TIER1-SIDECAR-FILES-HAVE-NO-COMMITTER-AT-ALL owns the fact that this exact ledger file is perpetually uncommitted. Same file, different defect."
+    },
+    "dedup_note": "Matched by SUBJECT against the hot board and docs/data/orch/archive/2026-08.json before filing. ready.106 and backlog.506 both touch this script or its ledger but neither is about the entrypoint idempotency contract. No existing row covers this.",
+    "reported_by": "router (dev-team dispatcher), self-observed while probing",
+    "self_disclosure": "The router itself caused the double-invocation, by re-running the probe to get clean JSON after a tail filter truncated the first output. The tick was NOT suppressed - run 1 SPAWN was correctly treated as authoritative per the cron prompt, and the system-auditor was spawned. Filed so the next caller is not so lucky."
+  }
+}
