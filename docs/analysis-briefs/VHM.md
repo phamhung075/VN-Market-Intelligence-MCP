@@ -12,3 +12,7 @@
 2026-08-14 16:00 | Close: 68.200 VND (-5.01%) | RSI: N/A | Vol: N/A | YoY: N/A | Sentiment: Bearish — Continued Vingroup sector pressure, accelerating decline | Brief action: Reduce | Regime: NEUTRAL | Anomaly: YES — accelerating decline -5.01%, Vingroup complex weakness
 
 ## [Unified Agent] Quarterly Syntheses
+
+## [News Scout] Batch2 Sentiment — 2026-08-25 01:30 UTC
+
+2026-08-25 | **BULLISH** VN-Index 1800 breakout driven by real estate sector recovery. Foreign passive funds targeting high-weight real estate names (VHM, VIC, KDH). Macro backdrop NEUTRAL-bullish despite geopolitical tensions; domestic real estate story intact | YoY: Recovery from prior bearish fund losses sentiment; foreign fund flows supporting sector

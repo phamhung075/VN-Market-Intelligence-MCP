@@ -11,3 +11,7 @@
 2026-08-14 16:00 | Close: 200.400 VND (-3.61%) | RSI: N/A | Vol: N/A | YoY: N/A | Sentiment: Bearish — Foreign institutional selling, Vingroup sector pressure continues | Brief action: Reduce | Regime: NEUTRAL | Anomaly: YES — continued price decline, foreign selling pressure
 
 ## [Unified Agent] Quarterly Syntheses
+
+## [News Scout] Batch2 Sentiment — 2026-08-25 01:30 UTC
+
+2026-08-25 | **BULLISH** VN-Index breaks 1800 level with foreign fund inflows post-FTSE inclusion. Real estate sector leads recovery. VIC as market leader + largest FTSE weight benefits from passive index flows. Strong foreign accumulation signal amid geopolitical risk-off | YoY: Continued bullish momentum from prior cycles; passive fund flow amplification new positive driver
