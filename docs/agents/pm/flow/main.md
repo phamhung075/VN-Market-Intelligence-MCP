@@ -206,7 +206,7 @@ else
         elif ($hits | length) == 0 and ($terminal_hits | length) > 0 then
           error("[pm 3e] parent \($sid) is already in a TERMINAL lane (done[]/done_verified[]) but Step 3e was invoked with an open disposition -- refuse, do not reopen")
         elif ($hits | length) == 0 then
-          error("[pm 3e] parent \($sid) NOT FOUND in in_progress[] or active_sprints[].tasks[] -- refuse. The old form silently no-op'd here and reported success; see FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC")
+          error("[pm 3e] parent \($sid) NOT FOUND in in_progress[] or active_sprints[].tasks[] -- refuse. The old form silently no-op'\''d here and reported success; see FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC")
         elif (($na // "") | length) == 0 then
           error("[pm 3e] CORRECTED_NEXT_AGENT is empty for \($sid) -- refuse. TaskSchema.next_agent is z.string().optional(), NOT nullable; writing null aborts the whole write at the validator")
         else . end
