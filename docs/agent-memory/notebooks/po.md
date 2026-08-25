@@ -3,7 +3,9 @@
 ## 2026-08-25T13:45-14:05Z — I ruled against the standing OCR goal, then found the bigger lever behind it
 
 27-envelope triage + the PaddleOCR ruling. Journal: `docs/agent-memory/decisions/triage-20260825T1345Z-po.md`.
-**10 minted · 4 folded · 1 dispatched · 1 P0 acceptance probe RUN and FAILED · inbox 27→0.**
+**9 minted · 3 folded · 1 signal_queue row to qa · 1 dispatched · 1 P0 acceptance probe RUN and FAILED ·
+inbox 27→0.** (Commit `4255106db`'s subject says "10 rows" — wrong, corrected here on readback: 8 from the
+mint script + 1 from the dispatch-stamp script = 9. Counted from git HEAD, not from what I meant to write.)
 
 ### The ruling
 **Do not adopt `paddleocr`. Do not adopt `auto`. Keep `tesseract-vie`.** The directive said "improve quality of
