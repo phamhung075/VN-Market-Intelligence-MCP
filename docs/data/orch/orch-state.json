@@ -22381,6 +22381,34 @@
         "dispatch_lane": "dev-mcp-server",
         "updated_by": "dev-mcp-server",
         "evidence": "commit ad0ff8268 (13 new usecases/eveningSummary/ step modules + thin sequencer, doc update); notebook + decision-journal S95 in commit a9ae069b1"
+      },
+      {
+        "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
+        "type": "FIX",
+        "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "devteam-eligibility:effective-nextagent-detail-first-no-recency",
+        "files": [
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "status_note": "CONFIRMED IN CODE. scripts/lib/devteam-eligibility.jq def effective_next_agent($detail_items) (~line 342) and its twin def effective_owner (~line 331) both resolve detail-FIRST: if the backlog-detail.json copy has a non-empty string they return it and never look at the board row. Neither compares the two updated_at stamps, even though BOTH planes carry one. Comment cites FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16) as the origin of detail-first. LIVE INSTANCE (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE): hot review[] row was rerouted qa->ops at 13:50Z; docs/data/orch/archive/backlog-detail.json still said qa, stamped 12:51:27Z (~1h older). The resolver returned the stale qa, QA-Drain re-claimed, a third qa pass re-derived the same HELD verdict, redispatch_count=1. As of 2026-08-23T15:0xZ both planes read next_agent=qa again (hot updated 14:53:08Z, cold 12:51:27Z) so this specific row has converged, but the resolver defect is structural and re-fires on every hot-row reroute. SCOPE NOTE: this is NOT FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (BACKLOG, developer) — that row is about the CLAIM script reading a cached dispatch_lane. The claim script is correct as written; the defect is in the resolver. AC-1: when both planes carry updated_at, the more recent wins; detail-first is retained ONLY as the tie-break/when-one-side-is-absent rule, preserving the 2026-07-16 intent. AC-2: fixture replay of the PEK divergence (hot=ops@13:50Z, cold=qa@12:51Z) resolves to ops BEFORE the fix and qa AFTER on the reversed fixture. AC-3: effective_owner gets the identical treatment in the same change — same defect shape, same file. AC-4: no regression in scripts/audits/bounded1-supervised-lane-report.sh output on the live board.",
+        "updated_at": "2026-08-25T07:55:33Z",
+        "promoted_at": "2026-08-25T07:32:38Z",
+        "promoted_by": "po/triage-20260825T073238Z",
+        "updated_by": "developer",
+        "po_expedited_at": "2026-08-25T07:32:38Z",
+        "po_expedited_by": "po",
+        "po_escalation_20260825T0727Z": "P1 -> P0 AND promoted backlog[]->ready[] with a po_expedited_at incident stamp. TRIGGER: dev-team escalation 2026-08-25T04:46:23Z upgraded its own 04:21Z P1 filing after a full census showed the LANE-LEVEL consequence, not just two mis-resolved rows. Census: review_total=27, status_REVIEW=17, rows_with_hot_next_agent_qa=1, rows_with_cold_next_agent_qa=0, rows_with_effective_next_agent_qa=0, qa_drain_picked_this_tick=0, qa_wip=3, qa_cap=10, take_budget_available=7. QA-Drain resolved ZERO eligible rows while holding 7 free budget: the review lane is DAMMED, not merely lossy. MASKING ROW: FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED is the ONLY review[] row routed to qa on the hot board (hot next_agent=qa, cold next_agent=developer); effective_next_agent() prefers the cold backlog-detail.json value, resolves it to developer, and QA-Drain never sees it. ONE stale cold entry is sufficient to zero the entire lane. 12 further hot/cold divergent rows were enumerated in the same census. This row is the resolver fix and therefore the dam. po_expedited_at routes it through the Incident-Lane Consumer's own INCIDENT_CAP=2 budget (dev-team/flow/main.md, UNCONDITIONAL head-decoupled site) instead of the shared WIP<=2 slot, so it does not have to win the RLC starvation lottery. LIVE MEASUREMENT (po, this tick): zero rows in the whole board carried po_expedited_at before this write — the incident lane has been live and completely unused.",
+        "implementation_note": "[developer 2026-08-25T07:55:25Z] FIXED + committed 6b94d0832. scripts/lib/devteam-eligibility.jq: effective_owner()/effective_next_agent() now recency-compare via new parse_ts() (ISO8601->epoch, null-safe) instead of blind detail-first — when BOTH board and detail carry a non-empty value AND both carry a parseable updated_at, the STRICTLY more recent stamp's value wins; detail-first retained UNCHANGED as tie-break/one-side-absent fallback (AC-1). Verified with ad-hoc jq fixtures (not committed, scratchpad-only): PEK-shaped divergence (board newer) resolves to board's value, reversed fixture (detail newer) resolves to detail's value, and every pre-existing fallback shape (board-only, detail-only, no-updated_at legacy rows, tied stamps) is byte-identical to pre-fix behavior (AC-2). effective_owner() got the identical treatment in the same commit (AC-3). scripts/audits/devteam-dispatch-gate-satisfiability.sh: 114/116 PASS both BEFORE and AFTER this change (confirmed via git-stash A/B on the live board) — the one failing assertion (SLS gate at in_progress=1 saturated shape) is byte-identical pre/post-fix, a pre-existing live-board-shape condition unrelated to this resolver change, NOT a regression (AC-4). scripts/audits/bounded1-supervised-lane-report.sh: identical output before/after, exit 0 both. tsc/bun test not applicable — pure jq library, no TS surface touched."
       }
     ],
     "qa": [
@@ -22581,36 +22609,6 @@
     "last_triaged_at": "2026-08-25T06:54:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
-      {
-        "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
-        "type": "FIX",
-        "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "devteam-eligibility:effective-nextagent-detail-first-no-recency",
-        "files": [
-          "scripts/lib/devteam-eligibility.jq"
-        ],
-        "status_note": "CONFIRMED IN CODE. scripts/lib/devteam-eligibility.jq def effective_next_agent($detail_items) (~line 342) and its twin def effective_owner (~line 331) both resolve detail-FIRST: if the backlog-detail.json copy has a non-empty string they return it and never look at the board row. Neither compares the two updated_at stamps, even though BOTH planes carry one. Comment cites FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16) as the origin of detail-first. LIVE INSTANCE (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE): hot review[] row was rerouted qa->ops at 13:50Z; docs/data/orch/archive/backlog-detail.json still said qa, stamped 12:51:27Z (~1h older). The resolver returned the stale qa, QA-Drain re-claimed, a third qa pass re-derived the same HELD verdict, redispatch_count=1. As of 2026-08-23T15:0xZ both planes read next_agent=qa again (hot updated 14:53:08Z, cold 12:51:27Z) so this specific row has converged, but the resolver defect is structural and re-fires on every hot-row reroute. SCOPE NOTE: this is NOT FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (BACKLOG, developer) — that row is about the CLAIM script reading a cached dispatch_lane. The claim script is correct as written; the defect is in the resolver. AC-1: when both planes carry updated_at, the more recent wins; detail-first is retained ONLY as the tie-break/when-one-side-is-absent rule, preserving the 2026-07-16 intent. AC-2: fixture replay of the PEK divergence (hot=ops@13:50Z, cold=qa@12:51Z) resolves to ops BEFORE the fix and qa AFTER on the reversed fixture. AC-3: effective_owner gets the identical treatment in the same change — same defect shape, same file. AC-4: no regression in scripts/audits/bounded1-supervised-lane-report.sh output on the live board.",
-        "updated_at": "2026-08-25T07:46:04Z",
-        "promoted_at": "2026-08-25T07:32:38Z",
-        "promoted_by": "po/triage-20260825T073238Z",
-        "updated_by": "po/triage-20260825T073238Z",
-        "po_expedited_at": "2026-08-25T07:32:38Z",
-        "po_expedited_by": "po",
-        "po_escalation_20260825T0727Z": "P1 -> P0 AND promoted backlog[]->ready[] with a po_expedited_at incident stamp. TRIGGER: dev-team escalation 2026-08-25T04:46:23Z upgraded its own 04:21Z P1 filing after a full census showed the LANE-LEVEL consequence, not just two mis-resolved rows. Census: review_total=27, status_REVIEW=17, rows_with_hot_next_agent_qa=1, rows_with_cold_next_agent_qa=0, rows_with_effective_next_agent_qa=0, qa_drain_picked_this_tick=0, qa_wip=3, qa_cap=10, take_budget_available=7. QA-Drain resolved ZERO eligible rows while holding 7 free budget: the review lane is DAMMED, not merely lossy. MASKING ROW: FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED is the ONLY review[] row routed to qa on the hot board (hot next_agent=qa, cold next_agent=developer); effective_next_agent() prefers the cold backlog-detail.json value, resolves it to developer, and QA-Drain never sees it. ONE stale cold entry is sufficient to zero the entire lane. 12 further hot/cold divergent rows were enumerated in the same census. This row is the resolver fix and therefore the dam. po_expedited_at routes it through the Incident-Lane Consumer's own INCIDENT_CAP=2 budget (dev-team/flow/main.md, UNCONDITIONAL head-decoupled site) instead of the shared WIP<=2 slot, so it does not have to win the RLC starvation lottery. LIVE MEASUREMENT (po, this tick): zero rows in the whole board carried po_expedited_at before this write — the incident lane has been live and completely unused.",
-        "claimed_at": "2026-08-25T07:46:03Z",
-        "claimed_by": "dev-team (incident-lane consumer)",
-        "dispatch_lane": "developer"
-      },
       {
         "id": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
         "type": "FEATURE",
