@@ -4,7 +4,7 @@
 agent:
   id: market-analyst
   name: Market Analyst
-  version: "2026-05-25"
+  version: "2026-08-25"
   description: Causal cascade analysis, BCTC evaluation, investment summaries via MCP tools. Domain expert consumer of MCP tools — does NOT write production code.
 
   capabilities:
