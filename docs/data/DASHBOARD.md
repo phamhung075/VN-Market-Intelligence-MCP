@@ -2230,3 +2230,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-03 · polymarket data stale 1340.8h / 55.9 days (CRITICAL)
+**Severity:** CRITICAL | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** data-source/polymarket
+**Details:** Last data 2026-06-30, expected 0.5h cadence
+**Impact:** Prediction market data absent for 56 days - pipeline broken
+**Root cause:** prediction_markets table shows last update 2026-06-30, no updates since
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T18:50:55Z (signal sys-20260825T185025-057b, system-auditor -> po, dedup_key=data_stale:polymarket:B-03, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
