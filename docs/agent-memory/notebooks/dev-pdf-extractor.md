@@ -273,3 +273,9 @@ until someone sets `auto`. Debt tracked by
 
 ### Status
 REVIEW → next_agent=qa (head reset to idle in the same orch-apply write)
+
+---
+
+## Cycle 2026-08-25 (2) — FIX-PDFX-TESSERACT-CONFIDENCE (dispatch #2) — STOPPED AT AC-0
+
+AC-0 memory sweep FAILS (rising, not flat: 42.99%→56.42%→90.11%→100.00%→100.00% of 2.5GiB cap for N=0/1/3/6/14 fires on DBC_2025_Q4). Mid-cycle PO ruling (`2826b101f`) minted an orientation P0 ahead of this row; stopped before AC-1..AC-6 (frozen sample would risk contamination + AC-0 alone is dispositive). Full methodology, raw numbers, code-change note, and a notebook-corruption incident write-up: `docs/agent-memory/decisions/dev-pdf-extractor-ac0-findings-20260825T1830Z.md`. Row untouched by me, sits in `ready[2]`, not a WIP lane.

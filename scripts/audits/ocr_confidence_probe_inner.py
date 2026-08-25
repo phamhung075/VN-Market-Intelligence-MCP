@@ -32,12 +32,27 @@ Usage (via scripts/audits/ocr-confidence-probe.sh):
 
 Never run during VN market hours (02:00-08:59 UTC weekdays).
 """
+import hashlib
 import json
 import os
+import re
 import sys
 import time
 
 _DIAGS = []
+
+# FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
+# (measurement cycle 2) — AC-1 "instrument NUMERIC-TOKEN DENSITY": count of
+# parseable VND accounting figures per region. This is the signal a human
+# (qa) used successfully on BOTH FPT and DBC to separate genuinely-broken
+# regions ("headers, a stray '178%', zero figures") from legitimate ones
+# (coherent lines with real accounting figures) — and it is what the BCTC
+# product actually consumes. Matches Vietnamese dot-grouped thousands
+# (>=2 groups of 3 digits after the leading group, i.e. >=6 digits total,
+# optionally with a comma decimal remainder) — e.g. "20.225.450",
+# "3.498.405", "70.112.826". Deliberately NOT circular: it never looks at
+# Tesseract's own confidence or box geometry, only at the recognised text.
+_VND_FIGURE_RE = re.compile(r"\b\d{1,3}(?:\.\d{3}){2,}(?:,\d+)?\b")
 
 
 def _otsu_threshold(gray) -> int:
@@ -131,6 +146,8 @@ def _install_shim():
                 ink_cov=0.0,
                 line_ink_cov=0.0,
                 covered_lines=0,
+                numeric_token_count=0,
+                numeric_token_density_per_100chars=0.0,
                 text_excerpt="",
             )
             _DIAGS.append(d)
@@ -199,7 +216,17 @@ def _install_shim():
         texts = vtxt.tolist()
         text = " ".join(t for t in texts if t)
         mean_conf = float(vconf.mean()) / 100.0
-        d["text_excerpt"] = text[:200]
+
+        # ---- numeric-token density (AC-1, untested candidate) -------------
+        # Computed on the FULL recognised text, never the truncated excerpt,
+        # so region length does not bias the count.
+        vnd_figures = _VND_FIGURE_RE.findall(text)
+        d["numeric_token_count"] = len(vnd_figures)
+        d["numeric_token_density_per_100chars"] = round(
+            100.0 * len(vnd_figures) / max(1, len(text)), 4
+        )
+
+        d["text_excerpt"] = text[:300]
         _DIAGS.append(d)
         return (text.strip(), max(0.0, min(1.0, mean_conf)))
 
@@ -274,6 +301,23 @@ def main() -> None:
 
     adapter = PekEngineAdapter(ocr_backend=TesseractVieBackend())
 
+    # AC-5 (carried from PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN):
+    # table-phase wall clock must be reported WITH fire count, never as a bare
+    # whole-pipeline percentage. This probe never fires a rescue (tesseract-vie
+    # only, hardcoded above), so its table_phase_s is the 0-fire BASELINE the
+    # auto-mode bench run's table_phase_s is compared against.
+    phase = {"table_phase_s": None}
+    _orig_table = PekEngineAdapter._run_table_extraction
+
+    def _timed_table_extraction(self, *args, **kwargs):
+        _s = time.perf_counter()
+        try:
+            return _orig_table(self, *args, **kwargs)
+        finally:
+            phase["table_phase_s"] = round(time.perf_counter() - _s, 2)
+
+    PekEngineAdapter._run_table_extraction = _timed_table_extraction
+
     t0 = time.perf_counter()
     result = adapter.extract_layout_and_tables(pdf_path=pdf_path, report_id=report_id)
     t1 = time.perf_counter()
@@ -289,11 +333,18 @@ def main() -> None:
                 "page_type": u.get("page_type"),
             }
 
+    # AC-5: sha256 per unit so a tesseract-vie-only probe run (this script,
+    # never pushes, never fires a rescue) can be diffed unit-by-unit against
+    # an `auto` bench_inner.py run on the SAME report_id/pdf without going
+    # through the DB — same convention as ocr_bench_inner.py's unit_digests.
     unit_rows = {
         u["unit_id"]: {
             "row_count": u.get("row_count"),
             "quarantined": u.get("quarantined"),
             "md_len": len(u.get("stitched_markdown") or ""),
+            "sha256": hashlib.sha256(
+                (u.get("stitched_markdown") or "").encode("utf-8")
+            ).hexdigest()[:16],
         }
         for u in units
     }
@@ -301,6 +352,7 @@ def main() -> None:
     out = {
         "report_id": report_id,
         "wall_time_s": round(t1 - t0, 2),
+        "table_phase_s": phase["table_phase_s"],
         "n_regions": len(_DIAGS),
         "total_pages": document_map.get("total_pages"),
         "page_to_unit": {str(k): v for k, v in page_to_unit.items()},
