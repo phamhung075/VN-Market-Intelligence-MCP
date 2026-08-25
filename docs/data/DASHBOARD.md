@@ -2248,10 +2248,11 @@
 **Location:** system-auditor cycle markers
 **Details:** malformed marker file swept by durability sweep
 **Impact:** prior cycle died mid-run / naming defect
-**Root cause:** system-auditor
-**Zone owner:** sys-20260825T223506-5ed0
-**Last reported:** 2026-08-25T22:43:53Z (signal auditor-cycle-loss:malformed-key, system-auditor -> po, WARN Telegram sent)
+**Root cause:** prior cycle died mid-run / naming defect
+**Zone owner:** system-auditor
+**Last reported:** 2026-08-25T22:43:53Z (signal sys-20260825T223506-5ed0, system-auditor -> po, WARN Telegram sent, dedup_key=auditor-cycle-loss:malformed-key)
 **Mitigation:** No immediate action beyond signal routing.
+**CORRECTION (this cycle, self-caught):** the row committed at 2026-08-25T22:43:53Z (commit — see `git log --oneline -- docs/data/DASHBOARD.md`) had its Impact/Root-cause/Zone-owner/signal-id fields shifted by one position due to a malformed `scripts/emit-dashboard-row.sh` invocation (9 args supplied instead of 10, missing a distinct `--impact` value) — the raw signal_queue row `sys-20260825T223506-5ed0` (`auditor-cycle-loss:malformed-key`) itself was written correctly and is unaffected; only this DASHBOARD.md row's field layout was garbled. Fields above hand-corrected in place.
 
 ---
 
