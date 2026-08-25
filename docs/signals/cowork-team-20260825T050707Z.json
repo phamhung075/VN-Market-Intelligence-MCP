@@ -1,0 +1,73 @@
+{
+  "id": "cowork-team-20260825T050707Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "telemetry",
+  "priority": "P2",
+  "status": "NEW",
+  "ts": "2026-08-25T05:07:07Z",
+  "dedup_key": "cowork-0500Z-promoter-verified-at-source-zero-of-46-on-nominal-quarter-latest-freeze-is-downstream",
+  "subject": "05:00Z tick + promoter read at SOURCE: 0 of 46 snapshot names are on a nominal quarter; cycle-snapshot-latest freeze is a CONSEQUENCE, not a second bug",
+  "payload": {
+    "tick": {
+      "nominal": "2026-08-25T05:00Z",
+      "drift_min": 3,
+      "slots": 1,
+      "one_shots": 0,
+      "new_signals": 0,
+      "gate": "NORMAL (headroom 2595>=1500, load 2.79 < 24 = 12 cores x 2, max_parallel 4)",
+      "pressure_mode": "adaptive (age 13min < 20 threshold)",
+      "calendar_status": "open (in-domain)",
+      "spawned": "alert-commander-market",
+      "last_fired": "2026-08-25T05:05:19Z",
+      "locks": "slot token + cron:cowork:2026-08-25T05:00Z both released, 0 residual"
+    },
+    "PROMOTER_NOW_READ_AT_SOURCE_not_inferred": {
+      "file": "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
+      "key_construction": "L397-399: const m = tickId.match(/T(\\d{2}:\\d{2}):/) -- HH:MM taken STRAIGHT from the nominal tick_id the dispatcher passes in",
+      "lookup": "L263: cycle-snapshot-${tickHHMM}.json ; L264: if (!existsSync) return {promoted:false, stale:false}",
+      "what_this_settles": "I passed tick_id 2026-08-25T05:00:00Z. Promoter looked for cycle-snapshot-05:00.json. Writer had produced cycle-snapshot-05:04.json. Not-found branch. This is now verified in code, no longer inferred from behaviour."
+    },
+    "THE_DECISIVE_CENSUS": {
+      "measurement": "Of 46 live cycle-snapshot files, count whose minute is in {00,15,30,45}",
+      "result": "ZERO. 0 of 46.",
+      "why_this_is_stronger_than_my_previous_number": "My 04:45Z filing said '36 of 46 off a 5-min boundary, 10 reachable'. That is the READER-spec denominator (round-to-nearest-5). The PROMOTER needs a nominal QUARTER, and on that denominator the hit rate is 0/46. These are two different stages with two different denominators -- not a revision of the earlier figure, an additional and stricter one."
+    },
+    "ITEMS_d_AND_e_COLLAPSE_INTO_ONE": {
+      "previously_filed_as_two": "(d) cycle-snapshot naming defect across 4 stages; (e) cycle-snapshot-latest.json frozen since 2026-08-23",
+      "now_established_as_one": "The freeze is the DOWNSTREAM CONSEQUENCE of the naming defect, not an independent bug.",
+      "the_corroborating_detail": "cycle-snapshot-latest.json is frozen at tick:'00:00', created_at 2026-08-23T00:07:50Z. '00:00' IS a nominal quarter. The last successful promotion is precisely the one occasion the writer's raw run-minute happened to coincide with a nominal quarter. Exactly what the model predicts.",
+      "branch_discrimination": "L264 returns stale:false on ABSENT; L293 returns stale:true on found-but-older-than-SNAPSHOT_MAX_STALENESS_MS (4h). My emits return stale_warning null/false -- the ABSENT branch. So the 4h freshness gate has NEVER fired. Rules out the competing hypothesis that latest froze because of a staleness refusal."
+    },
+    "REMEDY_now_fully_specified_and_verified": {
+      "change": "ONE line, writer-side. docs/agents/cowork-team/flow/tick-snapshot.md: FILE_TICK=$(date -u +%H:%M) -> derive HH:MM from the NOMINAL tick.",
+      "availability_confirmed": "The nominal tick is already in the dispatcher's hand at Step 4.7 -- preflight emits .tick ('2026-08-25T05:00Z') and every slot carries scheduled_utc_time. Step 4.7 runs once per tick (before the per-slot fan-out at 5.x), so one snapshot per tick named by nominal tick is the correct shape.",
+      "server_side_change_needed": "NONE. The promoter is correct code. Fix the writer and the existing lookup succeeds unmodified.",
+      "fixes_in_one_move": [
+        "promoter starts promoting",
+        "cycle-snapshot-latest unfreezes",
+        "reader SPEC and reader ACTUAL both land on a name that exists"
+      ]
+    },
+    "promoted_counter": {
+      "cycle_snapshot_promoted": false,
+      "consecutive_false": 16
+    },
+    "writer_defect_instance": {
+      "nominal": "05:00",
+      "written": "cycle-snapshot-05:04.json",
+      "bytes": 16628,
+      "NOT_scored_as_a_reader_test": "05:04 misses under both candidate reader rules, so it cannot discriminate between them. Writer-defect evidence only."
+    },
+    "housekeeping": {
+      "payload_encoding_fixed": "Step 4.6 payload is single-encoded this tick (jq --arg over a pre-serialised string), correcting last tick's cosmetic double-encode.",
+      "signal_backlog": "50 -> 35, peer drain landed.",
+      "snapshot_count": "47 before, 47 after (one pruned at 24h, one added)."
+    },
+    "carried_unchanged": {
+      "stranded_push": "246 commits ahead of origin/main; both owning fix rows still dispatch_lane:null and unpickable by DRS.",
+      "chef_0413Z": "filed at 04:59Z -- cycle wrote both artifacts to undeclared paths, canonical unified-agent.md has no entry for it, dish reported SENT.",
+      "kinhdich": "seven consecutive alert-commander cycles of DBC BAN 100% / VIC GIU 81% against rallies; no gate, no task row."
+    }
+  }
+}
