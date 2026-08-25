@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-25T06:41:26Z",
-    "updated_by": "dev-team (head-reset: stale pin on archived DONE_VERIFIED row)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APP-split-assembleEveningSummary",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-split-assembleEveningSummary — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-25T06:54:28Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4346,15 +4347,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-delete-dead-port-and-deprecated",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-delete-dead-port-and-deprecated"
-      },
-      {
-        "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
-        "priority": "P1",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APP-split-assembleEveningSummary",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary"
       },
       {
         "title": "Reconcile and dedup directionArrow/changePct formatters (behavior decision)",
@@ -22439,9 +22431,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-25T03:46:20Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-25T06:54:19Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
+        "priority": "P1",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-APP-split-assembleEveningSummary",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary",
+        "promoted_at": "2026-08-25T06:54:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-25T06:54:28Z",
+        "claimed_at": "2026-08-25T06:54:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -22455,7 +22463,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-25T01:44:16Z"
+        "last_served_tick": "2026-08-25T06:54:09Z"
       },
       "sls": {
         "last_served_tick": "2026-08-25T02:15:21Z"
@@ -22473,7 +22481,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T06:47:52Z",
+    "_updated_at": "2026-08-25T06:54:09Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
