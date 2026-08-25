@@ -78,3 +78,14 @@
 - treat the router's "1345a is non-reproducible, real trigger is CI env var" claim as sufficient without re-deriving it — rejected: verified independently (ran it in the 562-test batch, then isolated with/without CI) rather than taking either the developer's or the router's word for it.
 **why-decision:** Every AC-bearing claim independently re-verified at source, including the one nobody had closed (real DB rebuild verify), not merely the ones already checked in prior cycles.
 **why-change:** `vc-approved`, qa[] -> done_verified[], RC-VERIF raw_probe recorded in the same write.
+
+### STEP qa-S213 · qa · 2026-08-25T15:52Z
+**task-id:** FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS
+**what-done:** Direct-commit verify of `e6adc6dfe` — AC-4 PASS (re-proved live end-to-end, not from prose), AC-1/AC-2 PASS-with-scope-caveat, AC-3 refused as unverifiable at 3.3% of its own 24h window; landed qa[] -> review[], next_agent=po.
+**what-considered:**
+- Close AC-3 on "zero fires since the commit" — REJECTED, quantified as worthless: median inter-fire gap over the last 40 fires is 0.68h and 48% of historical gaps already exceed the 47min elapsed, so the observed silence is the MODAL outcome under the unfixed regime.
+- Absorb the two flagged out-of-scope observations (system-auditor execution-fidelity, verify-fleet-commit-pathspec.sh RED) into this row's verdict — REJECTED, both belong to other rows; recorded in verify_note as separately-flagged, not scored here.
+- Trust the developer's "verified live in a sandboxed repo" AC-4 claim — REJECTED, rebuilt the probe myself.
+**why-decision:** AC-4's real risk was a fix that lives in `scripts/git-hooks/pre-commit` but never reaches the LIVE hook — confirmed `.git/hooks/pre-commit` is a symlink to it, then fired a real BARE commit in a fresh sandbox and read `caller_chain=` back off all three surfaces (banner, `.git/sweep-guard.log`, signal payload), naming both the invoking command line and `claude -n detect-loop`. Re-ran `pre-commit.test.sh`: 15/15.
+**why-change:** Terminal shape is `vc-changes` (qa[] -> review[], redispatch_count 1) NOT because the shipped work is defective — it is sound — but because AC-3 is a time-gated AC with 23h13m left. Deviation from the canonical actuator: the row's prose sat at 11997B against a 12000B ceiling, so the whole verdict went into `verify_note` (a STRUCTURAL field, excluded from `proseBytes`) and `qa_changes_requested_at` was dropped; deleting the now-stale `drain_source_lane` made prose SHRINK to 11989B. Ceiling-checked as a candidate before applying.
+**AC-3 forward risk recorded on the row:** the fixed class (cowork-tick) is 4 of 59 fires since 08-22 (6.8%); 93.2% (system-auditor 27.1%, mega-sweep 1.7%, misc 64.4%) is untouched, so AC-3 as literally worded is unlikely to pass on this fix alone — earliest closable 2026-08-26T14:59:30Z, PO ruling needed on scope.
