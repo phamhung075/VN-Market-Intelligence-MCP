@@ -1,0 +1,65 @@
+{
+  "id": "cowork-team-20260825T045907Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "flow_defect",
+  "priority": "P2",
+  "status": "NEW",
+  "ts": "2026-08-25T04:59:07Z",
+  "dedup_key": "chef-0413Z-cycle-wrote-both-artifacts-to-undeclared-paths-canonical-log-has-no-entry",
+  "subject": "chef-intraday 04:13Z cycle wrote BOTH artifacts off its declared surface; canonical notebook has zero entry for that cycle",
+  "payload": {
+    "CORRECTION_TO_MY_OWN_PRIOR_FRAMING": {
+      "what_I_had_been_saying": "chef writes off its declared surface -- needs a canonical-path RULING before anything is tracked. I left 2 files uncommitted across several ticks waiting for that ruling.",
+      "why_that_was_wrong": "There is nothing to rule on. The canonical paths ARE declared in .claude/agents/unified-agent.md, and 76 of 77 synthesis files on disk honor them -- including one written by the SAME agent for the SAME slot on the SAME day, 2h earlier, which landed correctly and is tracked.",
+      "corrected_framing": "This is a single defective cycle, not an undocumented convention. No ruling is needed; a fix is."
+    },
+    "declared_surface": {
+      "source": ".claude/agents/unified-agent.md",
+      "notebook": "docs/agent-memory/notebooks/unified-agent.md",
+      "synthesis": "docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json"
+    },
+    "what_the_0413Z_cycle_actually_wrote": {
+      "notebook_ACTUAL": "docs/agent-memory/notebooks/chef-intraday.md (39L, untracked) -- wrong FILE: named by slot, not by agent",
+      "synthesis_ACTUAL": "docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json (4607B, mtime 04:24:52Z, untracked) -- wrong DIRECTORY: notebooks/ instead of data/",
+      "both_untracked": true
+    },
+    "the_same_day_control_case": {
+      "cycle": "02:13Z chef-intraday, same slot, same agent, same DATE_VN",
+      "notebook": "docs/agent-memory/notebooks/unified-agent.md, mtime 2026-08-25T02:26:11Z, TRACKED",
+      "synthesis": "docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json, 3716B, mtime 02:25:26Z, TRACKED",
+      "significance": "Rules out 'the agent does not know its paths'. It knew them at 02:13Z and not at 04:13Z."
+    },
+    "census": {
+      "synthesis_files_on_disk_total": 77,
+      "landed_outside_docs_data": 1,
+      "the_one": "docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json (today, 04:24:52Z)",
+      "reading": "First occurrence in 77. Not a drift, not a convention -- an outlier."
+    },
+    "IMPACT_the_part_that_actually_matters": {
+      "canonical_log_gap": "docs/agent-memory/notebooks/unified-agent.md last cycle header is '## Session: 2026-08-25 (intraday 02:13 UTC)'. There is NO 04:13Z entry. grep for 04:1xZ/04:2xZ returns nothing.",
+      "consequence": "The 04:13Z cycle is invisible on every tracked and canonical surface. Its only record is 2 untracked files at paths nothing reads. Any untracked-file cleanup destroys that cycle's record silently.",
+      "published": "The cycle self-reports Status: SENT -- so a MARKET dish went out with no canonical log entry behind it."
+    },
+    "HYPOTHESIS_n1_correlation_NOT_established_cause": {
+      "observation": "The off-path cycle self-labels '**Status:** SENT (degraded-floor recovery) | **Quality:** degraded'.",
+      "why_it_is_worth_stating": "'degraded-floor' is a real named code path in this repo, not agent-invented prose -- it appears in docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md, docs/handoffs/UC-CCA-P3-BA-spec.md, and a chef-midflow-bail signal. A rarely-taken recovery branch carrying its own divergent write paths would explain why 76/77 are clean.",
+      "EXPLICIT_LIMIT": "n=1 correlation. I have NOT read the branch, NOT confirmed it owns a write path, NOT shown the normal branch differs. Do not dispatch this as a root cause. It is a place to look first.",
+      "first_probe_for_whoever_takes_it": "git log -S 'degraded-floor recovery' --all returns EMPTY -- the phrase has never appeared in tracked content, so this recovery path's own output has likely never been committed before either."
+    },
+    "provenance": {
+      "note": "The 04:00Z tick that spawned this chef-intraday was dispatched by THIS dispatcher session. Marker published:chef-intraday:2026-08-25:11 is still held by owner_client_session 7a47f7c6-8c8b-4939-929d-461d20cd32da.",
+      "why_recorded": "So the defect is not attributed to an unknown external firer."
+    },
+    "router_disposition": {
+      "files_left_uncommitted": "yes -- unchanged decision, but now for a DIFFERENT and firmer reason: committing them would enshrine paths the agent definition contradicts and 76 prior files disprove. Previously I withheld pending a ruling that was never needed.",
+      "NOT_deleted": "left in place -- they are the only copy of that cycle's record",
+      "router_scope": "router-only; no flow-doc or agent-def edit made. Owner is agent-father (agent definition + flow write paths)."
+    },
+    "carried_open_items_unchanged": {
+      "stranded_push": "246 commits ahead of origin/main. alert-commander hit the same pre-push size-lint block live this tick (bctcScalarAggregator.ts 1206L vs upper 1205L) and correctly escalated rather than bypassing. Both owning fix rows still dispatch_lane:null, unpickable by DRS.",
+      "kinhdich_price_contradiction": "c246 makes it SEVEN consecutive alert-commander cycles: DBC BAN 100%, VIC GIU 81% against rallies. Still no gate covers it, still unfiled as a task.",
+      "snapshot_naming": "unchanged from the 04:45Z filing -- writer raw-minute / reader-SPEC round-5 / reader-ACTUAL raw-minute / promoter nominal-quarter; 36 of 46 names unreachable by spec."
+    }
+  }
+}
