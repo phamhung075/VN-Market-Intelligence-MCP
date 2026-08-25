@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-25T02:12:38Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -139,7 +139,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -160,7 +160,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -181,7 +181,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -202,7 +202,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -223,7 +223,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -244,7 +244,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -22472,7 +22472,7 @@
         "last_served_tick": "2026-08-25T01:16:34Z"
       }
     },
-    "_updated_at": "2026-08-25T01:44:16Z",
+    "_updated_at": "2026-08-25T02:12:55Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22562,6 +22562,143 @@
         },
         "createdAt": "2026-08-25T01:26:00Z",
         "drained_at": "2026-08-25T01:41:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:12:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:12:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:12:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:12:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d9e0fe31a49cf0a5c1fd1e3c6de72befdaf404b10c5bb4adc870f53524873e90",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T02:07:40Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T02:06:20Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 111,
+          "signal_backlog": 34,
+          "note": "Step 5.3 off-flow check DEFERRED (BGFAN-1) — alert-commander spawned run_in_background; pre-write last_fired was 2026-08-24T08:53:30Z, revert target if >=2 distinct OFFFLOW_MARKERS appear in its final assistant text turn AND last_fired still equals 2026-08-25T02:06:20Z. DRAIN DEVIATION: 6 NEW signal_queue rows, all to=po, from=chef, type=narrative_contradiction (CCATO cohort, ts 2026-08-24T00:00:00Z, no dedup_key) — HELD AT NEW, not marked READ: po has 0 slots in cowork-schedule.json so Step 0a's route-to-slot branch is unreachable, and the cowork drain has no pending_triage_inbox re-envelope step, so READ here would be mark-without-delivery; with ts already >24h old, READ would also make them immediately cold-evict-eligible (READ is terminal). A peer dev-team drain delivers these. Board coverage confirmed by SUBJECT: SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (ACTIVE P0), FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (READY P0), FIX-NTGPROBE-FOREIGNFLOW-INSUFFICIENT-MSG-MATCHES-NO-NULL-MARKER-FALSE-CONTRADICTION (P1) — no mint. Inversion observed again: of the 6 near-duplicate rows for one VNM claim, returned_value spread is {not found in database, 62.1, 62.1, 61, 61, 60} — the first CONFIRMS chef's no-data claim yet was filed as a contradiction. DEFECT (4th consecutive tick, both halves in-tick): Step 4.7 named the snapshot by WALL CLOCK cycle-snapshot-02:05.json while emit_pressure_state looks up NOMINAL 02:00 -> cycle_snapshot_promoted:false; cycle-snapshot-latest.json still frozen at 2026-08-23 02:09 (4468B), its .market_context is type string not object, regime_status ABSENT, zero volatility key anywhere -> last_regime/last_volatility_level sent as unknown rather than fabricated. DEFECT (locale, re-measured): spawn-fanout Step 5.1's doc-literal awk -F',' load parse returns 2 where LC_ALL=C uptime returns 2.29 — splits on this host's decimal comma and keeps the integer part; harmless at load 2.29 vs threshold 24, but a real 24.9 would read 24 and pass <=24 instead of tripping DEGRADED. Remedy is the LC_ALL=C pin verify-a30-mcp-memory-reclamation.sh already carries."
+        },
+        "createdAt": "2026-08-25T02:07:40Z",
+        "drained_at": "2026-08-25T02:12:55Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-25T02:07:40Z",
-    "matched_slots": ["alert-commander-market"],
-    "won_slots": ["alert-commander-market"],
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "alert-commander-market": "cron" },
-    "cadence_minutes": { "alert-commander-market": null },
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-25T02:06:20Z",
-    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "Step 5.3 off-flow check DEFERRED (BGFAN-1) — alert-commander spawned run_in_background; pre-write last_fired was 2026-08-24T08:53:30Z, revert target if >=2 distinct OFFFLOW_MARKERS appear in its final assistant text turn AND last_fired still equals 2026-08-25T02:06:20Z. DRAIN DEVIATION: 6 NEW signal_queue rows, all to=po, from=chef, type=narrative_contradiction (CCATO cohort, ts 2026-08-24T00:00:00Z, no dedup_key) — HELD AT NEW, not marked READ: po has 0 slots in cowork-schedule.json so Step 0a's route-to-slot branch is unreachable, and the cowork drain has no pending_triage_inbox re-envelope step, so READ here would be mark-without-delivery; with ts already >24h old, READ would also make them immediately cold-evict-eligible (READ is terminal). A peer dev-team drain delivers these. Board coverage confirmed by SUBJECT: SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (ACTIVE P0), FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (READY P0), FIX-NTGPROBE-FOREIGNFLOW-INSUFFICIENT-MSG-MATCHES-NO-NULL-MARKER-FALSE-CONTRADICTION (P1) — no mint. Inversion observed again: of the 6 near-duplicate rows for one VNM claim, returned_value spread is {not found in database, 62.1, 62.1, 61, 61, 60} — the first CONFIRMS chef's no-data claim yet was filed as a contradiction. DEFECT (4th consecutive tick, both halves in-tick): Step 4.7 named the snapshot by WALL CLOCK cycle-snapshot-02:05.json while emit_pressure_state looks up NOMINAL 02:00 -> cycle_snapshot_promoted:false; cycle-snapshot-latest.json still frozen at 2026-08-23 02:09 (4468B), its .market_context is type string not object, regime_status ABSENT, zero volatility key anywhere -> last_regime/last_volatility_level sent as unknown rather than fabricated. DEFECT (locale, re-measured): spawn-fanout Step 5.1's doc-literal awk -F',' load parse returns 2 where LC_ALL=C uptime returns 2.29 — splits on this host's decimal comma and keeps the integer part; harmless at load 2.29 vs threshold 24, but a real 24.9 would read 24 and pass <=24 instead of tripping DEGRADED. Remedy is the LC_ALL=C pin verify-a30-mcp-memory-reclamation.sh already carries."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T02:07:40Z"
+  "createdAt": "2026-08-25T02:07:40Z",
+  "_processed": {
+    "fingerprint": "d9e0fe31a49cf0a5c1fd1e3c6de72befdaf404b10c5bb4adc870f53524873e90",
+    "processedAt": "2026-08-25T02:12:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
