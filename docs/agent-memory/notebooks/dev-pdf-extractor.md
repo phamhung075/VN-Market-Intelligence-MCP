@@ -195,3 +195,81 @@ Zone health: pytest 1062 pass / 0 fail (was 1062 pass with ~40%-of-seeds flake, 
 
 ### Status
 REVIEW → next_agent=qa (REBUILD_REQUIRED — AC-8/AC-9 blocked on deploy + a live pek_triggered cohort)
+
+---
+
+## Cycle 2026-08-25 — OCR-PADDLE-VI-LANG-FIX-AND-REBENCH
+
+**Zone:** apps/pdf-extractor/ | P0 (invalid-benchmark redo)
+
+### Defect
+`ocr_adapter.py:577`/`ocr_worker.py:215` instantiated PaddleOCR text-fallback
+with `lang="en"` — no Vietnamese diacritics in that rec dict. Same class
+already fixed on the table path (`pek_engine_adapter.py:410`, `lang="vi"`)
+but never propagated here. The 2026-08-25 4-run benchmark that measured
+"PaddleOCR regresses Vietnamese" ran under this bug and was retracted
+(`project_paddleocr_vietnamese_bctc_measured_regression.md`).
+
+### Fix
+`lang="en"->"vi"` at both sites, stale "handles basic diacritics" comment
+corrected. PDF-Extract-Kit/ untouched (verified zero-diff).
+
+### Re-benchmark (FPT Q4 2025, e71f845d, 46p; rebuilt image; ephemeral
+`docker compose run --rm --no-deps`; verified via readonly bun:sqlite
+`bctc_layout_units`, not push echo — count held at 46 across all 3 runs)
+
+| Backend | Table-phase wall | cgroup peak / cap | hard-limit hits |
+|---|---|---|---|
+| tesseract-vie | 174.5s | 1631.6 MiB (63.7%) | 0 |
+| paddleocr(vi) | 414.5s | 2684.4 MiB (100%, pinned at memory.max) | 1444 |
+| auto | 117.2s | 1302.4 MiB (50.9%) | 0 |
+
+Diacritic verdict: `vi` is a REAL improvement over `en` (now emits
+Vietnamese-attempted diacritics at all) but NOT parity with tesseract —
+page 5 sample still garbles many words ("Tai sán cö dinh" vs tesseract's
+correct "Tài sản cố định"). Root cause found in installed
+`paddleocr==2.10.0` source: `"vi"` is bucketed into the generic
+multi-language `"latin"` rec model (30+ languages sharing one model), NOT a
+dedicated Vietnamese model — so the config fix is correct but cannot reach
+tesseract's accuracy by itself. `auto` reproduced byte-identical output to
+tesseract-vie on page 9 (the separately-tracked, out-of-scope
+`TesseractVieBackend` mean-of-nonempty-rows confidence defect — rescue
+never fires — re-confirmed, not touched). PaddleOCR(vi) DID recover page 9's
+real revenue/profit numbers where tesseract loses them, but at 2.4x latency
+and pinned at the memory cap with 1444 hard-limit hits (kernel reclaim, 0
+OOM).
+
+**Ruling: do NOT swap.** Fails both the quality bar and the cap-headroom
+bar even with `vi` fixed — per the task's own decision rule. Default text
+backend stays `tesseract-vie` (unchanged; `OCR_TEXT_BACKEND` remains unset
+in compose/env, matching prod today).
+
+### Meter conflict resolved
+Empirically confirmed the ephemeral container DOES inherit `mem_limit`
+(HostConfig.Memory + cgroup memory.max both read 2684354560 on a live probe
+container). `ru_maxrss` is the inflated meter: `RUSAGE_SELF` alone tracked
+the cgroup peak closely (e.g. paddleocr self=2615.7 MiB vs cgroup
+peak=2684.4 MiB) but `RUSAGE_CHILDREN` came back numerically ~equal to
+`RUSAGE_SELF` in every run (self+children ≈ 2x self) — `TesseractVieBackend`
+shells out to the `tesseract` binary once per cell via pytesseract, and each
+reaped child's `ru_maxrss` reflects its post-fork/pre-exec RSS snapshot off
+an already ~1.5 GiB-resident Python parent (torch+paddle+doclayout-yolo
+loaded unconditionally for layout+table-structure detection, regardless of
+text backend) — a double-count of the same physical pages, not real extra
+memory. Quote cgroup `memory.current`/`memory.peak`, never `ru_maxrss`, for
+this service; same fix applies wherever else this service reports memory
+(A-30 `mem_creep`, `PERF-PEK-PER-PAGE-LATENCY` — flagged, not fixed here).
+
+### Commit
+`d584d4db2` fix(pdf-extractor) lang=en->vi / `9d6ee40f6` chore(scripts) bench harness persisted (`scripts/audits/ocr_bench_inner.py` + `ocr-backend-bench.sh`)
+
+Zone health: 48/50 relevant OCR tests pass (2 pre-existing local-venv
+`pandas` import gaps, confirmed identical before/after via `git stash`,
+unrelated to this change — not run in container). Live
+`vn-market-intelligence-mcp-pdf-extractor-1` NOT redeployed with this fix —
+Docker rebuild/redeploy of the persistent service is ops's zone per this
+agent's own `not_my_job` list; image was rebuilt locally only, for the
+ephemeral benchmark containers.
+
+### Status
+DONE — no swap performed, code fix committed, redeploy flagged to ops.
