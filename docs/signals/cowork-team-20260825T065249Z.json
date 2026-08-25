@@ -1,0 +1,94 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "P2",
+  "dedup_key": "cowork-step51-load-parse-locale-and-separator-both-wrong-now-sole-degraded-determinant",
+  "createdAt": "2026-08-25T06:52:49Z",
+  "payload": {
+    "tick": "2026-08-25T06:45Z",
+    "drift_min": 5,
+    "classification": "FIRE",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "one_shots": 0,
+    "new_signals": 0,
+    "pressure_mode": "adaptive",
+    "telemetry": {
+      "signal_backlog": 34,
+      "dev_queue_depth": 700,
+      "dev_head": "idle",
+      "board_lanes": {
+        "backlog": 562,
+        "ready": 109,
+        "review": 26,
+        "qa": 3,
+        "in_progress": 0,
+        "active_sprints": 19
+      }
+    },
+    "findings": [
+      {
+        "id": "STEP51-LOAD-PARSE-LOCALE-AND-SEPARATOR",
+        "severity": "P2",
+        "file": "docs/agents/cowork-team/flow/spawn-fanout.md",
+        "step": "5.1",
+        "summary": "MAX_PARALLEL load-average parse is wrong in BOTH locales, and as of this tick it is the SOLE determinant of DEGRADED.",
+        "as_written": "uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'",
+        "measured": {
+          "live_locale": "LANG=fr_FR.UTF-8 (LC_ALL and LC_NUMERIC both unset)",
+          "fr_FR_uptime": "load averages: 2,11 2,83 3,08",
+          "fr_FR_parse_result": "2  (splits on the DECIMAL comma; truncates to integer part)",
+          "LC_ALL_C_uptime": "load averages: 2.11 2.83 3.08",
+          "LC_ALL_C_parse_result": "2.112.833.08  (no commas present; concatenates all three averages)",
+          "true_load_1min": 2.11,
+          "cores": 12,
+          "load_per_core_factor": 2,
+          "threshold": 24
+        },
+        "why_it_matters": "Both failure modes fail OPEN (toward MAX_PARALLEL=max_parallel_default=4), never toward throttling: the truncated integer is always <= true load, and the concatenated string never satisfies a numeric > comparison.",
+        "newly_reachable": "Previously masked. When pressure_mode=legacy (every tick through 06:30Z) HEADROOM_MB was forced null so DEGRADED was true regardless of load. This tick pressure_mode=adaptive AND container_vm_headroom_mb=5128 >= headroom_floor_mb=1500, so the headroom half no longer degrades and the load half alone decides.",
+        "correction_1": "SUPERSEDES the recorded advice 'pin LC_ALL=C on Step 5.1'. Pinning LC_ALL=C is what PRODUCES the concatenation — it removes the commas the -F',' split depends on.",
+        "correction_2": "SUPERSEDES this dispatcher's own 06:30Z commit body (1b6586533), which claimed 'the fault is the field separator, not a decimal-comma locale' and that 'LC_ALL=C changes nothing'. That test was invalid: LC_ALL=C had already been exported before the comparison was run, so C was being compared against C. It is BOTH faults and they interact.",
+        "verified_fix_direction": "Split on whitespace after -F'load averages?:' and normalize the decimal comma. Verified to yield 2.11 under BOTH fr_FR.UTF-8 and LC_ALL=C: uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'",
+        "owner_hint": "agent-father (flow-doc edit, docs-only, no runtime code)"
+      },
+      {
+        "id": "PRESSURE-STATE-KEY-NAMES-DRIFTED-IN-MEMORY-NOT-IN-CODE",
+        "severity": "P3",
+        "summary": "Near-miss false finding, recorded so the next reader does not repeat it. pressure-state.json has NO headroom_mb and NO pressure_level key; probing those returns jq null, which is indistinguishable from a null VALUE and reads as 'adaptive mode has no pressure data'.",
+        "actual_key_set": [
+          "emitted_at",
+          "tick_id",
+          "signal_backlog",
+          "last_regime",
+          "last_volatility_level",
+          "calendar_status",
+          "dev_queue_depth",
+          "container_vm_headroom_mb",
+          "stale_warning"
+        ],
+        "live_value": "container_vm_headroom_mb = 5128 (healthy, non-null)",
+        "consumer_is_correct": "spawn-fanout.md:184 reads PRESSURE_STATE.container_vm_headroom_mb — the correct name. The 2026-07-28 rename (FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY) landed properly in the flow doc.",
+        "stale_artifact": "The name host_headroom_mb still appears 4x in flow docs/scripts and in the fleet memory note; container_vm_headroom_mb appears 7x. The memory note should be corrected, the code should not.",
+        "how_to_apply": "Dump the FULL key set before concluding a field is null. jq returns null for absent keys."
+      },
+      {
+        "id": "CYCLE-SNAPSHOT-NEVER-PROMOTED",
+        "severity": "P2",
+        "occurrence": "4th consecutive live confirmation",
+        "summary": "Step 4.7 names the snapshot by wall clock, emit_pressure_state looks it up by nominal tick.",
+        "this_tick": "wrote docs/data/cycle-snapshot-06:50.json against nominal tick 06:45 -> cycle_snapshot_promoted:false",
+        "downstream": "cycle-snapshot-latest.json remains tick 00:00 from 2026-08-23; last_regime and last_volatility_level therefore stay 'unknown', keeping 2 of 3 adaptive cadence inputs dead even now that pressure_mode is adaptive.",
+        "fix": "writer-side one-liner in docs/agents/cowork-team/flow/tick-snapshot.md — FILE_TICK must be the nominal tick, not date -u +%H:%M. No server change.",
+        "owner_hint": "agent-father"
+      }
+    ],
+    "signal_delivery_confirmation": {
+      "note": "The two to=po rows held at NEW across the 06:00Z-06:30Z ticks WERE delivered. Third clean round trip for the hold-at-NEW decision.",
+      "verified_by": "source + drained_at cluster, never by row id (the dev-team drain re-envelopes under a content-hash envelope_id and discards the original id)",
+      "cluster": "source=dashboard @ 2026-08-25T06:47:17Z, n=4 — includes from=market-db-journal-guard to=po type=system-issue x2, routed_to='PO Step 0-SIG'"
+    }
+  }
+}
