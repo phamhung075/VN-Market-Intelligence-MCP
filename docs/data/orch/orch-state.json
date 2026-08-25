@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 4 row(s) (4 from review[], 0 from done[]), highest-ranked FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 4 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-25T08:17:32Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "Idle — self-healed by router at tick 2026-08-25T12:07Z. Prior head named FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE as in_progress/next_agent=qa, but that row is in done_verified[] status=DONE_VERIFIED. Second consecutive tick with this exact stale shape (prior heal at 08:07Z) — QA lane-moves are not resetting .head in the same write.",
+    "updated_at": "2026-08-25T12:15:05Z",
+    "updated_by": "dev-team (router self-heal, stale-head guard before pipeline-resume)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -641,6 +641,48 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-25.json"
+      },
+      {
+        "id": "sys-20260825T121451-0eb5",
+        "ts": "2026-08-25T12:14:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "summary": "auditor cycle lost tick=malformed-key — orphaned marker, mid-run death",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-loss:malformed-key"
+      },
+      {
+        "id": "sys-20260825T121454-4a5e",
+        "ts": "2026-08-25T12:14:54Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 9h (cadence 4h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-25T12:00Z"
+      },
+      {
+        "id": "sys-20260825T121457-17ff",
+        "ts": "2026-08-25T12:14:57Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 3h (cadence 0.5h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier1:2026-08-25T12:00Z"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
