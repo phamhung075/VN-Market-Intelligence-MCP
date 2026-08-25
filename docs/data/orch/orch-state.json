@@ -497,6 +497,32 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:market-db-journal-guard:2026-08-25T05:54:25Z",
         "dedup_key": "system_probe:market-db-journal-guard:docker-daemon-not-running"
+      },
+      {
+        "id": "chefpath-20260825T062600Z",
+        "ts": "2026-08-25T06:26:00Z",
+        "from": "router",
+        "to": "dev-team",
+        "type": "system-issue",
+        "summary": "CHEF degraded-floor recovery path writes BOTH its notebook section AND its synthesis JSON to\nNON-CANONICAL paths, orphaning an already-PUBLISHED dish from every downstream consumer.\n\nOBSERVED (router, 2026-08-25T06:26Z, incidental to a db-integrity SKIP-SPAWN tick — found via\n`git status`, not via any detector):\n  docs/agent-memory/notebooks/chef-intraday.md                                (untracked, 04:25Z)\n  docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json (untracked, 04:24Z)\nBoth belong to the 04:13Z chef-intraday cycle, whose notebook header reads:\n  \"**Status:** SENT (degraded-floor recovery) | **Quality:** degraded | **Clusters:** 1 qualified\"\n  \"Recovery reason: token_budget_optimization — Steps 1.5-6 partial completion\"\n\nCANONICAL PATHS ARE UNTOUCHED BY THAT CYCLE:\n  - docs/agent-memory/notebooks/unified-agent.md still reports latest cycle = 02:13Z; `grep -c 04:13`\n    against it returns 0.\n  - docs/data/ holds only the 02:13Z slot file (75 synthesis JSONs total, none for 04:13Z).\nCONSEQUENCE: a dish that was SENT to MARKET has ZERO canonical record. Every consumer that reads\nthe canonical paths -- fb-market-poster, digest-predict, tran-ngoc-bau (whose entire job is\nauditing chef narrative for TNB 6-layer completeness against the notebook), market-analyst -- will\nnever see the 04:13Z dish. tran-ngoc-bau in particular would score the day on 02:13Z alone and\nreport a complete walk while a degraded 1-cluster dish went out unaudited.\n\nNOT the same defect as the existing P1 backlog row FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-\nSYNTHESIS-JSON (2026-08-07). APTNESS NOTE: that row is about Step 8e's git-add PATHSPEC omitting\nthe synthesis JSON -- a COMMIT gap. It explains why these two files are untracked, and is real,\nbut it does NOT cover WRONG-DIRECTORY SELECTION. Discriminator: the SAME agent, SAME day, on the\n02:13Z full-quality cycle, wrote docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json\nto the CORRECT path AND got it committed (dca608eb2). So both the path logic and Step 8e work on\nthe normal path and diverge only on the degraded-floor path. Fixing the pathspec row alone would\nleave this open; the two should be fixed together but are distinct root causes.\n\nROOT-CAUSE HYPOTHESIS (unverified -- code not read, router does not implement): the degraded-floor\nrecovery branch (referenced in the notebook as \"chef-telemetry.md §\") composes its own output\nfilenames from the slot id rather than reusing the CYCLE_DATE-pinned canonical path constants that\nthe full recipe (chef-dish.md Step 7.6 / 8e) uses -- yielding notebooks/<slot>.md instead of an\nappend to unified-agent.md, and notebooks/<synthesis>.json instead of docs/data/<synthesis>.json.\nNeeds a read of the degraded-floor branch to confirm.\n\nCONTAINMENT DONE BY ROUTER (evidence preservation ONLY, no fix): both stray files committed AS-IS\nin their wrong locations so the only surviving record of a published dish is not lost to an\nuntracked-file sweep. They are deliberately NOT relocated -- a `git mv` is part of the fix and\nbelongs to the owning dev, not the router.\n\nSUGGESTED VERIFICATION FOR THE FIX: force a degraded-floor cycle and assert (a) unified-agent.md\ngained a section for that cycle, (b) docs/data/ gained the slot's synthesis JSON, (c) no new file\nappeared under docs/agent-memory/notebooks/ other than the unified-agent.md edit.\n",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/notebooks/chef-intraday.md",
+        "payload": {
+          "dedup_key": "chef:degraded-floor-recovery:noncanonical-output-paths",
+          "related_row": "FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON",
+          "related_aptness": "PARTIAL — covers the Step 8e commit-pathspec gap only, NOT wrong-directory selection; distinct root cause, same-day same-agent full-quality cycle proves the normal path works",
+          "stray_files": [
+            "docs/agent-memory/notebooks/chef-intraday.md",
+            "docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json"
+          ],
+          "canonical_paths_expected": [
+            "docs/agent-memory/notebooks/unified-agent.md (append a section)",
+            "docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json"
+          ],
+          "orphaned_cycle": "2026-08-25T04:13Z chef-intraday, Status=SENT, Quality=degraded, 1 cluster",
+          "discovered_by": "router git-status during db-data-integrity SKIP-SPAWN tick — no detector caught it"
+        }
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",

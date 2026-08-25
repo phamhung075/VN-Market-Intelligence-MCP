@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "date_vn": "2026-08-25",
+    "dish_type": "intraday",
+    "cycle_id": "chef-intraday-20260825T0413Z",
+    "slot_id": "chef-intraday",
+    "scheduled_utc": "2026-08-25T04:13:00.000Z",
+    "published_at": "2026-08-25T04:22:47Z",
+    "marker_key": "published:chef-intraday:2026-08-25:11",
+    "quality_verdict": "degraded",
+    "quality_reason": "token_optimization_recovery"
+  },
+  "clustering": {
+    "clusters_qualified": 1,
+    "convergence_type": ["ticker_convergence", "sector_convergence"],
+    "ticker_convergence": {
+      "DBC": ["price_surge", "ta_bb_breakout_up"]
+    },
+    "sector_convergence": {
+      "real_estate": ["PDR", "VIC", "DXG"],
+      "signal_count": 3
+    }
+  },
+  "tnb_synthesis": {
+    "us_macro_layer": "Fed rate environment (3.63%) vs SBV 5.00% carry spread 1.37pp NEUTRAL. Geopolitical escalation: US-Iran trade tensions, tech rout Nasdaq -1.2%, FPT exposed (12% US revenue). [gap:EFFR_IORB_specific_unavailable]",
+    "vn_macro_layer": "USD/VND 25,950 BEARISH (depreciation pressure on imports). Gold $4690.2/oz bullish (safe-haven, +2.2σ above baseline). Foreign room outflow z=-1.69 (5d) confirms risk-off. [gap:CPI_trend_unavailable] [gap:VIRA_FX_reserves_unavailable]",
+    "valuation_layer": "[phase: slowdown] [tier: fixed_income/defensive] — Macro regime shift on geopolitical risk; FII carry-unwind pressure; volatility NORMAL (GK_VOL_20d=15.77%, vol_regime=NORMAL)",
+    "kinh_dich_context": "Market hexagram Quẻ 36 Minh Di (明夷, BẤT LỢI) 64% confidence — caution signal. DXG (Quan 20, TRUNG TINH); FPT (Tuy 17, THUAN LOI); HPG (Tiem 53, THUAN LOI); VCB (Tuy 45, THUAN LOI)"
+  },
+  "conviction_calls": [
+    {
+      "ticker": "DBC",
+      "conviction_level": "medium",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale": "Ticker convergence (price_surge +6.93% + ta_bb_breakout_up 03:30 UTC) signals short-term momentum, but FII outflow and geopolitical headwinds cap conviction. Carry regime tightening (1.37pp) limits upside. Watch for oversold recovery on macro stabilization.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "medium",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale": "Sector convergence (real_estate) + safe-haven large-cap hedge (VIC price +4.85%). However, FII net-sell velocity -70k shares (5d) and USD/VND depreciation pressure dominate. Money supply and cost-of-capital headwinds present.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "PDR",
+      "conviction_level": "low",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale": "TA breakout signal (ta_bb_breakout_up 03:00 UTC) isolated; no earnings pillar support, no macro pillar alignment, no cost-of-capital rationale. Insufficient data to confirm directional thesis.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    }
+  ],
+  "known_gaps": [
+    "[gap:macro_health_read_unavailable — Step 1.5 not reached]",
+    "[gap:PMI_unavailable]",
+    "[gap:EFFR_IORB_specific_unavailable]",
+    "[gap:CPI_trend_unavailable]",
+    "[gap:VIRA_FX_reserves_unavailable]",
+    "[gap:L5_portfolio_conviction_unavailable — get_portfolio_conviction not called]",
+    "[gap:L6_gaps_partial_enumeration]",
+    "[L6-gap: gold >$4300 regime-drift risk — safe-haven premium may lag actual risk-off reversal]",
+    "[L6-gap: single-pillar thesis — PDR 1/4 pillars aligned; insufficient macro support]"
+  ],
+  "signals_consumed": [
+    {"id": 11323, "ticker": "PDR", "type": "ta_bb_breakout_up", "source": "alert-engine"},
+    {"id": 11325, "ticker": "DBC", "type": "price_surge", "source": "alert-engine"},
+    {"id": 11326, "ticker": "DBC", "type": "ta_bb_breakout_up", "source": "alert-engine"},
+    {"id": 11327, "ticker": "VIC", "type": "price_surge", "source": "alert-engine"},
+    {"id": 11329, "ticker": "DBC", "type": "price_surge", "source": "alert-engine"},
+    {"id": 11332, "fromAgent": "news-scout", "type": "chain_catalyst", "topic": "gold_safe_haven"},
+    {"id": 11333, "fromAgent": "news-scout", "type": "chain_catalyst", "topic": "US_Iran_tech_rout"}
+  ],
+  "recovery_state": {
+    "degraded_floor_recovery_triggered": true,
+    "reason": "token_budget_optimization",
+    "steps_reached": ["Step 0.5 (marker probe)", "Step 1 (cluster analysis)", "Step 7 (publication)", "Step 8b (notebook)"],
+    "steps_partial": ["Steps 1.5-6 (analysis layers partial)"],
+    "recovery_quality_verdict": "degraded"
+  }
+}
