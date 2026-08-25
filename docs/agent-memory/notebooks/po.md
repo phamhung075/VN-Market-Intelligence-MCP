@@ -1,54 +1,57 @@
 # PO Notebook
 
-## 2026-08-25T16:50-17:15Z — the block guarding the user's OCR goal was protecting a container that no longer exists
+## 2026-08-25T17:40-18:00Z — I ruled YES on n=1. Document #2 killed it in 30 minutes.
 
-Router-direct triage. Journal: `docs/agent-memory/decisions/triage-20260825T1700Z-po.md`.
-**6 rulings · 3 rows minted · 2 promoted+expedited · 1 P0 un-stranded · inbox 17→4 (13 cleared, 4 held).**
+Re-ruling my own 17:00Z decision. Journal: `docs/agent-memory/decisions/triage-20260825T1752Z-po.md`.
+**Auto-mode OCR REJECTED · 2 rows CANCELLED→archive · 1 un-stranded from `in_progress[]` · 3 unspawnable rows repaired.**
 
-### Falsify the blocker before you route around it
-The standing directive ("PaddleOCR for Vietnamese BCTC") had a measured, ratified fix sitting inert.
-`OPS-PDFX-REDEPLOY-DEBT` was `depends_on` `UNBLOCK-PDFX-OPS-DEPLOY`, whose sequencing forbade any
-rebuild because "AC-7's sampler needs ≥12h of cgroup counters that reset on recreation". I checked
-both halves instead of honouring them. **AC-7 never ran** — its CSV must live in
-`docs/incidents/data/`, which holds three files, all `rag-durability-*`. And the protected container
-`2edf0c9c9905` is gone: `docker inspect` returns `e2801b67406c`, Created 08-24T13:35:05Z, StartedAt
-08-25T06:33:03Z. There was no window to destroy, and the ordering was **backwards** — sampling a
-container you are about to replace measures nothing. Removed the dep, P3→P1, `ready[0]`, expedited.
-Also caught: the deployed label reads `vn.market.git_sha="unknown"`, so "verify by IMAGE ID" is
-impossible on this service today.
+### My rollback triggers fired before deployment
+At 17:00Z I wrote "roll back on >10% rescue fire rate, or any cgroup hard-limit hit (baseline 0)".
+On the second document ever measured: **46%** and **494 `memory.max` events**. A change its own
+criteria would revert on day one does not ship. That was the whole ruling; everything below is why
+it is not fixable by tuning.
 
-### The ruling
-`OCR_TEXT_BACKEND=auto`, set in **docker-compose.yml, not main.py** — one line to revert, readable in
-`docker inspect`, and every `run --rm` container keeps the conservative default. Gated on G1 QA-green
-(stated, not assumed), G2 a **second-document** probe (the dev's own caveat, promoted to a hard gate —
-two of three rejected discriminators *inverted* on the only document measured), G3 the redeploy, G4
-market hours. 7-day rollback triggers written with numbers, not adjectives.
+### The metric measures the wrong thing, and the code says so itself
+`_ink_coverage` divides ink-inside-word-boxes by **all** Otsu foreground in the crop — so the
+denominator carries rule lines, shaded bands, seals, speckle: ink the engine was *right* to skip.
+That term is issuer-styling, orthogonal to read quality. Hence FPT's legit-floor 0.674 vs DBC's
+0.329 on two documents both read correctly. And `_recall_adjusted_confidence`'s own docstring
+defends `min()` with *"a region read perfectly but only 34% covered … is rescued"*. DBC page 14 **is**
+that region. The spec is wrong, not the implementation. At n=2 the bands already overlap — no
+constant separates them, so retuning is arithmetically dead, not merely disallowed.
 
-### Count subjects, not envelopes
-14 notebook-hook envelopes arrived as near-identical pairs 92s apart. Every one of those notebooks'
-mtimes **predates** the window — the hook re-evaluated a standing STATE and emitted it as a
-per-invocation EVENT, and `createdAt` inside the hash makes dedup structurally impossible. 8 subjects,
-not 14 incidents. Folded all 10 actionable ones onto the existing actuator and did **not** mint the
-duplication defect: the emitter-side dedup ledger already exists, just wired to the wrong signal
-family. Then measured all 7 candidate notebooks with `wc` rather than trusting the row: **2 have
-converged** (code-janitor 2621B, dev-team 11288B) and were dropped from scope, and the row's stated
-`section_count=1` mechanism is false on all 4 survivors. Consolidated it 12,585B → 5,294B in the same
-write, because at 12,585 it was over the ceiling and could not be annotated at all.
+### Two things nobody had named
+**Memory is superlinear in fire count.** 1 fire = +112 MiB / 0 events; 6 fires = +1493 MiB / 494
+events. Residency cancels (PaddleOCR is constructed in both arms). If that is retention, *no* fire
+rate is safe — a perfect discriminator still OOMs. `OCR_FALLBACK_THRESHOLD` is env-driven, so the
+decisive sweep costs no code change and no rebuild. **The winner-pick can't protect the negative
+control:** `paddle_conf >= tesseract_conf` compares two `min(precision, coverage)` scores, but
+Tesseract's boxes are word-level and PaddleOCR's are line-level — coverage is biased upward by box
+granularity alone, worst exactly where the rescue fires, ties going to PaddleOCR.
+
+### Resolve numbers, don't average them
+Dev's +3.8% vs qa's +54.9%: **struck dev's**. Not because two disagree, but because qa's *tesseract*
+arm was faster while its *auto* arm was 44% slower — contention slows both, so the asymmetry is real
+— and because ~8s/region from the valid lang=vi bench makes "one PaddleOCR page cost 4.3s total"
+impossible. Then the harder call: my criterion #3 was **unmeasurable** on either dataset. Both are
+single-fire measurements of a fire-count-dependent cost. Withdrew the criterion rather than score it.
+
+### What I got wrong at 17:00Z
+Four gates, none bounding the *generalization* claim or memory. Both that resolved did so on
+FPT-only evidence. **The gate that saved this was not one I wrote** — qa chose to run a second
+document beyond its brief. When a fix is tuned on a sample, "passes its ACs" is not a gate; the ACs
+were written against that sample.
+
+### Traps hit
+`in_progress[]` has **no picker** — qa's CHANGES_REQUESTED move stranded the row *and* held a WIP
+slot. But `orch-row-prose-ceiling-check.mjs` measures only backlog/ready/review and scores a row
+arriving from elsewhere as `liveBytes=0`, so lane-moving a 13,965B row **hard-rejects**. Had to
+shrink to 11,173B first. Also: `jq '{next_agent}'` renders an *absent* key as `null`, which is how I
+"confirmed" archive rows carry `next_agent: null` — the validator caught it. Use `has()`.
 
 ### Carry-over
-- **`--check` is not read-only.** Running `guard-signal-type-coverage.sh --check` MUTATED the board:
-  auto-minted a row and applied an orch-apply write (872→873). `FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-MODE-MUTATES-BOARD`
-  already owns it. Treat every `audits/` script as a writer until proven otherwise.
-- **Held 4 envelopes on purpose, and attached a terminator.** `guard-signal-type-coverage.sh` reads
-  `pending_triage_inbox[]` as its ONLY Pipeline-A type source, so clearing an unrouted type falsely
-  greens CI. But the inbox is not a CI fixture — so I promoted the row that ends the hold-back out of
-  `backlog[]`, where `next_agent=agent-father` is off the DRS allowlist and **nothing could ever pick it**.
-  If it holds a third tick, escalate the structural row instead.
-- **Prose ceiling shapes where a finding can live, again.** `FIX-PDFX-TESSERACT-CONFIDENCE` has 174B
-  headroom, so the second-document gate had to become its own row rather than an AC. Two ticks running.
-- **A row-scoped claim key does not guard an agent instance.** Minted the generalisation with 4
-  confirmed sites; the signal only scoped the PO case.
-- Not run: TNB / channel-audit / signal-dashboard / goahead / manual-dispatch pre-checks. Scoped tick.
-- **Left alone, reported not absorbed:** 8 `review[]` rows and 11 `ready[]` rows carry a null
-  `next_agent`. Pre-existing, out of scope.
-- Standing push disarm in force — committed, nothing pushed. `.head` idle.
+- `ready[0]` FIX-PDFX-TESSERACT-CONFIDENCE → dev-pdf-extractor, **measurement-only**, AC-0 memory
+  sweep first. Row has 827B ceiling headroom — next writer must use `detail_ref`, not inline.
+- Router's "13 unspawnable ready rows" = **over-count of 10**; `effective_owner` resolves them. 3 real, repaired.
+- Still open on me: `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` (review[], BLOCKED, next_agent=po).
+- Honest status of the user's BCTC goal: **no ready path**; one cheap, specific experiment would open one.
