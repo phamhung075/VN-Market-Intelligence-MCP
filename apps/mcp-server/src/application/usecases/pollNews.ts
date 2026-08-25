@@ -23,7 +23,7 @@
  *                             tryInsertEntry / loadWatchlist
  * Stage 1 of the pipeline-body decomposition (fetch/health — same "one
  * extraction per commit" ladder the task's own DoD approach names) landed
- * this pass:
+ * 2026-08-15:
  *   resolveFetchers.ts     — per-cycle fetcher-set resolution (local
  *                             defaults + injected overrides + newsapi
  *                             fallback + VPS-only keys)
@@ -33,13 +33,21 @@
  *   fetchAndRecordHealth.ts — Promise.allSettled fetch execution +
  *                             globalSourceTracker health recording
  *   allSourcesDarkAlert.ts — DB-backed cooldown + Telegram bug alert
- * This file is now the orchestrator: fetch/health stage delegated above,
- * plus the still-inline dedup/insert and cascade/alert-generation stages,
- * and the all-sources-dark cooldown state box. All previously-exported
- * names (types, detectInsiderFamilyBuying, detectInsiderSelling,
+ * Stage 2 (dedup/insert — normalize/sentiment/dedup/insert/RAG-embed/
+ * deep-fetch-gate, per QA's explicit continue-the-ladder instruction on the
+ * stage-1 review) lands this pass:
+ *   ingestEntries.ts       — per-item commodity-indicator extraction +
+ *                             normalize + sentiment classify + dedup-insert
+ *                             loop orchestration
+ *   ragEmbed.ts            — LanceDB embed of one newly-inserted entry
+ *   deepFetchEnqueue.ts    — deep-fetch relevance gate + queue enqueue
+ * This file is now the orchestrator: fetch/health + dedup/insert stages
+ * delegated above, plus the still-inline cascade/alert-generation stage and
+ * the all-sources-dark cooldown state box. All previously-exported names
+ * (types, detectInsiderFamilyBuying, detectInsiderSelling,
  * _resetAllDarkAlert, pollNews) are re-exported here unchanged so every
  * existing `from ".../pollNews.js"` import keeps working with zero call-site
- * changes. Remaining stages (dedup/insert, cascade/alert-generation) are
+ * changes. Remaining stage (cascade/alert-generation/mention-velocity) is
  * tracked as follow-up, not done in this pass (see
  * docs/agent-memory/notebooks/dev-mcp-server.md).
  *
@@ -48,9 +56,7 @@
 
 import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 import type { SearchResult } from "../../domain/services/cascadeEngine.js";
-import { normalizeNews } from "../../domain/services/newsNormalizer.js";
 import { isVnRelevant } from "../../domain/services/vnRelevanceFilter.js";
-import { scoreMacroIndicator } from "../../domain/services/macroIndicatorScorer.js";
 import { buildCausalChain, DEFAULT_BROADCAST_MIN_IMPACT } from "../../domain/services/cascadeEngine.js";
 import { detectStocksInText, tickerWholeWordMatch, stripSourceAttributionSuffix } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
@@ -64,10 +70,11 @@ import { _resetGlobalSourceTracker } from "../../infrastructure/observability/so
 import { detectInsiderFamilyBuying, detectInsiderSelling } from "./pollNews/insiderDetectors.js";
 import { deduplicateSignalsByStockAndType } from "./pollNews/signalDedup.js";
 import { defaultRagRetriever } from "./pollNews/defaultFetchers.js";
-import { tryInsertEntry, loadWatchlist } from "./pollNews/dbHelpers.js";
+import { loadWatchlist } from "./pollNews/dbHelpers.js";
 import { resolveFetchers } from "./pollNews/resolveFetchers.js";
 import { fetchAndRecordHealth } from "./pollNews/fetchAndRecordHealth.js";
 import { maybeAlertAllSourcesDark, type DarkAlertState } from "./pollNews/allSourcesDarkAlert.js";
+import { ingestEntries } from "./pollNews/ingestEntries.js";
 import type {
   PollNewsResult,
   SourceFetchers,
@@ -197,174 +204,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     logger.debug(`[pollNews] VN relevance filter discarded ${irrelevantCount} non-VN articles`);
   }
 
-  // ── Step 1b: Auto-extract commodity/indicator prices from news text ─────
-  // Stores discovered prices in tracked_indicators for σ-based analysis.
-  try {
-    const { extractAndStoreIndicators } = await import("../../infrastructure/db/commodityTracker.js");
-    for (const item of relevantItems) {
-      const text = `${item.title} ${item.content}`;
-      extractAndStoreIndicators(text, item.source);
-    }
-  } catch {
-    // Best-effort — table may not exist yet
-  }
-
-  // ── Step 2–3: Normalize, classify sentiment, and dedup ──────────────────
-  // Task 306 slice 1: run sentiment classifier per article BEFORE insertion
-  // so the rag_analyses.sentiment column has real bullish/bearish/neutral
-  // values (not the normalizer default). This makes get_sentiment_trend
-  // queryable per-stock via affected_actions LIKE '%CODE%' + sentiment.
-  let inserted = 0;
-  let duplicates = 0;
-  const newEntries: ReturnType<typeof normalizeNews>[] = [];
-
-  const { classifySentiment: classifySentimentForInsert } = await import(
-    "../../domain/services/sentimentClassifier.js"
+  // ── Step 1b–3: commodity-indicator extraction, normalize/sentiment/dedup/
+  // insert/RAG-embed/deep-fetch-gate (FACTORY-APP-split-pollNews stage 2,
+  // extracted to ./pollNews/ingestEntries.js) ──────────────────────────────
+  const { inserted, duplicates, newEntries } = await ingestEntries(
+    relevantItems,
+    db,
+    watchlist,
+    ragInsertFn,
   );
-
-  for (const item of relevantItems) {
-    const entry = normalizeNews(item);
-    const cls = classifySentimentForInsert(`${entry.sourceTitle} ${entry.summary}`);
-    entry.sentiment = cls.direction; // bullish | bearish | neutral
-
-    // Task 1199: apply tiered impact scoring for Trading Economics articles.
-    // The generic normalizer gives all TE articles high scores (8–10) because
-    // global macro keywords (inflation, interest rate) saturate the keyword count.
-    // Replace with a tier-aware score based on indicator name / VN relevance.
-    if ((item.source ?? "").toLowerCase() === "tradingeconomics") {
-      entry.impactScore = scoreMacroIndicator(item.title);
-    }
-
-    const wasInserted = tryInsertEntry(db, entry);
-
-    if (wasInserted) {
-      inserted++;
-      newEntries.push(entry);
-
-      // Task 1840a: embed newly inserted article into LanceDB (non-fatal).
-      // Awaited so the embed completes within the same async call as the SQLite
-      // insert — mirrors the pattern in fetchParseAndStoreBctc.ts (step 4).
-      // DFR-P1-MCP FR-5: pass new metadata fields (doc_type, depth_tier, source_domain, etc.)
-      try {
-        const { randomUUID } = await import("node:crypto");
-        const level = entry.affectedActions.length > 0 ? "action" : "domain";
-        // First affected action is the primary ticker (uppercase); use for actionCode
-        const primaryTickerUpper = entry.affectedActions[0]?.toUpperCase();
-        const actionCode = primaryTickerUpper?.toLowerCase();
-        const tags = [
-          "news",
-          (item.source ?? "unknown").toLowerCase(),
-          ...entry.affectedActions.map((c) => c.toLowerCase()),
-        ];
-        // Derive source_domain from article URL — E1: guard parse failure
-        let source_domain = "";
-        try {
-          if (entry.sourceUrl) {
-            source_domain = new URL(entry.sourceUrl).hostname;
-          }
-        } catch { /* malformed URL — use empty string */ }
-        // Derive sector from ticker via mcp.config.json market.referenceStocks
-        // DFR-P1-MCP FR-5: lookupSectorForTicker — inline pure lookup
-        let sector = "";
-        if (primaryTickerUpper) {
-          try {
-            const { loadMcpConfig } = await import("../../infrastructure/config.js");
-            const cfg = loadMcpConfig();
-            const refStocks = (cfg.market as unknown as Record<string, unknown>)?.referenceStocks as
-              Record<string, string[]> | undefined;
-            if (refStocks) {
-              for (const [sectorName, tickers] of Object.entries(refStocks)) {
-                if (Array.isArray(tickers) && tickers.includes(primaryTickerUpper)) {
-                  sector = sectorName;
-                  break;
-                }
-              }
-            }
-          } catch { /* sector lookup best-effort */ }
-        }
-        await ragInsertFn({
-          id: randomUUID(),
-          level,
-          title: entry.sourceTitle,
-          summary: entry.summary,
-          tags,
-          ...(actionCode !== undefined && { actionCode }),
-          // DFR-P1-MCP FR-5: new metadata fields
-          doc_type: "news",
-          depth_tier: "shallow",
-          source_domain,
-          published_at: entry.publishedAt ?? "",
-          confidence: entry.confidence ?? 0,
-          impact_score: entry.impactScore ?? 0,
-          ticker: primaryTickerUpper ?? "",
-          sector,
-        });
-      } catch (err) {
-        logger.warn("[pollNews] ragInsert failed (non-fatal)", {
-          error: err instanceof Error ? err.message : String(err),
-          title: entry.sourceTitle?.slice(0, 80),
-        });
-      }
-
-      // DFR-P2-MCP: deep-fetch gate (runs only on newly inserted articles — no re-fetch of duplicates)
-      // Non-fatal: gate failure MUST NOT abort the poll cycle.
-      try {
-        const { shouldDeepFetch, buildSectorKeywordMap } = await import("../../domain/services/deepFetchGate.js");
-        const { enqueueIfNotPresent } = await import("../../infrastructure/db/deepFetchQueueStore.js");
-
-        // Load watchlist tickers for gate (active only)
-        const watchlistTickers = watchlist
-          .filter((w) => !("active" in w) || (w as { active?: boolean }).active !== false)
-          .map((w) => w.actionCode?.toUpperCase() ?? "")
-          .filter(Boolean);
-
-        // Build sector keyword map from watchlist entries (pure — no I/O)
-        // watchlist entries from DB carry sector via WatchlistEntry shape
-        const sectorEntries = watchlist.map((w) => ({
-          ticker: w.actionCode?.toUpperCase() ?? "",
-          sector: (w as { sector?: string }).sector ?? "",
-          active: !("active" in w) || (w as { active?: boolean }).active !== false,
-        }));
-        const sectorKeywords = buildSectorKeywordMap(sectorEntries);
-
-        const hit = shouldDeepFetch({
-          title: entry.sourceTitle ?? "",
-          snippet: entry.summary ?? "",
-          impactScore: entry.impactScore ?? 0,
-          sentiment: entry.sentiment ?? "neutral",
-          sourceUrl: entry.sourceUrl ?? "",
-          affectedActions: entry.affectedActions,
-          watchlistTickers,
-          sectorKeywords,
-        });
-
-        if (hit && entry.sourceUrl) {
-          // Derive source_domain independently (can't access ragInsertFn inner scope)
-          let gateSourceDomain = "";
-          try {
-            gateSourceDomain = new URL(entry.sourceUrl).hostname;
-          } catch { /* malformed URL */ }
-          const gatePrimaryTicker =
-            entry.affectedActions[0]?.toUpperCase() ?? null;
-          enqueueIfNotPresent(db, {
-            source_url: entry.sourceUrl,
-            source_domain: gateSourceDomain,
-            rag_id: entry.id ?? "",
-            ticker: gatePrimaryTicker,
-          });
-        }
-      } catch (gateErr) {
-        logger.warn("[pollNews] deep-fetch gate error (non-fatal)", {
-          error: gateErr instanceof Error ? gateErr.message : String(gateErr),
-        });
-      }
-    } else {
-      // Only count as duplicate if the item had a non-empty URL
-      // (empty-URL items are always inserted, so they never reach this branch
-      //  unless a logic error occurs — count them as duplicates if they do)
-      duplicates++;
-    }
-  }
 
   // ── Step 4–5: Run cascade + generate alerts for new entries ──────────────
   let totalAlerts = 0;
