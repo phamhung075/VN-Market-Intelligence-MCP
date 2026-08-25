@@ -169,15 +169,47 @@ fi
 # ─── Write stdin to a temp file in the SAME directory ────────────────────────
 # MUST be in the same directory as LIVE_FILE (same filesystem mountpoint) so
 # that the final mv(2) is a POSIX-atomic rename, not a copy-then-delete.
-TMP=$(mktemp "$(dirname "${LIVE_FILE}")/.orch-apply-XXXXXXXX.json")
+#
+# PORTABILITY (task: FIX-ORCHAPPLY-MKTEMP-SUFFIX-DEFEATS-RANDOMIZATION-BSD-
+# CONCURRENT-WRITER-COLLISION): the X-run MUST be the trailing component of
+# the mktemp template on BOTH BSD/macOS and GNU/Linux. GNU mktemp tolerates
+# (and correctly substitutes through) a literal suffix placed after the X's;
+# BSD/macOS mktemp does NOT — it silently treats the whole string, suffix
+# included, as ONE literal filename and never substitutes the X's at all.
+# That was the defect: `.orch-apply-XXXXXXXX.json` created the literal file
+# `.orch-apply-XXXXXXXX.json` every single call on macOS, so every concurrent
+# writer raced for one fixed path instead of unique ones (`mkstemp failed:
+# File exists` on the 2nd caller). Reproduced live 2026-08-25 with this exact
+# template before applying this fix — see notebook.
+#
+# FIX: mktemp a template with the X-run at the very end and NO suffix
+# (portable identically on both platforms), THEN rename to append the
+# `.json` suffix as a separate step. `.json` carries no functional weight —
+# every downstream reader (orch-validate.mjs, orch-stamp-updated-at.mjs,
+# orch-conservation-check.mjs, orch-row-prose-ceiling-check.mjs) takes the
+# temp path as an explicit CLI arg and calls readFileSync(path, 'utf-8') +
+# JSON.parse — none of them switch on file extension. The suffix IS relied
+# on by scripts/test/orch-apply-wrapper-tests.sh's leftover-temp-file check
+# (`find "$FIXTURE_DIR" -name ".orch-apply-*.json"`), so this fix preserves
+# the exact same final filename SHAPE (`.orch-apply-<random>.json`) rather
+# than dropping the suffix — no test-side change needed.
+TMP=$(mktemp "$(dirname "${LIVE_FILE}")/.orch-apply-XXXXXXXX")
 
 # Cleanup trap: remove temp on any exit (including early exits on failure).
 # If the mv succeeds, TMP is set to "" to make this a no-op.
+# Registered BEFORE the suffix-rename below so a failure in that rename step
+# (pre-suffix TMP path) is still cleaned up.
 cleanup() {
   set +e
   [[ -n "${TMP:-}" && -f "${TMP}" ]] && rm -f "${TMP}"
 }
 trap cleanup EXIT
+
+# Append the `.json` suffix now that the randomised name already exists and
+# is guaranteed unique (mktemp created it with O_EXCL) — the rename itself
+# cannot collide.
+mv "${TMP}" "${TMP}.json"
+TMP="${TMP}.json"
 
 # Read stdin into temp file
 if ! cat > "${TMP}"; then
