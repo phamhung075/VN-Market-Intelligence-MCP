@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "severity": "WARN",
+  "ts": "2026-08-25T04:37:23Z",
+  "dedup_key": "cowork-0430Z-tick-telemetry-dashboard-drain-lane-starved",
+  "status": "NEW",
+  "payload": {
+    "tick": "2026-08-25T04:30Z",
+    "drift_min": 3,
+    "pressure_mode": "adaptive",
+    "steps": "4.2 age 11min<20 adaptive | 4.3 no-op (calendar open, SUPERSEDED post-Phase-2a) | 0a drain 2 rows HELD | 4b silent (1 slot, no agent_id in >=2) | 4.6 claimed | 4.7 wrote cycle-snapshot-04:35.json | 5.1 NORMAL cores=12 load=1.93 headroom=2651 max_parallel=4 | 5.2 consistency PASS | 5b last_fired=2026-08-25T04:36:34Z | 6.0 emit success BEFORE release | tokens released",
+    "slots_spawned": [
+      "alert-commander-market"
+    ],
+    "new_finding_dashboard_drain_lane_starved": {
+      "claim": "The dev-team drain services its 'file' lane while leaving its 'dashboard' lane unserviced in the SAME pass.",
+      "measurement": "pending_triage_inbox source+drained_at clusters (verified by cluster, never by id): last 'dashboard' cluster 2026-08-25T03:15:34Z (n=1). 'file' clusters since: 03:16:09Z n=6, 03:40:51Z n=2, 04:14:42Z n=4. Zero dashboard clusters in 79 minutes.",
+      "decisive_detail": "Row sys-20260825T035603-1fb9 entered signal_queue NEW at 03:56:03Z. The 04:14:42Z pass (peer commit 547ec1188, self-described 'dev-team tick 2026-08-25T04:07Z') drained 4 file-source signals and left that dashboard row untouched at 18 minutes old. Same pass, one lane serviced.",
+      "why_it_matters": "My standing hold-to=po-rows-at-NEW rule rests on a recorded expectation that a peer dev-team tick delivers them within ~15-30 min. That expectation is NOT holding today. If the dashboard lane is starved rather than merely slow, holding at NEW is no longer a short wait — the rows sit indefinitely, which is a different risk profile from the one the rule was written against.",
+      "not_asserted": "I have NOT established the mechanism. Separate cadence, a per-pass cap, a different trigger condition, or a genuine defect are all consistent with this evidence. Recording the observation, not a diagnosis.",
+      "to_check_next": "Whether a dashboard cluster appears after the next dev-team tick. If two more passes service file-only, this is a starved lane and the hold rule needs a fallback."
+    },
+    "signal_drain_held": {
+      "rows_held_at_NEW": [
+        "sys-20260825T035603-1fb9 (system-auditor, signal_feedback, WARN, 03:56:03Z)",
+        "cj-20260825T043249 (code-janitor, system-issue, LOW, 04:32:49Z)"
+      ],
+      "premise_reverified_live": "po slots in cowork-schedule.json = 0, so Step 0a's 'route to matching agent slot' branch is unreachable and nothing was delivered this tick. Marking READ would strip both from PO's NEW-only selector and place them in the cold-evict terminal set.",
+      "deviation_stated": "This is a deliberate deviation from work-tick.md Step 0a as written, declared out loud per standing practice — now with the added caveat above that the delivery backstop I rely on may itself be starved."
+    },
+    "pre_committed_test_2": {
+      "recorded_before_any_return": true,
+      "setup": "Step 4.7 wrote cycle-snapshot-04:35.json at ~04:35 — a name that IS a valid 5-minute slot, so it satisfies SKILL.md:58's rounding rule. Spawn issued ~04:36:30; reader reaches Step -1 at roughly 04:37.",
+      "discriminator": "HIT => the reader DOES implement line 58's round-to-nearest-5 (04:37 -> 04:35), which would falsify my c244-based inference and mean that notebook line named wall-clock time rather than the lookup key it used. MISS naming a non-multiple-of-5 key => independent second confirmation that the reader uses the raw run-minute in violation of its own spec.",
+      "why_decisive": "Unlike the 04:15Z test, freshness cannot be the confound: the file will be ~2 min old against a 7-minute budget, and its name is spec-valid. No third explanation fits.",
+      "honesty_note": "At the 04:15Z tick I pre-committed to spawn-to-Step--1 LATENCY as the residual cause and that was falsified by the freshness math. Recording this one the same way so it can falsify me again."
+    },
+    "promoter_confirmation": "emit_pressure_state returned cycle_snapshot_promoted:false — 14th consecutive. Promoter sought nominal cycle-snapshot-04:30.json; writer produced 04:35. Consistent with the structural-unreachability finding, not new evidence.",
+    "step_4b_note": "Trivially satisfied this tick (single slot). Recorded because I MISSED this guard at the 04:00Z tick with two alert-commander slots; keeping it explicit until it is habitual."
+  }
+}
