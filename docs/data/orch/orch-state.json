@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T15:41:12Z",
+    "_updated_at": "2026-08-25T15:44:26Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -794,6 +794,20 @@
         "provenance": "router-observed",
         "audit_cycle_tag": "cron:dev-team:2026-08-25T15:07Z",
         "dedup_key": "tooling_defect:drain-signals-js:unknown_flag_falls_through_to_destructive_default"
+      },
+      {
+        "id": "rtr-20260825T1545-qadrainskip",
+        "ts": "2026-08-25T15:44:26Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "Review-Lane QA-Drain SKIP branch STRANDS the row it skips. Both invocation sites say: `if not outer_claim.claimed: log SKIP -- held by peer session; continue`. But the claim script (scripts/devteam-review-claim-qa-drain.jq) has ALREADY moved that row review[] -> qa[] and stamped claimed_at/claimed_by in the committed orch-apply write BEFORE the per-row outer_claim is attempted. A skipped row therefore sits in qa[] with status=QA and no qa agent ever dispatched, and no later tick re-picks it: both QA-Drain sites select from review[], never qa[]. Hit live this tick on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. SECOND finding, same incident: task_claim is NOT re-entrant on task: keys -- it returned claimed:false with current_holder.owner_client_session EQUAL TO the requesting session (a stale RLC lock from that row own earlier completed dispatch). So the SKIP branch prose -- held by peer session -- is wrong twice over: the holder can be YOURSELF. Router resolved it by releasing its own stale lock and re-claiming rather than stranding a P0; the flow gives no sanctioned path for that. Same class as FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED lane-narrower-than-claim-script family.",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router-observed",
+        "audit_cycle_tag": "cron:dev-team:2026-08-25T15:37Z",
+        "dedup_key": "flow_defect:devteam-qadrain:skip_branch_strands_already_lanemoved_row"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
