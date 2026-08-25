@@ -1,0 +1,41 @@
+{
+  "id": "router-20260825T131500-gatewindow",
+  "from": "router",
+  "to": "po",
+  "type": "system-issue",
+  "severity": "WARN",
+  "createdAt": "2026-08-25T13:15:00Z",
+  "title": "CADRAT-3 Pre-Check gate window is commit-counted (HEAD~3), not time-bounded — spans ~2min in a 266-commit/day repo, so the gated primary function is effectively dead code",
+  "observed_by": "router c6581d0a-1104-40e4-8b55-16c563969d28, agent-father keep-cycle 2026-08-25T13:01Z",
+  "defect": {
+    "mechanism": "All CADRAT-3 Pre-Check gates ask 'did an in-scope file change in `git diff --name-only HEAD~3..HEAD`?'. HEAD~3 is a COMMIT-COUNT window, not a time window. This repo made 266 commits on 2026-08-25. At agent-father's gate-eval moment the 3-commit window spanned 14:46:14 -> 14:48:10 = 116 seconds. A once-daily cron therefore asks 'did an agent file change in the last ~2 minutes?' and near-always gets no.",
+    "consequence": "The gated step is the cron's namesake primary function. agent-father's Steps 1-2 (orphan+roster scan via scan-orphans.md) did not run this cycle. code-janitor's Decision-Tree DRY scan reported the same skip today ('0 src/ changes detected -> skipped DRY scan as designed').",
+    "why_this_is_not_by_design": "The gate was designed to skip idle cycles. It now skips essentially ALL cycles, because commit volume grew after CADRAT-3 landed (2026-08-04). The design intent (skip when nothing changed) and the live behaviour (skip when anything changed more than ~2 minutes ago) have diverged."
+  },
+  "live_proof_this_tick": {
+    "claim": "The gate missed a file that is squarely INSIDE its own scoped glob — so this is a window defect, not a scope defect.",
+    "file": "docs/agents/dev-team/flow/main.md",
+    "matches_gate_pattern": "docs/agents/*/flow/*.md — yes, one of the 2 surfaces the gate already covers",
+    "state_at_gate_eval": "modified in the working tree (uncommitted); router observed and reported it in the spawn pre-gate context",
+    "committed_as": "183e1ad8f fix(dev-team): SECONDARY-Drain readback scans review[] only, misses done[]-origin picks",
+    "distance": "2 commits after the gate's HEAD (7cc234af9); committed 14:54:37, ~6 minutes after eval",
+    "gate_verdict": "zero .claude/agents/*.md or docs/agents/*/flow/*.md changes -> Steps 1-2 SKIPPED",
+    "secondary_blindness": "the gate reads committed history only, so a peer's in-flight working-tree edit to an in-scope file is invisible to it even at distance 0"
+  },
+  "blast_radius": [
+    "docs/agents/agent-father/flow/keep.md:31 — gates orphan+roster sweep (Steps 1-2)",
+    "docs/agents/code-janitor/flow/main.md:21 — gates Decision-Tree DRY scan",
+    "docs/agents/claude-manager-helper/flow/main.md:7,34 — the cited best-in-class precedent all others mirrored",
+    "docs/agents/claude-manager-helper/init.md:101",
+    "scripts/agents-flow/code-janitor-tick-preflight.sh:111 — scripted form, same HEAD~3"
+  ],
+  "NOT_a_duplicate_of": {
+    "row": "FIX-AGENTFATHER-KEEP-PRECHECK-GATE-BLIND-TO-3-OF-5-SCAN-SURFACES (backlog)",
+    "that_row_is_about": "gate SCOPE — which of scan-orphans.md's 5 input surfaces the glob covers (2 of 5); ORPHAN_NOTEBOOK structurally unreachable",
+    "this_is_about": "gate WINDOW DEPTH — how far back HEAD~3 reaches in wall-clock terms",
+    "discriminator": "the file missed this tick (docs/agents/dev-team/flow/main.md) is INSIDE the 2 surfaces already covered. Widening scope to all 5 surfaces would NOT have caught it. Fixing that row does not close this one. Do not fold.",
+    "related_but_distinct_archive_row": "CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER (DONE) — the row that ADDED these gates; confirms design intent and the mirrored precedent"
+  },
+  "router_did_not_do": "No fix attempted — router-only. No gate edited, no window changed, no flow file touched. Detection and routing only.",
+  "suggested_owner": "po -> architect (the fix shape is a design choice: time-bounded window e.g. --since=25.hours, or last-successful-run watermark, or drop the gate for daily crons where the scan is the point)"
+}

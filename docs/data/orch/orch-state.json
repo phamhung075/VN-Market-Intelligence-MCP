@@ -703,6 +703,20 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "auditor-cycle-missing:tier1:2026-08-25T12:00Z"
+      },
+      {
+        "id": "router-20260825T131500-gatewindow",
+        "ts": "2026-08-25T13:15:00Z",
+        "from": "router",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CADRAT-3 Pre-Check gate uses HEAD~3 (commit-count, ~2min at 266 commits/day) so agent-father orphan+roster scan + code-janitor DRY scan are effectively never reached — in-scope file missed live this tick",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": "docs/signals/agentfather-precheck-gate-window-2026-08-25.json",
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "precheck-gate-window:HEAD3-commit-count:2026-08-25"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -16929,46 +16943,6 @@
     ],
     "done": [
       {
-        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
-        "type": "FIX",
-        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
-        "status": "DONE",
-        "priority": "P0",
-        "size": "S",
-        "zone": ".claude/skills/",
-        "owner": "agent-father",
-        "depends": [],
-        "supervised": true,
-        "created_at": "2026-07-21T17:15:48Z",
-        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
-        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
-        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit.",
-        "updated_at": "2026-08-25T12:48:41Z",
-        "updated_by": "po/triage-20260721T1907",
-        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them.",
-        "acceptance": "(1) Fix the 3 skills own bare-commit lines to pathspec-scoped form per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c, commit-boundary/SKILL.md (new sub-rule inserted between RULE 2 and RULE 3), commit/SKILL.md Step 2 -- each git commit -m call gets -- <exact paths from that skills own explicit-stage step> appended, never a directory or dot pathspec. (2) commit-boundary RULE 3s post-hoc git show --name-only HEAD / git reset --soft HEAD~1 backstop is preserved unchanged as defense-in-depth, not replaced. (3) No behavioral change to the explicit-file-list collection logic itself (commit-mutex Step 3a, commit-boundary RULE 1, commit Step 1) -- only the commit line gains a pathspec. (4) Documentation-example bare-commit lines that illustrate the anti-pattern being replaced (e.g. commit-mutex Wiring Pattern prose Replace any bare git add ... && git commit block with:) are left untouched and reported, not edited. (5) Other bare-commit occurrences found in .claude/skills/ during the scoping grep but outside these 3 files (session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127) are explicitly OUT of this row scope per architecture brief §3 step 3 (Layer-2, not this row, PM-tracked cleanup pass) and must be left untouched, reported not fixed. (6) Commit lands with explicit pathspecs on the commit line itself (not just git add), consistent with the standing constraint and the defect this row exists to close.",
-        "files": [
-          ".claude/skills/commit-mutex/SKILL.md",
-          ".claude/skills/commit-boundary/SKILL.md",
-          ".claude/skills/commit/SKILL.md"
-        ],
-        "acceptance_written_by": "agent-father/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS-20260721T1908",
-        "acceptance_written_at": "2026-07-21T19:08:10Z",
-        "entered_review_at": "2026-07-21T19:13:38Z",
-        "agent_father_completed_at": "2026-07-21T19:13:38Z",
-        "agent_father_completed_by": "agent-father",
-        "commit_sha": "3e4f50d3a4d2ccd22a2cd60ede304e567af7b627",
-        "review_note": "3 surgical edits shipped per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c (+ Quick Reference step 4, kept consistent) -> `-- <path1> <path2> ...`; commit-boundary/SKILL.md new RULE 2.5 inserted between RULE 2/3 (RULE 3 post-hoc git show/reset --soft backstop preserved unchanged, R-HANDOFF RULE-1-3 refs updated to (incl. 2.5)); commit/SKILL.md Step 2 -> `-- <same paths from Step 1>` + Rules-list line added. Raw-verified: re-grepped all 3 files post-edit, confirmed zero remaining bare `git commit -m` lines outside 2 deliberately-left doc-example spots (commit-mutex Wiring-Pattern prose naming the anti-pattern; commit-boundary FORBIDDEN block illustrating it). Re-ran scripts/audits/verify-commit-sweep-discriminator.sh fresh (VERDICT PASS, git 2.49.0) to confirm the design premise still holds before treating the fix as durable. mock-guard.sh --files run but its PASS is a no-op for .md (filters to ts/tsx/js/py/go) -- did not bank it, read every changed file raw myself instead. Committed with git commit -- <3 explicit paths> (dogfooding the exact fix), diff-cached empty post-commit, git show --name-only HEAD confirms exactly the 3 intended files landed. Size-justification headers updated for both files that crossed/grew past the 120L threshold (commit-mutex 230->240L, commit-boundary newly added at 140L/20L overage since it had none before). OUT OF SCOPE, deliberately left (grepped, not fixed) -- same bare-commit defect class but outside this row per architecture brief §3 step 3 (Layer-2, PM-tracked cleanup pass, not this row): session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127. Also NOT touched (adjacent zone, outside .claude/skills/): docs/agents/{pm,agents-architect,agent-father}/init.md commit_discipline lines still read RULE 1-3 without the (incl. 2.5) suffix -- cosmetic staleness only, the skill file itself is authoritative and correct. Sibling row FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK checked: status READY, zone scripts/, owner/next_agent developer, untouched by this work -- no overlap found.",
-        "po_signoff_at": "2026-07-21T19:29:49Z",
-        "po_signoff_by": "po/triage-20260721T1907",
-        "po_signoff_verdict": "APPROVED. All six acceptance criteria are independently verifiable at source and were verified — by the dispatcher at commit level (both commits pathspec-scoped and tight, 3 files and 2 files, no peer sweep; all four Layer-2 files show empty diffs; RULE 3 reset --soft HEAD~1 backstop intact; FORBIDDEN doc-examples preserved) and by po against the row's own acceptance text. AC (4) and (5) are satisfied in the strongest available form: the agent reported the out-of-scope sites rather than fixing them, which is the behaviour those criteria asked for. AC (6) is satisfied and self-demonstrating — the fix was committed using the very pathspec form it introduces.",
-        "po_signoff_caveat": "The agent's claim that it wrote acceptance onto the row BEFORE editing any file is UNVERIFIABLE and is NOT relied upon for this approval. The acceptance text first appears in git at 304f24edd (19:14:24Z), after the skills commit 3e4f50d3a (19:12:13Z), because agent-father's commit zone excludes orch-state.json and a peer cold-evict collapsed the acceptance-write and the lane-move into one blob. Unverifiable is not disproven, and no fault attaches to the agent: the dispatch instruction was unsatisfiable as written, which the dispatcher has acknowledged as its own error. Decisively, the ordering claim is IMMATERIAL to this sign-off — none of acceptance criteria (1) through (6) requires acceptance-written-first, so the approval rests entirely on independently checkable artifacts. The systemic unenforceability is carried forward as DESIGN-ACCEPTANCE-WRITE-OWNERSHIP-DISPATCHER rather than being resolved here.",
-        "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward.",
-        "secondary_claimed_at": "2026-08-25T12:48:40Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
-      },
-      {
         "id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
         "type": "SPRINT-S",
         "title": "BCTC Inspect page has no quarter/ticker filter — add 2 facet <select> over the existing flat 257-option doc dropdown (client-side, zero backend change)",
@@ -19066,6 +19040,59 @@
             "observed_at": "2026-08-24T18:34:35Z"
           }
         }
+      },
+      {
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
+        "type": "FIX",
+        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "owner": "agent-father",
+        "depends": [],
+        "supervised": true,
+        "created_at": "2026-07-21T17:15:48Z",
+        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit.",
+        "updated_at": "2026-08-25T13:06:26Z",
+        "updated_by": "po/triage-20260825T1251Z",
+        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them.",
+        "acceptance": "(1) Fix the 3 skills own bare-commit lines to pathspec-scoped form per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c, commit-boundary/SKILL.md (new sub-rule inserted between RULE 2 and RULE 3), commit/SKILL.md Step 2 -- each git commit -m call gets -- <exact paths from that skills own explicit-stage step> appended, never a directory or dot pathspec. (2) commit-boundary RULE 3s post-hoc git show --name-only HEAD / git reset --soft HEAD~1 backstop is preserved unchanged as defense-in-depth, not replaced. (3) No behavioral change to the explicit-file-list collection logic itself (commit-mutex Step 3a, commit-boundary RULE 1, commit Step 1) -- only the commit line gains a pathspec. (4) Documentation-example bare-commit lines that illustrate the anti-pattern being replaced (e.g. commit-mutex Wiring Pattern prose Replace any bare git add ... && git commit block with:) are left untouched and reported, not edited. (5) Other bare-commit occurrences found in .claude/skills/ during the scoping grep but outside these 3 files (session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127) are explicitly OUT of this row scope per architecture brief §3 step 3 (Layer-2, not this row, PM-tracked cleanup pass) and must be left untouched, reported not fixed. (6) Commit lands with explicit pathspecs on the commit line itself (not just git add), consistent with the standing constraint and the defect this row exists to close.",
+        "files": [
+          ".claude/skills/commit-mutex/SKILL.md",
+          ".claude/skills/commit-boundary/SKILL.md",
+          ".claude/skills/commit/SKILL.md"
+        ],
+        "acceptance_written_by": "agent-father/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS-20260721T1908",
+        "acceptance_written_at": "2026-07-21T19:08:10Z",
+        "entered_review_at": "2026-07-21T19:13:38Z",
+        "agent_father_completed_at": "2026-07-21T19:13:38Z",
+        "agent_father_completed_by": "agent-father",
+        "commit_sha": "3e4f50d3a4d2ccd22a2cd60ede304e567af7b627",
+        "review_note": "3 surgical edits shipped per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c (+ Quick Reference step 4, kept consistent) -> `-- <path1> <path2> ...`; commit-boundary/SKILL.md new RULE 2.5 inserted between RULE 2/3 (RULE 3 post-hoc git show/reset --soft backstop preserved unchanged, R-HANDOFF RULE-1-3 refs updated to (incl. 2.5)); commit/SKILL.md Step 2 -> `-- <same paths from Step 1>` + Rules-list line added. Raw-verified: re-grepped all 3 files post-edit, confirmed zero remaining bare `git commit -m` lines outside 2 deliberately-left doc-example spots (commit-mutex Wiring-Pattern prose naming the anti-pattern; commit-boundary FORBIDDEN block illustrating it). Re-ran scripts/audits/verify-commit-sweep-discriminator.sh fresh (VERDICT PASS, git 2.49.0) to confirm the design premise still holds before treating the fix as durable. mock-guard.sh --files run but its PASS is a no-op for .md (filters to ts/tsx/js/py/go) -- did not bank it, read every changed file raw myself instead. Committed with git commit -- <3 explicit paths> (dogfooding the exact fix), diff-cached empty post-commit, git show --name-only HEAD confirms exactly the 3 intended files landed. Size-justification headers updated for both files that crossed/grew past the 120L threshold (commit-mutex 230->240L, commit-boundary newly added at 140L/20L overage since it had none before). OUT OF SCOPE, deliberately left (grepped, not fixed) -- same bare-commit defect class but outside this row per architecture brief §3 step 3 (Layer-2, PM-tracked cleanup pass, not this row): session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127. Also NOT touched (adjacent zone, outside .claude/skills/): docs/agents/{pm,agents-architect,agent-father}/init.md commit_discipline lines still read RULE 1-3 without the (incl. 2.5) suffix -- cosmetic staleness only, the skill file itself is authoritative and correct. Sibling row FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK checked: status READY, zone scripts/, owner/next_agent developer, untouched by this work -- no overlap found.",
+        "po_signoff_at": "2026-07-21T19:29:49Z",
+        "po_signoff_by": "po/triage-20260721T1907",
+        "po_signoff_verdict": "APPROVED. All six acceptance criteria are independently verifiable at source and were verified — by the dispatcher at commit level (both commits pathspec-scoped and tight, 3 files and 2 files, no peer sweep; all four Layer-2 files show empty diffs; RULE 3 reset --soft HEAD~1 backstop intact; FORBIDDEN doc-examples preserved) and by po against the row's own acceptance text. AC (4) and (5) are satisfied in the strongest available form: the agent reported the out-of-scope sites rather than fixing them, which is the behaviour those criteria asked for. AC (6) is satisfied and self-demonstrating — the fix was committed using the very pathspec form it introduces.",
+        "po_signoff_caveat": "The agent's claim that it wrote acceptance onto the row BEFORE editing any file is UNVERIFIABLE and is NOT relied upon for this approval. The acceptance text first appears in git at 304f24edd (19:14:24Z), after the skills commit 3e4f50d3a (19:12:13Z), because agent-father's commit zone excludes orch-state.json and a peer cold-evict collapsed the acceptance-write and the lane-move into one blob. Unverifiable is not disproven, and no fault attaches to the agent: the dispatch instruction was unsatisfiable as written, which the dispatcher has acknowledged as its own error. Decisively, the ordering claim is IMMATERIAL to this sign-off — none of acceptance criteria (1) through (6) requires acceptance-written-first, so the approval rests entirely on independently checkable artifacts. The systemic unenforceability is carried forward as DESIGN-ACCEPTANCE-WRITE-OWNERSHIP-DISPATCHER rather than being resolved here.",
+        "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward.",
+        "secondary_claimed_at": "2026-08-25T12:48:40Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po",
+        "po_verified_at": "2026-08-25T13:06:25Z",
+        "po_verified_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show --stat <sha>; git merge-base --is-ancestor <sha> HEAD; grep -n 'git commit' <3 skill files>",
+            "args": "sha=3e4f50d3a4d2ccd22a2cd60ede304e567af7b627; files=.claude/skills/{commit-mutex,commit-boundary,commit}/SKILL.md",
+            "live_value_observed": "Commit 3e4f50d3a exists, IS an ancestor of HEAD, --stat lists EXACTLY the 3 in-scope files (commit-boundary +39, commit-mutex +11, commit +9), no 4th path. Re-read all 3 at CURRENT HEAD (not at the commit): commit-mutex:54-58 commit line ends `)\" -- <path1> <path2> ...`; commit-boundary carries a new `## RULE 2.5 PATHSPEC-SCOPED COMMIT` between RULE 2 and RULE 3 with a CORRECT/FORBIDDEN pair naming bare, `-- docs/` and `-- .` unsafe; commit:88 ends `-- <same explicit file paths staged in Step 1>` (AC-1 x3). RULE 3 post-hoc `git show --name-only HEAD` + `git reset --soft HEAD~1` backstop present and unmodified below RULE 2.5 (AC-2). Collection logic unchanged: commit-mutex 2a still `git add <path1> <path2> ...`, RULE 1 and commit Step 1 untouched (AC-3). Anti-pattern doc examples preserved at commit-mutex:75 and the commit-boundary FORBIDDEN block (AC-4). The 4 Layer-2 out-of-scope sites untouched - the commit --stat contains only the 3 in-scope files (AC-5). AC-6 consistent with that tight 3-file --stat.",
+            "observed_at": "2026-08-25T13:06:25Z",
+            "evidence_commit": "3e4f50d3a4d2ccd22a2cd60ede304e567af7b627",
+            "verdict": "ALL 6 ACCEPTANCE CRITERIA RE-VERIFIED AT SOURCE AT CURRENT HEAD"
+          }
+        },
+        "po_secondary_drain_disposition_20260825T1303Z": "SECONDARY-Drain re-picked this row (secondary_claimed_at 2026-08-25T12:48:40Z) after an 08-23T13:39Z stamp went undispatched. Read the row itself, not the spawn text's lane premise: done[]-origin pick, status DONE, no status_note/review_note, next_agent unset - which is why the target resolver defaulted to po. Nothing was awaiting a decision: po_signoff_verdict APPROVED was written 2026-07-21T19:29:49Z. The row's ONLY real defect was stopping at DONE instead of DONE_VERIFIED, and that is NOT cosmetic: scripts/lib/devteam-eligibility.jq deps_satisfied requires EVERY dep to be DONE_VERIFIED ('plain DONE is NOT sufficient', its own comment), so backlog[] row FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT - which depends on BOTH this row and its already-DONE_VERIFIED sibling FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK - measured deps_satisfied=false live this tick and has been undispatchable for 5 weeks for that single reason. DONE_VERIFIED here is backed by a real re-probe run this tick (verification.raw_probe), not a backfilled assertion, and it clears that block. Also removes the row from the SECONDARY-Drain candidate set (review[] UNION done[]) so it cannot burn a fourth pick."
       }
     ],
     "head": {
@@ -21794,8 +21821,8 @@
         "baseline_pass": true,
         "created_at": "2026-08-24T00:12:36Z",
         "created_by": "po",
-        "updated_at": "2026-08-24T20:04:13Z",
-        "updated_by": "po",
+        "updated_at": "2026-08-25T13:06:26Z",
+        "updated_by": "po/triage-20260825T1251Z",
         "dedup_key": "signalqueue_emission_integrity:narrative_contradiction",
         "source": "PO Step 0-SIG 2026-08-24T00:03Z — 6 narrative_contradiction envelopes drained into .dev_team_idle_chain.pending_triage_inbox (4 distinct envelope_ids, 2 of them delivered twice: orch-apply accepted duplicate envelope_ids without complaint). Router flagged the family; PO re-measured every number at source before minting.",
         "root_cause": "THREE independent defects at ONE choke point — .signal_queue.rows[] append has no producer authentication, no content dedup, and no verdict/SSOT consistency check. (A) FORGED WRITER IDENTITY: the append stamps .signal_queue._updated_by = \"narrative-truth-gate\", which is the exact --arg who literal at scripts/narrative-truth-gate.sh:446. Anything that can run jq | orch-apply.sh can claim to be any producer; orch-apply.sh validates shape, never provenance. (B) NO dedup_key: neither emitter emits one (bash builds the row dict at scripts/narrative-truth-gate.sh:415-437, the TS port at apps/mcp-server/src/infrastructure/signals/narrativeContradictionSignalWriter.ts:60-90 — grep both, zero dedup_key key), and the row id is ntg-{compact_ts}-{dimension}-{ticker}-{uuid4[:6]}, so the random suffix makes every duplicate id-unique BY CONSTRUCTION. The already-open FIX-SIGNALQUEUE-DUP-ID-GUARD is therefore structurally unable to catch this class — see po_not_a_duplicate. (C) HARDCODED SUMMARY vs PAYLOAD: scripts/narrative-truth-gate.sh:421-423 templates the summary as '... but {tool} returned non-null data' unconditionally, never reading v['returned_summary'], so a row whose payload says the opposite still reads as an accusation.",
@@ -21819,9 +21846,10 @@
         ],
         "po_not_a_duplicate": "Checked every non-terminal lane before minting, on the PAYLOAD SET rather than id tokens. Three near neighbours, none of which covers this: (1) FIX-SIGNALQUEUE-DUP-ID-GUARD (backlog, developer, cross-service/) — 'orch-apply.sh id-uniqueness guard for signal_queue.rows[]/archive[] + normalize auditor ts to full ISO8601'. It is STRUCTURALLY UNABLE to catch this family: the 42 ids are all distinct (uuid4 suffix), so an id-uniqueness guard passes every one of them, and the ts here is well-formed ISO8601 — it is simply FALSE, which a format normaliser cannot detect. Its two dimensions are real and worth shipping; they just do not intersect this row. (2) FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT-DEFEATS-7D-WINDOW (backlog, developer) — same dedup DISEASE, different organ: that row is scripts/emit-audit-signal.sh and the auditor dedup ledger; this one is the signal_queue append path and has no dedup_key at all to validate. Read it first anyway — its AC-3 fail-mode analysis and its po_retarget 'prose is a known-failed fix' argument both transfer verbatim. (3) CCATO-MCP-T6/T7/T8 (ready, dev-mcp-server) — the in-flight migration of this gate into mcp-server. It does NOT close this: T6 registers the tool, it does not authenticate the writer, and the TS writer it exposes reproduces defects (B) and (C) faithfully because CCATO-MCP-T4's ACs demanded byte-faithfulness to the bash row. Fixing this row should be coordinated with T6 but must not wait on it.",
         "verification_gate": "(a) State the AC-1 attribution finding explicitly, with the evidence that supports it — 'probably the script' is a fail. (b) Replay: reconstruct all 42 live rows as candidate appends and paste the accept/quarantine/reject table; the 7 tool_null_markers rows must be rejected by AC-4 and no genuine contradiction may be rejected. (c) Negative control, mandatory: a correct FAIL row (returned_value '62.1') must pass unchanged — a gate proven only on the family it was written for is the shape recorded in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist. (d) Show .signal_queue.rows[] ntg-* count after AC-8. (e) READ-ONLY ON EFFECTS: no BUG Telegram from any test run.",
-        "po_expedite_20260824T1056Z": "P1->P0 2026-08-24T07:37Z. RE-MEASURED 10:56Z: 78 rows, 13 batches, EMITTER STILL LIVE. Batch 13 (6 rows: -62a037 -d6f9e8 -94f891 -d47330 -1adb71 -1704ab) landed between commits 22429c27e (08:53:31Z, ntg=72) and c637f9e69 (08:59:31Z, ntg=78) - 8h45m AFTER this row was minted and 7h20m after the expedite; a set-diff of those two commits returns exactly those 6 ids. Git-traced counts: 0(08-23T22:32Z) 18 36 42 48 54 66 72 78(08-24T08:59Z). All 78 still carry ts 2026-08-24T00:00:00Z to the second across 10h27m of wall clock, so AC-7's not-a-clock-read proof is 13 batches strong, not 3. Grouping on payload.returned_value still gives the SAME 4 findings ('not found in database', 60, 61, 62.1): 4 findings, 78 rows, 19.5x amplification, zero dedup_key on any of them. 13 inverted rows now RETRACTED (7 at 00:2x, 5 at 07:37Z, 1 at 10:56Z). AC-8's figure is stale a second time: 65 rows to collapse, not 60 or 35. No ntg-* row is age-evictable before 2026-08-25T00:00Z.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID",
-        "po_recount_20260824T2004Z": "Router recount 2026-08-24T19:55:33Z: ntg-* count=108 (was 78 at 10:56Z), +5 batches of 6, all ts still 2026-08-24T00:00:00Z across ~21h wall clock, zero dedup_key. Status split 6 NEW/84 READ/13 RETRACTED/5 triaged. Same 4 findings via payload.returned_value grouping -> 27x amplification. Promoting backlog->ready per router dispatch; no further re-derivation this cycle."
+        "po_expedited_at": "2026-08-25T13:06:25Z",
+        "po_expedited_by": "po",
+        "po_expedite_20260825T1303Z": "SUPERSEDES+CORRECTS the two 08-24 notes deleted here (po_expedite_20260824T1056Z, po_recount_20260824T2004Z); raw batch traces preserved in the 20260825T1251Z-po decision journal. Their headline figures are STALE - do NOT quote them: signal_queue now holds only 2 ntg-* rows and BOTH carry real distinct clock reads (20:33:31Z / 20:36:14Z), not 108 rows at 27x amplification. Re-verified at source this tick that the defect is STILL LIVE regardless: 6 brand-new ntg-* rows (suffixes 3bcd96 6c2355 286c9c 328400 51973a 1d332d) were FIRST introduced at commit ddab2f4c on 2026-08-25T07:07:04Z - git log -S confirms first-introduction, so a LIVE EMISSION, not a stale-full-doc restore - all carrying the frozen ts 2026-08-24T00:00:00Z (31h stale, killing the read-clock-once-at-midnight theory), all technical_indicators-VNM (ONE finding, 6x amplification), zero dedup_key; removed again 7.5 min later at e3fb7e5f. Scope stands: fix the EMISSION path (AC-1 attribution FIRST), not the current queue depth. Canonical po_expedited_at stamped this tick - the 08-24 escalations used bespoke prose keys only, which is_po_expedited cannot read, so they were never visible to the Incident-Lane Consumer."
       },
       {
         "id": "FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN",
