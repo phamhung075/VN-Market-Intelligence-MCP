@@ -128,10 +128,136 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T02:12:38Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-24T00:00:00Z",
+    "_updated_by": "narrative-truth-gate",
     "archive": [],
     "rows": [
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-c610ae",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-ec9b00",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-0141e9",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-7a6882",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-6133ab",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-3d4916",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-a98155",
         "ts": "2026-08-24T00:00:00Z",
