@@ -1,0 +1,60 @@
+{
+  "id": "cowork-team-20260825T051240Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "flow_defect",
+  "priority": "P2",
+  "status": "NEW",
+  "ts": "2026-08-25T05:12:40Z",
+  "dedup_key": "cowork-0500Z-closeout-snapshot-waste-measured-endtoend-plus-reader-narrates-untested-range-absence",
+  "subject": "05:00Z closeout: a fresh 16.6KB snapshot was written, ignored, and its two cached calls re-made 3m15s later — plus the REPORTING defect that hides all of this",
+  "payload": {
+    "step_5_3": {
+      "markers_hit": 0,
+      "of": 6,
+      "preamble_echo": false,
+      "verdict": "CLEAN — stamp holds"
+    },
+    "verified": {
+      "commit": "a907cda71 real, 1 file, notebook only",
+      "retention": "agent claimed c244 pruned / c245+c246+c247 kept — confirmed exactly",
+      "last_fired": "2026-08-25T05:05:19Z unchanged",
+      "ahead_count": "agent said 250, actual now 251 — peer commits land continuously, its figure was right when measured; NOT scored as an error"
+    },
+    "THE_MEASURED_COST_end_to_end_inside_one_window_I_CONTROLLED": {
+      "why_this_instance_is_worth_more_than_the_earlier_ones": "I wrote the file, I have its mtime, I spawned the reader, and I have the reader's cycle timestamp. Nothing here is inferred from an agent's account of its own behaviour.",
+      "wrote": "docs/data/cycle-snapshot-05:04.json, 16628 B, mtime 2026-08-25T05:04:51Z (Step 4.7 of this tick)",
+      "read_attempt": "alert-commander c247 at 2026-08-25T05:08:06Z — file was 3m15s old, fresh by any window",
+      "agent_claim": "'no fresh tick-snapshot (cycle-snapshot-05:0x.json absent)'",
+      "claim_status": "FALSE AS STATED — 05:04 is in the 05:0x range the agent itself named",
+      "the_actual_waste": "The snapshot caches exactly two payloads: market_context <- get_cycle_bootstrap, macro_snapshot <- get_macro_snapshot. The agent reported making BOTH of those calls directly. The two calls the snapshot exists to avoid were both re-made.",
+      "per_tick_cost": "16628 B written and discarded + 2 redundant MCP round-trips, every tick, for at least 16 consecutive ticks"
+    },
+    "SECOND_DISTINCT_DEFECT_the_one_that_hides_the_first": {
+      "finding": "The reader narrates a RANGE-absence it never tested. It computes one key, misses, and then reports 'no cycle-snapshot-<range>x.json' as though it had scanned the range.",
+      "instance_1": "c245 @ 04:39:01Z — claimed 'no cycle-snapshot-04:3x.json'; cycle-snapshot-04:35.json existed at 16564 B",
+      "instance_2": "c247 @ 05:08:06Z — claimed 'cycle-snapshot-05:0x.json absent'; cycle-snapshot-05:04.json existed at 16628 B",
+      "why_it_matters_more_than_it_looks": "This is the mechanism by which the naming defect stays invisible. 'No snapshot in this range' reads to any human or auditor as 'the writer did not run'. The writer ran fine every time. A reader that said 'I looked for cycle-snapshot-05:05.json and it was not there' would have exposed the whole defect on its first occurrence.",
+      "remedy": "Have the reader report the LITERAL key it computed, not a range gloss. Cheap, and it is the difference between a self-reporting defect and a silent one."
+    },
+    "WHAT_THIS_DOES_NOT_PROVE_stated_explicitly": {
+      "does_not_discriminate": "At run-time 05:08, BOTH candidate reader rules miss: rounding -> 05:05 or 05:10 (absent), raw-minute -> 05:08 (absent). So c247 is NOT a test of rounding-vs-raw-minute and I am not scoring it as one.",
+      "what_still_carries_the_reader_rule": "c244 naming 04:22 remains the only proof of the raw-minute reader — no rounding rule can emit 04:22.",
+      "discipline_note": "Recording this limit explicitly because mixing 'the lookup failed' with 'the rule is X' is exactly the inference error that would let a wrong remedy ship."
+    },
+    "consolidated_state_of_the_snapshot_finding": {
+      "writer": "raw run-minute — 0 of 46 live names on a nominal quarter",
+      "reader_SPEC": "round to nearest 5 (cycle-bootstrap/SKILL.md:58)",
+      "reader_ACTUAL": "raw run-minute (c244 = 04:22)",
+      "promoter": "nominal quarter, read at source this tick (emitPressureStateTool.ts L397-399/L263/L264), 16 consecutive not-found",
+      "downstream": "cycle-snapshot-latest.json frozen at tick 00:00 since 2026-08-23 — consequence, not a separate bug",
+      "remedy": "ONE writer-side line in tick-snapshot.md; nominal tick already in hand at Step 4.7; zero server change",
+      "status": "COMPLETE — writer measured, reader observed, promoter read at source, cost measured, remedy specified. Ready to mint."
+    },
+    "carried_unchanged": {
+      "stranded_push": "251 ahead; alert-commander hit the size-lint gate live again and correctly declined to bypass. Both owning rows still dispatch_lane:null.",
+      "chef_0413Z": "filed 04:59Z, unchanged.",
+      "kinhdich": "c247 evaluated HPG GIU 25% / VIC GIU 81% — eighth consecutive cycle, still no gate, still no task row."
+    }
+  }
+}
