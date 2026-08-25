@@ -1,0 +1,117 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "bug-escalation",
+  "priority": "P0",
+  "createdAt": "2026-08-25T04:46:23Z",
+  "dedup_key": "resolver:effective_next_agent|hot-cold-next_agent-divergence",
+  "summary": "ESCALATION of the 04:21Z signal (same dedup_key, do not double-mint): the hot/cold next_agent divergence does not merely skip individual rows — it empties the Review-Lane QA-Drain candidate set entirely. Measured live this tick.",
+  "payload": {
+    "escalates": "docs/signals/processed/dev-team-20260825T042116Z.json",
+    "severity_change": "P1 -> P0",
+    "why_escalated": "Previously filed as 2 individual mis-resolved rows. A full census this tick shows the lane-level consequence: QA-Drain resolves ZERO eligible rows out of 27 review[] rows while holding 7 free budget (QA_WIP=3, QA_CAP=10). The lane is dammed, not merely lossy.",
+    "measured_at": "2026-08-25T04:46:23Z",
+    "census": {
+      "review_total": 27,
+      "status_REVIEW": 17,
+      "rows_with_hot_next_agent_qa": 1,
+      "rows_with_cold_next_agent_qa": 0,
+      "rows_with_effective_next_agent_qa": 0,
+      "qa_drain_picked_this_tick": 0,
+      "qa_wip": 3,
+      "qa_cap": 10,
+      "take_budget_available": 7
+    },
+    "masking_row": {
+      "id": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+      "hot_next_agent": "qa",
+      "cold_next_agent": "developer",
+      "status": "REVIEW",
+      "note": "This is the ONLY review[] row routed to qa on the hot board. effective_next_agent() prefers the cold backlog-detail.json value, so it resolves to developer and QA-Drain never sees it. One stale cold entry is sufficient to zero the entire lane."
+    },
+    "divergent_rows_total": 12,
+    "divergent_rows": [
+      {
+        "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
+        "hot": "",
+        "cold": "ops",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "W5-FU-CTG-REFINE-96e36139",
+        "hot": "",
+        "cold": "ops",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T",
+        "hot": "dev-team",
+        "cold": "ops",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+        "hot": "agent-father",
+        "cold": "dev-mcp-server",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
+        "hot": "",
+        "cold": "po",
+        "status": "REVIEW"
+      },
+      {
+        "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
+        "hot": "",
+        "cold": "po",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT",
+        "hot": "",
+        "cold": "po",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "TASK-COWORK-MUTEX-001",
+        "hot": "",
+        "cold": "developer",
+        "status": "BLOCKED"
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
+        "hot": "architect",
+        "cold": "po",
+        "status": "REVIEW"
+      },
+      {
+        "id": "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
+        "hot": "",
+        "cold": "po",
+        "status": "REVIEW"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
+        "hot": "",
+        "cold": "developer",
+        "status": "REVIEW"
+      },
+      {
+        "id": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+        "hot": "qa",
+        "cold": "developer",
+        "status": "REVIEW"
+      }
+    ],
+    "reproduce": "jq -r --slurpfile detail docs/data/orch/archive/backlog-detail.json (build id-keyed map from .items[]) then compare .task_board.review[].next_agent against $D[.id].next_agent; count rows where the cold value wins and differs.",
+    "root_cause_location": "scripts/lib/devteam-eligibility.jq:342-348 effective_next_agent($detail_items) returns $detail_items[.id].next_agent whenever it is a non-empty string, falling back to the hot row .next_agent only when absent. detail_items_from (:49-53) builds that map from docs/data/orch/archive/backlog-detail.json .items[]. Nothing reconciles the two planes and nothing warns on mismatch.",
+    "asks": [
+      "Decide which plane is authoritative for next_agent. The hot board is the one every agent actually writes on handoff; the cold archive is a snapshot that goes stale silently.",
+      "Until that decision lands, make the divergence loud rather than silent: have effective_next_agent (or a preflight audit) emit a warning listing rows where hot and cold disagree, instead of resolving one and discarding the other.",
+      "Re-check the QA-Drain lane after the fix. Its DoD trend (review[] shrinks, qa[] grows) cannot be measured while its candidate set resolves to zero."
+    ],
+    "related_open_row": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (backlog[], P1, undispatched) is the same two-plane class on the DRS side.",
+    "router_note": "Router does not author task rows. Filed as a signal for PO/architect triage."
+  }
+}
