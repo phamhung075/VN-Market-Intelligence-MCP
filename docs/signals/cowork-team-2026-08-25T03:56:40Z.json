@@ -1,0 +1,65 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_defect_correction",
+  "status": "NEW",
+  "priority": "P2",
+  "ts": "2026-08-25T03:56:40Z",
+  "dedup_key": "cowork-cycle-snapshot-quantization-mismatch",
+  "supersedes_narrowing_in": [
+    "docs/signals/cowork-team-2026-08-25T03:42:10Z.json",
+    "commit 70628b3e7"
+  ],
+  "payload": {
+    "headline": "READ THE SPEC, NOT THE AGENT PROSE — the consumer has NO nearest-file scan. My prior tolerance-window remedy was designed against behaviour I inferred from one agent sentence and never verified.",
+    "spec_source": ".claude/skills/cycle-bootstrap/SKILL.md Step -1",
+    "spec_verbatim": {
+      "tick_rule": "TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot)",
+      "path_rule": "SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json",
+      "lookup": "single exact-path existence check; if present, a >7min staleness test on THAT file; else fall through to direct MCP",
+      "no_nearest_scan": true
+    },
+    "true_mechanism": "FOUR quantizations of one clock, not a sub-minute race: writer names by RAW minute (date -u +%H:%M, tick-snapshot.md); reader looks up the SAME clock ROUNDED TO 5-MIN SLOTS; promotion looks up the NOMINAL QUARTER TICK. A write can only ever be found when its minute is a multiple of 5.",
+    "quantified": {
+      "corpus": 46,
+      "writes_with_minute_divisible_by_5": 8,
+      "percent_matchable_at_all": 17,
+      "writes_named_at_nominal_quarter_tick": 0
+    }
+  },
+  "corrections_to_my_own_prior_claims": [
+    {
+      "claim": "the 03:00Z HIT was luck — a write at 03:05:45Z reached inside the remaining 15 seconds",
+      "verdict": "WRONG",
+      "why": "minute 05 is a multiple of 5, so the rounded lookup resolves 03:05 for any read from 03:02:30 to 03:07:30. That HIT was DETERMINISTIC with a ~5-minute window, not a 15-second coin flip."
+    },
+    {
+      "claim": "the consumer locates the neighbouring file and computes its staleness, then discards it on name equality alone",
+      "verdict": "UNSUPPORTED",
+      "why": "built on the 03:30Z agent sentence about a nearest file being 1 min stale. The spec has no nearest-neighbour scan. That was agent narration read as code behaviour."
+    },
+    {
+      "claim": "cheaper remedy = a tolerance window on the nearest snapshot the consumer already computes",
+      "verdict": "RETRACTED",
+      "why": "there is no nearest-snapshot computation to put a tolerance on. That remedy would have to BUILD the scan first, so it is not the cheap option it was sold as."
+    },
+    {
+      "claim": "margin_to_minute_roll_seconds is the discriminator (recorded in the 03:45Z telemetry signal)",
+      "verdict": "WRONG MODEL",
+      "why": "the reader rounds to 5-min buckets, so distance to the next MINUTE is not the relevant quantity; distance to the next 5-MIN BUCKET boundary is."
+    }
+  ],
+  "what_still_holds": [
+    "The prediction was right: 03:45Z tick MISSED, as called in advance in commit 09a5c4297. 4 samples, 2 advance predictions, both held.",
+    "Promotion is structurally unsatisfiable: 0 of 46 files carry a nominal-quarter name.",
+    "cycle-snapshot-latest.json frozen at tick 00:00 / 2026-08-23T00:07:50Z, serving regime UNKNOWN vs live NEUTRAL.",
+    "Blast radius still bounded: every miss falls back to live MCP calls, so the cost is ~2 redundant bootstrap calls per tick, not wrong data."
+  ],
+  "remedy_now_single": "Name by NOMINAL tick in all three places (writer, reader, promotion). The dispatcher already passes scheduled_utc, so the writer has the nominal value in hand and does not need to derive it. This is the only remedy that fixes reader AND promotion; there is no cheap second option.",
+  "unresolved": "At 03:45Z the agent reported the latest cached snapshot was from the prior day, while at 03:30Z the same agent on the same flow reported a nearest file 1 min stale. The spec explains neither phrasing. Treat both as narration of unknown provenance, not as evidence of lookup behaviour.",
+  "unowned_finding": {
+    "subject": "DBC kinhDich BAN 100% vs price",
+    "detail": "divergence WIDENED this cycle: +6.63% today vs +5.42% at 03:30Z, kinhDich still full-confidence sell. Correctly non-actionable under alert-commander gate. No agent in the fleet checks whether the model leads price or is wrong."
+  },
+  "routed_to": "PO Step 0-SIG"
+}
