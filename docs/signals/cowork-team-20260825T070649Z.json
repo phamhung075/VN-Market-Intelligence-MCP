@@ -51,7 +51,15 @@
         "deterministic": "FILE_TICK=$(date -u +%H:%M) is pure bash inside the fence — no LLM substitution involved, so this fires identically on every tick regardless of dispatcher.",
         "executed_as_written": "Ran the fence verbatim rather than hand-substituting a nominal name. Hand-correcting would break the evidence chain and is an unrecorded flow edit; the router does not edit flow docs.",
         "fix": "docs/agents/cowork-team/flow/tick-snapshot.md — FILE_TICK must be the nominal tick, used for BOTH the filename and the --arg tick value. No server change.",
-        "owner_hint": "agent-father"
+        "owner_hint": "agent-father",
+        "downstream_observed_post_filing": {
+          "what": "The wall-clock tick does not stay inside docs/data/ — it propagates into the spawned agent's own cycle identity, its notebook, and its log_agent_work record.",
+          "evidence": "alert-commander returned from this tick reporting 'cycle 07:05 (tick=07:05)'. Its notebook entry c250 is headed 'tick=07:05' and its log_agent_work id=2133 belongs to that cycle. The nominal tick was 07:00 and I passed scheduled_utc=2026-08-25T07:00:00.000Z explicitly in the spawn prompt.",
+          "inconsistent_across_consecutive_cycles": "c249 (06:45Z tick): notebook says tick=06:45 — the NOMINAL value, matching the scheduled_utc I passed — while consuming cycle-snapshot-06:50.json. c250 (07:00Z tick): notebook says tick=07:05 — the WALL-CLOCK snapshot name — despite the same prompt shape and scheduled_utc=07:00. Same dispatcher, same slot, consecutive fires, two different derivations.",
+          "why_this_raises_severity": "Previously argued as a promotion failure confined to cycle-snapshot-latest.json. It is also a provenance defect: cycle records in agent notebooks and the log_agent_work table are labelled with a time that matches neither the nominal tick nor, reliably, the scheduled_utc the dispatcher supplied. Anyone reconciling agent activity against the cowork schedule by tick label will mis-join.",
+          "not_yet_established": "WHY the derivation differs between c249 and c250 is unresolved. Do not assert that the snapshot filename overrides scheduled_utc as a rule — it did on c250 and did not on c249. Two samples.",
+          "scope_note": "This raises the fix scope: the nominal tick must reach the agent unambiguously, not just fix the filename and the .tick field."
+        }
       },
       {
         "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
