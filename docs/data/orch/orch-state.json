@@ -1151,6 +1151,23 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-25T20:00Z",
         "dedup_key": "data_stale:bctc-vps-queue-255870:B-13"
+      },
+      {
+        "id": "rtr-20260825T2258-effnextagentnullts",
+        "ts": "2026-08-25T22:58:14Z",
+        "from": "dev-team",
+        "to": "architect",
+        "type": "tooling_defect",
+        "summary": "CORRECTION + SCOPE WIDENING on the RESIDUAL flagged in review row FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT: its stated cause (board edit without an updated_at bump) is FALSIFIED, the real cause is a null detail.updated_at, the scope is 11 live rows not 3, and 73 of 105 detail items are latently in the same class",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router-tick-verification",
+        "dedup_key": "tooling_defect:devteam-eligibility:effective_next_agent-null-detail-ts-makes-board-unreachable",
+        "related": [
+          "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT"
+        ],
+        "detail": "RELATIONSHIP TO EXISTING WORK — READ FIRST, this is deliberately NOT a duplicate. review[] row FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (next_agent=qa, updated 2026-08-25T22:33:11Z) already carries, inside its verify_note, a RESIDUAL block naming 3 rows and routing them to 'architect/PO adjudication'. That flag is correct to exist and its instinct to escalate was right. This signal files three corrections to it and does NOT ask for the fix to be reverted. (1) CAUSE IS WRONG, AND THE WRONG CAUSE IMPLIES A FIX THAT DOES NOTHING. The verify_note says the 3 rows diverge 'because the board edit didn't bump updated_at', which implies bumping the board's updated_at would resolve them. It would not. Measured on live data: all 3 rows DO carry a board updated_at (2026-08-25T22:30:08Z on each). What is missing is the DETAIL side. scripts/lib/devteam-eligibility.jq effective_next_agent() takes the board value only inside the conjunct (($board_ts != null) and ($detail_ts != null) and ($board_ts > $detail_ts)); a null $detail_ts makes that conjunct false UNCONDITIONALLY, control falls to the else branch, and $raw_detail_na is returned no matter how fresh the board write is. No board-side bump can make a null detail_ts non-null, so the implied remedy is inert. (2) SCOPE IS 11 ROWS, NOT 3, AND 73 LATENT. Live census of orch-state.json against docs/data/orch/archive/backlog-detail.json: 105 detail items carry next_agent, only 32 carry updated_at — 73 (70%) sit in the structurally-unreachable class, so ANY future board next_agent edit on one of them is silently inert too. 15 rows currently diverge. The 4 in review[] carry BOTH timestamps and resolve CORRECTLY by recency (board_ts > detail_ts, board wins) — the comparator itself is sound and must not be 'fixed' blindly. All 11 failures are exactly the detail_ts=null rows: archive/FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE: board=po IGNORED -> routes architect | backlog/FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT: board=agent-father IGNORED -> routes ba | backlog/FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY: board=architect IGNORED -> routes ba | backlog/FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES: board=dev-mcp-server IGNORED -> routes ba | backlog/FIX-SIGNALQUEUE-DUP-ID-GUARD: board=developer IGNORED -> routes dev | backlog/FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT: board=agent-father IGNORED -> routes ba | backlog/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD: board=pm IGNORED -> routes ba | ready/QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL: board=po IGNORED -> routes qa | ready/FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY: board=pm IGNORED -> routes architect | ready/FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN: board=developer IGNORED -> routes architect | ready/FIX-BCTC-BANK-SUMMARY-MAPPING: board=architect IGNORED -> routes ba. (3) VENUE MAKES IT UNACTIONABLE. The residual currently lives only in prose inside a verify_note on a review[] row. Dispatch gates and claim scripts read structured fields, never prose — the same class as feedback_pickers_blind_to_prose_status_note_autoclaim_contraindicated_row, where a do-NOT-build instruction in a status_note was auto-claimed straight through. Parked there it cannot reach whoever routes these rows. WHY AC-4's diff=0 IS NOT EVIDENCE OF CORRECTNESS. The row's AC-4 reports 'dispatch_lane UNCHANGED for all 8 (diff=0)' after re-resolving. That is the EXPECTED output of this defect, not a refutation of it: dispatch_lane was originally stamped from the detail side, and for null-detail_ts rows the resolver deterministically returns the detail side again. The re-resolve reproduced the same answer because the same branch fired both times. diff=0 demonstrates the resolver is deterministic, not that the routing is right. NOTE ON THE CARRIER ROW ITSELF: FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT has NO entry at all in backlog-detail.json, so it is itself a member of the unreachable class its own fix was written to address. IMPACT: resolved_dispatch_lane() chains effective_next_agent -> effective owner -> 'developer' fallback, and both claim scripts now route through it — devteam-backlog-claim-design-router-sweep.jq (DRS :138) and devteam-backlog-claim-supervised-lane-sweep.jq (SLS :138/:175). A router or PO editing .next_agent to redirect any of the 11 therefore produces NO dispatch change, silently. 4 of the 11 are in ready[] and live-dispatchable now; 3 of those carry board_ts=2026-08-25T22:30:08Z, written ~18 minutes before this tick and already inert. CANDIDATE DIRECTIONS (architect's call, explicitly not the router's): (a) treat null detail_ts as infinitely-old so a timestamped board value wins — closest to apparent intent, but flips routing on 11 rows at once and needs a blast-radius review; (b) require detail_ts and fail loudly instead of silently preferring detail; (c) backfill updated_at across the 73 detail items — data-only, leaves the comparator defect latent for the next untimestamped item. Note the 3 ready[] rows ALSO need the separate content call the verify_note already correctly identified (which side is right), and that call is independent of whichever of (a)/(b)/(c) is chosen. NOT MINTING A BOARD ROW: filing for architect triage because (a)/(b)/(c) is a routing-semantics decision with fleet-wide blast radius, and because the adjacent row is still in review[] — minting now risks the duplicate-shipping shape in feedback_po_promote_dedup_blind_to_archived_lane_reships_fixed_work. REPRODUCTION NOTE: detail items live ONLY in docs/data/orch/archive/backlog-detail.json, supplied to the claim scripts via --slurpfile detail + detail_items_from($detail). They are NOT at .task_details or .task_board.details inside orch-state.json — probing there returns null for every field and silently measures nothing."
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -24163,7 +24180,7 @@
         "last_served_tick": "2026-08-25T22:13:30Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-25T14:22:46Z"
+        "last_served_tick": "2026-08-25T22:46:28Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-25T14:45:11Z"
@@ -24178,7 +24195,7 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-25T22:44:10Z",
+    "_updated_at": "2026-08-25T22:46:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
