@@ -203,3 +203,14 @@ architect unranked — picking one is a fleet-wide routing-semantics call, not m
   no board coverage found. Flow rule says re-verify next tick before minting. Do that.
 - `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL` and `FIX-A29-CRON-GAP-...` now overlap by
   construction. Merge or close one before either is worked.
+
+### Addendum — the two mandatory pre-checks (run after the drain, not before)
+- supervised-goahead: **no-op**. `.head.status=idle`, `.head.active_task_id=null`, so WF-2 evaluates
+  no row and nothing is held. 20+ other rows are `supervised` with no `po_goahead_*`; the sub-flow
+  says explicitly not to pre-emptively stamp those, and I did not.
+- manual-dispatch-sweep: **146 candidates** (107 DRS-stranded, 37 backlog-XOR, 2 ready-XOR, 5
+  re-admitted). #1 `FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED` is STILL unstampable at
+  34450 prose bytes — 2nd tick in a row it wedges its own sweep. Fell through to #2, P0 CI-RED
+  `FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-...-DANGLING-IDS` (11232B after stamp, landed and read back).
+  It was `reflag=true`: previously flagged, stamp went stale, i.e. its earlier BATCH never dispatched.
+  `next_agent=agent-father` is off the DRS allowlist → router hand-dispatch only.

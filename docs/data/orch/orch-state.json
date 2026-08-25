@@ -14734,7 +14734,7 @@
         "priority": "P0",
         "created_at": "2026-08-23T18:07:39Z",
         "created_by": "po",
-        "updated_at": "2026-08-24T23:56:08Z",
+        "updated_at": "2026-08-25T23:39:53Z",
         "updated_by": "po",
         "check_id": "CI-RED-0c938085",
         "dedup_key": "ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md",
@@ -14744,10 +14744,10 @@
         "ci_red_observed_shas": [
           "ab50872961c786bab709e2227e7f4c03d8b3ae71 (CI-RED-ab508729, run 32655888564, job signal-type-coverage-guard, 2026-08-23T17:53:28Z)"
         ],
-        "po_manual_dispatch_flagged_at": "2026-08-23T21:08:35Z",
+        "po_manual_dispatch_flagged_at": "2026-08-25T23:39:52Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Selected over the two rank-0 ties (FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED, FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP) because the rank-0 tiebreak is array index — arbitrary, not value — and this is the row that actually turns the signal-type-coverage-guard CI job green. All three are the same file (docs/agents/po/flow/triage-signals.md) and the same owner, so one agent-father hop lands all three.",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Re-admitted via flag_reentrant (prior stamp older than the 4h staleness window, i.e. its earlier BATCH never dispatched). Selected as #2: the #1 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is at 34450 prose bytes and its Step-2 stamp hard-aborts orch-apply, so this sweep fell through per FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE AC-4. next_agent=agent-father is OFF the DRS allowlist: this row is reachable by router hand-dispatch ONLY.",
         "third_unrouted_type_20260824": "po 2026-08-24 measured a THIRD unrouted Pipeline-A type this file also needs and this row does not cover: `system_issue` UNDERSCORE (1 envelope, from system-auditor, severity CRITICAL, envelope 31b7f837, held back from the inbox CLEAR alongside your 3). Only the HYPHEN form `system-issue` has a routing row (triage-signals.md:39); the underscore form appears ONLY inside the `**CORRECTION` stats table at line 72, which guard-signal-type-coverage.sh's pipeline_b_section() parser deliberately SKIPS, so it is not routed. Tracked separately as FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (P1, agent-father, same file) because that one needs a real emitter-vs-alias decision, not the mechanical table append this row scopes. Land all of them in the same agent-father hop; CI cannot go honestly green while any of the 4 envelopes is still unrouted.",
         "po_occurrence_20260824T2350Z": "2026-08-24: live recurring-bug fire (envelope 622c03db) routed via to-fallback, gap confirmed still open (grep=0). Detail in po notebook 2026-08-24."
       },
