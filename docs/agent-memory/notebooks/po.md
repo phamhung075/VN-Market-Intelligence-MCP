@@ -1,5 +1,52 @@
 # PO Notebook
 
+## 2026-08-25T19:37-20:00Z — Two "confirmed" findings inverted when I checked the wiring instead of the age
+
+Triage of 15 envelopes (6 re-delivered from the 18:5xZ run that died on ENOTFOUND).
+Journal: `docs/agent-memory/decisions/triage-20260825T1937Z-po.md`.
+**3 minted · 2 promoted · 1 adjudicated (sign-off REFUSED) · 7 folded · inbox 15→0 read back.**
+
+### The envelope told me which finding was real. It was wrong.
+A dev-team correction refuted 3 of 4 stale findings and kept polymarket as "the ONE real find" —
+55.9 days against a 0.5h cadence, and market hours cannot explain 55.9 days. True, and irrelevant:
+`predictionTools.ts:10-18` records **architect RULING: RETIRE, 2026-07-31**, ISP-blocked by France's
+ANJ regulator, `predictionMarkets.enabled: false`. The last fetch (2026-06-30T22:02Z) predates the
+ruling by a month. 4/4 false positives. The lesson is not "verify the refutation" — the refutation
+was right about its three. It is that **an age is never evidence of a defect until you know whether
+the source is supposed to be running.**
+
+### The guard I was asked to add already existed, two lines below the compare that failed
+The brief's root cause was "B-01..B-13 has no trading-calendar guard, route it through
+vnTradingCalendar.ts". `flow/main.md:425` already says "Skip foreign-flow check outside VN market
+hours"; the next bullet already points at the calendar-aware script; the runbook already lists this
+under "False-positive patterns"; system-map already sets `market_hours_only: true`. Three guards,
+all bypassed. Had I taken the premise I would have shipped a **fourth prose instruction into an
+LLM-executed flow** and called it a fix. The real gap: `market_hours_only` is declared on **1 of 28
+sources** while ssc-iboard and yahoo-finance share the identical 0.25h cadence. AC-1 now forbids the
+prose fix explicitly.
+
+### The tool the flow doc names does not carry the field it says to read
+Auditor said 12/28 sources lack a queryable `last_fetch_ts`. `get_pipeline_health` — the instrument
+`main.md:423` designates — returns per-TICKER OHLCV and **zero of 28**. The other three tools are
+keyed by signal-type and service name, never source id. I minted the row asking for the real count
+rather than swapping one unverified number for another.
+
+### The read-back the router ordered is the only reason the CLEAR was honest
+Step 0-SIG's documented block died on `echo "$json" | jq` under zsh (2 of 15 payloads carried
+escapes). `orch-apply` refused the write, but the block's `|| true` swallowed it — I would have
+reported clearing 15 envelopes that never cleared. Occurrence 4 of an already-open P0. That
+instruction is not in the doc, and **AC-4 on that row is what makes it structural rather than
+dependent on whoever dispatches me.**
+
+### Refused a sign-off that read as correct on every individual branch
+The resume-key keepalive renews on `not outer_claim.claimed` — i.e. it renews the very lock whose
+absence WF-4's own comment names as its safety net, while `resume_attempts` increments only on the
+success branch. Dead-but-once-committed agents strand a WIP slot forever; `commit-convention.md:78`
+makes the required `Task:` trailer the common case, not an edge one. Direction upheld, bound added,
+P0. Every branch reads fine in isolation — that is exactly why control-flow inspection was not
+enough.
+
+
 ## 2026-08-25T18:15-18:30Z — The signal was right. It was also too cautious in one direction and too broad in the other.
 
 Triage of 22 envelopes. Journal: `docs/agent-memory/decisions/triage-20260825T1815Z-po.md`.
