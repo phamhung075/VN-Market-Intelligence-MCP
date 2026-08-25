@@ -162,5 +162,9 @@
   "auditor-cycle-missing:tier1:2026-08-25T03:00Z": {
     "ts": "2026-08-25T03:00:18Z",
     "sev": 2
+  },
+  "system_deployment:mcp-server-image-stale:A-32": {
+    "ts": "2026-08-25T03:56:02Z",
+    "sev": 2
   }
 }

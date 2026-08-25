@@ -1,14 +1,14 @@
 {
-  "written_at": "2026-08-25T03:23:01Z",
-  "fire_tick": "2026-08-25T03:00Z",
-  "verdict": "FAILURE",
-  "detail": "launchd_agents: launchd not loaded/unhealthy: com.vn-market.fleet-push(not-loaded) (also acknowledged-degraded, tracked: com.vn-market.docker-events(exit-status:143) ); ",
+  "written_at": "2026-08-25T03:53:53Z",
+  "fire_tick": "2026-08-25T03:30Z",
+  "verdict": "ALL_GREEN",
+  "detail": "all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents) — acknowledged-degraded (suppressed — open backlog fix-task tracks it): com.vn-market.docker-events(exit-status:143) expected-disabled (deliberately disabled by user policy, self-expiring, no tracked_by/staleness): com.vn-market.fleet-push(disabled-by-plist) ",
   "checks": {
     "docker_ps": "PASS",
     "health_3000": "PASS",
     "health_3001": "PASS",
     "disk": "PASS",
     "mem_creep": "PASS",
-    "launchd_agents": "FAIL"
+    "launchd_agents": "PASS"
   }
 }
