@@ -61,6 +61,18 @@ fi
 MAX 2 total push attempts. Abort on conflict; never auto-resolve. Lock is still held during this
 entire block. Origin lags by at most this one commit if both attempts fail.
 
+**Hook-rejection push failure (alert-commander, discovered live 2026-08-25):** `PUSH_EXIT != 0`
+is not always non-fast-forward — a local pre-push hook (e.g. `[pre-push] BLOCKED: doc-shaped
+check(s) failed`, size-lint on a file unrelated to `own_paths`) rejects the same way. Before
+attempting `git pull --rebase`, run `git status --porcelain`: if the working tree carries
+UNSTAGED/UNTRACKED changes outside `own_paths` (a peer session's in-flight work), do NOT rebase
+— `git pull --rebase` requires a clean tree and stashing/discarding those changes would touch
+foreign paths, forbidden by this skill's own foreign-path rule. Skip straight to the same
+terminal actions as a failed rebase-retry: `send_telegram(channel="bug", "[<agent>] commit-mutex:
+push BLOCKED by <hook/gate> — unrelated to my change. Commit local-only. Manual reconcile
+required.")` → Step 2e (post-commit verify) → Step 3 (release). Do not retry push again this
+cycle — the gate is a repo-state condition, not resolved by retrying.
+
 ## Rationale (FYI — never gates an action)
 
 **No-Heartbeat Rule:** commit-mutex does NOT require `task_heartbeat` calls. The critical section
