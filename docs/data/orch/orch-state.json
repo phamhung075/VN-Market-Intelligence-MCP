@@ -955,6 +955,20 @@
         "provenance": "router-observed",
         "audit_cycle_tag": "cron:dev-team:2026-08-25T18:37Z",
         "dedup_key": "detector_defect:auditor-b-freshness:cadence_age_gate_has_no_trading_calendar_guard"
+      },
+      {
+        "id": "rtr-20260825T1905-resumekeykeepalivestrand",
+        "ts": "2026-08-25T19:41:21Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "REGRESSION FOUND IN A SHIPPED FIX — FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT (commit faf84a6f6, agent-father, 2026-08-25). The fix is directionally right and closes a real confirmed duplicate-spawn window, but as written it introduces a PERMANENT STRAND for the most common agent death mode, and its own AC-2 (\"crash recovery preserved and PROVEN\") is falsified rather than merely unproven. Mechanism: the new keepalive renews resume_key on S2/ILC's claimed:false branch every tick. WF-4's stale-age reset declines to fire whenever `git log --since=claimed_at --grep=<task-id>` finds a commit — and commit-convention.md REQUIRES a `Task: <TASK-SLUG>` trailer on any fix/feat delivering a board task, so one commit from the agent before it dies satisfies that grep permanently. WF-4 therefore never resets .head; S2's outer_claim never succeeds because the keepalive keeps the lock alive; .head.resume_attempts increments only on the successful-claim branch (main.md:589) so WF-3's 3-attempt bound is never reachable. The row sits in in_progress[] forever holding a WIP slot. Pre-fix, the same scenario self-healed in 3 ticks. Note the irony worth recording: WF-4's own in-file comment names \"S2's own outer_claim peer-held check\" as the safety net justifying its conservative no-reset — this fix is what removes that safety net. Suggested bound (not prescriptive): increment resume_attempts on the renew branch so WF-3 stays reachable, or cap consecutive renewals, or source liveness from something other than the lock's own presence. Row moved ready[]->review[] next_agent=po with the full chain in status_note. Currently INERT (.head idle, in_progress[]=0) so there is time to fix before first exposure.",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router-observed",
+        "audit_cycle_tag": "cron:dev-team:2026-08-25T18:37Z",
+        "dedup_key": "signal_feedback:devteam-resume-key-keepalive:renewal-unbounded-strands-row-wf3-unreachable"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -19909,33 +19923,6 @@
         "updated_at": "2026-08-25T18:28:52Z"
       },
       {
-        "id": "FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW",
-        "title": "S2 dispatcher-wrap and the Incident-Lane Consumer both guard duplicate spawns with a fixed task_claim ttl_seconds:3600 and NO heartbeat renewal — any specialist running past 60min outlives its own guard, and a dev-team tick landed inside a live 7m50s unguarded window on 2026-08-25",
-        "status": "READY",
-        "type": "FIX",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "dispatch_lane": "agent-father",
-        "priority": "P1",
-        "zone": "docs/agents/dev-team/",
-        "size": "S",
-        "created_at": "2026-08-25T18:22:32Z",
-        "created_by": "po (triage-20260825T1815Z)",
-        "dedup_key": "devteam-dispatch:resume-key-ttl-lapses-under-live-agent",
-        "origin_signal_id": "868f84ea62e150feb16f79cf45bc3baca5583f800609141925991f182f83d52c",
-        "files": [
-          "docs/agents/dev-team/flow/main.md",
-          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
-        ],
-        "related": [
-          "FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT",
-          "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
-        ],
-        "ac": "AC-1 A dispatched row's resume key cannot expire while the dispatching flow still shows .head in_progress on that same active_task_id. Cheapest known shape: heartbeat the key each tick while that condition holds — a dead dispatcher stops heartbeating, so the crash backstop survives. AC-2 THE CRASH-RECOVERY PROPERTY IS PRESERVED AND PROVEN, not asserted: a genuinely dead dispatcher must still release the row. Demonstrate both halves — a live long-running agent keeps its guard, a killed dispatcher loses it. AC-3 Both call sites change together: S2 dispatcher-wrap AND the Incident-Lane Consumer in docs/agents/dev-team/flow/main.md. Fixing one leaves the window open on the other path. AC-4 Raising the TTL is NOT an accepted fix on its own — it moves the cliff; the observed agent ran 68min against a 60min bound and the next one will run longer. If a TTL bump ships as a stopgap it is labelled as such and does not close this row. AC-5 scripts/audits/devteam-dispatch-gate-satisfiability.sh gains an assertion covering resume-key lifetime vs agent runtime, or the row states explicitly why that guard cannot see this class. Today it asserts ILC dispatch eligibility and is blind to this defect.",
-        "status_note": "PO RULING 2026-08-25T18:22Z. Origin: dev-team signal_feedback envelope 868f84ea62e1, severity high, drained 18:13Z. Dedup-checked across all non-terminal lanes via scripts/po-board-dedup-search.sh (RESUME-KEY|TTL.*3600|LOCK-LIFETIME|DOUBLE-SPAWN) — ZERO existing row. Minted. | WHY THIS IS NOT HYPOTHETICAL: on 2026-08-25 the ILC dispatched FIX-PDFX-TESSERACT-CONFIDENCE at 15:35:59Z with resume_key task:<row> ttl 3600; the key expired 16:35:59Z; the agent finished 16:43:49Z; the 16:37Z dev-team tick fired INSIDE that 7m50s window with head.status=in_progress and the lock ABSENT from task_list_held. No in-flow guard would have stopped a second spawn — WF-4 stale-age (7200s threshold, age 4087s) correctly did not fire, WF-3 resume-attempt bound was at 0 of 3, and S2's own peer-held probe reads the very lock that had already expired, so it would have returned free. The only reason no duplicate launched is that the router held out-of-band harness knowledge that the subagent process was alive. That is not a control. | WHY IT IS RANKED HERE AND NOT LOWER: the guard fails precisely on LONG-running specialists, and the P0 row directly above this one (FIX-PDFX-OCR-ORIENTATION-...) is a multi-document OCR bench that will again exceed 60 minutes. The defect is scheduled to fire on the next row PO is dispatching. | DISPATCH NOTE: owner/next_agent agent-father because the two call sites are in docs/agents/dev-team/flow/main.md. agent-father is OFF the DRS-ratified allowlist [architect,ba,pm,po,agents-architect], so DRS will not pick this row up — it needs a router hand-dispatch, same DRS-STRANDED-OFF-ALLOWLIST class as improvement_approved_md's LANE-A path. dispatch_lane is stamped so the row is not shapeless, but do not mistake that for reachability.",
-        "updated_at": "2026-08-25T18:28:52Z"
-      },
-      {
         "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
         "type": "FIX",
         "size": "S",
@@ -23565,6 +23552,34 @@
         "dispatch_lane": "qa",
         "po_lane_move_20260825T1700Z": "BACKLOG -> REVIEW BY PO. The fix LANDED, incidentally, under a different row's commit: 73d4ce109 (2026-08-24T23:40:24Z, developer, filed against FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE) replaced the `grep -c ... 2>/dev/null || echo 0` idiom with `grep -c ... 2>/dev/null` followed by `[ -z \"$VAR\" ] && VAR=0` at ALL FIVE sites this row names. Verified at source by PO this tick, not inferred: scripts/agents-flow/notebook-auto-prune.sh lines 587/588 SECTION_COUNT, 630/631 SECTION_COUNT, 699/700 NON_SENTINEL_SECTION_COUNT, 701/702 SENTINEL_SECTION_COUNT, 751/752 TIE_COUNT. `grep -n 'grep -c.*|| echo' ` now matches only 3 explanatory comment lines (584, 629, 691) and zero executable statements. Moved to review[] with next_agent=qa rather than closed by PO — PO does not self-verify code.",
         "po_qa_focus_20260825T1700Z": "AC-1 confirm the 5 sites above. AC-2 confirm the emitted JSON is now parseable in the field: post-fix emissions parse (docs/signals/processed/notebook-prune-dropped-newest-docs-agent-memory-notebooks-tran-ngoc-bau-md-2026-08-25T120747Z.json and ...163137Z.json both `jq .` clean), while every pre-fix corpse does not. AC-3 the blast-radius claim in this row's desc is REPRODUCIBLE and was re-measured this tick: scanning all 54 docs/signals/*.json, exactly 4 files are invalid JSON and 100% of them are notebook-prune-dropped-newest-* emitted 2026-08-24T20:41:39Z..22:32:31Z, i.e. inside the pre-fix window (fix at 2026-08-24T23:40:24Z). All 4 fail identically at line 14 with a bare `0,` after `\"sentinel_section_count\": 0`. PO REPAIRED those 4 files in place this tick (deleted the stray line only; no other byte touched) — same disposition a prior PO tick used on the 2026-08-22 pair, see scripts/po-triage-20260823T1157-widen-umbrella-scope-preflight.jq. They will drain normally on the next tick and fold onto the notebook-cap rows. NO QUARANTINE MACHINERY IS NEEDED and none should be built: drain-signals.js:229 deliberately leaves unparseable files in place and warns every tick, and its contract explicitly says 'removed at source' — triage is the sanctioned remover."
+      },
+      {
+        "id": "FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW",
+        "title": "S2 dispatcher-wrap and the Incident-Lane Consumer both guard duplicate spawns with a fixed task_claim ttl_seconds:3600 and NO heartbeat renewal — any specialist running past 60min outlives its own guard, and a dev-team tick landed inside a live 7m50s unguarded window on 2026-08-25",
+        "status": "REVIEW",
+        "type": "FIX",
+        "owner": "po",
+        "next_agent": "po",
+        "dispatch_lane": "po",
+        "priority": "P1",
+        "zone": "docs/agents/dev-team/",
+        "size": "S",
+        "created_at": "2026-08-25T18:22:32Z",
+        "created_by": "po (triage-20260825T1815Z)",
+        "dedup_key": "devteam-dispatch:resume-key-ttl-lapses-under-live-agent",
+        "origin_signal_id": "868f84ea62e150feb16f79cf45bc3baca5583f800609141925991f182f83d52c",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
+        ],
+        "related": [
+          "FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT",
+          "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
+        ],
+        "ac": "AC-1 A dispatched row's resume key cannot expire while the dispatching flow still shows .head in_progress on that same active_task_id. Cheapest known shape: heartbeat the key each tick while that condition holds — a dead dispatcher stops heartbeating, so the crash backstop survives. AC-2 THE CRASH-RECOVERY PROPERTY IS PRESERVED AND PROVEN, not asserted: a genuinely dead dispatcher must still release the row. Demonstrate both halves — a live long-running agent keeps its guard, a killed dispatcher loses it. AC-3 Both call sites change together: S2 dispatcher-wrap AND the Incident-Lane Consumer in docs/agents/dev-team/flow/main.md. Fixing one leaves the window open on the other path. AC-4 Raising the TTL is NOT an accepted fix on its own — it moves the cliff; the observed agent ran 68min against a 60min bound and the next one will run longer. If a TTL bump ships as a stopgap it is labelled as such and does not close this row. AC-5 scripts/audits/devteam-dispatch-gate-satisfiability.sh gains an assertion covering resume-key lifetime vs agent runtime, or the row states explicitly why that guard cannot see this class. Today it asserts ILC dispatch eligibility and is blind to this defect.",
+        "status_note": "PO RULING 2026-08-25T18:22Z. Origin: dev-team signal_feedback envelope 868f84ea62e1, severity high, drained 18:13Z. Dedup-checked across all non-terminal lanes via scripts/po-board-dedup-search.sh (RESUME-KEY|TTL.*3600|LOCK-LIFETIME|DOUBLE-SPAWN) — ZERO existing row. Minted. | WHY THIS IS NOT HYPOTHETICAL: on 2026-08-25 the ILC dispatched FIX-PDFX-TESSERACT-CONFIDENCE at 15:35:59Z with resume_key task:<row> ttl 3600; the key expired 16:35:59Z; the agent finished 16:43:49Z; the 16:37Z dev-team tick fired INSIDE that 7m50s window with head.status=in_progress and the lock ABSENT from task_list_held. No in-flow guard would have stopped a second spawn — WF-4 stale-age (7200s threshold, age 4087s) correctly did not fire, WF-3 resume-attempt bound was at 0 of 3, and S2's own peer-held probe reads the very lock that had already expired, so it would have returned free. The only reason no duplicate launched is that the router held out-of-band harness knowledge that the subagent process was alive. That is not a control. | WHY IT IS RANKED HERE AND NOT LOWER: the guard fails precisely on LONG-running specialists, and the P0 row directly above this one (FIX-PDFX-OCR-ORIENTATION-...) is a multi-document OCR bench that will again exceed 60 minutes. The defect is scheduled to fire on the next row PO is dispatching. | DISPATCH NOTE: owner/next_agent agent-father because the two call sites are in docs/agents/dev-team/flow/main.md. agent-father is OFF the DRS-ratified allowlist [architect,ba,pm,po,agents-architect], so DRS will not pick this row up — it needs a router hand-dispatch, same DRS-STRANDED-OFF-ALLOWLIST class as improvement_approved_md's LANE-A path. dispatch_lane is stamped so the row is not shapeless, but do not mistake that for reachability.  ||  ROUTER VERIFICATION 2026-08-25T19:05Z (cron:dev-team:2026-08-25T18:37Z). Commits faf84a6f6 + b83e15e5d confirmed in HEAD ancestry, one file each, orch-state.json untouched by agent-father. VERIFIED BY DIFF: AC-1/AC-3 both call sites renew on their own claimed:false branch (S2 main.md:541ff, ILC main.md:1029ff); AC-4 ttl_seconds held at 3600 at every touched site, never raised; AC-2's byte-unchanged half holds (the diff touches only lines 1, 541, 992, 1396 — WF-3/WF-4 are untouched). The renewal is also mechanically sound and NOT a theft bypass: current_holder.owner_client_session is genuinely returned on failed claims (coordinationStore AC-10 tests), so presenting it satisfies taskHeartbeatTool Rung A honestly. AC-5 accepted via its own OR-clause. || BUT AC-2 IS FALSIFIED, NOT MERELY UNPROVEN — DO NOT SIGN OFF AS-IS. The fix converts WF-4's own named safety net into a self-sustaining loop and removes the only recovery path for the most common death mode. Chain: (1) agent claims task:<row>, commits at least once, then dies without releasing; (2) each later tick WF-4 sees age>=7200s, runs `git log --since=claimed_at --fixed-strings --grep=<task-id>`, finds that commit, and takes its documented \"conservative default: do NOT reset\" branch — whose in-file comment explicitly delegates safety to \"S2's own outer_claim peer-held check\"; (3) S2 reaches outer_claim, which now returns claimed:false BECAUSE THE KEEPALIVE ITSELF RENEWED THE LOCK on the previous tick, so it renews again for another 3600s; (4) .head.resume_attempts increments ONLY on the successful-claim branch (main.md:589), so it stays frozen and WF-3's 3-attempt bound is unreachable forever. Result: row permanently stranded in in_progress[], WIP slot permanently consumed, no expiry, no reset, no telegram. Pre-fix the identical scenario recovered deterministically: lock lapsed at 60min, outer_claim succeeded, resume_attempts incremented, WF-3 flipped the row BLOCKED after 3 ticks. || THE COMMIT PRECONDITION IS NOT AN EDGE CASE: docs/policies/commit-convention.md makes `Task: <TASK-SLUG>` REQUIRED on fix/feat commits that deliver a board task, and that is exactly the string WF-4 greps — so any agent that delivered anything at all before dying satisfies it permanently. Both agents running in this session died mid-work on an ENOTFOUND API fault after having committed. || NOT a reason to revert the direction: the pre-fix duplicate-spawn window was real, confirmed live, and this fix does close it. The keepalive needs a bound independent of the lock it renews — e.g. cap consecutive renewals then fall through, or increment .head.resume_attempts on the renew branch so WF-3 stays reachable, or require liveness evidence not derived from the lock's own presence. || CURRENTLY INERT IN PRODUCTION: .head is idle and in_progress[]=0, so the branch is unreachable until the next dispatch — fixable before it can bite. Router did not execute the keepalive branch this tick.",
+        "updated_at": "2026-08-25T19:41:21Z",
+        "updated_by": "dev-team (router verify cron:dev-team:2026-08-25T18:37Z)"
       }
     ],
     "qa": [
