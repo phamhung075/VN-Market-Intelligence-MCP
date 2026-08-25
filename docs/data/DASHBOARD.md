@@ -2206,3 +2206,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-02 · yahoo-finance data stale 0.6h
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** data-source/yahoo
+**Details:** Last fetch 2026-08-25 18:13:15, expected 15-min cadence
+**Impact:** Foreign equity index data may be delayed
+**Root cause:** vnstock_fetch_log shows 0.6h delay beyond expected 6-min SLA
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T18:50:53Z (signal sys-20260825T185018-7a73, system-auditor -> po, dedup_key=data_stale:yahoo-finance:B-02, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
