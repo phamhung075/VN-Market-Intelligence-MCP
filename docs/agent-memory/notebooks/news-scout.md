@@ -43,3 +43,10 @@
 - Top themes: Gold safe-haven (+2.2σ), Fund losses across 91 funds, S&P 500 tech weakness (Iran tensions)
 - Watchlist coverage: VIC, VHM strong foreign demand | KDH insider accumulation amid debt +64% | HPG bluechip accumulation
 - Feedback: 0 signals prior cycle | Filter hints: [default thresholds]
+
+## c256 · 2026-08-25T08:07 UTC
+- Items: 30 | Impacts: 4 high-impact | Signals: [urgent_news:2, chain_catalyst:2] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: default thresholds
+- Coverage: 30 articles analyzed (20 domestic + 10 international) | Stale tickers: none
+- Key findings: VIC wealth surge (8/10), VPB FTSE inclusion (8/10), Gold global accumulation (9/10), Iran sanctions tech selloff (9/10)
+- Exit: PASS
