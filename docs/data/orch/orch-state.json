@@ -457,6 +457,17 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-25T03:30Z",
         "dedup_key": "system_deployment:mcp-server-image-stale:A-32"
+      },
+      {
+        "id": "cj-20260825T043249",
+        "ts": "2026-08-25T04:32:49Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-25.json"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
