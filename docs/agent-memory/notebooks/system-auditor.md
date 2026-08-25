@@ -1,3 +1,21 @@
+## Tier-DATA DB Data-Anomaly Sweep
+
+**Scan timestamp:** 2026-08-25T04:00:23Z  
+**Deterministic counts:** ohlc_violations=336 (20 distinct dates), scale_anomalies=0, vnindex_cache=1, low_confidence_reports=52
+
+**Findings summary (6 total, all already-open):**
+1. **daily_ohlcv** (INCORRECT, MED): 336 OHLC constraint violations across 20 distinct dates. Residue from prior data extraction issues; stable count (no fresh violations in last 2 days). Tracked under LINT-OHLCV-WRITE-BYPASS. Signal: already-open:LINT-OHLCV-WRITE-BYPASS.
+2. **cron_job_runs** (FAIL, WARN): 212 error rows (205 crashed + 7 error, ~0.1% error rate on 217k total). Low rate suggests transient failures, requires monitoring for spikes. Signal: already-open:FIX-CRON-RUNS-NULL-ERRORMSG.
+3. **deep_fetch_queue** (STALE, WARN): 2,541 rows (2,477 expired, 34 vps-failed, 30 pending). Stale backlog; assess if being drained or stuck. Signal: already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
+4. **deep_fetch_stats** (FAIL, WARN): 0 rows despite production writer. Either writer not invoked or records aggressively rotated. Signal: already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
+5. **macro_indicators** (STALE, WARN): 1 row only; feed producing minimal output. Check source availability and last ingest. Signal: already-open:FIX-MACRO-INDICATORS-EMPTY-COLUMNS.
+6. **sbv_rates** (STALE, WARN): 1 row only; SBV feed stale. Check source availability (may be offline outside business hours). Signal: already-open:AUDIT-FC-SBV-RATES.
+
+**Dedup status:** All findings matched to existing open task rows; no new signals written.  
+**History entry:** Appended to `docs/data/db-integrity-history.json` (entry [200] of max 200, capped).
+
+See `docs/data/db-integrity-history.json` for full detail.
+
 ## c1016 · 2026-08-25T03:30Z
 ### Audit Run Tier-1 (2026-08-25T03:30Z)
 - Tier: 1 | Verdict: ALL_GREEN (pre-gate)
@@ -45,7 +63,6 @@
 - No contract contradictions
 - Probe NOT re-run (constraint: avoid dedup-ledger mutation)
 - Verdict sourced from trigger file (read-only, evidence use only)
-
 
 ## c1015 · 2026-08-25T03:30Z
 ### Audit Run Tier-DATA (2026-08-25T03:30Z)
@@ -108,50 +125,3 @@ History record: docs/data/db-integrity-history.json (appended 2026-08-25T03:29:5
 ### Contract Status
 - No contract contradictions
 - Durability sweep completed successfully
-
-## c1013 · 2026-08-25T03:00Z
-### Audit Run Tier-DATA (2026-08-25T03:00Z)
-- Tier: DATA | Tables checked: 17 | Findings: 2 (1 REAL HIGH, 1 BY-DESIGN)
-- Anomalies: 0 new signals (dedup: deep_fetch_stats already tracked, OHLC violations already tracked)
-- Status: HEALTHY (no new data anomalies detected; known residues tracked)
-
-### Findings Summary
-
-**1. deep_fetch_stats table — empty (0 rows, class=a)**
-- Schema exists, row count: 0
-- Production writer: `apps/mcp-server/src/infrastructure/db/deepFetchQueueStore.ts`
-- Severity: HIGH (class=a means may_stay_critical)
-- Correlate with deep_fetch_queue: 2537 rows total (2472 expired, 31 pending, 34 vps-failed)
-- Root cause: Stats aggregation job not populating, or queue processor is not generating stats records
-- Signal: DEDUP-SUPPRESSED (already-open as FIX-DEEPFETCH-PIPELINE* or similar)
-- Action: dev-team to investigate queue processor health
-
-**2. daily_ohlcv — 336 persistent OHLC violations**
-- OHLC violations count: 336 (spanning 20 distinct dates, not concentrated)
-- Fresh violations (last 2 days): 0
-- Scale anomalies (>100x): 0
-- Class: INCORRECT
-- Root cause: Known residual from prior data extraction weeks
-- Status: BY-DESIGN (already tracked under LINT-OHLCV-WRITE-BYPASS)
-- Action: awaiting root-cause fix via CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR task
-
-### Data Quality Metrics
-- Counts (deterministic sqlite output):
-  - ohlc_violations_count: 336
-  - scale_gt100x_count: 0
-  - vnindex_cache_rows_count: 1
-  - low_confidence_reports_count: 52
-  - ohlc_violation_distinct_dates: 20
-- History reference: docs/data/db-integrity-history.json entry scan_ts=2026-08-25T03:00:09Z
-
-### Durability Sweep
-- Result: [durability-sweep] swept=0 malformed=0 found=0 schedule_gap_t1=1 schedule_gap_t2=0 schedule_gap_t3=0
-- Tier-1 schedule gap detected: 1 (expected due to 30min cadence variance)
-- No stale marker files found
-
-### Contract Status
-- No contract contradictions detected this cycle
-- Durability sweep: OK
-
-## d4-auto · 2026-08-25T03:00:00.993Z
-D4 candidates: none
