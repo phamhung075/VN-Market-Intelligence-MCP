@@ -199,3 +199,27 @@ This is NOT the 07-17 "missing weights" defect. Weights ARE present (doclayout_y
 100% read-only: Docker logs (`docker logs` pdf-extractor since 07-28), `docker inspect` (container state), `bun:sqlite` readonly queries (cron_job_runs, bctc_layout_units, bctc_table_rows). No file writes, no DB mutations, no extraction triggered, no code changes. Operators can execute this dispatch's findings with a single container restart + re-probe + re-dispatch if needed.
 
 ---
+
+## 2026-08-25 ADDENDUM — dev-mcp-server SECONDARY-drain live re-verification (close recommendation)
+
+**Dispatch:** dev-team tick 2026-08-25T04:07Z, SECONDARY-DRAIN (session `036ceaf1-bf34-46cd-92e4-8c6b213ff4bb`). Board `next_agent` divergence at dispatch time: hot row said `architect` (PO's 2026-08-23T11:57Z dispatchability fix), cold `backlog-detail.json` said `dev-mcp-server` (stale since 2026-08-11); resolver picked the cold value.
+
+**Everything this SPIKE ever asked for is closed or owned elsewhere. Read-only re-check, no code touched:**
+
+| Item | Status |
+|---|---|
+| AC-1 (infra rollback) | CLEAR — 2026-07-17, `ac1_finding` |
+| AC-2 (dormancy root cause, 1st episode) | Fixed — PEK model-cache re-seed, 2026-07-17 |
+| AC-2 (dormancy root cause, 2nd episode, OCR-gateway deadlock) | Fixed — `FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK`, DONE_VERIFIED (confirmed by `po_ownership_call_20260811T1733Z`) |
+| AC-3 (report-storm circuit breaker) | DONE_VERIFIED + archived, 2026-07-17 (`FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER`) |
+| 2026-08-11 "cap not enforced" residual (`reconcile_attempts` observed 9-12 vs cap 8) | Same defect as `FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS` (Arm-2 recycle not zeroing the counter) — that row shipped DONE_VERIFIED 2026-08-12 (commit `e9caf2ac3`). **Live RAW re-check today** (`docker exec` mcp-server, readonly `bun:sqlite`): every `enrich_failed` row whose `last_attempt` postdates 2026-08-12 lands at `reconcile_attempts` EXACTLY 8 (e.g. HCM/HSG/POW/VCI/VHM 2025-Q4, `last_attempt`=2026-08-23T19:05:00). The remaining >8 rows on the board (HUT 2025-Q3=12, HUT 2024-Q1/Q2=11, etc.) all have `last_attempt`<=2026-08-22 — pre-fix terminal residue that is never reprocessed once `enrich_failed`. Not a live bug. |
+
+**Live pipeline health, 2026-08-25T04:2xZ:** `bctc_layout_units` MAX(extracted_at)=2026-08-24 19:42:54 (6969 rows, alive); `bctc_table_rows` MAX=2026-08-23 16:39:26 (5180 rows, ~1.3d lag — same stage-divergence shape as the 08-05 note above, owned by `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP`, still BACKLOG/live, NOT this SPIKE's scope); `bctc_vps_queue` status counts: done=207, enrich_failed=52, deferred_infra=328, url_not_found=26, pending=1; `bctcExtractReconcileJob` cron firing clean every 30min (last 5 runs all `success`).
+
+**2026-08-22 telegram cluster** (folded this tick by `po_fold_20260823T1157Z`: 11x write/reparse BLOCKED total_assets=0, 4-row circuit-breaker trip, 2x further RECONCILE EXHAUSTED) is already covered by 4 live sibling rows, none of which is this SPIKE: `FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write` (DEGRADED, P0), `FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE` (BLOCKED, P0), `FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T` (BLOCKED), `FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET` (BACKLOG) — all confirmed present on the live board this pass.
+
+**Verdict:** this SPIKE has zero remaining diagnostic or dev-mcp-server work. Every AC it opened, and every follow-up FIX it spawned, is DONE_VERIFIED or tracked live by a named sibling row. **Recommending DONE_VERIFIED** — not self-certifying: this row's own 2026-07-17 `disposition` field explicitly reserves close sign-off for PO ("by PO final sign-off"), and the row carries `supervised: true`. Board `next_agent` set to `po`; stale cold-detail `next_agent` (`dev-mcp-server`) deleted so `effective_next_agent()` no longer diverges from the board (both hot and cold now agree, falling through to board = `po`).
+
+**Investigation method:** 100% read-only — `docker exec` into the live `mcp-server` container, `bun:sqlite` readonly queries only (`bctc_layout_units`, `bctc_table_rows`, `bctc_vps_queue`, `cron_job_runs`); read `docs/data/orch/orch-state.json` + `docs/data/orch/archive/backlog-detail.json` + `docs/data/orch/archive/2026-08.json` for row history/status of sibling rows; no extraction triggered, no DB writes, no code changes in `apps/mcp-server/`.
+
+---
