@@ -214,3 +214,13 @@ architect unranked — picking one is a fleet-wide routing-semantics call, not m
   `FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-...-DANGLING-IDS` (11232B after stamp, landed and read back).
   It was `reflag=true`: previously flagged, stamp went stale, i.e. its earlier BATCH never dispatched.
   `next_agent=agent-father` is off the DRS allowlist → router hand-dispatch only.
+
+### Addendum 2 — Step 0-TNB c136: the audit asked me to mint a row that already exists
+TNB c136 (Overall CRITICAL) finding #2, HIGH: chef-evening `last_fired` frozen through all of
+2026-08-24 despite a genuine fire+publish, and today's 19:45Z dispatch (8fda9e649) read the stale
+field and concluded "2d gap closed". The handoff says "No existing row found after targeted grep —
+po to triage/mint". **False negative.** `FIX-COWORK-LASTFIRED-NO-STAMP-ON-A-GENUINELY-DELIVERED-FIRE`
+was minted at 21:53:13Z, ~1h20m AFTER that audit cycle ended. Folded the c136 evidence there as the
+reproduction fixture; ACK written into the handoff naming the grep failure mode and pointing at
+`po-board-dedup-search.sh`. Second time today a `grep` on orch-state.json produced a wrong dedup
+verdict — this one would have cost a duplicate P1.

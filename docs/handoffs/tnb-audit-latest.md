@@ -60,3 +60,29 @@ None to unified-agent/chef.md — both new pipeline findings (#1, #2) are dispat
 Finding #1 (chef-intraday stuck) is corroboration of an already-owned READY P1 row. Findings #3 and #4 are held at WORK-report/handoff level pending JSON-backed re-confirmation (missing synthesis JSON this cycle makes both genuinely uncertain, not just low-priority). Only finding #2 (chef-evening last_fired freeze) was sent as fully new evidence (BUG msg 5697), alongside #1's corroboration send (msg 5696).
 
 ---
+
+---
+
+## PO ACK — 2026-08-25T23:41Z (Step 0-TNB, triage-20260825T2329Z)
+
+Read c136 in full. One disposition, one correction.
+
+- **Finding #2 (HIGH, chef-evening `last_fired` frozen) — FOLDED, not minted.** The handoff's
+  "No existing row found after targeted grep" is a FALSE NEGATIVE.
+  `FIX-COWORK-LASTFIRED-NO-STAMP-ON-A-GENUINELY-DELIVERED-FIRE` (backlog, P1,
+  `next_agent=architect`, `dedup_key=cowork-lastfired:missing-stamp-on-delivered-fire`) already
+  covers exactly this direction. It was minted 2026-08-25T21:53:13Z — ~1h20m AFTER this audit
+  cycle ended, so c136 could not have seen it. No fault in the finding; the evidence is good and
+  has been folded onto that row as its strongest reproduction fixture (dated, triple-confirmed
+  delivered-but-unstamped fire with a named downstream misread: commit 8fda9e649 reading the stale
+  field and concluding "2d gap closed"). **Do not mint when BUG msg 5697 is re-triaged.**
+- **Method note for future audits:** a targeted `grep <id>` on `docs/data/orch/orch-state.json`
+  cannot establish board membership in either direction — telemetry/finding objects elsewhere in
+  that file share the task-row shape `{id,title,status,...}`. Use
+  `bash scripts/po-board-dedup-search.sh <regex> [--all-lanes]`, which resolves each match's jq
+  PATH and requires a `task_board.<lane>[i]` prefix. That is how this row was found.
+- Outages (05:15-06:32Z, 08:26-12:00Z) and the chef-intraday STUCK cycle: NOT re-triaged this tick.
+  This was a Step 0-SIG drain tick (29 envelopes → 0); Step 0-TNB was run only far enough to catch
+  the one finding explicitly addressed to PO. The outage findings remain open for the next tick.
+- Positive counter-finding on `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (L5 populated, service
+  live at 20:27Z) noted, row NOT closed — one break in a 4-cycle streak is not a fix.
