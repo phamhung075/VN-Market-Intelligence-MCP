@@ -10,5 +10,11 @@
   },
   "priority": "low",
   "createdAt": "2026-08-25T14:21:54Z",
-  "dedup_key": "cowork-drainonly-work-tick-skips-both-snapshot-and-telemetry-guards"
+  "dedup_key": "cowork-drainonly-work-tick-skips-both-snapshot-and-telemetry-guards",
+  "_processed": {
+    "fingerprint": "16f3efb5e582facf0fd68bea6d538ec0dafac30600899a9768a64f6d5c926c8e",
+    "processedAt": "2026-08-25T14:42:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

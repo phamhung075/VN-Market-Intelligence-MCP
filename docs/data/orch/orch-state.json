@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T14:26:45Z",
+    "_updated_at": "2026-08-25T14:42:51Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -691,7 +691,7 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor memory analysis: genuine working set pressure, not leak",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-25T14:00Z",
@@ -705,11 +705,67 @@
         "type": "signal_feedback",
         "summary": "The STANDING INSTRUCTION deferring 0a-D signal_queue prune indefinitely rests on two premises that no longer hold: the cited live-probe row is gone from the hot queue (consumed into a DONE_VERIFIED fix), and the 73-row 'triaged' vocabulary fragmentation is fully resolved (live census is now NEW/READ only, zero triaged, zero RETRACTED). Asking PO to re-rule, not asserting the contract is settled.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-verification",
         "dedup_key": "premise_staleness:FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT:prune-deferral-standing-instruction",
         "detail": "SOURCE: backlog row FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, field po_ruling_signalqueue_prune_deferral_20260721T1811 — 'STANDING INSTRUCTION: 0a-D stays deferred until this row status contract is settled ... When this row closes, the prune is unblocked automatically.' Its stated justification is that pruning 'would destroy the evidence cowork-team warned about', naming signal row po-20260720T052606, described in the sibling field po_fold_from_spike_20260721T1811 as 'LIVE PROBE - DO NOT TIDY ... deliberately held at NEW as the only reproducing instance; mark it READ only as the verified OUTPUT of a confirmed fix.' PREMISE 1 FALSIFIED: po-20260720T052606 is absent from .signal_queue.rows[] and now lives in docs/data/orch/archive/2026-08.json at signal_rows[23] with status='triaged' (never READ), to='unified-agent'. It was NOT lost silently — the same archive records done_tasks[256] = FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE, status DONE_VERIFIED, origin_signal_id='po-20260720T052606'. So the probe was consumed and produced a shipped, QA-verified fix; whether that satisfies 'the verified OUTPUT of a confirmed fix' is PO's call, not the router's. Note its status was 'triaged', which the documented PRUNE predicate (READ/RESOLVED/SUPERSEDED) does not match — so whatever moved it to cold archive was NOT the standard predicate; that path is unidentified and may be worth its own look. PREMISE 2 FALSIFIED: field po_vocabulary_evidence records a census of '73 rows status=triaged, 9 status=NEW, 1 status=RETRACTED' and calls the 73 'structurally unprunable ... a permanently growing hot-file cost with no eviction path.' Live census this tick: {NEW:1, READ:33} — zero triaged, zero RETRACTED. The fragmentation the row was partly minted to fix is gone. STILL TRUE, DO NOT DISTURB: the contract row itself remains open and correctly gated — it is supervised+plan_only, and its effective depends (key is 'depends', not 'depends_on') names FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT, which sits in ready[] at status READY, not DONE_VERIFIED. The 14:07Z SLS turn correctly declined to promote it on exactly that gate, honouring the po_ordering_ruling 'LANDS SECOND'. ROUTER ACTION THIS TICK: 0a-D-PRUNE was evaluated, found 0 rows older than 24h, and orch-cold-evict.sh was NOT invoked — so nothing was evicted and the deferral was not violated either way. ASK: re-rule on whether the standing deferral should continue. As written it is unbounded and self-perpetuating (it releases only when a row closes that is itself gated on a second open row), and its two cited evidentiary reasons are now spent."
+      },
+      {
+        "id": "sys-20260825T143851-7409",
+        "ts": "2026-08-25T14:38:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "monthlySignalQualityAudit MISSED (2054h overdue, threshold 1080h)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
+        "dedup_key": "auditor-a29-fire-gap:monthlySignalQualityAudit"
+      },
+      {
+        "id": "sys-20260825T143856-12d9",
+        "ts": "2026-08-25T14:38:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "ragFtsRebuildCron STALE (858h overdue, threshold 36h)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
+        "dedup_key": "auditor-a29-fire-gap:ragFtsRebuildCron"
+      },
+      {
+        "id": "sys-20260825T143900-0a9e",
+        "ts": "2026-08-25T14:39:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "brokerSanctionsSweep STALE (607h overdue, threshold 36h)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
+        "dedup_key": "auditor-a29-fire-gap:brokerSanctionsSweep"
+      },
+      {
+        "id": "sys-20260825T143903-6238",
+        "ts": "2026-08-25T14:39:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "stale pending BCTC (2 rows >72h)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
+        "dedup_key": "data_stale:bctc-discover:B-13"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -23116,7 +23172,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T14:22:46Z",
+    "_updated_at": "2026-08-25T14:42:51Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23141,6 +23197,95 @@
         "payload": "PREMISE REFUTED at source for P0 FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES. Rung B is NOT inert. coordinationStore.ts releaseTask() gates it on task_kind=orphan-signal AND owner_client_session IS NULL AND owner_agent match AND payload.original_owner_client_session match. The PO test fixture was minted with task_claim under a dead-but-NON-NULL session, so the Rung B SELECT could not match and released:0 was CORRECT anti-theft behaviour; the step-4 control released:1 via Rung A, also correct. Both arms demonstrate the code working as specified (taskReleaseTool.ts:59 states it verbatim: ignored for any row whose own owner_client_session is NOT NULL - cannot be used to bypass Rung A anti-theft). task_claim CANNOT create a NULL-owner row; only the server-side reaper mints those. SURVIVING and still valid: zero live NULL-owner orphan-signal rows exist, so the AC is genuinely unrunnable without a reaper-minted row or a direct DB insert - that half stands and is the real blocker. ACTION: retire or rewrite the P0 before any architect dispatch; as written it sends architect to fix correct code. Also do NOT let this re-retract the 2026-08-25T01:40Z memory finding that the FR-2 ladder works - it does, on genuine NULL-owner rows.",
         "createdAt": "2026-08-25T14:09:05Z",
         "drained_at": "2026-08-25T14:20:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "16f3efb5e582facf0fd68bea6d538ec0dafac30600899a9768a64f6d5c926c8e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "architect",
+        "type": "flow-contract-gap",
+        "priority": "low",
+        "payload": {
+          "summary": "Drain-only WORK ticks skip BOTH Step 4.7 and Step 6.1 by their own guards, so a tick that drains signal_queue rows leaves no docs/signals record; telemetry.md silent (MATCHES empty) and the preflight SILENT (slots+one_shots+new_signals empty) are two incompatible definitions and the drain-only tick sits in the wedge. Self-caught after I ran both steps out-of-contract on 2 prior ticks.",
+          "detail": "SELF-CAUGHT: I executed Step 4.7 and Step 6.1 on two drain-only WORK ticks (12:15Z, 12:30Z) that both steps' own guards say to SKIP. Correcting my behaviour from the 14:15Z tick onward, and routing the underlying contract gap that made the error easy.\n\nTHE GAP. The preflight returns WORK when ANY of slots/one_shots/new_signals is non-empty. But two downstream guards are written only against slots:\n- tick-snapshot.md Step 4.7 line 1: \"Only execute if WON_SLOTS is non-empty (skip on silent-exit path).\"\n- telemetry.md Step 6.1: \"SKIP if silent==true AND spawned[] empty AND errors[] empty\", where the payload template defines silent as \"<true if MATCHES empty, false otherwise>\".\n\nOn a drain-only WORK tick (slots:[], one_shots:[], new_signals>0) MATCHES and WON_SLOTS are both empty, so BOTH steps skip. Step 4.8 is already a documented no-op and Steps 5/5b are vacuous with nothing spawned. The tick therefore performs real work -- it drains/routes signal_queue rows per work-tick.md Step 0a -- and leaves NO docs/signals/ record that it ran. Only emit_pressure_state (Step 6.0, explicitly un-skippable) and the P3 release fire.\n\nWHY THIS IS A CONTRACT QUESTION, NOT A BUG REPORT. Both guards are correct for the case they were written for: with zero spawns there is no consumer for a cycle snapshot and no slot outcome to report. The snapshot's own header states its purpose is \"before agent spawn. Agents read this file instead of calling get_cycle_bootstrap independently\" -- with zero agents spawned it has no reader by construction. So the skips are right; what is missing is that \"silent\" now has two incompatible meanings in one flow. The preflight's SILENT means slots AND one_shots AND new_signals all empty. telemetry.md's silent means MATCHES empty. The drain-only tick sits exactly in the wedge between them, and that wedge did not exist when telemetry.md was written.\n\nTWO CANDIDATE RULINGS -- architect to pick, I am deliberately not picking:\n(a) Make telemetry.md's silent agree with the preflight's: silent = MATCHES empty AND one_shots empty AND drained_rows == 0. A drain-only tick then writes its Step 6.1 envelope with won_slots:[] and a drain count, restoring observability. Step 4.7's WON_SLOTS guard stays untouched and correct.\n(b) Declare drain-only ticks deliberately telemetry-free and say so in one line in main.md's WORK-continuation item 4, so the next reader does not re-derive it. Cheaper, but the fleet keeps having no record of which tick drained which rows.\n\nI lean (a) on the grounds that the drain is the one irreversible thing a drain-only tick does, but it is a real trade and the call is architect's.\n\nSECONDARY, SMALLER: main.md's WORK-continuation item 4 says \"Continue unchanged at Steps 4.2-4.3, 4.4-4.5b, 4.6-4.6b, 4.7 (tick-snapshot.md), 4.8, 5, 5b, 6\". Read alone that enumerates 4.7 as a step that runs; the guard lives only in the child file's first line. \"Continue unchanged\" means the step runs WITH its guard, but the enumeration is what a dispatcher reads on the hot path. A four-word parenthetical -- \"4.7 (tick-snapshot.md, guarded on WON_SLOTS)\" -- would have prevented my error outright.\n\nCOST OF MY ERROR, MEASURED not estimated: two orphan snapshot files, docs/data/cycle-snapshot-12:20.json (14712 B) and cycle-snapshot-12:35.json (15785 B), each costing 2 gateway calls (~20KB of payload fetched to disk) for a file that had zero possible readers. Both are .gitignored and both age out via Step 4.7's own -mmin +1440 prune, so no cleanup is owed and I am not deleting them by hand. Two telemetry envelopes were also written that the guard says should not exist: docs/signals/cowork-team-20260825T122140Z.json and cowork-team-20260825T123547Z.json. Those two are NOT waste -- they carry the 12:15Z/12:30Z tick findings and the dedup_keys cowork-tick-2026-08-25T12:15Z / T12:30Z, and under ruling (a) they become retroactively in-contract. Leaving them.\n\nONE CONTAMINATION NOTE FOR THE OPEN CYCLE-SNAPSHOT WORK. My earlier writer-key distribution measurement across docs/data/cycle-snapshot-*.json (\"14 on a 5-min boundary, 17 off\") included those two self-written files. Both happen to land on 5-min boundaries, so they inflate the on-boundary bucket by 2. The effect is small and does not change that analysis's conclusion -- newest-file-within-7-min selection still kills the class without any writer change -- but the sample was not clean and a re-measure should exclude them.\n",
+          "owner_hint": "architect to rule; agent-father to implement the doc change",
+          "tick": "2026-08-25T14:15Z"
+        },
+        "createdAt": "2026-08-25T14:21:54Z",
+        "drained_at": "2026-08-25T14:42:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7ae3235815076bf4bc163109a5a8a334a7d613d43fa22148cb8918d9bc10ccfb",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "INFO",
+        "payload": "pdf-extractor memory analysis: genuine working set pressure, not leak",
+        "createdAt": "2026-08-25T14:23:16Z",
+        "drained_at": "2026-08-25T14:42:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a99b49e8cc1d176c3d9f07eb13205297b004a8a256db6b1dae8791a70a205091",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "The STANDING INSTRUCTION deferring 0a-D signal_queue prune indefinitely rests on two premises that no longer hold: the cited live-probe row is gone from the hot queue (consumed into a DONE_VERIFIED fix), and the 73-row 'triaged' vocabulary fragmentation is fully resolved (live census is now NEW/READ only, zero triaged, zero RETRACTED). Asking PO to re-rule, not asserting the contract is settled.",
+        "createdAt": "2026-08-25T14:26:45Z",
+        "drained_at": "2026-08-25T14:42:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e5f78c7c7257c1dcef2077f27092c0c16ee8a5b09bb258921086a1e40e9a554a",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "CRITICAL",
+        "payload": "monthlySignalQualityAudit MISSED (2054h overdue, threshold 1080h)",
+        "createdAt": "2026-08-25T14:38:51Z",
+        "drained_at": "2026-08-25T14:42:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "25910353152099205d68c4e5a15da9024f33e971e214ecd97b63bb6cbdb9bd06",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "CRITICAL",
+        "payload": "ragFtsRebuildCron STALE (858h overdue, threshold 36h)",
+        "createdAt": "2026-08-25T14:38:56Z",
+        "drained_at": "2026-08-25T14:42:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b32f986f41964b4a854bb7fedc398bf5b1fea5e0e583586139bc27bd2501071a",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "CRITICAL",
+        "payload": "brokerSanctionsSweep STALE (607h overdue, threshold 36h)",
+        "createdAt": "2026-08-25T14:39:00Z",
+        "drained_at": "2026-08-25T14:42:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a54e563b202c5b6f5065d94817477b2795980ce96bee9d3d72b1139ef176570f",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "priority": "WARN",
+        "payload": "stale pending BCTC (2 rows >72h)",
+        "createdAt": "2026-08-25T14:39:03Z",
+        "drained_at": "2026-08-25T14:42:51Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
