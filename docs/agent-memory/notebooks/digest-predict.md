@@ -56,3 +56,12 @@
 - Claims (id=53-55): SHB bearish p=0.75 (target<11.700đ, 10d) | VHM bearish p=0.64 (target<71.200đ, 10d — momentum-leader decile10 today +2.37% nhưng RS trung/dài hạn WEAK 18.5/100, foreign-flow bán ròng thắng thế) | VIX bullish p=0.06 (target>14.200đ, 5d — raw 0.6447 bị LR=0.10 TRUSTED n=14 dập tắt).
 - Đối chiếu 08-23 c(17:42Z race, cùng session): SHB/VHM p=0,75, VIX p=0,07 — hội tụ độc lập lần nữa, xác nhận pipeline deterministic.
 - get_52w_proximity: 500 internal error — SKIP, dùng ticker-level evidence only.
+
+## 2026-08-25T17:41Z Daily Predictions
+- Calibration: stable, delta: +0.007 | Claims: 3 | Dampening: no. Regime fallback NEUTRAL (macro_snapshot JSON shape, no "Global Liquidity" field — carry-over since 07-03).
+- Qualified raw 5: VEA 0,8420 (stale, DROPPED)/VIX 0,6447/VND 0,6300/SHB 0,9500(bearish)/VHM 0,7750(bearish). Ranked by |bull-bear| delta: VEA 0,8420(dropped)>VIX 0,6447>VND 0,4014>SHB 0,3571>VHM 0,3370 — top 3 sau khi loại VEA: VIX/VND/SHB.
+- VEA DROPPED (13 chu kỳ liên tiếp 07-16→08-25): score_date stale 2026-05-18, "no fragments found", BCTC EBITDA phi lý scale (~5,32×10^15 tỷ VND) — tiền lệ CORRUPT DATA không đổi.
+- Claims (id=56-58): VIX bullish p=0,08 (target>14.800đ, 5d, foreign-flow LR=0,13 n=16 dập raw 0,6447) | VND bullish p=0,18 (target>17.600đ, 10d, news-sentiment LR=0,29 n=16) | SHB bearish p=0,54 (target<11.200đ, 10d, foreign-flow bán ròng LR=0,57 n=31 — claim tin cậy cao nhất chu kỳ này).
+- VHM raw-qualify (bearish 0,7750, delta 0,3370) loại do rank — delta thấp nhất trong 4 mã sạch sau khi loại VEA.
+- get_bctc_full: VND/VIX/SHB đều "Chưa có dữ liệu BCTC" (absent, không phải corrupt) — không dùng số liệu tài chính trong claim_text.
+- claim-truth-gate (narrative_truth_gate, MCP-native): cả 3 PASS lần đầu, không phát hiện CCATO.
