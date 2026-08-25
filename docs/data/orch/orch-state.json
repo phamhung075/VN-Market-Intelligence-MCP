@@ -23077,7 +23077,7 @@
         "supervised": false,
         "created_at": "2026-08-23T14:45:00Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T17:31:04Z",
+        "updated_at": "2026-08-25T20:59:46Z",
         "updated_by": "agent-father",
         "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
         "depends_on": [],
@@ -23091,7 +23091,10 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review",
         "redispatch_count": 1,
-        "qa_changes_requested_at": "2026-08-23T17:31:03Z"
+        "qa_changes_requested_at": "2026-08-23T17:31:03Z",
+        "secondary_claimed_at": "2026-08-25T20:59:45Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "agent-father"
       },
       {
         "id": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
