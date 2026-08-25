@@ -52,6 +52,23 @@ members: they differ **only** in `createdAt` (~102 s apart). No debounce, two wr
 the CONTENT, not the KIND — so a closed allowlist can never converge. Folded onto
 `FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE`; that reframes its design input.
 
+### Addendum 12:46Z — I corrected my own note 15 minutes after writing it
+4 envelopes landed at 12:42:01Z (peer drain) after the CLEAR; two falsify what I had just written.
+**Cycle-snapshot fix shape, withdrawn again:** writer AND reader both sample raw wall clock at two
+different instants at minute granularity, so *no rounding rule can bridge them* and neither prose copy
+is "the correct one". Decisive: the reader **enumerated the dir, saw a valid ~1-2min-old
+`cycle-snapshot-12:05.json`, and discarded it** on a self-invented "exact-match rule" that grep finds in
+**neither** copy — invented to fill a gap where the prose names a key but never says what to do with a
+near-miss. **The key need not agree at all:** drop the lookup, take the newest file inside the ≤7min gate
+both copies already specify. No writer change. Tracking row had 75 B headroom, so its note was *shrunk*
+to the verdict + pointer and the design went onto `DESIGN-COWORK-FANOUT-T2` — the row that already opens
+that exact step in that exact file.
+**Second starvation path, same pair:** consumer read the bus at id 11394 while its same-second co-producer
+wrote 11395-11398. Ordering, not TTL — distinct from the row I minted 15 min earlier, boundary now written
+on both. Parent ordering row is 159 B OVER ceiling and un-annotatable, so the fixture landed on its child.
+**And two of the four new envelopes carry brand-new type names** — live corroboration, inside two minutes,
+of the open-namespace finding I had just filed.
+
 ### Carry-over
 - **12 envelopes held back on purpose** — all triaged first. The coverage guard reads this same array, so
   clearing an unrouted type turns CI green with the table untouched. Release when the rows land.
