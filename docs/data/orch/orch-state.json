@@ -22346,13 +22346,13 @@
         "last_served_tick": "2026-08-25T00:12:02Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-24T19:48:05Z"
+        "last_served_tick": "2026-08-25T00:48:07Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-24T20:24:01Z"
       }
     },
-    "_updated_at": "2026-08-25T00:41:34Z",
+    "_updated_at": "2026-08-25T00:48:07Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {

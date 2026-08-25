@@ -1,0 +1,42 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-08-25T00:46:49Z",
+  "payload": {
+    "module": "server-reaper orphan-signal minting + docs/agents/dev-team/flow/orphan-adoption.md",
+    "summary": "Reaper mints orphan-signals for tasks that COMPLETED successfully. The S2 dispatch convention deliberately leaves the sprint-task lock unreleased on the success path (ttl_seconds is the bound), so every successful background dispatch eventually produces a spurious orphan-signal when its TTL lapses. Adoption has no terminal-state guard, so a dev-team tick will re-run PO-signed-off archived work.",
+    "observed_tick": "2026-08-25T00:37Z",
+    "observed_by_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
+    "evidence": {
+      "orphan_signal_id": "orphan-signal:task:FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+      "original_task_id": "task:FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+      "task_actual_state": "DONE_VERIFIED, zone=cross-service/, closed_at=2026-08-24T23:02:18Z, cold-evicted to docs/data/orch/archive/2026-08.json",
+      "po_signoff_commit": "cc589e8b5 (2026-08-24T23:06:55Z)",
+      "cold_evict_commit": "d49737fb1 (2026-08-24T23:11:18Z)",
+      "orphan_minted_at": "2026-08-24T23:59:49Z",
+      "lag_after_completion_minutes": 57,
+      "board_rows_matching_task_id": 0,
+      "note": "Adoption board-flip targets .task_board.active_sprints[].tasks[] — with zero matching rows it is a silent no-op, so adoption would spawn work with no board row to update."
+    },
+    "unreleasable": {
+      "release_attempted_this_tick": true,
+      "result": "released:0",
+      "cause": "owner_client_session is null (owner_session=server-reaper); task_release keys on owner_client_session so the call is a no-op",
+      "consequence": "signal persists until TTL 2026-08-25T01:59:49Z; the 01:07Z and 01:37Z dev-team ticks will both re-hit it"
+    },
+    "danger_interaction": {
+      "row": "task_board.backlog.543 FIX-ORPHANADOPTION-TREEHYGIENE-EMPTY-ZONE-REPOWIDE-REVERT (P0)",
+      "why": "This orphan payload carries NO zone field, so task_zone falls to infer_from_task_id() and resolves empty. The tree-hygiene gate then runs git status --porcelain -- <empty> = REPO-WIDE and git checkout -- each modified file. At this tick that would have reverted 3 live peer files: docs/agent-memory/modules/tool-usage-stats.json, docs/data/coverage-state.json, docs/data/dev-team-idle-widen-state.json (the last is this tick own preflight state).",
+      "action_taken_this_tick": "Adoption NOT executed. No revert run. No board write."
+    },
+    "existing_coverage": {
+      "task_board.backlog.217": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (P0, BLOCKED epic wrapper, lane=ba next=pm) — adopter-side guard, 6 FR children",
+      "task_board.ready.21": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD (P1, next=developer, dispatch_lane=null so unpickable)",
+      "task_board.backlog.543": "FIX-ORPHANADOPTION-TREEHYGIENE-EMPTY-ZONE-REPOWIDE-REVERT (P0, next=agent-father, dispatch_lane=null)",
+      "gap": "All three are ADOPTER-side. None addresses the upstream generator: the reaper cannot distinguish an abandoned lock from a completed one whose lock was intentionally left to expire. Fixing only the adopter suppresses the symptom; the false-orphan stream continues and burns Step 0a-B on every tick."
+    },
+    "action_required": "po_triage"
+  }
+}
