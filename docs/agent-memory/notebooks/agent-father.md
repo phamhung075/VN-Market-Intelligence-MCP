@@ -134,3 +134,42 @@ defects flagged in RETURN as a follow-up row against SECONDARY-Drain itself — 
 -> review[], next_agent=qa, `.head` idle-reset) WAS committed directly (`c677e3ac9`) — the dispatching
 tick's own instructions named this the allowed "ONE signal-queue DONE-mark per task dispatch" carve-out
 in `FU-AGENT-FATHER-ORCH-SCOPE`, unlike the UNCOMMITTED precedent noted just above.
+
+## FIX 2026-08-25T13:00Z — FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY (P0, dispatcher: router, task_board.backlog[485])
+
+Closed the exact follow-up flagged in my own ILC entry immediately above. Router reproduced live
+2026-08-25T12:37Z: SECONDARY-Drain's claim script (`scripts/devteam-review-claim-secondary-drain.jq`,
+byte-unchanged, `review[] ∪ done[]` union is deliberate per its own header) correctly stamped a
+`done[]`-origin row (`FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS`), but `docs/agents/dev-team/flow/main.md`'s
+readback named `.task_board.review[]` only, so `picked` came back empty and the row was never
+dispatched — no error, silent strand. Corroborated chronic (PO's 2026-08-25T12:30Z triage: all 3 of
+that day's earlier picks were `done[]`-origin; `review[]`'s 25 rows have never once carried a
+`secondary_claimed_*` stamp).
+
+Fix: widened the readback to `.task_board | to_entries[] | select(.value|type=="array") | .key as $lane
+| .value[] | select(...) | . + {_lane: $lane}` — copied the ILC section's own generic all-lane shape
+verbatim rather than inventing a new one, per the dispatch instruction. Also fixed AC-7 (spawn-prompt
+premise): dropped the hardcoded "stale review[]-lane row (status=REVIEW, branch:null)" / "Read its
+status_note/review_note fields directly" text, now derives `_lane`/`status` from the picked row and no
+longer assumes status_note/review_note exist on a done[]-origin pick. Size-justification header entry
+appended (+14L, 1369→1383).
+
+**Verification actually run (not narrated):** live jq repro against a scratch fixture reproducing the
+router's exact stamped row — OLD `.task_board.review[]`-only filter returns empty (bug reproduced,
+exit 0 no output); NEW all-lane filter returns the row with `_lane:"done"` (fix confirmed, exit 0).
+Regression-checked a `review[]`-origin pick still resolves (`_lane:"review"`) and the no-match/no-op
+case still returns empty cleanly. Ran the NEW filter against the live `docs/data/orch/orch-state.json`
+(read-only) — exits 0, no jq errors, confirms `task_board`'s non-array keys (`head`,
+`last_triaged_at`, ...) are correctly excluded by the `type=="array"` guard. Confirmed live that
+`FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS` is still sitting in `.task_board.done[]` carrying the
+router's exact stamp from the repro — left AS-IS (not manually dispatched): this lane re-picks the
+same oldest eligible row every tick until it resolves (documented residual, unchanged), so the next
+live dev-team tick will re-stamp it and this time the widened readback will actually find and dispatch
+it to `po`. `scripts/audits/devteam-dispatch-gate-satisfiability.sh` does not test SECONDARY-Drain at
+all (grep-confirmed, 0 matches for "secondary") — no existing regression suite covers this call site;
+none broken by this change, none available to re-run as a fleet-level check.
+
+Committed `183e1ad8f` (main.md only, explicit pathspec on both `git add` and `git commit -F -- <path>`),
+pushed nowhere (standing push-disarm, 360+ commits unpushed). Left undone: no regression verifier
+script for this call site exists or was created (out of scope — scripts/ is outside agent-father's
+commit_zone; flagging as a fast-follow candidate, not silently assumed covered).
