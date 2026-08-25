@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-APP-split-assembleEveningSummary",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-split-assembleEveningSummary — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-25T06:54:28Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-25T07:23:02Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22240,6 +22239,25 @@
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-25T04:27:11Z"
+      },
+      {
+        "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
+        "priority": "P1",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APP-split-assembleEveningSummary",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary",
+        "promoted_at": "2026-08-25T06:54:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-25T07:23:02Z",
+        "claimed_at": "2026-08-25T06:54:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dispatch_lane": "dev-mcp-server",
+        "updated_by": "dev-mcp-server",
+        "evidence": "commit ad0ff8268 (13 new usecases/eveningSummary/ step modules + thin sequencer, doc update); notebook + decision-journal S95 in commit a9ae069b1"
       }
     ],
     "qa": [
@@ -22439,23 +22457,7 @@
     },
     "last_triaged_at": "2026-08-25T06:54:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
-        "priority": "P1",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-APP-split-assembleEveningSummary",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary",
-        "promoted_at": "2026-08-25T06:54:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-25T06:54:28Z",
-        "claimed_at": "2026-08-25T06:54:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
