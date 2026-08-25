@@ -179,3 +179,14 @@
 - return per-entry signal arrays from buildSignalsForEntry instead of mutating a shared array/map by reference — REJECTED: original code accumulates BOTH across the WHOLE newEntries batch (trade-relationship's alreadyCovered check reads cross-entry state); a return-based split would silently change that semantic.
 **why-decision:** gate evidence (tsc, targeted 144/144 pollNews bundle, server boot, tool/cron count unchanged, size-lint 1 pre-existing offender, mock-guard PASS) stayed green after each stage; preserving the shared-by-reference idiom was the only way to keep this pure code motion, zero behavior change.
 **why-change:** stage 3 wasn't strictly required this pass (QA named it as the NEXT continuation, not mandatory same-cycle) but pursued anyway given P0 + prior redispatches; all 5 extraction targets named in the row's own `approach` field are now done. Full DoD (<=120L) still not met — 269L, disclosed honestly, same as stage 1/2.
+
+### STEP dev-mcp-server-S95 · dev-mcp-server · 2026-08-25T07:20:00Z
+**task-id:** FACTORY-APP-split-assembleEveningSummary
+**what-done:** Split `assembleEveningSummary.ts` (773L monolith) into a thin sequencer + 13 step modules under `usecases/eveningSummary/`, mirroring the sibling `FACTORY-APP-split-assembleBriefing` structure. Read the landed sibling refactor first as the module-boundary/naming reference per dispatch instructions.
+**what-considered:**
+- Reuse briefing's `queryGlobalSnapshot`/`checkFreshnessGate`/`queryPredictionSignals` verbatim (as the archived `approach` field in `backlog-detail.json` literally names) — REJECTED after diffing: all three have real behavioral differences (global snapshot ORDER BY + prev-row delta fields, freshness-gate WORK-channel message text, prediction-signal HIGH/CRITICAL-only vs evening's medium-fallback+diag) — reusing would have silently changed evening's output, violating the explicit "same inputs → same output" mandate.
+- `queryTopStories` — same diff found it byte-identical to briefing's own Step 3 — kept as a genuine shared import (`./briefing/queryTopStories.js`) rather than duplicated, honoring the task's actual reuse intent where it's safe.
+**why-decision:** the dispatch brief's own execution contract (preserve behavior exactly, disclose latent bugs rather than fix them) outranks the archived backlog `approach` field's untested assumption that those 3 steps were shared-safe; verifying via read-diff before reuse avoided a silent regression.
+**why-change:** none from the DoD's actual acceptance criteria (module split, <=120L steps, thin sequencer, tests green) — only diverges from the literal `approach` prose's naming of 3 specific reuse targets, for the reason above. Noted a pre-existing latent bug left unfixed per scope: evening's global-snapshot truthiness check never tests `hangSeng !== 0` (briefing's does) — disclosed, not silently patched.
+
+### CAP-REACHED · 2026-08-25T07:20:44Z
