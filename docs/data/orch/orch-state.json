@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T22:44:10Z",
+    "_updated_at": "2026-08-25T23:16:56Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1160,7 +1160,7 @@
         "type": "tooling_defect",
         "summary": "CORRECTION + SCOPE WIDENING on the RESIDUAL flagged in review row FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT: its stated cause (board edit without an updated_at bump) is FALSIFIED, the real cause is a null detail.updated_at, the scope is 11 live rows not 3, and 73 of 105 detail items are latently in the same class",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-verification",
         "dedup_key": "tooling_defect:devteam-eligibility:effective_next_agent-null-detail-ts-makes-board-unreachable",
@@ -23873,7 +23873,8 @@
         "status_note": "DEV-MCP-SERVER 2026-08-26 (session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb): AC-1 SATISFIED -- added `--psm 1` to ocrOnePage's tesseract spawn (auto page segmentation + OSD). Proven via committed fixture (apps/mcp-server/src/__tests__/fixtures/ocr-orientation/{upright,rotated180}.pdf, synthetic ASCII page, sideways CONTENT baked into pixels not a PDF /Rotate flag -- a /Rotate flag would be pre-corrected by poppler and mask the bug) + regression test FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE.test.ts (6/6 pass): old no-psm pipeline garbles the 180-rotated fixture (fixture-validity proof), fixed ocrOnePage recovers upright-identical text, already-upright pages unaffected (no regression). Also verified directly against the real file named in AC-3: all 19 OSD-detected rotated pages (10,11,31,34,35,48,57,60-71) of the LIVE VIC_2026_Q1.pdf recover clean legible Vietnamese header/section text (read-only re-OCR against the host-mounted PDF, NO DB write) vs the mirrored/reversed garbage currently stored. | AC-2 order respected: fix lands+proven FIRST in this commit; the stored-text invalidation (DELETE FROM pdf_extracted_text WHERE filename=?) is NOT executed against the live DB in this pass -- the running mcp-server container is still on the pre-fix image (rebuild owed separately, tracked elsewhere per dispatch). Shipped a reusable, deploy-state-independent script (scripts/migrations/reextract-pdf-ocr-orientation.ts -- hardcodes --psm 1 itself, never imports the possibly-stale image's code) -- dry-run-verified read-only against the live DB (confirmed BEFORE=71 rows for VIC_2026_Q1.pdf, garbled samples match). Ready to run --apply once the image is rebuilt. | AC-3: BEFORE (live DB, read-only) = 36 total bctc_refined_units, 11 DONE, 25 FAILED for report 1f53ef33-8f50-489b-8505-689740692ab0. AFTER NOT MEASURED -- cannot assert recovery without it: flipping window_status requires a separate agentic re-refine pass (get_bctc_pending_refine -> push_bctc_refined_unit -> finalize_bctc_refine, host-level fleet cron), outside this dev-mcp-server task's scope/capability, AND gated on the same image rebuild. Of the 25 FAILED units, only 14 (pages 11,31,34,35,48,57,60-67) cover >=1 OSD-rotated page -- the fix can only plausibly help those; the other 11 FAILED units (pages 1,2,20-30,38-47,56, zero rotation detected) fail for an unrelated reason not addressed here. unit-0006 (page 10, rotated) is already DONE -- window_status is an LLM-refine judgment call, not a deterministic function of OCR text quality; do not assume a 1:1 rotated-page-fixed -> FAILED-to-DONE flip. | AC-4 SATISFIED -- cgroup memory.peak delta (docker run against the live mcp-server image, real BCTC page NVL.pdf p1, 5 runs each after excluding 1 cold-start outlier each): psm-3 baseline mean 101.0MB (sigma 1.4MB), psm-1 fixed mean 134.3MB (sigma 1.3MB), delta +33.3MB/page (~33%). Well inside the 3221225472-byte (3GiB) container cap; memory.events all-zero (no oom) every run. Time cost +~1.4s/page (single real-page sample, 6.37s->7.75s). | Cross-file test-isolation hazard found+fixed (test-level only, production code untouched): first 2 full-suite runs (56, then 55 fail) showed this new test file's 2-3 behavioral tests failing with \"[test-mock] spawn() unexpectedly invoked\" -- root-caused (reproduced standalone) to FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH.test.ts's process-wide mock.module(\"node:child_process\",...) leaking across files because bun's full-suite file scheduling does not strictly serialize one file's afterAll finishing before the next file's tests start. Fixed by switching the counterfactual helper to Bun.spawn (immune to that mock) and adding a cheap canary-spawn pre-check before the one assertion that must use the real, patched ocrOnePage -- skips honestly instead of false-failing when the canary detects the mock. 3rd/final run: this file 0 fail. | Gates (3rd/final full run): bun test 15486 pass/40 skip/51 fail/1287 files (477s) -- failing-file-set unchanged from this session's pre-change baseline (VPS-proxy-health/logVpsPush/get_backtest_runs/5000ms-timeout class/task_heartbeat-schema noise), zero overlap with pdfOcrWorker/ocrOnePage (grepped every failure's stack trace); bun tsc --noEmit clean; bun run lint:ci clean (0 warnings); server boot healthy (PORT=3099, toolCount:184); tool count 184 / cron count 88 unchanged (helper-fn-only change, no tool/cron touched). mock-guard.sh PASS. size-lint-justification.sh --check: pdfOcrWorker.ts and the new test file not flagged (5 pre-existing unrelated offenders in bctcScalarAggregator.ts + pdf-extractor files). | Docs: docs/protocols/bctc-extraction-runbook.md GAP callout updated from NOT-WIRED to code-fix-landed with full evidence + script pointer. | NEXT: qa review the diff+fixture-test; ops rebuild the mcp-server image (tracked elsewhere); THEN run `bun scripts/migrations/reextract-pdf-ocr-orientation.ts --filename VIC_2026_Q1.pdf --apply`; THEN dispatch an agentic re-refine pass for report 1f53ef33-8f50-489b-8505-689740692ab0 to get the real AFTER FAILED-unit count.",
         "created_at": "2026-08-25T21:53:13Z",
         "created_by": "po (triage-20260825T2144Z)",
-        "updated_at": "2026-08-25T23:04:50Z"
+        "updated_at": "2026-08-25T23:20:56Z",
+        "verify_note": "ROUTER VERIFICATION 2026-08-25T23:20:55Z — DEPLOY GATE CLEARED, TWO ACs STILL OUTSTANDING. AC-2/AC-3 of this row were deliberately NOT executed at build time: both required the mcp-server image to actually carry this fix, and it did not. That gate has now cleared, verified by the router independently rather than accepted from narration — in-container `docker exec vn-market-intelligence-mcp-mcp-server-1 sh -c 'grep -c -- \"--psm\" /app/src/infrastructure/fetchers/pdfOcrWorker.ts'` returns 4 (returned 0 pre-rebuild); `grep -c \"export async function ocrOnePage\"` returns 1; image sha256:0a653c2a07673c9aad8796b2d7b6c6feb00d3a3926727cbd257f4e57c00721c6 created 2026-08-25T23:12:41Z, container started 23:12:46Z. REMAINING FOR QA — do not close on code inspection alone. (AC-2) Live DB invalidation has NOT been run: `bun scripts/migrations/reextract-pdf-ocr-orientation.ts --apply` (script present, 10530B). Until it runs, pages already extracted into market.db still hold PRE-fix OCR text, so the fix is live for NEW extractions only and the stored corpus is unchanged. (AC-3) The AFTER measurement has NOT been taken. Pre-fix exemplars to re-measure: DBC pages 12/15 (confidence 0.535/0.586 — both ABOVE the 0.5 gate while containing zero real content, i.e. undetected-broken false negatives) and VIC, 19 of 71 pages affected. CRITICAL FOR THE VERIFIER: a healthy-looking confidence number is NOT evidence here — this row exists precisely because TesseractVieBackend computes confidence as mean() over non-empty rows, so a near-total page miss self-reports high confidence. Verify by reading extracted TEXT on the named exemplar pages, never by the confidence field. CAVEAT ON THE OPS RECORD: docs/incidents/ops-cycle-20260826-dual-rebuild-mcp-pdf.md is titled and filed as 2026-08-26T01:13Z, which is host-local time (Europe/Paris, UTC+2) mislabelled as Z; its evidence body (23:12:21Z / 23:13:16Z / 23:13:58Z) is correct machine-captured UTC and matches the probe above. Real headroom to the 02:00Z VN market open was 2h47m, not the 47m the record claims. Trust the body timestamps, not the title."
       },
       {
         "id": "OPS-MCPSERVER-IMAGE-PREDATES-REAPER-FIX-9-COMMITS-13H-STALE",
@@ -24200,7 +24201,7 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-25T22:46:28Z",
+    "_updated_at": "2026-08-25T23:16:56Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24654,6 +24655,18 @@
         "createdAt": "2026-08-25T22:41:41Z",
         "drained_at": "2026-08-25T22:44:02Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2b87d96455b5d49e89c822d1fc69d5ef9c64ba87e91ca4805faadc20f7d8ef9d",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "architect",
+        "type": "tooling_defect",
+        "priority": "WARN",
+        "payload": "CORRECTION + SCOPE WIDENING on the RESIDUAL flagged in review row FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT: its stated cause (board edit without an updated_at bump) is FALSIFIED, the real cause is a null detail.updated_at, the scope is 11 live rows not 3, and 73 of 105 detail items are latently in the same class",
+        "createdAt": "2026-08-25T22:58:14Z",
+        "drained_at": "2026-08-25T23:16:56Z",
+        "routed_to": "po"
       }
     ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
