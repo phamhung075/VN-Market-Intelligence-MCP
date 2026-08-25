@@ -1,0 +1,38 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "P3",
+  "createdAt": "2026-08-25T07:20:20Z",
+  "dedup_key": "devteam-flow:0aD-unscripted-plus-T6-dead-glob",
+  "summary": "Two dev-team flow-doc defects found by executing the 07:07Z tick. (1) Step 0a-D (signal_queue drain) has NO canonical script, so every tick hand-executes the routing lookup from prose — live drift already in the durable inbox: 2 envelopes carry routed_to=\"po-step-0-sig\" vs 67 carrying \"PO Step 0-SIG\". (2) gcc-preflight T6 worktree-lock sweep is structurally dead code: its glob can never match for a linked worktree. NEITHER IS A NEW ROW REQUEST — see fold_guidance.",
+  "payload": {
+    "finding_1": {
+      "what": "Step 0a-D queue-plane drain is unscripted; routed_to label drifts per tick",
+      "evidence": {
+        "spec_says": "docs/agents/dev-team/flow/drain-signals.md §0a-1 verbatim: the canonical script does NOT cover §0a-D (queue row READ-marking) or §0a-D-PRUNE — those stay in this flow",
+        "file_plane_is_deterministic": "scripts/agents-flow/drain-signals.js:284 calls computeRoutedTo(type, from) -> 48/48 file-sourced envelopes carry \"PO Step 0-SIG\"",
+        "dashboard_plane_drifted": "19 dashboard-sourced envelopes carry \"PO Step 0-SIG\", 2 carry \"po-step-0-sig\" (both source=dashboard, drained_at=2026-08-25T04:41:11Z, from=system-auditor + code-janitor)",
+        "blast_radius": "LOW today — routed_to is documented as informational only and PO Step 0-SIG re-reads the inbox as SSOT. It is a latent trap for any future consumer that string-matches routed_to."
+      },
+      "root_cause": "the queue plane has no shared implementation, so the (type,from) routing-table lookup is re-derived by hand every tick and the label spelling is whatever that tick executor typed"
+    },
+    "finding_2": {
+      "what": "gcc-preflight T6 worktree-lock expiry sweep is dead code as written",
+      "evidence": {
+        "spec_glob": "docs/agents/dev-team/flow/main.md gcc-preflight: for each f in .claude/worktrees/*/.git/*.lock",
+        "why_dead": "in a LINKED worktree .git is a FILE (a gitdir: pointer), not a directory — verified: .claude/worktrees/agent-ae9ed2cd6f04b3686/.git is 128B ASCII text. The glob matched 0 files.",
+        "real_location": ".git/worktrees/<name>/ — verified present and currently clean (no *.lock)",
+        "near_miss": "a broader find over .claude/worktrees matched bun.lock, Bun package lockfile at the worktree root. Deleting it would have destroyed real content in the protected worktree holding 11 days of uncommitted work. The narrow documented glob is what prevented that — widening it naively is the WRONG fix."
+      },
+      "suggested_shape_not_prescribed": "resolve the lock dir via git rev-parse --git-dir / the gitdir pointer rather than assuming .git is a directory, and keep the pattern anchored to git lock names so it can never match project lockfiles"
+    },
+    "fold_guidance": {
+      "do_not_mint_for_finding_1": "PRIOR ART EXISTS. FIX-DEVTEAM-DRAIN-ROUTES-NON-PO-ENVELOPES-TO-PO-STEP0SIG (backlog, P=high) already owns the routed_to field — it is about the VALUE being wrong (every envelope stamped PO Step 0-SIG regardless of its own `to`). This report is about the LABEL SPELLING drifting between the scripted and unscripted planes. Adjacent, same field, same fix surface. Recommend folding this evidence into that row rather than minting a competitor.",
+      "also_adjacent": "TASK-DEVTEAM-IDLE-CHAIN-3-DRAIN-DURABILITY (backlog, P=high) proposes reordering §0a-1 and §0a-D for durable-append-before-destructive. That ordering is ALREADY SHIPPED and was executed live this tick (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN, combined append+flip in one orch-apply write). That row may be stale — flagging for your check, not asserting it.",
+      "finding_2_is_uncovered": "subject-scan over all task_board lanes + docs/data/orch/archive/2026-08.json found no row about the worktree-lock glob. The T6 keyword hits are generic-token over-match (task numbering in unrelated epics). This one is genuinely new, but it is P3: the branch has been inert since it was written, not misfiring."
+    },
+    "discovered_by": "router executing dev-team tick 2026-08-25T07:07Z — both found by running the flow, neither by any detector",
+    "not_written_to_orch_state": "filed as a file-plane signal deliberately: PO was spawned at S3 this same tick and is actively writing orch-state.json. A signal_queue append is a full-doc write and could race its triage."
+  }
+}
