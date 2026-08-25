@@ -160,3 +160,13 @@
 - also advancing/re-scoping the sibling board row FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], next_agent:ba) since the salvaged commit implements it — REJECTED: outside this task's authorized scope (different board row, not named in the brief); flagged in notebook/RETURN for its owner instead of silently acting on it.
 **why-decision:** task brief + user-instruction both explicitly bound scope to salvage; the row's own status_note AC-1/AC-2/AC-4 (land 6 files, advance-or-flag the HPG row, confirm no other hidden-diff worktree) are satisfied without touching removal or the sibling row.
 **why-change:** none — followed the dispatching brief's SALVAGE ONLY scope verbatim.
+
+### STEP dev-mcp-server-S93 · dev-mcp-server · 2026-08-25T02:05:00Z
+**task-id:** FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK
+**what-done:** Added a SUPPRESS-ONLY presence-liveness guard to `gcExpiredLocks()`'s Phase-1 pre-GC scan (`coordinationStore.ts`): the SELECT now excludes rows whose `owner_client_session` matches a LIVE (`expires_at > now`) `task_kind='session-presence'` row via `AND (t.owner_client_session IS NULL OR NOT EXISTS(...))`, a self-join on `task_locks` with no schema change. Phase-2 DELETE untouched. 5 new tests (AC-1 suppress-on-live-presence, AC-2 polarity — absent presence still emits, AC-2b expired-presence still emits, AC-3 NULL-safety, AC-4 live-incident regression repro) — all pass.
+**what-considered:**
+- Inverting polarity (emit only when presence is absent-and-confirmed) — REJECTED per the row's explicit AC-2 REJECT clause: an undercounting, opt-in roster must never be read as proof of death.
+- Mirroring the cron Step-1b.1 liveness oracle — REJECTED: row explicitly flags that oracle as broken bidirectionally (FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE), take the shape (cross-check presence) not that implementation.
+- Explicit `owner_client_session IS NULL` short-circuit vs relying on SQLite's NULL=NULL-is-UNKNOWN semantics alone — CHOSE explicit clause for readability/testability even though the bare NOT EXISTS would already be NULL-safe by SQL semantics (belt-and-suspenders, AC-3 is explicitly called out as load-bearing).
+**why-decision:** one correlated subquery inside the existing Phase-1 SELECT is the cheapest correct fix — same transaction, zero new I/O, zero schema change, and the polarity is structurally impossible to invert by accident since suppression requires an actual EXISTS match, never an absence.
+**why-change:** none — implementation follows the dispatch brief's design constraint verbatim.
