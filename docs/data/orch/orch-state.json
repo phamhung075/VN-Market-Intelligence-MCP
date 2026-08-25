@@ -154,23 +154,6 @@
         }
       },
       {
-        "id": "sys-20260824T135127-56bd",
-        "ts": "2026-08-24T13:51:27Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "auditor_cycle_missing",
-        "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 11h (cadence 4h)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T12:00Z",
-        "triaged_at": "2026-08-24T14:05:00Z",
-        "triaged_by": "po",
-        "triage_note": "Tier-2 cycle-missing detector row. Triaged 2026-08-24T14:05Z: the cycle's two claimed anomalies did not survive source verification (A-29 cluster = market-hours stand-down, A-29b = known name-join gap, both already owned). This row is ALSO the concrete instance of the V1 null-tag defect - it carries audit_cycle_tag:null, which is why V1's independent re-read returned 0 for a row that is present and committed. Filed as FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO."
-      },
-      {
         "id": "ntg-20260824T203331Z-macro-macro-17a1b6",
         "ts": "2026-08-24T20:33:31Z",
         "from": "tran-ngoc-bau",

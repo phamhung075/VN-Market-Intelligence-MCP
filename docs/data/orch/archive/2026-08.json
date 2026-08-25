@@ -30233,6 +30233,23 @@
       "rerouted_by": "po/triage-20260824T1310Z",
       "reroute_reason": "to=ops is structurally undeliverable: ops has no signal_queue selector anywhere in the fleet (grep over docs/agents/ops/ and .claude/agents/ops.md = 0 hits) and ops is absent from system-map.json's cowork_signal_recipient set. Rerouted to po, which has a live selector, so the payload is readable rather than immortal-and-unpickable. Structural fix tracked at FIX-SIGNALQUEUE-TO-OPS-HAS-NO-CONSUMER-PRODUCERS-KEEP-ROUTING-THERE. Status deliberately NOT flipped to READ here: READ is in TERMINAL_SIGNAL_STATUSES and would cold-evict the payload in 24h.",
       "po_triage_20260824T1310Z": "ACCEPTED. 97% peak / 76MiB headroom against the 2.5GiB cap is consistent with PO's own dmesg evidence of two real worker OOM kills on 2026-08-23, and this signal's own caution that the A-30 refutation was 'REFUTED, not confirmed' is correct. Folded into FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM; no new row. Standing refusals unchanged: do NOT raise the 2.5GiB cap (live per-container caps already sum to ~13.5GiB against 7.75GiB of host RAM, and raising it would move that row's AC-4 percent-of-cap goalpost, which is metric-masking), and do NOT add pdf-extractor to acked_memory[]. Note for the ops restart now unblocked on FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH: a restart reclaims this burst, so post-restart memory will look better; that is reclamation, not a fix."
+    },
+    {
+      "id": "sys-20260824T135127-56bd",
+      "ts": "2026-08-24T13:51:27Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "auditor_cycle_missing",
+      "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 11h (cadence 4h)",
+      "severity": "WARN",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T12:00Z",
+      "triaged_at": "2026-08-24T14:05:00Z",
+      "triaged_by": "po",
+      "triage_note": "Tier-2 cycle-missing detector row. Triaged 2026-08-24T14:05Z: the cycle's two claimed anomalies did not survive source verification (A-29 cluster = market-hours stand-down, A-29b = known name-join gap, both already owned). This row is ALSO the concrete instance of the V1 null-tag defect - it carries audit_cycle_tag:null, which is why V1's independent re-read returned 0 for a row that is present and committed. Filed as FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO."
     }
   ],
   "backlog_detail": [],
