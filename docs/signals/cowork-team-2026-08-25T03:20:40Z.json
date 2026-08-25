@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "priority": "low",
+  "createdAt": "2026-08-25T03:20:40Z",
+  "payload": {
+    "nominal_tick": "03:15",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "spawned": ["alert-commander-market"],
+    "errors": [],
+    "one_shots": [],
+    "suppressed_cadence": ["chef-intraday"],
+    "dev_head": "in_progress",
+    "devq": 108,
+    "signal_backlog": 34,
+    "new_signals": 0,
+    "pressure_mode": "adaptive",
+    "fanout_gate": "NORMAL",
+    "max_parallel": 4,
+    "headroom_mb": 2892,
+    "load_1min": 1.89,
+    "cores": 12,
+    "last_fired_timestamp": "2026-08-25T03:20:12Z",
+    "last_fired_prewrite": "2026-08-25T03:06:20Z",
+    "cycle_snapshot_promoted": false,
+    "note": "Drain a genuine no-op (new_signals=0, nothing held this tick). suppressed_cadence carried chef-intraday for the first time this session — CHECKED, NOT A DEFECT: that slot last fired 2026-08-25T02:21:39Z and its cadence-policy.json row for calendar_status=open resolves interval_minutes=60, so at 03:16Z it was 54 minutes into a 60-minute interval and the suppression is the adaptive cadence working as designed. Recording the check so a future reader does not re-open it as an anomaly. SNAPSHOT PROMOTION DEFECT reproduction #9, server-confirmed cycle_snapshot_promoted=false: Step 4.7 named the file docs/data/cycle-snapshot-03:19.json from wall-clock date -u +%H:%M while emit_pressure_state looks up the nominal tick 03:15. REFINEMENT of this defect, from the 03:00Z spawn's own return rather than inference: that agent reported a tick-snapshot HIT on docs/data/cycle-snapshot-03:05.json at ~1 minute fresh and skipped both get_cycle_bootstrap and get_macro_snapshot, i.e. the CONSUMER path works because the spawned agent resolves the same wall-clock name the dispatcher writes. Only emit_pressure_state's nominal-tick lookup disagrees. So the blast radius is narrower than eight prior reports implied: it is confined to the cycle-snapshot-latest.json promotion, which matters only for an agent that MISSES the tick file and falls back — and that fallback serves a file frozen at tick 00:00 / created_at 2026-08-23T00:07:50Z carrying regime UNKNOWN while live snapshots read NEUTRAL. Fix the promotion lookup, not the consumer. PUSH BACKLOG accelerating: 176 unpushed commits at 02:52Z, 184 at 03:12Z — eight commits in about twelve minutes across six distinct agents (po, agent-father, system-auditor, dev-team, alert-commander, cowork-team). Third independent agent-side reproduction landed this tick window: alert-commander commit f3319745d blocked by the pre-push size-lint hook on apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, reported as 1206L actual vs 1205L upper bound vs 1096L baseline; the agent correctly refused --no-verify and escalated via telegram channel=bug. Both covering rows remain unpickable at dispatch_lane=null: FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS (P1, next_agent=dev-mcp-server) and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, next_agent=developer). The first row's own title still says 117 commits; the measured figure is 184, so the row understates its blast radius by 67 and the gap widens every tick. Board movement is real but elsewhere: ready[] fell 111 to 108 and signal_backlog 36 to 34 across the last two ticks, and FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW shipped into review[]. dev_head read from canonical top-level .head (in_progress), never the deprecated .task_board.head stub. last_regime emitted as the live-measured NEUTRAL, a deliberate stated deviation from the frozen latest file; last_volatility_level sent as unknown truthfully, zero volatility keys exist in the snapshot."
+  }
+}
