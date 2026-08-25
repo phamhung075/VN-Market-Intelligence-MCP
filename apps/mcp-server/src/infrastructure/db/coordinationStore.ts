@@ -497,6 +497,23 @@ const ORPHAN_EMIT_ALLOW_LIST = [
  * adopt stranded work. Emission is ALLOW-LIST gated (DoD-P15-4): only kinds
  * in ORPHAN_EMIT_ALLOW_LIST produce signals; all others are silently GC'd.
  *
+ * FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK (2026-08-25):
+ * Phase-1 additionally cross-checks the expired row's owner_client_session
+ * against LIVE task_kind='session-presence' rows before minting. This guard
+ * is SUPPRESS-ONLY, never assert-dead:
+ *   - presence row PRESENT (matching owner_client_session) and unexpired
+ *     => SUPPRESS the mint (the owning session is demonstrably still alive;
+ *        TTL-lapse alone is not proof of death).
+ *   - presence row ABSENT (no match, or owner_client_session IS NULL)
+ *     => fall through to exactly today's behaviour (emit as before).
+ * Presence registration is OPT-IN and the roster is known to undercount live
+ * sessions (SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS) — under
+ * this polarity an undercounting roster can only make the guard weaker
+ * (fail to suppress a mint it arguably should have), never wrong (it can
+ * never suppress a mint for a session that isn't actually presence-live).
+ * Phase-2 DELETE is completely unaffected: the expired lock itself still GCs
+ * either way — only the adoption-signal mint is suppressed.
+ *
  * Atomicity: the entire pre-GC emit + DELETE runs inside a single SQLite
  * transaction (all-or-nothing). If the transaction fails, no orphan-signals
  * are emitted and the original rows are preserved.
@@ -541,21 +558,38 @@ export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?:
       //                                designed to outlive their registering session) — same
       //                                class as cron:*; still GC'd silently by Phase 2 below.
       // and the excludeTaskId row being claimed right now (stale-steal path handles it).
+      //
+      // FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK: additionally
+      // suppress emission (SUPPRESS-ONLY — never assert-dead, see function jsdoc above)
+      // when the expired row's owner_client_session matches a LIVE (unexpired)
+      // task_kind='session-presence' row. `t.owner_client_session IS NULL` short-circuits
+      // the NOT EXISTS check so a NULL-owner row can never spuriously match a presence
+      // row that also happens to carry a NULL owner_client_session (AC-3 NULL-safety) —
+      // it always falls through to today's behaviour, same as an absent presence row.
       const kindPlaceholders = ORPHAN_EMIT_ALLOW_LIST.map(() => "?").join(",");
-      const excludeClause = excludeTaskId !== undefined ? " AND task_id != ?" : "";
+      const excludeClause = excludeTaskId !== undefined ? " AND t.task_id != ?" : "";
       const scanParams: (number | string)[] = [grace, ...ORPHAN_EMIT_ALLOW_LIST];
       if (excludeTaskId !== undefined) scanParams.push(excludeTaskId);
 
       const expiredAdoptable = db
         .prepare(
-          `SELECT task_id, task_kind, owner_agent, owner_client_session, payload, redispatch_count
-           FROM task_locks
-           WHERE expires_at + ? < unixepoch('now')
-             AND task_kind IN (${kindPlaceholders})
-             AND task_id NOT LIKE 'published:%'
-             AND task_id NOT LIKE 'cron:%'
-             AND task_id NOT LIKE 'cron-registration:%'
-             AND task_id != 'dev-team-cron-singleton'
+          `SELECT t.task_id, t.task_kind, t.owner_agent, t.owner_client_session, t.payload, t.redispatch_count
+           FROM task_locks t
+           WHERE t.expires_at + ? < unixepoch('now')
+             AND t.task_kind IN (${kindPlaceholders})
+             AND t.task_id NOT LIKE 'published:%'
+             AND t.task_id NOT LIKE 'cron:%'
+             AND t.task_id NOT LIKE 'cron-registration:%'
+             AND t.task_id != 'dev-team-cron-singleton'
+             AND (
+               t.owner_client_session IS NULL
+               OR NOT EXISTS (
+                 SELECT 1 FROM task_locks presence
+                 WHERE presence.task_kind = 'session-presence'
+                   AND presence.owner_client_session = t.owner_client_session
+                   AND presence.expires_at > unixepoch('now')
+               )
+             )
              ${excludeClause}`,
         )
         .all(...scanParams) as Array<{

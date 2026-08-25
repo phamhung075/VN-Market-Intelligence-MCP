@@ -1217,4 +1217,176 @@ describe("AC-11: gcExpiredLocks — orphan-signal emission (TASK_1983 / DoD-P15-
     const allSignals = testDb.prepare("SELECT COUNT(*) as cnt FROM task_locks WHERE task_kind = 'orphan-signal'").get() as { cnt: number };
     expect(allSignals.cnt).toBe(1);
   });
+
+  // ---------------------------------------------------------------------------
+  // FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK:
+  // Phase-1 must cross-check owner_client_session against a LIVE
+  // task_kind='session-presence' row before minting — SUPPRESS-ONLY, never
+  // assert-dead. Phase-2 DELETE behaviour is unchanged in every case below.
+  // ---------------------------------------------------------------------------
+
+  /** Helper: insert a session-presence row for a given client session. */
+  function insertPresence(
+    db: Database,
+    owner_client_session: string | null,
+    expiresInSeconds: number,
+  ): void {
+    db.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        (?, 'session-presence', 'sess-presence', 'cowork-team', ?,
+         unixepoch('now'), unixepoch('now') + ?, unixepoch('now'), ?, NULL, 0)
+    `).run(`session:${owner_client_session ?? "null"}`, owner_client_session, expiresInSeconds, expiresInSeconds);
+  }
+
+  it("AC-1: SUPPRESSES orphan-signal mint for an expired sprint-task whose owner_client_session has a LIVE presence row", () => {
+    // Presence row: live, long TTL (registered, unexpired)
+    insertPresence(testDb, "live-session-AC1", 1800);
+
+    // Sprint-task lock owned by that same session — expired past grace
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        ('task:AC1-live-owner', 'sprint-task', 'sess-AC1', 'dev-mcp-server', 'live-session-AC1',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600, '{"x":1}', 0)
+    `).run();
+    setExpired(testDb, "task:AC1-live-owner", 400);
+
+    const deleted = gcExpiredLocks(testDb, 300);
+
+    // Phase-2 DELETE still runs — the expired sprint-task lock is gone.
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = 'task:AC1-live-owner'").get();
+    expect(origRow).toBeNull();
+
+    // Phase-1 mint is SUPPRESSED — no orphan-signal row.
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = 'orphan-signal:task:AC1-live-owner'"
+    ).get();
+    expect(signalRow).toBeNull();
+
+    // deleted count: the sprint-task row only (the live presence row is untouched — still live).
+    expect(deleted).toBe(1);
+
+    // The presence row itself must survive (still live, not expired).
+    const presenceRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = 'session:live-session-AC1'").get();
+    expect(presenceRow).not.toBeNull();
+  });
+
+  it("AC-2 (POLARITY — load-bearing): an expired row whose owner_client_session has NO presence row STILL emits exactly as today", () => {
+    // No presence row registered at all for this session — absence must never
+    // be treated as proof of life or of death; it is simply not a suppression trigger.
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        ('task:AC2-no-presence', 'sprint-task', 'sess-AC2', 'dev-mcp-server', 'unregistered-session-AC2',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600, '{"x":2}', 0)
+    `).run();
+    setExpired(testDb, "task:AC2-no-presence", 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = 'task:AC2-no-presence'").get();
+    expect(origRow).toBeNull();
+
+    // Emits exactly as today — presence absence is NOT a suppression trigger.
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = 'orphan-signal:task:AC2-no-presence'"
+    ).get();
+    expect(signalRow).not.toBeNull();
+  });
+
+  it("AC-2b: an EXPIRED presence row (session no longer live) does NOT suppress the mint", () => {
+    // Presence row exists but is itself expired — not a live match, must not suppress.
+    insertPresence(testDb, "stale-presence-session", -100);
+
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        ('task:AC2b-stale-presence', 'sprint-task', 'sess-AC2b', 'dev-mcp-server', 'stale-presence-session',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600, '{"x":3}', 0)
+    `).run();
+    setExpired(testDb, "task:AC2b-stale-presence", 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = 'orphan-signal:task:AC2b-stale-presence'"
+    ).get();
+    expect(signalRow).not.toBeNull();
+  });
+
+  it("AC-3: NULL-safety — an expired row with owner_client_session IS NULL emits as today, never spuriously matching a NULL-owner presence row", () => {
+    // A presence row that itself (irregularly) carries owner_client_session = NULL.
+    insertPresence(testDb, null, 1800);
+
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        ('task:AC3-null-owner', 'sprint-task', 'sess-AC3', 'dev-mcp-server', NULL,
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600, '{"x":4}', 0)
+    `).run();
+    setExpired(testDb, "task:AC3-null-owner", 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = 'task:AC3-null-owner'").get();
+    expect(origRow).toBeNull();
+
+    // Must still emit — a NULL-owner row must never match a NULL-owner presence row.
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = 'orphan-signal:task:AC3-null-owner'"
+    ).get();
+    expect(signalRow).not.toBeNull();
+  });
+
+  it("AC-4: regression test reproducing the live incident — short-TTL sprint-task under a long-TTL presence-registered session survives GC with zero orphan-signal, and the expired lock IS still deleted", () => {
+    const sessionId = "live-incident-session-036ceaf1";
+
+    // Register long-TTL session-presence for the session (simulates a live,
+    // presence-registered session whose sprint-task lock has a much shorter TTL).
+    insertPresence(testDb, sessionId, 3600);
+
+    // Claim a sprint-task under that session with a short TTL.
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        ('task:FIX-AC4-LIVE-INCIDENT-REPRO', 'sprint-task', 'sess-AC4', 'dev-mcp-server', ?,
+         unixepoch('now'), unixepoch('now') + 60, unixepoch('now'), 60, '{"title":"long-running work"}', 0)
+    `).run(sessionId);
+
+    // Let the sprint-task lock's short TTL lapse (past grace) while the
+    // session-presence row (long TTL) is still very much alive.
+    setExpired(testDb, "task:FIX-AC4-LIVE-INCIDENT-REPRO", 400);
+
+    const deleted = gcExpiredLocks(testDb, 300);
+
+    // ZERO orphan-signal rows minted for this task_id.
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = 'orphan-signal:task:FIX-AC4-LIVE-INCIDENT-REPRO'"
+    ).get();
+    expect(signalRow).toBeNull();
+
+    // The expired sprint-task row was still deleted (Phase-2 unchanged).
+    const origRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = 'task:FIX-AC4-LIVE-INCIDENT-REPRO'"
+    ).get();
+    expect(origRow).toBeNull();
+    expect(deleted).toBe(1);
+
+    // The live presence row itself must survive untouched.
+    const presenceRow = testDb.prepare(`SELECT * FROM task_locks WHERE task_id = 'session:${sessionId}'`).get();
+    expect(presenceRow).not.toBeNull();
+  });
 });
