@@ -1,0 +1,12 @@
+{
+  "from": "dev-pdf-extractor",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "payload": "FOURTH OCR CONSTRUCTION SITE, OUTSIDE apps/pdf-extractor/. FIX-PDFX-OCR-ORIENTATION landed (905e32be1) and corrects orientation at all 3 named pdf-extractor sites + page_rasterizer. But the text PO actually read through get_bctc_page_text (source='sqlite_ocr') comes from market.db pdf_extracted_text, which is written by apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts::ocrOnePage() -- 'pdftoppm -r 200 | tesseract stdin stdout -l vie+eng', NO --psm and NO orientation detection (tesseract then defaults to psm 3: layout analysis, not orientation detection). Reached in production from composition-root.ts section 4b on every mcp-server start, for every PDF in data/pdfs/. Confirmed for report 1f53ef33-8f50-489b-8505-689740692ab0: bctc_layout_units has ZERO rows, so the PEK path produced nothing and 100% of that report's refine input is this mcp-server tesseract read. CONSEQUENCE: the 25 FAILED units stay unrecoverable and re-running the refiner re-reads the same garble. FIX NEEDED (dev-mcp-server zone): add orientation detection to ocrOnePage (--psm 1, or an image_to_osd pre-pass + rotate), THEN invalidate: DELETE FROM pdf_extracted_text WHERE filename = ? and let extractAndStorePdfPages re-OCR. Deleting BEFORE the ocrOnePage fix just re-writes the same garble. Full detail: docs/protocols/bctc-extraction-runbook.md section 'Page Orientation' -> GAP note.",
+  "related": [
+    "FIX-PDFX-OCR-ORIENTATION-UNDETECTED-ROTATED-BCTC-PAGES-READ-UPSIDE-DOWN",
+    "FIX-REFINEBCTC-SKIPSET-NO-STATUS-FILTER-FAILED-UNITS-PERMANENTLY-TERMINAL"
+  ],
+  "createdAt": "2026-08-25T20:37:47Z"
+}
