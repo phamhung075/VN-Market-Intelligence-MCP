@@ -469,6 +469,20 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-25.json"
+      },
+      {
+        "id": "mdjg-20260825T053308",
+        "ts": "2026-08-25T05:33:08Z",
+        "from": "market-db-journal-guard",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "journal-guard exit 3 ERROR probe_query_failed detail=empty; docker exec hung 6m+, telegram undeliverable 3x — WAL status unknown this tick",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:market-db-journal-guard:2026-08-25T05:33:08Z",
+        "dedup_key": "system_probe:market-db-journal-guard:probe-query-failed-empty"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
