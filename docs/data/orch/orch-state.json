@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T13:45:50Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-25T14:20:58Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -664,7 +664,7 @@
         "type": "ops_followup_request",
         "summary": "RAG durability window opened 13:18Z on container 16c59b5e929f — take a MID-window D1 dmesg capture, not only at close; the previous window died exactly this way",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "po-triage",
         "dedup_key": "rag-durability-bar:mid-window-d1-dmesg-capture",
@@ -678,7 +678,7 @@
         "type": "signal_feedback",
         "summary": "PREMISE REFUTED at source for P0 FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES. Rung B is NOT inert. coordinationStore.ts releaseTask() gates it on task_kind=orphan-signal AND owner_client_session IS NULL AND owner_agent match AND payload.original_owner_client_session match. The PO test fixture was minted with task_claim under a dead-but-NON-NULL session, so the Rung B SELECT could not match and released:0 was CORRECT anti-theft behaviour; the step-4 control released:1 via Rung A, also correct. Both arms demonstrate the code working as specified (taskReleaseTool.ts:59 states it verbatim: ignored for any row whose own owner_client_session is NOT NULL - cannot be used to bypass Rung A anti-theft). task_claim CANNOT create a NULL-owner row; only the server-side reaper mints those. SURVIVING and still valid: zero live NULL-owner orphan-signal rows exist, so the AC is genuinely unrunnable without a reaper-minted row or a direct DB insert - that half stands and is the real blocker. ACTION: retire or rewrite the P0 before any architect dispatch; as written it sends architect to fix correct code. Also do NOT let this re-retract the 2026-08-25T01:40Z memory finding that the FR-2 ladder works - it does, on genuine NULL-owner rows.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-source-verification",
         "dedup_key": "premise_refutation:FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES:rungb-precondition-null-owner"
@@ -23088,9 +23088,34 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T14:01:12Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-25T14:20:58Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "ac5ed16c0212e57b84aa3e2070c832f392b023572db71479db54a7af36cd8790",
+        "source": "dashboard",
+        "from": "po",
+        "to": "qa",
+        "type": "ops_followup_request",
+        "priority": "WARN",
+        "payload": "RAG durability window opened 13:18Z on container 16c59b5e929f — take a MID-window D1 dmesg capture, not only at close; the previous window died exactly this way",
+        "createdAt": "2026-08-25T13:45:50Z",
+        "drained_at": "2026-08-25T14:20:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cff02024a63ccbc4d1b7a9f86a3b776802e5bd8177e620d77d1fe3f4d21bfd38",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "PREMISE REFUTED at source for P0 FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES. Rung B is NOT inert. coordinationStore.ts releaseTask() gates it on task_kind=orphan-signal AND owner_client_session IS NULL AND owner_agent match AND payload.original_owner_client_session match. The PO test fixture was minted with task_claim under a dead-but-NON-NULL session, so the Rung B SELECT could not match and released:0 was CORRECT anti-theft behaviour; the step-4 control released:1 via Rung A, also correct. Both arms demonstrate the code working as specified (taskReleaseTool.ts:59 states it verbatim: ignored for any row whose own owner_client_session is NOT NULL - cannot be used to bypass Rung A anti-theft). task_claim CANNOT create a NULL-owner row; only the server-side reaper mints those. SURVIVING and still valid: zero live NULL-owner orphan-signal rows exist, so the AC is genuinely unrunnable without a reaper-minted row or a direct DB insert - that half stands and is the real blocker. ACTION: retire or rewrite the P0 before any architect dispatch; as written it sends architect to fix correct code. Also do NOT let this re-retract the 2026-08-25T01:40Z memory finding that the FR-2 ladder works - it does, on genuine NULL-owner rows.",
+        "createdAt": "2026-08-25T14:09:05Z",
+        "drained_at": "2026-08-25T14:20:50Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,
