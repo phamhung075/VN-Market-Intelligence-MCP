@@ -1,5 +1,55 @@
 # PO Notebook
 
+## 2026-08-25T07:19-07:40Z — the incident lane was shipped, live, and completely unused
+
+Inbox self-read as SSOT: **69 envelopes / 61 distinct `envelope_id` -> 0** in one write.
+Journal: `docs/agent-memory/decisions/triage-20260825T0732Z-po.md`.
+**8 rows minted · 2 promoted+expedited · 5 folded · 0 stranded in `in_progress[]`.**
+
+### The finding that mattered most was not in any signal
+`is_po_expedited` = `po_expedited_at != ""`. The Incident-Lane Consumer that consumes it is
+UNCONDITIONAL (no head gate, no rotation gate), has its own `INCIDENT_CAP=2` budget entirely
+separate from the shared `WIP<=2` slot, and its caller landed in `dev-team/flow/main.md` earlier
+today. **Zero rows on the whole board carried the field.** Every prior tick has been fighting RLC
+starvation (~1-in-6 idle ticks, 1 row per turn) while a dedicated, unconditional, empty lane sat
+next to it. Priority bumps were never the lever; the stamp is.
+Spent both slots: the QA-Drain dam (`FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-...`)
+and the armed destructive path (`FIX-ORPHAN-FR4-FR5-...`). Dry-ran the real claim script at
+`take_budget=2` against the post-write board before believing it: both claimed, lane=developer.
+
+### Two near-misses, both caught by resolving before writing
+1. The verdictgate emitter reported "ZERO covering rows across ALL lanes" for 336 impossible OHLC
+   rows. `CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR` has carried **336 rows / 20 business dates** since
+   2026-08-05. Exact match. I would have re-shipped covered work; instead I folded and scoped the
+   new row to the structural half in writing.
+2. I nearly filed "triage-signals.md cites a nonexistent row id". The row exists — cold archive,
+   `done_tasks[107]`, `DONE_VERIFIED`. The **real** defect is adjacent and worse: the paragraph
+   mandates a NON-TERMINAL-lane scan, then branches on `DONE/DONE_VERIFIED` — a state that surface
+   structurally cannot report. A literal reader lands on `not found`, which matches no branch.
+
+### The prose ceiling is now a triage constraint, not hygiene
+`po_expedited_at`/`po_expedited_by` are NOT in `STRUCTURAL_FIELDS`, so on `FIX-ORPHAN-FR4-FR5`
+(live prose 11919/12000 B) the **stamp alone** would have hard-aborted the write. Deleted the
+fully-superseded `po_corroboration_20260806` — verbatim restated inside `..._20260808` — in the same
+write: 11832 B. 20 rows are already over ceiling and are permanently un-annotatable; two of them
+were this tick's correct fold targets for the notebook-prune signals, so those folds went unwritten.
+
+### A landed fix that is not deployed is not a fix
+system-auditor's WARN "mcp-server running 13h older code than 0f6891872" looked like routine drift.
+Re-measured it: image `Created=2026-08-24T12:41:40Z`, 9 `apps/mcp-server` commits behind, and
+`0f6891872` is *"reaper stops orphan-minting TTL-expired locks owned by a live presence-registered
+session"*. At **06:33:55Z today the reaper did exactly that** — 4h38m after the fix was on main.
+Three services now measured running pre-fix images. Bounded the claim in the row: un-deployed is a
+NECESSARY condition, sufficiency depends on presence-registration, which is opt-in. Filed as AC.
+
+### Carry-over
+- Both `INCIDENT_CAP` slots spent — do not stamp a third `po_expedited_at` until one clears.
+- Next expedite candidate: `FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-...` (+ sibling), both
+  still `dispatch_lane: null` with the tree ~246 commits ahead. Untouched (standing push disarm).
+- `SPIKE-KINHDICH-VERDICT-CONTRADICTS-PRICE-ACTION-7-CONSECUTIVE-CYCLES` is filed on a second-hand,
+  unreproduced premise **on purpose**. Its first deliverable is reproduction or falsification.
+
+
 ## 2026-08-25T03:05Z — a correction block that shipped a fresh falsified claim; a CRITICAL that measured the wrong database
 
 Inbox read fresh as SSOT: **15 entries → 0**. Journal: `docs/agent-memory/decisions/triage-20260825T0305Z-po.md`.
