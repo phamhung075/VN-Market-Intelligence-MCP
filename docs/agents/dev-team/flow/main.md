@@ -207,8 +207,10 @@ orphan_signals = call_tool(server="vn-market", tool="task_list_held", arguments=
 
 If any `orphan_signals` row has `signal.payload.original_task_kind == "sprint-task"` →
 → Run sub-flow: `docs/agents/dev-team/flow/orphan-adoption.md` (full per-signal adoption loop:
+FR-4 board-state guard [identical rule to `dispatch-claim/SKILL.md` § Orphan-Adoption Probe,
+hot+cold-archive+supervised classification via shared `scripts/lib/resolve-task-lane-by-id.jq`],
 N_MAX redispatch-count gate, claim, DoD-P15-1 tree-hygiene precondition, checkpoint verify,
-board flip, resume-spawn; sub-flow ends with its own `JUMP TO end` once a task is adopted this tick).
+FR-5 lane-aware board flip, resume-spawn; sub-flow ends with its own `JUMP TO end` once a task is adopted this tick).
 Common case (`orphan_signals` empty, or no `sprint-task` rows in it) → fall through, no further read needed.
 
 **Scope note:** Step 0a-B handles `original_task_kind="sprint-task"` only. `cowork-slot` and
