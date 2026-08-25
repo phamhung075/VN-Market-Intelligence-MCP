@@ -17298,6 +17298,29 @@
         "created_at": "2026-08-25T21:53:13Z",
         "created_by": "po (triage-20260825T2144Z)",
         "updated_at": "2026-08-25T21:53:14Z"
+      },
+      {
+        "id": "FIX-MANUALDISPATCH-BLIND-TO-READY-ROWS-OFF-ALLOWLIST-WITHOUT-XOR-FLAG",
+        "title": "A ready[] row whose next_agent is off the DRS allowlist and which carries NEITHER supervised nor plan_only is reachable by ZERO pickers — including the manual-dispatch escape hatch that exists precisely for off-allowlist rows. 24 rows live, 3 of them P0",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "M",
+        "owner": "po",
+        "next_agent": "architect",
+        "zone": "cross-service/",
+        "priority": "P0",
+        "baseline_pass": true,
+        "files": [
+          "scripts/lib/po-manual-dispatch-eligibility.jq",
+          "docs/agents/po/flow/manual-dispatch-sweep.md",
+          "scripts/audits/bounded1-supervised-lane-report.sh",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "dedup_key": "manual-dispatch-eligibility:ready-lane-off-allowlist-no-xor-flag-4th-gap-class",
+        "status_note": "FOURTH coverage-gap class, same family as BACKLOG-XOR-GAP (added 2026-08-07 by FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER) — found by PO at triage 2026-08-25T21:5xZ while ruling on why CHORE-PRUNE-SPRINT-COWORK-GUARANTEED-SLOT-CATCHUP-DECISION-JOURNAL has sat unclaimed since 2026-08-06. | THE HOLE, exactly. is_drs_stranded_off_allowlist scans backlog[] ONLY (status BACKLOG or TODO). is_backlog_xor_gap scans backlog[] ONLY. is_ready_xor_gap scans ready[] but REQUIRES exactly one of supervised/plan_only. So a ready[] row with an off-allowlist non-dev next_agent and NEITHER flag falls through all three, and DRS itself will not take it because the next_agent is off the ratified allowlist. Zero pickers, not one. | MEASURED, not inferred: this tick's sweep returned 147 candidates of which only 2 came from ready[] at all, while 24 ready[] rows sit in the hole. Three are P0: FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP (in ready[] since 2026-08-23 — the P0 that makes PO's own documented inbox CLEAR silently no-op, i.e. the sweep's blind spot is why the sweep's own caller keeps hitting it), TASK-COWORK-CATCHUP-10, TASK-CRON-SKILLMD-PROBE-WIRING. 21 of 24 name agent-father, 2 name claude-manager-helper. Oldest is 2026-07-14. | CAVEAT ON THE NUMBER: 24 comes from PO's own conservative enumeration with a hand-listed dev-role set; the authoritative count must be recomputed through the shared predicates in scripts/lib/devteam-eligibility.jq, never a second hand-maintained list — a duplicated allowlist array is the exact defect FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST keeps re-finding. AC-1 is that recomputation. | AC-2: close the hole in scripts/lib/po-manual-dispatch-eligibility.jq as a FOURTH named predicate composed from the existing shared defs — do NOT widen is_ready_xor_gap (that would change what the XOR class means and silently re-scope BOUNDED-1's own report) and do NOT widen the DRS allowlist (the human-gate reasoning that excluded these agents still holds; the fix is to make the human gate reachable, never to remove it). AC-3: scripts/audits/bounded1-supervised-lane-report.sh grows a section for the new class from the SAME def — three call sites of one composition, never three copies, per that file's own header. AC-4: the regression verifier scripts/audits/po-manual-dispatch-sweep-verify.sh gains positive and negative controls for the new branch. AC-5: after the fix, re-run the sweep and confirm the previously-invisible P0s appear in the candidate list — an implementation that ships without that observation has not been verified. | SECOND, INDEPENDENT WEDGE ON THE SAME SWEEP, do not conflate: even for rows the predicates DO surface, Step 2's stamp hard-rejects on any row already over the 12000B prose ceiling (this tick: candidates 1 and 2, at 34589B and 11677B; 19 board rows are over ceiling fleet-wide). That half is owned by FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS (ready[], P1) and was logged there as a live instance. Together the two mean the sweep is blind to the rows nobody routes AND unable to stamp the rows everyone discusses.",
+        "created_at": "2026-08-25T22:00:06Z",
+        "created_by": "po (triage-20260825T2144Z)",
+        "updated_at": "2026-08-25T22:00:08Z"
       }
     ],
     "closed_sprints": [
