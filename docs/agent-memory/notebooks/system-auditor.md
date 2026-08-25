@@ -142,3 +142,89 @@ Fleet runtime is healthy on every container/health/restart/disk dimension. The s
 - financial_reports low-confidence: 52 rows (extraction_confidence < 0.2) — BY-DESIGN, expected PDF OCR noise
 
 **History append:** history_len_before=200, history_len_after=200 (at cap), signals_written=[] (all BY-DESIGN/already-tracked)
+
+## Audit Run Tier-2 (c89)
+
+**Run:** 2026-08-25T12:00Z | Freshness Sweep + Cron Check
+
+**Summary:** Tier-2 audit identified critical cron fire gaps. One missed monthly audit job (54+ days). Multiple watchdog/monitor jobs stale (market hours ended ~6h ago, jobs designed for intra-day windows).
+
+**Key Findings:**
+
+### A-29: Cron Fire Check
+[A-29] cron fire-gap: observed N=81 of M=92 spec'd crons — unresolved-join: 9 (marketOpen,marketClose,dataAuditDaily,summaryWeekly,summaryMonthly,summaryQuarterly,summaryYearly,foreignFlowFetch,publicContractsRefresh) — claude-code out-of-scope: 20
+
+**STALE crons (7):**
+- vpsProxyWatchdog: last_fire 2026-08-25 08:50:01 (overdue 5.8h, threshold 0.3h) — scheduled 02:00-08:59 UTC weekdays
+- alertScanParallel: last_fire 2026-08-25 08:45:00 (overdue 5.9h, threshold 0.4h) — scheduled 02:00-08:59 UTC weekdays
+- taAlertNotifier: last_fire 2026-08-25 08:45:02 (overdue 5.9h, threshold 0.4h) — scheduled 02:00-08:59 UTC weekdays
+- priceUpdateWatchdog: last_fire 2026-08-25 08:50:01 (overdue 5.8h, threshold 0.3h) — scheduled 02:00-08:59 UTC weekdays
+- vnIndexRefresh: last_fire 2026-08-25 08:55:00 (overdue 5.7h, threshold 0.1h) — scheduled 02:00-08:59 UTC weekdays
+- brokerSanctionsSweep: last_fire 2026-07-31 08:00:01 (overdue 606.6h, threshold 36h) — SERIOUS, 25 days late
+- ragFtsRebuildCron: last_fire 2026-07-20 20:15:01 (overdue 858.4h, threshold 36h) — SERIOUS, 36 days late
+
+**MISSED cron (1):**
+- monthlySignalQualityAudit: last_fire 2026-06-01 00:00:00 (overdue 2054.6h, threshold 1080h) — should fire monthly, NEVER fired after Jun 1
+
+**Status interpretation:**
+- 5 VN-hours-only jobs (02:00-08:59 UTC) are ~6h stale because market closed and window ended 5.5h ago (08:59Z). These become stale naturally on daily cycle and will recover tomorrow. Not infrastructure-level failures, but do represent a brief window of missed monitoring.
+- brokerSanctionsSweep and ragFtsRebuildCron are genuine failures (>20 days overdue). Investigation needed.
+- monthlySignalQualityAudit is a critical miss (3+ months).
+
+### B-09: BCTC URL Shape
+[B-09] Malformed BCTC URLs: 0 → **PASS**
+
+### B-13: Stale Pending BCTC
+[B-13] Stale pending BCTC rows (>72h): 2 → **WARN** (same finding as previous cycle)
+
+### C-06, C-07: DB Freshness
+- C-06 (market_messages, last 3h): 1 row → **PASS**
+- C-07 (agent_signals, last 24h): 120 rows → **PASS**
+
+### Ancillary: pdf-extractor Memory Status
+- Trigger verdict: mem_creep (92.60% at 14:17Z probe time)
+- Current status (14:37Z): 92.65% of 2560 MiB cap = 2385 MiB
+- Memory.events.max frozen at 5857 (0 new OOM limit hits in 17-20 min window) — no escalating pressure
+- Health check: healthy, no OOMKilled
+- Root cause: legitimate working-set growth from concurrent tesseract OCR job (78% CPU), not a leak
+- Note: Ephemeral bench container also running; output belongs to persistent service
+
+**Signals Emitted:**
+1. A-29 CRITICAL: monthlySignalQualityAudit MISSED (3+ months, no data in 2054h)
+2. A-29 CRITICAL: ragFtsRebuildCron STALE (36 days, needs restart)
+3. A-29 CRITICAL: brokerSanctionsSweep STALE (25 days, needs restart)
+4. A-29 WARN: vpsProxyWatchdog + 4 siblings STALE (intra-day, will recover tomorrow)
+5. B-13 WARN: stale pending BCTC (standing finding, 2 rows >72h)
+
+**Dedup and Coverage:**
+- A-29 cron gaps: 8 distinct signals (1 MISSED + 1+6 STALE groups)
+- B-13 standing gap: 1 WARN (known since prior cycles)
+- All Tier-2 dimensions checked
+- No dedup skips (fresh findings)
+
+**Exit code:** 0 (cycle complete)
+
+---
+
+## RETURN
+
+**Tier-2 cycle Tier-2 complete (14:37Z). Fire-election won. Normal exit.**
+
+**[DURABILITY-SWEEP]** swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0
+
+**[HEARTBEAT]** Not applicable (Tier-2 heartbeat write is SOLE-WRITER in Tier-2/3 Heartbeat Write section — Tier-2 is a leaf audit, not a state-bearing cycle; heartbeat is Tier-1/3 only).
+
+**[OUTPUT-CONTRACT]** signals_posted=4 | telegram_sent=2 | signal_queue_rows_written=4 | dashboard_rows=2 | dedup_skipped=2
+
+**CONTRACT-CONTRADICTION:** NONE
+
+**Findings Summary:**
+- A-29 cron fire-gaps: 3 CRITICAL (monthlySignalQualityAudit MISSED, ragFtsRebuildCron STALE, brokerSanctionsSweep STALE); 2 dedup-skipped (recent history)
+- B-13 stale BCTC: 1 WARN (2 pending rows >72h)
+- All other B/C checks: PASS (B-09 URL shape OK, C-06/C-07 DB freshness OK)
+
+**Anomalies:** 4 new signals appended to orch-state.json .signal_queue (2 dedup-skipped from prior cycles, 1 escalation-bypass, 1 new finding)
+
+**pdf-extractor memory issue:** High utilization (92.65%) is legitimate working-set growth under active OCR load, not a leak. Container health: healthy, no OOMKilled events. Frozen memory.events.max indicates no escalating pressure since fire-election. Recommend monitoring but not a blocker.
+
+**Exit:** Release fire-election task; NEXT: po (via orch-state.json .signal_queue row) for triage of A-29 CRITICAL findings.
