@@ -2242,3 +2242,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: D-CYCLE-1 · orphaned auditor cycle marker (malformed-key)
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** system-auditor cycle markers
+**Details:** malformed marker file swept by durability sweep
+**Impact:** prior cycle died mid-run / naming defect
+**Root cause:** system-auditor
+**Zone owner:** sys-20260825T223506-5ed0
+**Last reported:** 2026-08-25T22:43:53Z (signal auditor-cycle-loss:malformed-key, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
