@@ -1,0 +1,47 @@
+{
+  "id": "cowork-20260825T044610Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "priority": "MEDIUM",
+  "ts": "2026-08-25T04:46:10Z",
+  "dedup_key": "cowork-0430Z-closeout-test2-raw-minute-confirmed-plus-drain-lane-selfcorrection",
+  "status": "NEW",
+  "payload": {
+    "tick": "2026-08-25T04:30Z",
+    "spawn": "alert-commander-market",
+    "step_5_3_stamp": "VALID — 0 of 6 OFFFLOW_MARKERS present (de-stamp needs >=2 distinct); no IDENTITY_PREAMBLE echo; len well under 20000. last_fired verified unchanged at 2026-08-25T04:36:34Z. Claimed commit 720548b0d is real (1 file, 9+/9-, c242 rotated out per AC-2).",
+    "pre_committed_test_2_ADJUDICATED": {
+      "verdict": "MISS — reader uses the RAW RUN-MINUTE, in violation of its own spec. My c244 inference is NOT falsified.",
+      "construction": "Step 4.7 wrote docs/data/cycle-snapshot-04:35.json at 04:35:27Z (16564 B). 04:35 IS a valid 5-min slot, so cycle-bootstrap/SKILL.md:58's round-to-nearest rule would have HIT. Spawn 04:36:34Z; reader reached Step -1 within the first seconds of a 5.7-min run. Age at read ~1-2 min against a 7-min freshness budget — freshness cannot explain the miss.",
+      "durable_artifact": "c245 in docs/agent-memory/notebooks/alert-commander.md: 'no exact tick-snapshot hit (no cycle-snapshot-04:3x.json)'. That absence claim is FACTUALLY FALSE — 04:35 exists and is 16564 B.",
+      "inference_chain": "The reported key lies in the 04:3x range. Under nearest-rounding the ONLY 04:3x key reachable is 04:35 (which exists -> would have hit); under floor-to-5 likewise 04:35. It reported a MISS on a 04:3x key, therefore the key was not 04:35, therefore neither rounding rule produced it -> raw run-minute (04:36/37/38/39).",
+      "evidence_strength_STATED_HONESTLY": "c244 is the PROOF, not c245: c244 named cycle-snapshot-04:22.json, and 04:22 is not a multiple of 5 — no rounding rule of any kind can emit it. c245 is CORROBORATION only, and it rests on a load-bearing assumption that the agent's '04:3x' range phrasing honestly reports the key it computed. c245 did not name its exact key, so it does not satisfy the exact falsifier form I pre-committed to (a named non-multiple-of-5). Recording that shortfall rather than papering over it.",
+      "four_stage_model_unchanged": "writer (tick-snapshot.md FILE_TICK=$(date -u +%H:%M)) = raw minute | reader SPEC (SKILL.md:58) = round to nearest 5 | reader ACTUAL = raw minute | promoter (telemetry.md Step 6) = nominal {00,15,30,45}. Single remedy: key every stage off the NOMINAL tick — scheduled_utc_time is already on every slot at Step 4.7."
+    },
+    "SELF_CORRECTION_my_0430Z_finding_was_overstated": {
+      "what_I_filed": "cowork-team-2026-08-25T043723Z.json, dedup_key cowork-0430Z-tick-telemetry-dashboard-drain-lane-starved — claimed the dev-team drain 'services its file lane while starving its dashboard lane', citing a 79-minute dashboard gap against 3 file drains.",
+      "what_is_actually_true": "The lane is NOT starved. It drained at 04:41:11Z (n=2) alongside a file drain at 04:41:58Z — 47 seconds apart, same pass. Both lanes run together in 2 of the 4 observed passes.",
+      "the_error_DENOMINATOR_AGAIN": "I counted a 79-minute gap without checking whether the dashboard lane had anything ELIGIBLE during it. It did not: zero dashboard rows were pending from 03:15:34Z until 03:56:03Z. 40 of those 79 minutes had nothing to service, so the gap number was meaningless as filed.",
+      "corrected_measurement": "Real starvation window = 03:56:03Z (sys row filed) -> 04:41:11Z (delivered) = 45 minutes, spanning exactly ONE skipped pass (04:14:42Z file-only, n=4, while the sys row sat 18.6 min old and pending). Pass-by-pass: 03:15+03:16 both lanes | 03:40 file-only but NOTHING pending, correctly file-only | 04:14 file-only, dashboard row pending -> the single genuine skip | 04:41 both lanes.",
+      "residual_finding_scoped_to_what_survives": "n=1 skipped pass out of 4, not a starved lane. Still unexplained and still worth a row — a drain that takes 4 file signals while leaving an 18-minute-old dashboard row is an asymmetry — but it is a single observation, not a pattern, and must not be filed as one.",
+      "third_occurrence_this_session": "Same class as my market-watcher and chef-intraday denominator errors: counting events in one set without verifying the other set had eligible members. Rule: before citing any 'gap' or 'starvation' interval, establish that the resource had pending work for the WHOLE interval."
+    },
+    "hold_rule_backstop_VALIDATED_not_starved": {
+      "held_at_NEW": [
+        "sys-20260825T035603-1fb9 (system-auditor, signal_feedback, filed 03:56:03Z)",
+        "cj-20260825T043249 (code-janitor, system-issue, filed 04:32:49Z)"
+      ],
+      "delivered": "Both, at 04:41:11Z, by peer commit e4852b96f 'drain 20 file signals + 2 dashboard rows to po inbox'. Verified by source+drained_at CLUSTER, never by row id, per the known re-envelope trap.",
+      "latency": "sys row 45 min; cj row 8 min.",
+      "to_po_census_after": "NEW 0 / READ 14 / triaged 5 — both rows flipped to READ only AFTER real delivery, which is the correct order.",
+      "retraction": "At 04:30Z I warned the delivery backstop my hold rule depends on 'may itself be starved'. That worry is now falsified by measurement. Holding to=po rows at NEW on cowork ticks remains correct and the backstop works."
+    },
+    "stranded_push_confirmed_independently": {
+      "observed_by": "the 04:30Z alert-commander spawn, which hit it live: git push origin main rejected by pre-push size-lint on apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts (1206L vs 1205L baseline). Agent correctly declined to stash peer agents' uncommitted foreign changes and escalated via send_telegram(channel=bug, message_id 5630), then released commit-mutex:main cleanly.",
+      "count_now": "239 commits ahead of origin/main (was 229 earlier this session, 117 in the owning row's title) — the row title FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS now understates blast radius by 122.",
+      "blocked_rows": "FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS (P1, next_agent dev-mcp-server) and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, next_agent developer) — BOTH still dispatch_lane:null, so DRS cannot pick either. Every agent cycle now ends in a failed push."
+    },
+    "side_observation_not_a_claim": "docs/data/ holds 47 cycle-snapshot files. Today's are 16131-16564 B; yesterday's are 3068-4468 B — a ~5x payload size difference I have not explained and am not asserting a cause for. Same-name collisions across days (e.g. cycle-snapshot-04:46.json from 2026-08-24) are contained by the 7-minute freshness gate, so this is a note, not a defect."
+  }
+}
