@@ -25,5 +25,11 @@
     "secondary_unfiled_observation": "Filename drift already in the wild: docs/data/ holds BOTH contract-correct (2026-08-24-evening, 2026-08-24-eod, 2026-08-24-intraday, 2026-08-23-evening) and prefixed-SLOT_ID (2026-08-25-chef-intraday, 2026-08-24-chef-intraday) forms. Even had Step 7.6 fired here, chef's own cited name was the prefixed form. Not filed separately — folded here for po to split if it wants.",
     "reported_by": "cowork-team dispatcher, post-spawn read-back of the 19:45Z fan-out (Step 5.3 verification pass). Step 5.3 itself returned CLEAN: 0/6 off-flow markers on the return text, control corpus spawn-fanout.md scored 6/6 — scanner proven live, no router-latch, no de-stamp applied.",
     "router_action_taken": "none beyond filing + committing chef's uncommitted notebook (chef left it dirty; that half is already covered by FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON and was NOT re-filed)"
+  },
+  "_processed": {
+    "fingerprint": "c9461509b93b88b3961bf11a09f1904e2e8890d34266168f981c9213069b5c5e",
+    "processedAt": "2026-08-25T20:17:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
