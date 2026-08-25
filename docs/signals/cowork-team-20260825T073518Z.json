@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "dedup_key": "cowork-tick-20260825T0730Z-snapshot-miss-prediction-registered",
+  "payload": {
+    "fire_time": "2026-08-25T07:35:18Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-25T07:34:49Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 36,
+    "findings": [
+      {
+        "id": "CYCLESNAPSHOT-WRITER-READER-KEY-MISMATCH",
+        "occurrence": "7th consecutive cycle_snapshot_promoted:false",
+        "status": "root cause already filed this session — signal cowork-team-20260825T072944Z.json, routed to architect. Not re-litigated here.",
+        "registered_prediction": {
+          "purpose": "Falsifiable test of the mechanism claimed in that signal, registered BEFORE the agent returns so it cannot be retrofitted.",
+          "written_file": "docs/data/cycle-snapshot-07:34.json (nominal tick 07:30)",
+          "key_property": "07:34 is OFF a 5-minute boundary — one of the 28-of-41 off-boundary files that make W1 structural.",
+          "predicted": "alert-commander will MISS the tick-snapshot and fall through to direct get_cycle_bootstrap. A reader applying the SKILL's documented rounding computes 07:35; a reader using raw wall clock computes ~07:36. Neither equals 07:34.",
+          "falsifier": "A reported tick-snapshot HIT this cycle would refute the writer/reader key-mismatch mechanism and require re-opening the analysis."
+        }
+      },
+      {
+        "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
+        "occurrence": "4th",
+        "detail": "flow-doc parse yields 2 from a true load of 2.11 under LANG=fr_FR.UTF-8. Verdict unaffected again (both far below the 24 threshold); still fails OPEN toward max_parallel=4."
+      }
+    ],
+    "note": "07:30Z WORK, single slot. Step 0a no-op (0 NEW — 2nd consecutive clean tick since the peer dev-team drain delivered the held cohort at 07:13:14Z). Pressure age 11.3min, adaptive. Headroom 5216MB, load 2.11/24, DEGRADED=false. Step 4.7 executed verbatim for the 7th time; not hand-corrected, since the fix is routed and unlanded."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-25T07:35:18Z"
+}
