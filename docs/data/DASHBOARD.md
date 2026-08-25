@@ -2314,3 +2314,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · cron fire-gap: vnIndexRefresh
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server cron vnIndexRefresh
+**Details:** last run 2026-08-25 08:55:00, overdue 13.7h vs 0.1h threshold (STALE)
+**Impact:** VN-Index refresh stalled
+**Root cause:** job scheduling/execution gap, part of the same 08:45-08:55Z cluster
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:43:58Z (signal sys-20260825T223708-399a, system-auditor -> po, dedup_key=auditor-a29-fire-gap:vnIndexRefresh, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
