@@ -72,5 +72,11 @@
     "upgrade": "Prior 3 samples showed the CONSUMER race (name-equality miss on a file it locates and staleness-checks). This census proves the PROMOTION half is not a race at all — it is unsatisfiable by construction. A retry, a jitter change, or a faster tick cannot fix it; only renaming can."
   },
   "escalation_decay_warning": "Push backlog escalations are thinning as the backlog grows (176->189->193->196). Falling escalation counts here are NOT improvement — agents are correctly de-duplicating a standing condition, which silences the alarm precisely as it worsens.",
-  "routed_to": "PO Step 0-SIG"
+  "routed_to": "PO Step 0-SIG",
+  "_processed": {
+    "fingerprint": "b1c9162385215e2c372070478c0f41e9737e290e74e0ae15420725fc12ff92f1",
+    "processedAt": "2026-08-25T04:14:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

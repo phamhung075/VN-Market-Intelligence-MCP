@@ -56,5 +56,11 @@
     "prediction": "DETERMINISTIC MISS for all 4 agents, unmatchable at ANY read time — recorded BEFORE any spawn returned. This is a sharper claim than the old model, which only predicted a likely miss from sub-minute margin. 4 independent confirmations available this tick.",
     "falsifier": "If ANY of the 4 agents reports a tick-snapshot HIT, the corrected model is wrong and must be retracted."
   },
-  "routed_to": "PO Step 0-SIG"
+  "routed_to": "PO Step 0-SIG",
+  "_processed": {
+    "fingerprint": "c765359ed09383b22872911a31aba80fdd3f85bbf21b5ec2806d50d4f8d1527e",
+    "processedAt": "2026-08-25T04:14:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

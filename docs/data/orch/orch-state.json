@@ -22299,7 +22299,7 @@
         "last_served_tick": "2026-08-25T01:16:34Z"
       }
     },
-    "_updated_at": "2026-08-25T03:45:59Z",
+    "_updated_at": "2026-08-25T04:14:43Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22623,6 +22623,152 @@
         },
         "createdAt": "2026-08-25T03:35:40Z",
         "drained_at": "2026-08-25T03:40:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6cc384df98067e6c3c233fb7dd461857179b8b9011b51605d28a35547000d54a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_defect_confirmation",
+        "priority": "P2",
+        "payload": {
+          "subject": "cycle-snapshot wall-clock naming — race confirmed by advance prediction, 3 samples",
+          "defect": "FIX-COWORK-CYCLE-SNAPSHOT-WALLCLOCK-NAME-VS-NOMINAL-TICK",
+          "reproductions": 10,
+          "cycle_snapshot_promoted": false,
+          "samples": [
+            {
+              "tick": "03:00Z",
+              "write": "03:05:45Z",
+              "agent_read": "03:05",
+              "outcome": "HIT"
+            },
+            {
+              "tick": "03:15Z",
+              "write": "03:19:39Z",
+              "agent_read": "03:20",
+              "outcome": "MISS"
+            },
+            {
+              "tick": "03:30Z",
+              "write": "03:34:28Z",
+              "agent_read": "03:35",
+              "outcome": "MISS (predicted in advance)"
+            }
+          ],
+          "consumer_behavior": "locates nearest file and computes staleness, then discards on name equality alone",
+          "preferred_fix": "name by NOMINAL tick in dispatcher write + agent read + promotion lookup",
+          "observed_cost": "~2 redundant MCP bootstrap calls per missed tick; NOT stale data (agent fell back to live calls, not to frozen latest)",
+          "escalation_decay": "agents now suppress push-block escalations as known; alarm falls while backlog grows 176->196",
+          "unpushed_backlog": 196,
+          "note": "RACE TEST RESOLVED — PREDICTION CONFIRMED IN ADVANCE. Follow-up to the 03:30Z tick telemetry (drained to the PO inbox at 03:40:51Z before this outcome was known) and to the 03:15Z correction commit fca953ee4. The 03:30Z spawn returned verbatim: 'no exact tick-snapshot match for 03:35 (nearest was 03:34, 1 min stale) -> direct get_cycle_bootstrap + get_macro_snapshot + get_macro_calendar'. That is precisely the MISS called in advance in commit a638380d1: the dispatcher's Step 4.7 write landed at mtime 03:34:28Z with 32 seconds left in the minute, the agent's bootstrap ran past 03:35:00Z, resolved its own date -u +%H:%M to 03:35, and missed. THREE SAMPLES, and the mechanism is now confirmed rather than inferred because the third was called before the return arrived: (1) 03:00Z, write 03:05:45Z, 15s remaining, agent read 03:05, HIT; (2) 03:15Z, write 03:19:39Z, 21s remaining, agent read 03:20, MISS; (3) 03:30Z, write 03:34:28Z, 32s remaining, agent read 03:35, MISS-as-predicted. A HIT requires the spawned agent's bootstrap to land inside the same wall-clock minute as the dispatcher's write — a sub-minute race the dispatcher does not control and cannot make deterministic by retrying. NEW AND MATERIAL, from the agent's own phrasing, and it points the fix somewhere no prior report did: the consumer DOES locate the neighbouring file and DOES compute its staleness ('nearest was 03:34, 1 min stale'), then discards a correctly-formed, one-minute-old, fit-for-use snapshot on NAME EQUALITY ALONE. The data was present. This is a pure naming/lookup defect end to end — not data availability, not freshness, not the MCP layer — and it admits two independent remedies: (i) CANONICAL, name by the NOMINAL tick in all three places (dispatcher Step 4.7 write, agent bootstrap read, emit_pressure_state promotion lookup); the dispatcher already knows the nominal tick and already passes it into every spawn as scheduled_utc, so no new plumbing is required; or (ii) CHEAPER, give the consumer a tolerance window and accept the nearest snapshot within N minutes, which it is already computing and already throwing away. PREFER (i): it also repairs the promotion, which (ii) leaves permanently broken — cycle-snapshot-latest.json has never once been promoted and still reads tick 00:00 created_at 2026-08-23T00:07:50Z serving regime UNKNOWN against a live NEUTRAL. Ten consecutive server-confirmed cycle_snapshot_promoted=false. BLAST RADIUS, measured not inferred, and smaller than eight earlier reports implied: on both observed misses the agent fell back to live get_cycle_bootstrap and get_macro_snapshot calls, NOT to the frozen latest file, so the observed cost is redundant MCP calls (tokens and latency, roughly 2 extra calls per missed tick) rather than wrong data. Do not generalize that to every agent's fallback chain without checking each one — alert-commander's chain was the only one observed. ESCALATION DECAY — a second-order risk that will hide the push blocker rather than surface it. The 03:30Z agent explicitly declined to send a bug escalation for its blocked push, reasoning it is 'an already-known, standing systemic condition, not a novel finding'. That de-duplication is individually correct and collectively dangerous: the three prior agents this session DID escalate, so alarm volume is decaying precisely as the condition worsens — unpushed backlog 176 at 02:52Z, 189 at 03:22Z, 193 at 03:35Z, 196 at 03:41Z. Falling escalation counts must NOT be read as improvement; by the time escalations stop entirely the backlog will be at its worst and its loudest evidence gone. UNOWNED MODEL/PRICE DIVERGENCE, recorded because no agent's gate covers it: get_kinhdich_reading returned DBC=BAN at 100% confidence (a full-confidence sell) on the same cycle DBC's price broke out +5.42% with a Bollinger-band breakout. The alert-commander correctly ruled it non-actionable under its own firing gate, which is the right call for that agent and leaves the question unowned. Either the model leads price or the model is wrong; nothing in the fleet currently checks which, so this will not be revisited unless it is filed as a task. STEP 5.3 for the 03:30Z spawn: 0 of 6 off-flow markers, no IDENTITY_PREAMBLE echo, length under the 20000 cap -> NO de-stamp; last_fired verified still 2026-08-25T03:35:09Z, unchanged from what that tick wrote."
+        },
+        "createdAt": "2026-08-25T03:42:10Z",
+        "drained_at": "2026-08-25T04:14:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b1c9162385215e2c372070478c0f41e9737e290e74e0ae15420725fc12ff92f1",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "P2",
+        "payload": {
+          "nominal_tick": "03:45",
+          "classification": "FIRE",
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "new_signals": 0,
+          "signal_backlog": 34,
+          "devq": 109,
+          "dev_head": "in_progress (FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED, claimed 03:48:37Z by dev-team incident-lane consumer)",
+          "fanout_gate": "NORMAL",
+          "headroom_mb": 2484,
+          "load_1min": 2.39,
+          "cores": 12,
+          "max_parallel": 4,
+          "last_fired_prewrite": "2026-08-25T03:35:09Z",
+          "last_fired_timestamp": "2026-08-25T03:50:41Z",
+          "cycle_snapshot_promoted": false,
+          "snapshot_write_utc": "2026-08-25T03:49:40Z",
+          "snapshot_file": "cycle-snapshot-03:49.json",
+          "margin_to_minute_roll_seconds": 20,
+          "predicted_consumer_resolution": "03:50",
+          "prediction": "MISS — recorded BEFORE the spawn returned, 2nd advance prediction on this defect"
+        },
+        "createdAt": "2026-08-25T03:51:20Z",
+        "drained_at": "2026-08-25T04:14:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1c42ae24027ed0cb2d3c77999e614615210aa88d9f7a097495461007f78751ad",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_defect_correction",
+        "priority": "P2",
+        "payload": {
+          "headline": "READ THE SPEC, NOT THE AGENT PROSE — the consumer has NO nearest-file scan. My prior tolerance-window remedy was designed against behaviour I inferred from one agent sentence and never verified.",
+          "spec_source": ".claude/skills/cycle-bootstrap/SKILL.md Step -1",
+          "spec_verbatim": {
+            "tick_rule": "TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot)",
+            "path_rule": "SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json",
+            "lookup": "single exact-path existence check; if present, a >7min staleness test on THAT file; else fall through to direct MCP",
+            "no_nearest_scan": true
+          },
+          "true_mechanism": "FOUR quantizations of one clock, not a sub-minute race: writer names by RAW minute (date -u +%H:%M, tick-snapshot.md); reader looks up the SAME clock ROUNDED TO 5-MIN SLOTS; promotion looks up the NOMINAL QUARTER TICK. A write can only ever be found when its minute is a multiple of 5.",
+          "quantified": {
+            "corpus": 46,
+            "writes_with_minute_divisible_by_5": 8,
+            "percent_matchable_at_all": 17,
+            "writes_named_at_nominal_quarter_tick": 0
+          }
+        },
+        "createdAt": "2026-08-25T03:56:40Z",
+        "drained_at": "2026-08-25T04:14:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c765359ed09383b22872911a31aba80fdd3f85bbf21b5ec2806d50d4f8d1527e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "P2",
+        "payload": {
+          "nominal_tick": "04:00",
+          "classification": "FIRE",
+          "spawned": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "batch_note": "4-hourly boundary — largest fan-out of the session so far; MAX_PARALLEL=4 so a single batch, no inter-batch wait",
+          "new_signals": 1,
+          "signal_backlog": 34,
+          "devq": 109,
+          "dev_head": "idle, next_agent=qa (04:00:37Z) — peer landed 0e3128e1f, the tier-1 auditor EXPECTED-DISABLED fix, and handed to qa",
+          "fanout_gate": "NORMAL",
+          "headroom_mb": 2240,
+          "load_1min": 1.99,
+          "cores": 12,
+          "max_parallel": 4,
+          "last_fired_prewrite": {
+            "news-scout-offhours": "2026-08-25T00:06:50Z",
+            "market-watcher-offhours": "2026-08-25T00:06:50Z",
+            "alert-commander-market": "2026-08-25T03:50:41Z",
+            "alert-commander-critical": "2026-08-25T00:06:50Z"
+          },
+          "last_fired_timestamp": "2026-08-25T04:05:33Z",
+          "cycle_snapshot_promoted": false,
+          "consecutive_promoted_false": 12
+        },
+        "createdAt": "2026-08-25T04:06:10Z",
+        "drained_at": "2026-08-25T04:14:42Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

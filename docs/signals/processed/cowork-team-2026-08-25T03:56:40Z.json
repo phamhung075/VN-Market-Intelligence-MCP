@@ -61,5 +61,11 @@
     "subject": "DBC kinhDich BAN 100% vs price",
     "detail": "divergence WIDENED this cycle: +6.63% today vs +5.42% at 03:30Z, kinhDich still full-confidence sell. Correctly non-actionable under alert-commander gate. No agent in the fleet checks whether the model leads price or is wrong."
   },
-  "routed_to": "PO Step 0-SIG"
+  "routed_to": "PO Step 0-SIG",
+  "_processed": {
+    "fingerprint": "1c42ae24027ed0cb2d3c77999e614615210aa88d9f7a097495461007f78751ad",
+    "processedAt": "2026-08-25T04:14:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
