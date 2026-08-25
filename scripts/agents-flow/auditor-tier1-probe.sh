@@ -101,6 +101,15 @@
 #                         one ledger, two arrays, honouring the identical
 #                         mixed-case-never-suppresses + staleness-rule
 #                         guarantees for both launchd and memory signatures.
+#   LAUNCHD_INSTALLED_DIR_PATH — directory of the LIVE INSTALLED *.plist files
+#                         (default: $HOME/Library/LaunchAgents), read by
+#                         _launchd_label_expected_disabled() below
+#                         (FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-
+#                         LAUNCHD-JOB-AS-DEGRADED) — deliberately separate from
+#                         LAUNCHD_DIR_PATH: that var points at the REPO copy
+#                         (label discovery only, never carries a live Disabled
+#                         key); this one points at the INSTALLED copy, the only
+#                         place a user's real Disabled=>1 policy choice lives.
 #   ORCH_STATE_PATH     — docs/data/orch/orch-state.json path (default: repo
 #                         docs/data/orch/orch-state.json) — read by
 #                         _task_status_in_orch_state(), shared by both ack
@@ -256,6 +265,9 @@ HEARTBEAT_FILE="${HEARTBEAT_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-h
 TRIGGER_FILE="${TRIGGER_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-trigger.json}"
 LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
 LAUNCHD_ACK="${LAUNCHD_ACK_PATH:-$REPO_ROOT/docs/data/auditor-launchd-ack.json}"
+# FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED
+# — the INSTALLED plist directory (never the repo copy — see header table above).
+LAUNCHD_INSTALLED_DIR="${LAUNCHD_INSTALLED_DIR_PATH:-$HOME/Library/LaunchAgents}"
 ORCH_STATE="${ORCH_STATE_PATH:-$REPO_ROOT/docs/data/orch/orch-state.json}"
 # FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT — see "SPAWN DEBOUNCE"
 # header section above for the full contract.
@@ -691,10 +703,28 @@ _mem_container_acked() {
 # below now resolves tracked_by against orch-state.json exactly like
 # _mem_container_acked() does (no headroom-floor concept applies here —
 # that predicate is memory-specific).
+#
+# FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-
+# DEGRADED (2026-08-25): the not-loaded branch above only ever had two
+# dispositions — "bad" or "acked" — with no way to say "the user deliberately
+# disarmed this job". That laundered a policy decision (com.vn-market.
+# fleet-push, Disabled=>1, disarmed to stop an unattended push of ~224
+# unpushed commits) through the ack ledger, which is semantically wrong (the
+# ledger's contract is "degraded + open tracked fix"; a deliberate disarm is
+# neither) and cannot self-expire the way a real ack can. A THIRD
+# disposition, EXPECTED-DISABLED, is now checked BEFORE the ack lookup in the
+# not-loaded branch (see _launchd_label_expected_disabled() below): a label
+# whose INSTALLED plist carries Disabled=>1, or that is a member of
+# `launchctl print-disabled`'s per-user disable database, is reported as
+# expected-disabled and never touches `bad`/`acked`/the spawn-debounce
+# entity side-channel. Deliberately NOT applied to the loaded-but-bad-exit-
+# status branch below: Disabled=>1 can never be loaded by launchd in the
+# first place, so that branch is always a live, possibly-crashing process —
+# widening this there would risk hiding a real crash, not a policy decision.
 _check_launchd_agents() {
-  local dir="$LAUNCHD_DIR" plist label lc_out bad="" acked="" match_line status
+  local dir="$LAUNCHD_DIR" plist label lc_out bad="" acked="" expected_disabled="" match_line status
   local obsolete_labels="com.vn-market.socat-bridge"
-  local ack_labels="" ack_reason ack_rc
+  local ack_labels="" ack_reason ack_rc disabled_reason disabled_rc
   # ack_labels carries tracked_by too now (TSV label\ttracked_by) — see
   # _launchd_label_acked's tracked_by-liveness check below.
   [ -f "$LAUNCHD_ACK" ] && ack_labels=$(jq -r '.acked[]? | [(.label // ""), (.tracked_by // "")] | @tsv' "$LAUNCHD_ACK" 2>/dev/null)
@@ -717,6 +747,11 @@ _check_launchd_agents() {
     esac
     match_line=$(printf '%s\n' "$lc_out" | awk -F'\t' -v want="$label" '$3 == want {print; exit}')
     if [ -z "$match_line" ]; then
+      disabled_reason=$(_launchd_label_expected_disabled "$label"); disabled_rc=$?
+      if [ "$disabled_rc" -eq 0 ]; then
+        expected_disabled="${expected_disabled}${label}(${disabled_reason}) "
+        continue
+      fi
       ack_reason=$(_launchd_label_acked "$label" "$ack_labels"); ack_rc=$?
       if [ "$ack_rc" -eq 0 ]; then
         acked="${acked}${label}(not-loaded) "
@@ -746,14 +781,50 @@ _check_launchd_agents() {
     fi
   done
   if [ -n "$bad" ]; then
-    echo "launchd not loaded/unhealthy: ${bad}${acked:+(also acknowledged-degraded, tracked: $acked)}"
+    echo "launchd not loaded/unhealthy: ${bad}${acked:+(also acknowledged-degraded, tracked: $acked)}${expected_disabled:+(also expected-disabled, no fix needed: $expected_disabled)}"
     return 1
   fi
-  if [ -n "$acked" ]; then
-    echo "acknowledged-degraded (suppressed — open backlog fix-task tracks it): $acked"
+  if [ -n "$acked" ] || [ -n "$expected_disabled" ]; then
+    echo "${acked:+acknowledged-degraded (suppressed — open backlog fix-task tracks it): $acked}${expected_disabled:+expected-disabled (deliberately disabled by user policy, self-expiring, no tracked_by/staleness): $expected_disabled}"
     return 0
   fi
   return 0
+}
+
+# Returns 0 (EXPECTED-DISABLED, PRINTS the disarm mechanism) if the label's
+# LIVE INSTALLED plist carries Disabled=>1, OR the label is a member of
+# `launchctl print-disabled`'s per-user disable database. Either signal is a
+# legitimate, user-initiated disarm mechanism (AC-3, FIX-AUDITOR-TIER1-PROBE-
+# SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED) — checked
+# independently because they are two DIFFERENT mechanisms (plist key vs.
+# launchctl's disabled-database), not because either alone is unreliable.
+# Reads the INSTALLED plist ($LAUNCHD_INSTALLED_DIR, never the repo copy,
+# AC-2) — the repo copy never carries a live Disabled=>1 (verified: the
+# repo's com.vn-market.fleet-push.plist has no Disabled key at all; only the
+# installed copy under ~/Library/LaunchAgents does, so reading the repo copy
+# would silently miss every real disarm). Uses `plutil -p` (never `grep -i
+# disabled` against the binary plist — that already produced one false
+# negative: absent-key and Disabled=>0 both print nothing to grep, only
+# plutil -p's structured `"Disabled" => N` line distinguishes them). Prints
+# nothing and returns 1 on no match (same reason/rc convention as
+# _launchd_label_acked() above).
+_launchd_label_expected_disabled() {
+  local label="$1" installed_plist disabled_val uid
+  installed_plist="$LAUNCHD_INSTALLED_DIR/${label}.plist"
+  if [ -f "$installed_plist" ]; then
+    disabled_val=$(plutil -p "$installed_plist" 2>/dev/null \
+      | awk -F'=> ' '/"Disabled"/{print $2; exit}')
+    if [ "$disabled_val" = "1" ]; then
+      printf 'disabled-by-plist'
+      return 0
+    fi
+  fi
+  uid=$(id -u)
+  if launchctl print-disabled "gui/$uid" 2>/dev/null | grep -q "\"${label}\" => disabled"; then
+    printf 'disabled-by-launchctl'
+    return 0
+  fi
+  return 1
 }
 
 # Exact-match membership test for a label against the acked[] ledger
