@@ -85,5 +85,11 @@
         "owner_hint": "agent-father"
       }
     ]
+  },
+  "_processed": {
+    "fingerprint": "5fe11c330758d60a07c54ea8ad543fbe6ea4da82e98c7de489a97a4fc5bd04d6",
+    "processedAt": "2026-08-25T07:13:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

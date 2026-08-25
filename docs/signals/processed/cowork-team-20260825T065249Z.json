@@ -106,5 +106,11 @@
       "verified_by": "source + drained_at cluster, never by row id (the dev-team drain re-envelopes under a content-hash envelope_id and discards the original id)",
       "cluster": "source=dashboard @ 2026-08-25T06:47:17Z, n=4 — includes from=market-db-journal-guard to=po type=system-issue x2, routed_to='PO Step 0-SIG'"
     }
+  },
+  "_processed": {
+    "fingerprint": "66e4f398c89a1213a4277375b44469be5c1d3baacd54962d60a62bf44c3d8b7d",
+    "processedAt": "2026-08-25T07:13:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

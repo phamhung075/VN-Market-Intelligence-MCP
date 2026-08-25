@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787640487,
-    "last_linecount": 23
+    "last_mtime": 1787642043,
+    "last_linecount": 24
   },
   "decision_journal": [
     {
@@ -128,136 +128,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-25T07:13:14Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-3bcd96",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-6c2355",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-286c9c",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-328400",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-51973a",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-1d332d",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
       {
         "id": "ntg-20260824T203614Z-technical_indicators-VNM-82a3ee",
         "ts": "2026-08-24T20:36:14Z",
@@ -300,46 +174,6 @@
         "triaged_at": "2026-08-24T10:56:41Z",
         "triaged_by": "po (triage-20260824T1050Z, router hand-dispatch)",
         "disposition": "FOLD onto FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP (2nd occurrence, 2nd distinct report in 2 days) + MINTED FIX-BCTC-IMGDEG-SIGNAL-SUMMARY-CONTRADICTS-ITS-OWN-LIVE-CONFIDENCES. THIS SIGNAL IS FALSE ABOUT ITS OWN SUBJECT ON TWO AXES - re-measured at source this tick via get_bctc_refined(report_id=1f53ef33-8f50-489b-8505-689740692ab0) through the gateway wrapper, not taken from the dispatch. (i) COUNT: THREE units carry an image_unavailable flag, not the 2 named in payload.affected_unit_ids - unit-0004 conf 0.75 flags [continuation_marker_missing:page7, image_unavailable:pages6-8]; unit-0005 conf 0.65 flags [image_unavailable, garbled_ocr_layout]; unit-0006 conf 0.70 flags [image_unavailable, ocr_row_alignment_uncertain]. (ii) THRESHOLD: NONE of the three is at or below the <=0.6 the summary asserts; the true range is 0.65-0.75. MECHANISM PINNED in apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts: (a) shouldSignalImageFetchDegradation() fires on strict equality occurrenceCount===threshold(2) - a rising edge that by its own header 'never re-fires on the 3rd, 4th ... occurrence' - and nothing ever amends the emitted row, so affected_unit_ids is a point-in-time snapshot presented as the report's final extent. unit-0006 was refined at 09:04:24, 10s AFTER this row's own ts 09:04:14, which is exactly why it is missing. (b) buildBctcImageFetchDegradedRow() templates the literal 'capped <=0.6 confidence' unconditionally and never reads a confidence value at all - byte-for-byte the same hardcoded-summary-contradicts-payload defect as CCATO defect (C) at scripts/narrative-truth-gate.sh:421-423, in a second, independent emitter. (c) The row carries NO dedup_key (yesterday's sibling bctc-imgdeg-69fcd047 only has one because PO stamped it by hand at triage) - same missing-dedup_key defect as CCATO defect (B). UNDERLYING AND WORSE THAN THE SUMMARY BUG: the <=0.6 cap that the writer's own file header calls 'BY DESIGN' is a prose instruction to the refine_bctc_md subagent (table-page.md / continuation-stitch.md) with no server-side clamp at the push_bctc_refined_unit boundary. Live data refutes it 3/3, so any downstream consumer filtering on confidence<=0.6 to find image-degraded units silently returns ZERO for this report. Not closed as noise: the fetch-plane degradation itself is real and now recurring, and the emitter's own falsity is the newly minted row."
-      },
-      {
-        "id": "sys-20260824T0130-pdf-mem-loop-8f4a",
-        "ts": "2026-08-24T07:10:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "memory_loop_breach",
-        "summary": "pdf-extractor memory-creep loop: breaches 85% threshold, benign (FOLD), absent from ack ledger, no tracked backlog row → fires every 30min",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "system-auditor",
-          "container": "vn-market-intelligence-mcp-pdf-extractor-1",
-          "finding_class": "benign_loop",
-          "measurement": {
-            "memory_percent": 86.9,
-            "threshold_percent": 85,
-            "verdict": "FOLD",
-            "reason": "confirmed stable/oscillating, absence from .acked_memory"
-          },
-          "issue": {
-            "symptom": "audit fire-election succeeds every 30min → probe runs → FAILURE → no visible change → fires again",
-            "root_cause": "pdf-extractor absent from docs/data/auditor-launchd-ack.json .acked_memory[], sole cause of breach",
-            "evidence": [
-              "previous tick (30min ago): concluded FOLD, both containers stable OOMKilled=false RestartCount=0",
-              "rag-service oscillates 58.33% → 91.40% over same window (known memory oscillation signature)",
-              "pdf-extractor: zero ack entry, no backlog row, zero authorization to hand-edit ack ledger"
-            ]
-          },
-          "action_required": "po decision: either ack the entry in auditor-launchd-ack.json or raise pdf-extractor memory cap",
-          "cycle_frequency_min": 30,
-          "observed_spawns_per_day": 48,
-          "mitigation_urgency": "medium"
-        },
-        "ts_original_backdated": "2026-08-24T01:30:00Z",
-        "ts_correction_note": "ts was backdated 5h40m by the emitting system-auditor (exact :30:00 boundary = a fabricated/rounded value, not a clock read). Real mint window 2026-08-24T07:10Z, corrected here by po. The id string still embeds the WRONG value (sys-20260824T0130-...) and is deliberately left alone so existing references resolve -- the id's embedded timestamp is NOT a clock fact, read ts. Matters because the 7-day prune ages on ts: the backdate silently burned 5h40m of this row's age budget.",
-        "triaged_by": "po (ruling-20260824T0716Z)",
-        "triaged_at": "2026-08-24T07:16:00Z",
-        "disposition": "ACCEPTED-WITH-CORRECTIONS. Measurement and routing correct; two payload claims are not. (i) payload.issue.root_cause says pdf-extractor's absence from .acked_memory is the 'sole cause of breach' -- it is the sole cause of the FAILURE VERDICT, not of the breach; the breach is real (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM shipped and idles at 85-87% against its own AC-4 bar of <=80% of cap). (ii) payload.issue.evidence says 'no backlog row' -- FALSE: FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK has tracked exactly this loop since 2026-08-24T04:01:33Z, and FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE tracks the headroom-plane defect. payload.action_required ('ack the entry or raise the cap') offers only the two options PO refused at 04:00Z and refuses again here -- see po_ruling_20260824T0716Z on the FOLD-VERDICT row for the full reasoning. Resolution: no ack, no cap change; the FOLD-VERDICT row is expedited to P0 and `.head` unpinned in this same write so it can finally be dispatched. _updated_by null on this row is the known signal_queue producer-auth gap, not a defect of this row."
       },
       {
         "id": "sys-20260824T125005-a30-pdf",
@@ -687,7 +521,7 @@
         "type": "system-issue",
         "summary": "FIRST LIVE REPRODUCTION of the orphan-adoption terminal-guard defect — evidence only, NOT a new work item; existing coverage already owns the fix (FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD epic in backlog[] BLOCKED, child FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD in ready[] P1). At 06:33:55Z, 63s after the Docker VM outage ended, server-reaper minted an orphan-signal for a DONE_VERIFIED task already cold-evicted to archive/2026-08.json. Phase A gates adoption ONLY on redispatch_count>=N_MAX (1>=3 false) and has no terminal-state check, so it would have spawned dev-mcp-server in adopt-resume mode against shipped, QA-verified work. Withheld by hand; nothing automatic stopped it. KEY DESIGN NOTE for the FR-4 implementation: the row was unresolvable in the HOT board at adoption time (already cold-evicted), so a hot-only read-guard sees not-found rather than terminal — not-found MUST NOT be treated as adoptable.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/2026-08-25-orphan-adoption-terminal-guard-live-reproduction.md",
         "payload": {
           "dedup_key": "orphan-adoption:terminal-guard-live-repro-20260825T063355Z",
@@ -708,7 +542,7 @@
         "type": "system-issue",
         "summary": "DATA-tier verdict label is an unbound free-judgment escape hatch around the mandatory dedup+signal\nactuator -- and it has already left 336 arithmetically-impossible OHLC rows with no owner in any\nlane. Found by router raw-verification of the 2026-08-25T07:00:48Z sweep, not by any detector.\n\nSTRUCTURAL DEFECT (primary). scripts/db-integrity-history-append.sh is the sole actuator for the\n.signal_queue write, and it is gated on the verdict STRING. Verbatim from its own source:\n  line 30: \"A finding whose verdict is NOT \\\"REAL\\\" (BY-DESIGN/CLEAN/WARN/etc.) is passed through\n            untouched -- no [signal write]\"\n  line 74: if [ \"$verdict\" = \"REAL\" ] && [ -n \"$table\" ] && [ \"$table\" != \"null\" ]; then\nFIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED correctly hardened the REAL path from prose into\na deterministic script actuator, precisely because prose-only enforcement had let the SAME residue\nbe re-signalled 3x. But the verdict LABEL ITSELF was left as free LLM judgment with no binding to\nthe evidence. So anything an agent labels BY-DESIGN / NOISE / CLEAN is invisible to dedup-check,\ninvisible to the signal write, and invisible to every enforcement path in the cron -- while still\nbeing recorded in the durable history trail as an inspected, dispositioned finding. The hardening\nis bypassable by a one-word choice, and the bypass leaves no trace that a bypass occurred.\n\nCONCRETE INSTANCE (how it surfaced). The 07:00:48Z sweep labelled the 336-row daily_ohlcv OHLC\nviolation residue verdict=\"BY-DESIGN\", signal_id=null. That skipped the actuator. Router then\nscanned for an owner and found NONE.\n  Counts, verbatim from scripts/db-integrity-counts.sh (scan_ts 2026-08-25T06:58:59Z):\n    ohlc_violations_count=336, ohlc_violation_distinct_dates=20, fresh_ohlc_violations_last_2d=0,\n    daily_ohlcv_total=789928, daily_ohlcv_newest_date=2026-08-25\n  Owner scan: ZERO matching rows across ALL task_board lanes INCLUDING archive/done_verified AND\n  the 21 nested closed_sprints[].tasks[] (regex ohlc.?violation|high.?low.?violat|H>=O|L<=O over\n  each row's full tostring). The only two signal_queue keyword hits are both INAPT on inspection\n  and must not be counted as coverage: sys-20260825T024042-6445 is a DIFFERENT daily_ohlcv anomaly\n  (\"0 distinct codes (expected >=25)\", 02:40Z, CRITICAL, to=po), and mdjg-20260825T055425 is the\n  router's own journal-guard row which merely mentions daily_ohlcv in passing.\n  Count behaviour, read DETERMINISTICALLY from history .counts[] (the cron assigns this comparison\n  to router/dev-team, not to the auditor): flat 336 at 03:29:55Z, 04:00:23Z, 04:30:50Z, 05:03:23Z,\n  05:41:12Z, 07:00:48Z. No delta. Stated as the recorded numbers, no trend asserted.\n\nWHY \"BY-DESIGN\" IS THE WRONG LABEL HERE: an OHLC bar violating H>=max(O,C) or L<=min(O,C) is\narithmetically impossible for real market data -- it is bad ingest, not an intentional state. The\nDEFENSIBLE part of the disposition is URGENCY, not designedness: fresh_ohlc_violations_last_2d=0\nmeans nothing new is being produced, so this is dormant historical residue needing a data cleanup,\nnot a live bleed. Correct shape was verdict=\"REAL\" + severity WARN/MED, letting the actuator run\nand either attach it to an existing row or mint one. NOT ATTRIBUTING BAD FAITH to the sweep -- it\nmade a judgment the system explicitly permits; the finding is that the system permits it silently.\n\nSCOPE DISCIPLINE OBSERVED: no date-narrowing claim is made here. distinct_dates=20 (>1), so per\nFIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED AC-4 any \"concentrated on a single date\" claim\nwould be FALSE and is deliberately not asserted.\n\nDEDUP: NOT COVERED for the verdict-label defect. Keyword scan over-matched badly (40 rows contain\n\"BY-DESIGN\" in prose -- the documented generic-token over-match), so candidates were judged by\ninspection, not by hit count. Closest is FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-\nNEVER-FIRES (backlog, P1, cross-service/): SAME FAMILY -- a hand-authored label with no binding to\nthe measured value defeating an enforcement path -- but it is the SEVERITY field defeating the\ndedup layer's escalation bypass. This is the VERDICT field defeating the dedup+signal actuator\noutright. Different field, different mechanism, different blast radius. PRIOR ART, DO NOT FOLD.\nFor the 336-row residue itself: genuinely untracked, no row to fold into.\n\nSUGGESTED SHAPE, not prescribed: bind the verdict to evidence rather than trusting the string --\ne.g. require a non-REAL verdict on a table with a non-zero anomaly count to carry a justification\nfield, or route non-REAL findings through a cheaper \"dispositioned, no signal\" ledger so a\nBY-DESIGN call is at least auditable after the fact. Implementer's call.\n",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "scripts/db-integrity-history-append.sh",
         "payload": {
           "dedup_key": "datatier:verdict-label-unbound-bypasses-dedup-signal-actuator",
@@ -22653,7 +22487,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T06:54:09Z",
+    "_updated_at": "2026-08-25T07:13:53Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24781,6 +24615,530 @@
         },
         "createdAt": "2026-08-25T05:52:05Z",
         "drained_at": "2026-08-25T06:47:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "898d1f1318fc015b6c32788f4fe2eb361938a50817548947e5167fd837519674",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "HIGH",
+        "payload": {
+          "dedup_key": "orphan-adoption:terminal-guard-live-repro-20260825T063355Z",
+          "kind": "evidence-for-existing-row",
+          "do_not_mint_new_task": true,
+          "existing_coverage": [
+            "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+            "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD"
+          ],
+          "ask": "Attach this reproduction to the FR4/FR5 child and decide whether it changes that child priority. Router did NOT promote it — position noted only: ready[21] of 109, P1, dispatch_lane null, 8 P0s ahead in band. Evidence could not be written onto the row inline: it is 11947B against ORCH_ROW_PROSE_CEILING_BYTES=12000, and the bulk is five bespoke po_triage_*/po_corroboration_* keys (10.5KB) that are PO-owned, so dev-team did not restructure them."
+        },
+        "createdAt": "2026-08-25T06:53:05Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "426d5939e81d8ec93bc66640e379d5f41428216fabb6741453fa6b92f354f71e",
+        "source": "dashboard",
+        "from": "router",
+        "to": "dev-team",
+        "type": "system-issue",
+        "priority": "HIGH",
+        "payload": {
+          "dedup_key": "datatier:verdict-label-unbound-bypasses-dedup-signal-actuator",
+          "structural_defect": "actuator gated on free-text verdict string; BY-DESIGN/NOISE/CLEAN silently skip dedup-check AND signal write, leaving no trace of the bypass",
+          "source_evidence": [
+            "scripts/db-integrity-history-append.sh:30",
+            "scripts/db-integrity-history-append.sh:74"
+          ],
+          "instance_table": "daily_ohlcv",
+          "instance_counts_verbatim": {
+            "ohlc_violations_count": 336,
+            "ohlc_violation_distinct_dates": 20,
+            "fresh_ohlc_violations_last_2d": 0,
+            "daily_ohlcv_total": 789928,
+            "daily_ohlcv_newest_date": "2026-08-25",
+            "counts_scan_ts": "2026-08-25T06:58:59Z"
+          },
+          "owner_scan_result": "ZERO rows across ALL lanes incl. archive/done_verified and 21 nested closed_sprints[].tasks[]",
+          "inapt_keyword_hits_rejected": [
+            "sys-20260825T024042-6445 (different daily_ohlcv anomaly: 0 distinct codes)",
+            "mdjg-20260825T055425 (router journal-guard row, incidental table mention)"
+          ],
+          "recorded_counts_flat_at": [
+            "2026-08-25T03:29:55Z",
+            "2026-08-25T04:00:23Z",
+            "2026-08-25T04:30:50Z",
+            "2026-08-25T05:03:23Z",
+            "2026-08-25T05:41:12Z",
+            "2026-08-25T07:00:48Z"
+          ],
+          "related_row": "FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES",
+          "related_aptness": "PARTIAL / PRIOR ART — same family (hand-authored label unbound to evidence defeats an enforcement path) but that row is the SEVERITY field defeating the escalation bypass; this is the VERDICT field defeating the dedup+signal actuator outright. Do not fold.",
+          "dedup_method_note": "keyword scan over-matched (40 rows contain BY-DESIGN in prose); candidates judged by inspection, not hit count",
+          "discovered_by": "router raw-verification of the 07:00:48Z DATA sweep — no detector caught it",
+          "urgency_note": "data half is dormant (fresh_last_2d=0), structural half is not"
+        },
+        "createdAt": "2026-08-25T07:15:00Z",
+        "drained_at": "2026-08-25T07:13:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "66e4f398c89a1213a4277375b44469be5c1d3baacd54962d60a62bf44c3d8b7d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "P2",
+        "payload": {
+          "tick": "2026-08-25T06:45Z",
+          "drift_min": 5,
+          "classification": "FIRE",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "one_shots": 0,
+          "new_signals": 0,
+          "pressure_mode": "adaptive",
+          "telemetry": {
+            "signal_backlog": 34,
+            "dev_queue_depth": 700,
+            "dev_head": "idle",
+            "board_lanes": {
+              "backlog": 562,
+              "ready": 109,
+              "review": 26,
+              "qa": 3,
+              "in_progress": 0,
+              "active_sprints": 19
+            }
+          },
+          "findings": [
+            {
+              "id": "STEP51-LOAD-PARSE-LOCALE-AND-SEPARATOR",
+              "severity": "P2",
+              "file": "docs/agents/cowork-team/flow/spawn-fanout.md",
+              "step": "5.1",
+              "summary": "MAX_PARALLEL load-average parse is wrong in BOTH locales, and as of this tick it is the SOLE determinant of DEGRADED.",
+              "as_written": "uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'",
+              "measured": {
+                "live_locale": "LANG=fr_FR.UTF-8 (LC_ALL and LC_NUMERIC both unset)",
+                "fr_FR_uptime": "load averages: 2,11 2,83 3,08",
+                "fr_FR_parse_result": "2  (splits on the DECIMAL comma; truncates to integer part)",
+                "LC_ALL_C_uptime": "load averages: 2.11 2.83 3.08",
+                "LC_ALL_C_parse_result": "2.112.833.08  (no commas present; concatenates all three averages)",
+                "true_load_1min": 2.11,
+                "cores": 12,
+                "load_per_core_factor": 2,
+                "threshold": 24
+              },
+              "why_it_matters": "Both failure modes fail OPEN (toward MAX_PARALLEL=max_parallel_default=4), never toward throttling: the truncated integer is always <= true load, and the concatenated string never satisfies a numeric > comparison.",
+              "newly_reachable": "Previously masked. When pressure_mode=legacy (every tick through 06:30Z) HEADROOM_MB was forced null so DEGRADED was true regardless of load. This tick pressure_mode=adaptive AND container_vm_headroom_mb=5128 >= headroom_floor_mb=1500, so the headroom half no longer degrades and the load half alone decides.",
+              "correction_1": "SUPERSEDES the recorded advice 'pin LC_ALL=C on Step 5.1'. Pinning LC_ALL=C is what PRODUCES the concatenation — it removes the commas the -F',' split depends on.",
+              "correction_2": "SUPERSEDES this dispatcher's own 06:30Z commit body (1b6586533), which claimed 'the fault is the field separator, not a decimal-comma locale' and that 'LC_ALL=C changes nothing'. That test was invalid: LC_ALL=C had already been exported before the comparison was run, so C was being compared against C. It is BOTH faults and they interact.",
+              "verified_fix_direction": "Split on whitespace after -F'load averages?:' and normalize the decimal comma. Verified to yield 2.11 under BOTH fr_FR.UTF-8 and LC_ALL=C: uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'",
+              "owner_hint": "agent-father (flow-doc edit, docs-only, no runtime code)"
+            },
+            {
+              "id": "PRESSURE-STATE-KEY-NAMES-DRIFTED-IN-MEMORY-NOT-IN-CODE",
+              "severity": "P3",
+              "summary": "Near-miss false finding, recorded so the next reader does not repeat it. pressure-state.json has NO headroom_mb and NO pressure_level key; probing those returns jq null, which is indistinguishable from a null VALUE and reads as 'adaptive mode has no pressure data'.",
+              "actual_key_set": [
+                "emitted_at",
+                "tick_id",
+                "signal_backlog",
+                "last_regime",
+                "last_volatility_level",
+                "calendar_status",
+                "dev_queue_depth",
+                "container_vm_headroom_mb",
+                "stale_warning"
+              ],
+              "live_value": "container_vm_headroom_mb = 5128 (healthy, non-null)",
+              "consumer_is_correct": "spawn-fanout.md:184 reads PRESSURE_STATE.container_vm_headroom_mb — the correct name. The 2026-07-28 rename (FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY) landed properly in the flow doc.",
+              "stale_artifact": "The name host_headroom_mb still appears 4x in flow docs/scripts and in the fleet memory note; container_vm_headroom_mb appears 7x. The memory note should be corrected, the code should not.",
+              "how_to_apply": "Dump the FULL key set before concluding a field is null. jq returns null for absent keys."
+            },
+            {
+              "id": "CYCLE-SNAPSHOT-NEVER-PROMOTED",
+              "severity": "P2",
+              "occurrence": "4th consecutive live confirmation",
+              "summary": "Step 4.7 names the snapshot by wall clock, emit_pressure_state looks it up by nominal tick.",
+              "this_tick": "wrote docs/data/cycle-snapshot-06:50.json against nominal tick 06:45 -> cycle_snapshot_promoted:false",
+              "downstream": "cycle-snapshot-latest.json remains tick 00:00 from 2026-08-23. Promotion is genuinely broken, but it is NOT the reason last_regime/last_volatility_level are 'unknown' — see correction below.",
+              "fix": "writer-side one-liner in docs/agents/cowork-team/flow/tick-snapshot.md — FILE_TICK must be the nominal tick, not date -u +%H:%M. No server change.",
+              "owner_hint": "agent-father",
+              "correction": {
+                "retracts": "The original downstream text said latest.json staleness is THEREFORE why last_regime/last_volatility_level stay unknown. That causal 'therefore' is false and I had already recorded the refutation on 2026-08-23 before restating the superseded framing here.",
+                "measured_2026_08_25": "telemetry.md:18-19 tells the emit call to read regime_status / volatility_level from cycle-snapshot-latest.json. Neither key exists at ANY path in ANY snapshot — fresh (06:50) or latest. Full key set of both is exactly [created_at, macro_snapshot, market_context, tick]. The only regime-bearing path is macro_snapshot.data.signals.carry.regime.",
+                "two_independent_blockers": "(1) wrong lookup key in telemetry.md — regime_status does not exist; (2) promotion never fires — wall-clock filename vs nominal-tick lookup. Fixing either ALONE leaves both fields 'unknown'.",
+                "live_value_being_missed": "macro_snapshot.data.signals.carry.regime = NEUTRAL, carrySpread 1.37pp, computedAt 2026-08-25T06:50:08Z, is_estimate:false, source_tier:2 — real and fresh."
+              }
+            },
+            {
+              "id": "REGIME-SCHEMA-DRIFT-CONVERGENCE-TWO-CONSUMERS-ONE-LIVE-FIELD",
+              "severity": "P2",
+              "summary": "Two independent consumers both fail to reach the same live carry.regime field, for two different reasons. Single upstream fix serves both.",
+              "consumer_a": "cowork telemetry.md Step 6.0 — looks up key 'regime_status', which has never existed in the snapshot schema.",
+              "consumer_b": "alert-commander via .claude/skills/regime-extraction/SKILL.md — parses macro_snapshot.text for a 'Global Liquidity: X' line. Confirmed absent: grep for that literal across all 42 on-disk snapshots returns zero files. Live .text is now '[Macro Snapshot]/Status: ok/Vn Index: ...'.",
+              "consumer_b_behaved_correctly": "The SKILL carries a documented 2026-07-03 schema-drift note instructing exactly this fallback (REGIME=NEUTRAL + log, read CARRY_REGIME from signals.carry.regime). alert-commander followed it. This is not an agent error — but the fallback has now been the standing behaviour for ~7 weeks and that note itself says 'flag to dev-team/architect if seen repeatedly'.",
+              "fix_direction": "Point both consumers at macro_snapshot.data.signals.carry.regime, or have the snapshot writer surface a top-level regime_status. Do NOT fix only the promotion path and call the adaptive inputs revived.",
+              "owner_hint": "architect (two-consumer schema decision, not a one-line doc edit)"
+            }
+          ],
+          "signal_delivery_confirmation": {
+            "note": "The two to=po rows held at NEW across the 06:00Z-06:30Z ticks WERE delivered. Third clean round trip for the hold-at-NEW decision.",
+            "verified_by": "source + drained_at cluster, never by row id (the dev-team drain re-envelopes under a content-hash envelope_id and discards the original id)",
+            "cluster": "source=dashboard @ 2026-08-25T06:47:17Z, n=4 — includes from=market-db-journal-guard to=po type=system-issue x2, routed_to='PO Step 0-SIG'"
+          }
+        },
+        "createdAt": "2026-08-25T06:52:49Z",
+        "drained_at": "2026-08-25T07:13:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5fe11c330758d60a07c54ea8ad543fbe6ea4da82e98c7de489a97a4fc5bd04d6",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "P2",
+        "payload": {
+          "tick": "2026-08-25T07:00Z",
+          "verdict": "WORK",
+          "drift_min": 3,
+          "pressure_mode": "adaptive",
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "one_shots": [],
+          "new_signals": 7,
+          "fanout_gate": {
+            "headroom_mb": 5128,
+            "headroom_floor_mb": 1500,
+            "load1m_as_parsed": "3",
+            "load1m_true": "3.62",
+            "cores": 12,
+            "threshold": 24,
+            "degraded": false,
+            "max_parallel": 4,
+            "note": "Same verdict under both the broken and the correct load value this tick — coincidence, not correctness. Headroom alone would have carried it."
+          },
+          "telemetry": {
+            "signal_backlog": 34,
+            "dev_queue_depth": 700,
+            "dev_head": "idle",
+            "lanes": {
+              "backlog": 561,
+              "ready": 109,
+              "review": 26,
+              "qa": 3,
+              "in_progress": 1,
+              "active_sprints": 19
+            }
+          },
+          "findings": [
+            {
+              "id": "CYCLE-SNAPSHOT-NEVER-PROMOTED",
+              "severity": "P2",
+              "occurrence": "5th consecutive live confirmation",
+              "summary": "Step 4.7 names the snapshot by wall clock; emit_pressure_state looks it up by nominal tick.",
+              "this_tick": "wrote docs/data/cycle-snapshot-07:05.json against nominal tick 07:00 -> cycle_snapshot_promoted:false",
+              "NEW_DETAIL": "The defect is not only the FILENAME. The fence passes --arg tick \"$FILE_TICK\" too, so the .tick FIELD INSIDE the file is also wall-clock: this tick's file carries tick:\"07:05\" when the nominal tick is 07:00. A fix that renames the file but leaves the field would still miss a content-based lookup. Prior 4 reports said 'named by wall clock' and understated it.",
+              "deterministic": "FILE_TICK=$(date -u +%H:%M) is pure bash inside the fence — no LLM substitution involved, so this fires identically on every tick regardless of dispatcher.",
+              "executed_as_written": "Ran the fence verbatim rather than hand-substituting a nominal name. Hand-correcting would break the evidence chain and is an unrecorded flow edit; the router does not edit flow docs.",
+              "fix": "docs/agents/cowork-team/flow/tick-snapshot.md — FILE_TICK must be the nominal tick, used for BOTH the filename and the --arg tick value. No server change.",
+              "owner_hint": "agent-father",
+              "downstream_observed_post_filing": {
+                "what": "The wall-clock tick does not stay inside docs/data/ — it propagates into the spawned agent's own cycle identity, its notebook, and its log_agent_work record.",
+                "evidence": "alert-commander returned from this tick reporting 'cycle 07:05 (tick=07:05)'. Its notebook entry c250 is headed 'tick=07:05' and its log_agent_work id=2133 belongs to that cycle. The nominal tick was 07:00 and I passed scheduled_utc=2026-08-25T07:00:00.000Z explicitly in the spawn prompt.",
+                "inconsistent_across_consecutive_cycles": "c249 (06:45Z tick): notebook says tick=06:45 — the NOMINAL value, matching the scheduled_utc I passed — while consuming cycle-snapshot-06:50.json. c250 (07:00Z tick): notebook says tick=07:05 — the WALL-CLOCK snapshot name — despite the same prompt shape and scheduled_utc=07:00. Same dispatcher, same slot, consecutive fires, two different derivations.",
+                "why_this_raises_severity": "Previously argued as a promotion failure confined to cycle-snapshot-latest.json. It is also a provenance defect: cycle records in agent notebooks and the log_agent_work table are labelled with a time that matches neither the nominal tick nor, reliably, the scheduled_utc the dispatcher supplied. Anyone reconciling agent activity against the cowork schedule by tick label will mis-join.",
+                "not_yet_established": "WHY the derivation differs between c249 and c250 is unresolved. Do not assert that the snapshot filename overrides scheduled_utc as a rule — it did on c250 and did not on c249. Two samples.",
+                "scope_note": "This raises the fix scope: the nominal tick must reach the agent unambiguously, not just fix the filename and the .tick field."
+              }
+            },
+            {
+              "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
+              "severity": "P2",
+              "occurrence": "2nd live reproduction",
+              "summary": "Step 5.1's LOAD_1MIN parse splits on the decimal comma under the live fr_FR locale and truncates.",
+              "measured_this_tick": "uptime emitted 'load averages: 3,62 3,36 3,13'; the flow-as-written pipeline returned 3; true value 3.62.",
+              "both_locales_wrong": "fr_FR truncates at the decimal comma (3,62 -> 3). LC_ALL=C removes the commas the -F',' split depends on and concatenates all three averages instead. Pinning LC_ALL=C is NOT the fix — it is a second bug.",
+              "verified_fix": "uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}' — yields 3.62 under both locales.",
+              "why_it_matters_now": "While pressure_mode was legacy, HEADROOM_MB was forced null so DEGRADED was true regardless and this parse never changed an outcome. Under adaptive with headroom 5128 >= floor 1500, the load half is the sole remaining determinant of DEGRADED.",
+              "fails_open": "Both failure modes bias toward max_parallel_default=4, never toward throttling: the truncated integer is always <= true load, and the concatenated string never satisfies a numeric > against the threshold.",
+              "owner_hint": "agent-father"
+            },
+            {
+              "id": "TO-PO-ROWS-HELD-AT-NEW",
+              "severity": "P3",
+              "summary": "All 7 NEW signal rows are to=po. Held at NEW; not marked READ. Deviation from Step 0a as written, stated out loud per standing practice.",
+              "rows": "6x from=chef type=narrative_contradiction (CCATO cohort, ts 2026-08-24T00:00:00Z) + 1x from=dev-team type=system-issue (orphanrepro-20260825T065305Z)",
+              "premise_reverified_not_assumed": "jq '[.slots[]|select(.agent==\"po\")]|length' on docs/data/cowork-schedule.json -> 0. Step 0a's 'route to matching agent slot at Step 5' branch is structurally unreachable for po, so the only reachable outcome is mark-READ-without-delivery.",
+              "SHARPER_THAN_PRIOR_REPORTS": "The 6 CCATO rows carry ts 2026-08-24T00:00:00Z and are 31h old RIGHT NOW. orch-cold-evict.sh evicts on (status in TERMINAL_SIGNAL_STATUSES) AND (ts older than SIGNAL_MAX_AGE_HOURS=24), and READ is in that terminal set. So marking them READ this tick would not merely start a 24h clock — it would make all 6 IMMEDIATELY evictable, untriaged, on this same day. Their NEW status is the only thing protecting them.",
+              "delivery_path_exists": "The dev-team/dashboard drain re-envelopes into orch-state .dev_team_idle_chain.pending_triage_inbox[] and does deliver; the cowork drain has no such step. Verified 3x by source+drained_at cluster, never by row id (the re-envelope discards the original id).",
+              "fix": "Port the pending_triage_inbox re-envelope step into the cowork drain body.",
+              "owner_hint": "agent-father"
+            }
+          ]
+        },
+        "createdAt": "2026-08-25T07:06:49Z",
+        "drained_at": "2026-08-25T07:13:53Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
