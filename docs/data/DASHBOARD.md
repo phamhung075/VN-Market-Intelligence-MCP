@@ -2362,3 +2362,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-DATA-COVERAGE · 12/28 data_sources lack a last_fetch_ts instrument
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** system-auditor check battery
+**Details:** bctc-discover, bctc-push, congbao, hnx, hose, muasamcong, news-vps, newsapi, reuters, sbv-vps, vneconomy-rss, vnexpress-rss have no direct queryable freshness column
+**Impact:** 43% of declared sources cannot be audited for freshness
+**Root cause:** instrument/check-battery gap, not necessarily a live outage
+**Zone owner:** system-auditor
+**Last reported:** 2026-08-25T22:44:00Z (signal sys-20260825T224045-194f, system-auditor -> po, dedup_key=data_stale:B-DATA-COVERAGE:instrument-gap, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
