@@ -2170,3 +2170,15 @@
 **Mitigation:** No immediate action beyond signal routing; fix owned by same detector-defect finding as sys-20260825T133632-2f9d.
 
 ---
+
+## Anomaly: A-30-GATE · mem_creep debounce window (1h) vs pdf-extractor 17+ day FOLD baseline
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** pdf-extractor (vn-market-intelligence-mcp-pdf-extractor-1)
+**Details:** MemPerc 85.77-86.19% this cycle (6-sample A-30 window), matching a band this container has sat in since >=2026-08-08 with FOLD on every deep-probe. cgroup: memory.max=2560MiB (cap confirmed), memory.current~2240.9MiB, memory.peak~2560.0MiB (at cap), memory.events max=5920/oom=0/oom_kill=0 (reclaim, never kill).
+**Impact:** Pre-gate debounce (1h window) re-arms a full Tier-1 subagent spawn + ~95-105s deep-probe roughly every debounce cycle against a signature that has never once escalated in 17+ days (spawn_count=4 on this ledger entry alone in ~28h).
+**Root cause:** Static per-signature 1h debounce window is shorter than this container's multi-week-stable baseline; container's genuine working-set need sits at/above the fixed 85% investigate-gate (see related INFO signal sys-20260825T142316-4385 recommending a cap increase).
+**Zone owner:** dev-pdf-extractor
+**Last reported:** 2026-08-25T17:08:33Z (signal sys-20260825T170808-1ae7, system-auditor -> po, dedup_key=detector_defect:auditor-tier1-probe:mem_creep_debounce_window_vs_persistent_fold_baseline:pdf-extractor, WARN Telegram sent)
+**Mitigation:** Detect-only. Candidate directions (not implemented): action the existing cap-increase recommendation, or lengthen debounce for signatures with N consecutive FOLD verdicts.
+
+---
