@@ -37,13 +37,15 @@
       "what": "scripts/agents-flow/auditor-tier1-probe.sh mem_creep check misclassifies 'stats-unavailable' as a memory-threshold breach.",
       "detail": "This tick's verdict reports mem_creep FAIL with detail 'mem >= 85% threshold (A-30 WARN boundary, mem-creep gate)' listing all 10 containers as '(stats-unavailable)'. docker stats returning nothing because the daemon is DEAD is not memory creep — it is the absence of a reading. Reporting absence-of-data as a threshold breach is a false positive of exactly the class that erodes trust in the probe.",
       "downstream_harm": "The emitted signature is 'health_3000|mem_creep:<all 10 container names>'. That bogus 10-container signature is now written into docs/data/auditor-tier1-spawn-debounce.json (spawn_count=1, window_expires_at 2026-08-25T06:47:51Z). A genuine future single-container mem_creep will produce a DIFFERENT signature and will therefore not dedup against it — the debounce ledger has been polluted with an unrepeatable key.",
-      "fix": "Treat stats-unavailable as a distinct third state (UNKNOWN/SKIP), never as FAIL. When the daemon itself is unreachable, mem_creep should be reported as not-evaluated and docker_ps should be the failing check."
+      "fix": "Treat stats-unavailable as a distinct third state (UNKNOWN/SKIP), never as FAIL. When the daemon itself is unreachable, mem_creep should be reported as not-evaluated and docker_ps should be the failing check.",
+      "scope_refinement": "STILL VALID but narrower than first described. mem_creep only emits the false \"mem >= 85% threshold\" text in the TRANSIENT window where `docker ps -q` still lists containers but `docker stats` cannot read them. Once the daemon is fully unreachable (06:13:21Z tick) mem_creep degrades correctly, reporting \"docker ps -q returned no output (docker unreachable?)\". So the bug is a partial-daemon-failure path, not a total-outage path — which makes it harder to notice and worth fixing on its own merits."
     },
     "second_probe_defect": {
       "severity": "P2",
       "what": "docker_ps scored PASS in the same tick where the docker daemon is unreachable.",
       "detail": "The 05:47:51Z verdict records checks.docker_ps=PASS alongside health_3000=FAIL. Roughly 10 seconds later every docker CLI invocation returns 'Docker Desktop is unable to start'. Either docker_ps ran before the 05:47:50Z hypervisor stop (a genuine race, in which case it is merely stale), or its success predicate does not actually require a daemon response. Worth confirming which, because a docker_ps that can PASS with no daemon is a blind spot in the single most important check the probe has.",
-      "note": "Timing makes the benign race plausible here — the probe wrote at 05:47:51Z and the hypervisor stopped at 05:47:50.55Z. Flagged for confirmation rather than asserted as a defect."
+      "note": "Timing makes the benign race plausible here — the probe wrote at 05:47:51Z and the hypervisor stopped at 05:47:50.55Z. Flagged for confirmation rather than asserted as a defect.",
+      "RESOLVED": "CLOSED at 2026-08-25T06:13:21Z — this was the benign race, NOT a blind spot. It was filed as needs-confirmation rather than asserted, and the 06:13:21Z tick supplies the confirmation: with the daemon fully gone, docker_ps correctly returns FAIL with detail \"docker ps returned no output (docker unreachable?)\". The 05:47:51Z PASS was genuinely stale by ~1s against the 05:47:50.55Z hypervisor stop. No fix needed; ops should NOT spend time here."
     },
     "fleet_impact": {
       "all_mcp_tools": "Every call_tool(server=vn-market, ...) is unreachable. All lock gates (task_claim / task_heartbeat / task_release) are down fleet-wide.",
@@ -71,7 +73,21 @@
       },
       "revised_recommendation": "Escalate toward host-level action sooner than this signal originally implied. The remaining bounded CLI step is the comprehensive teardown-to-zero (killall -9 Docker \"Docker Desktop\" com.docker.backend com.docker.build com.docker.dev-envs vpnkit; pkill -9 -i docker) followed by one clean `open -a Docker` — worth EXACTLY ONE attempt. If the socket still does not bootstrap after that, STOP and escalate to the user for GUI recovery / reboot. Do NOT re-run the ladder repeatedly; that failure mode is already documented.",
       "constraint_reaffirmed": "The do-NOT-rebuild-the-VM constraint in asks[2] is UNCHANGED and becomes MORE important as pressure to escalate rises. Removing ~/Library/Containers/com.docker.docker/Data/vms destroys every named volume including market_data.",
-      "tick_status": "dev-team 06:07Z tick also did not dispatch — preflight verdict=ERROR, SF-1 gate unreachable (curl exit=52, empty reply). Third consecutive blocked tick. Per docs/standards/gateway-call-contract.md de-escalation guidance, no fresh P0 was raised for the recurrence; this update amends the existing one instead."
+      "tick_status": "dev-team 06:07Z tick also did not dispatch — preflight verdict=ERROR, SF-1 gate unreachable (curl exit=52, empty reply). Third consecutive blocked tick. Per docs/standards/gateway-call-contract.md de-escalation guidance, no fresh P0 was raised for the recurrence; this update amends the existing one instead.",
+      "tick_status_latest": {
+        "observed_at": "2026-08-25T06:14:22Z",
+        "t1_0613Z": "verdict=FAILURE, spawn_decision=SPAWN, signature=docker_ps|health_3000|health_3001|mem_creep. checks: docker_ps=FAIL health_3000=FAIL health_3001=FAIL disk=PASS mem_creep=FAIL launchd_agents=PASS. Heartbeat last_healthy_at 2026-08-25T05:15:44Z, age 57min.",
+        "spawn_withheld": "system-auditor NOT spawned, same reasoning as the 05:47Z tick: its flow opens with a fire-election task_claim (docs/agents/system-auditor/flow/main.md ~L215, EXIT on non-claim) which is unreachable while the daemon is down. A compliant auditor exits before any tier work. Detection has already succeeded and is fully captured in this signal.",
+        "docker_unchanged": "vm/init.log still has not advanced past the 05:47:39Z FATAL. Backend log still shows nothing after the 06:05:39Z analytics batch. No recovery progress since the failed 06:00:41Z relaunch."
+      }
+    },
+    "third_probe_defect": {
+      "severity": "P2",
+      "what": "Signature churn defeats spawn-debounce across a multi-phase outage.",
+      "evidence": "docs/data/auditor-tier1-spawn-debounce.json now holds two entries for ONE incident, each spawn_count=1, neither suppressing the other: \"health_3000|mem_creep:<10 container names>\" (05:47:51Z) and \"docker_ps|health_3000|health_3001|mem_creep\" (06:13:21Z).",
+      "why": "The signature is composed from the SET of currently-failing checks. A progressive infra failure changes that set at each phase, so every tick mints a fresh key and debounce never engages. Debounce only works for a failure that presents identically each time.",
+      "harm": "Each T1 tick during a prolonged outage returns spawn_decision=SPAWN for what is one continuous incident. Absent a router-side judgement call, that is one subagent spawned per 30 minutes for the entire duration of the outage.",
+      "fix_direction": "Debounce on incident identity rather than exact check-set equality — e.g. suppress when the new failing set is a SUPERSET of a still-in-window signature, or key on the most-severe failing check rather than the full concatenation."
     }
   }
 }
