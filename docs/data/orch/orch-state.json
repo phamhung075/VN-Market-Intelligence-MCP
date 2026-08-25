@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "done_verified",
     "active_task_id": "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION",
-    "next_agent": "ops",
-    "next_action": "ops redeploying pdf-extractor so d584d4db2 (lang=vi) + e9144ea75 (recall-aware confidence) stop being inert in production. G3 of 4 on the OCR auto-flip. OCR_TEXT_BACKEND stays UNSET by this row; the flip is DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO. Cap stays 2560 MiB (single-variable deploy; the 3-3.5GiB recommendation is sys-20260825T142316-4385, separate row).",
-    "updated_at": "2026-08-25T17:17:39Z",
-    "updated_by": "router (dev-team 2026-08-25T17:07Z hand-dispatch)"
+    "next_agent": "po",
+    "next_action": "PO unblocks PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN (G2) and DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO (G3 satisfied, waiting on G1 QA-green and G2 second-document margin pass). Redeploy landed: new container f02640c5c2fa (created 2026-08-25T17:18:31Z) verified to contain both fixes (d584d4db2 lang=vi + e9144ea75 recall-aware confidence). Memory within bounds (current 55MiB, peak 58.7MiB of 2560MiB cap). All cgroup.events counters at zero.",
+    "updated_at": "2026-08-25T17:20:19Z",
+    "updated_by": "ops (OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
