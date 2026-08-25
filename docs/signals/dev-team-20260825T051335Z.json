@@ -1,0 +1,44 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "bug-escalation",
+  "priority": "P1",
+  "createdAt": "2026-08-25T05:13:35Z",
+  "dedup_key": "devteam-rotation:step1_triage|turn-burned-by-headdecoupled-jump-to-end",
+  "summary": "Idle-tick rotation stamps the winner BEFORE dispatch, but step1_triage is the only candidate whose body sits after three unconditional head-decoupled lanes — two of which JUMP TO end. When one of them dispatches, PO triage is skipped and its rotation turn is consumed anyway.",
+  "payload": {
+    "observed_live_at": "2026-08-25T05:13:35Z",
+    "observed_tick": "2026-08-25T05:07Z",
+    "what_happened": "Rotation selected step1_triage (oldest stamp, 01:16:34Z). Its stamp was advanced to 05:09Z immediately, per spec (unconditional, before dispatch). Control flow then reached Review-Lane QA-Drain Head-Decoupled, which claimed a row and dispatched qa, then executed its documented `JUMP TO end   # a batch was dispatched this tick; do not also fall through to Step 1/PO triage same tick`. PO triage never ran. step1_triage went from oldest stamp to newest without doing any work.",
+    "cost_this_tick": {
+      "pending_triage_inbox_depth": 40,
+      "includes": "the P0 resolver hot/cold divergence escalation (dedup_key resolver:effective_next_agent|hot-cold-next_agent-divergence) drained into the inbox this same tick",
+      "deferral": "step1_triage cannot be re-selected until the other 5 candidates have each had a turn — up to 6 idle ticks, roughly 3 hours at the 7,37 cadence"
+    },
+    "structural_asymmetry": {
+      "claim": "step1_triage is the ONLY one of the 6 rotation candidates exposed to this. The other 5 are structurally immune.",
+      "evidence_line_numbers_in_docs_agents_devteam_flow_main_md": {
+        "rotation_selection_and_stamp": 573,
+        "bounded1": 615,
+        "sls": 647,
+        "rlc": 737,
+        "drs": 794,
+        "qa_drain_idle_tick": 859,
+        "session_gate": 930,
+        "ilc_headdecoupled": 936,
+        "secondary_drain": 1021,
+        "qa_drain_headdecoupled": 1076,
+        "step1_triage_body": 1139
+      },
+      "why": "The 5 other candidates bodies all sit BEFORE the session gate (930), so they execute before any head-decoupled lane can jump to end. step1_triage has no body at the rotation site at all — the spec says so explicitly (its actual dispatch stays at line 1139 because it needs pendingSignals/reports gathered upstream and must stay reachable from Step 0b busy-tick bypass paths). That placement puts it downstream of ILC and QA-Drain-HD, both of which JUMP TO end on a successful dispatch."
+    },
+    "why_the_spec_does_not_cover_this": "The no-same-tick-cascade rationale at line 573 addresses the case where $SELECTED s OWN gate/promote/claim is a genuine no-op — there the burned turn is intentional and harmless. It does not contemplate $SELECTED being PREEMPTED by a different, unconditional lane after its stamp was already consumed. The stamp-before-dispatch choice is separately well-argued (single call site vs five duplicated writes at each lane exit), so the defect is the interaction, not either decision alone.",
+    "frequency_expectation": "Not rare. review[] is chronically non-empty (26 rows at time of writing), so QA-Drain-HD has work on most ticks. Any tick where step1_triage wins rotation AND QA-Drain-HD or ILC dispatches will burn the triage turn. That biases the inbox toward growing rather than draining.",
+    "asks": [
+      "Decide whether a preempting head-decoupled dispatch should roll back (or not consume) the selected candidates rotation stamp. Rolling back only in the preemption case preserves the existing no-op-turn semantics untouched.",
+      "Alternatively, exempt step1_triage from the JUMP TO end of ILC/QA-Drain-HD, since it neither writes .head nor competes for the WIP slot — the stated reason those lanes jump to end is to avoid a same-tick cascade among dispatching lanes, which PO triage is not.",
+      "Either way, add a regression assertion to scripts/audits/devteam-dispatch-gate-satisfiability.sh: when $SELECTED == step1_triage and QA-Drain-HD dispatches, PO triage must still be reachable OR the stamp must not have advanced."
+    ],
+    "router_note": "Router does not author task rows. Filed as a signal for architect/PO triage. Router followed the flow as written this tick (dispatched qa, skipped Step 1) rather than improvising around the documented JUMP TO end."
+  }
+}
