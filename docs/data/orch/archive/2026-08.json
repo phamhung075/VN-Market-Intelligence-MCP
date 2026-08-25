@@ -18446,6 +18446,69 @@
         }
       },
       "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify APPROVED. Commit 0e3128e1f confirmed main-ancestor, git show --stat touches exactly the 2 claimed files (auditor-tier1-probe.sh, auditor-launchd-ack.json). Read the diff at source (not the review_note prose): _launchd_label_expected_disabled() checked BEFORE the ack lookup, in the not-loaded branch only; reads LAUNCHD_INSTALLED_DIR plist via plutil -p (never grep -i disabled) for Disabled=>1 (AC-2), OR launchctl print-disabled membership (AC-3); result named in detail string distinct from acknowledged-degraded (AC-4); never writes bad/acked/spawn-debounce side-channel; loaded-but-bad-exit-status branch untouched. Live-ran the mutating probe myself (bash -n clean, jq valid): verdict=ALL_GREEN, launchd_agents among the 6 PASSED checks, detail names com.vn-market.fleet-push(disabled-by-plist) under expected-disabled (AC-6). Independently forced the print-disabled-only branch via LAUNCHD_INSTALLED_DIR_PATH=/nonexistent-qa-check-dir: correctly fell through and returned disabled-by-launchctl (AC-3 proven live in isolation, not just shadowed by the plist check -- fleet-push is now present in BOTH plutil -p Disabled=>1 AND launchctl print-disabled gui/$(id -u), state drift since the 08-24T16:48Z po_ruling text which recorded it absent from print-disabled -- immaterial to the fix, both mechanisms independently confirmed working). auditor-launchd-ack.json acked[] has zero fleet-push entries before or after every run (AC-5); docker-events untouched acked[] entry unaffected (AC-7, separate loaded-but-exit-0 label today, orthogonal fluctuation, not caused by this diff). auditor-tier1-spawn-debounce.json md5 byte-identical across 3 separate probe invocations -- no new/refreshed fleet-push entry (AC-8). Self-check: every command I ran was read-only (plutil -p, launchctl list, launchctl print-disabled, bash -n, jq, git show/log) -- no launchctl enable/load/bootstrap, no plist edit anywhere (AC-9). mock-guard.sh: no production source in scan scope, PASS. OUT-OF-SCOPE FINDING, flagged not fixed: docs/data/auditor-tier1-spawn-debounce.json has zero garbage-collection -- all 4 live entries (incl. the fleet-push spawn_count=10 entry) have already-expired window_expires_at with nothing pruning them; none of this row's AC-1..AC-9 cover debounce-ledger GC, so this is NOT absorbed here -- recommend po mint a separate row."
+    },
+    {
+      "title": "Move source-health tracker singleton from interface down to infrastructure",
+      "priority": "P2",
+      "zone": "mcp-server-application",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APP-pollNews-layering-fix",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix",
+      "promoted_at": "2026-07-24T04:44:30Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-11T17:36:01Z",
+      "claimed_at": "2026-08-11T17:28:33Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "entered_review_at": "2026-07-24T05:02:48Z",
+      "review_note": "dev-mcp-server self-closeout: pure DDD move, behavior-preserving. Moved globalSourceTracker singleton (+ _resetGlobalSourceTracker) from interface/mcp/tools/news-analysis/sourceHealthTools.ts to new infrastructure/observability/sourceHealthRegistry.ts -- resolves the Fence-B violation eslint.config.mjs already documented by name (pollNews.ts importing interface-layer state, annotated FENCE-LEGACY). Mirrors existing stateful-tracker precedent in infrastructure/observability/ (jobMetrics.ts, circuitBreakerLogger.ts). Left formatSourceHealthTable/registerSourceHealthTools (pure rendering, no state) in the interface file. Rewired 3 production consumers (pollNews.ts -- the violation itself; systemTools.ts; tradingEconomicsChromium.ts 2 dynamic imports, which was also wrongly reaching into interface/) + 6 test files. Removed the now-obsolete eslint-disable comment; updated the stale eslint.config.mjs Fence-B comment + a stale precedent citation in getMoneyRadarComposite.ts. Evidence: byte-diffed singleton block old-vs-new -- identical. tsc clean, zero dangling imports to old path (grep-confirmed). npx eslint clean on all 5 touched files (Fence-B no longer needs the disable). Targeted 10-file source-health/pollNews suite: 239-240 pass/4 skip, one known singleton-state cross-file flake (passes standalone, fails intermittently only under batch order) reproduced identically before AND after the move -- same signature, proving singleton semantics genuinely preserved. Server boot probe (PORT=3099, port 3000 held by live docker): health 200 toolCount=184=baseline. gen-project-stats: toolCount 184/cronJobCount 88 unaffected. Commit a2a386d24. Journal: docs/agent-memory/decisions/sprint-FACTORY-APP-pollNews-layering-fix-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit a2a386d24 on main ancestry (git merge-base --is-ancestor) -- git show --stat matches all 12 claimed files exactly (eslint.config.mjs, new infrastructure/observability/sourceHealthRegistry.ts, 3 rewired consumers [pollNews.ts, systemTools.ts, tradingEconomicsChromium.ts], 6 test files, getMoneyRadarComposite.ts doc-only precedent citation). Byte-compared the singleton block itself old-file vs new-file (seed list, recordDisabled calls, globalThis stash key, _resetGlobalSourceTracker) -- genuinely identical, pure relocation not a lossy rewrite. Confirmed the Fence-B violation is actually resolved at the exact documented site: pollNews.ts's \"eslint-disable-next-line boundaries/dependencies -- FENCE-LEGACY\" comment is gone and its import now points to infrastructure/; grep for \"from.*interface\" across pollNews.ts/getMoneyRadarComposite.ts returns zero live imports (comment-only matches); repo-wide grep confirms zero dangling imports to the old interface-layer path. Independently re-ran (not trusted from review_note prose): bun tsc --noEmit 0 errors; eslint clean (0 errors/warnings) on all 6 touched production files; targeted 7-file pollNews/source-health suite 42/42 pass 0 fail; mock-guard.sh PASS on all 6 files; security grep (process.env/password/secret/token) on every added diff line clean. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S49.",
+      "qa_verified_at": "2026-08-11T17:36:00Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun tsc --noEmit + eslint (6 files) + bun test (7-file targeted suite) + mock-guard.sh",
+          "args": {
+            "commit": "a2a386d24258ecc80b599a55e2b17a6530c6fe28",
+            "files_verified": [
+              "apps/mcp-server/eslint.config.mjs",
+              "apps/mcp-server/src/infrastructure/observability/sourceHealthRegistry.ts",
+              "apps/mcp-server/src/interface/mcp/tools/news-analysis/sourceHealthTools.ts",
+              "apps/mcp-server/src/application/usecases/pollNews.ts",
+              "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
+              "apps/mcp-server/src/infrastructure/fetchers/tradingEconomicsChromium.ts",
+              "apps/mcp-server/src/application/usecases/getMoneyRadarComposite.ts"
+            ]
+          },
+          "live_value_observed": "git merge-base --is-ancestor confirms a2a386d24 on main; git show --stat matches all 12 claimed files; tsc --noEmit 0 errors; eslint 0 errors/warnings on 6 touched production files; targeted 7-file pollNews/source-health suite 42/42 pass 0 fail; mock-guard.sh PASS on all 6 production files; zero dangling imports to old interface-layer path repo-wide",
+          "observed_at": "2026-08-11T17:36:00Z"
+        }
+      }
+    },
+    {
+      "title": "Split pollNews 1426L god-file into single-responsibility modules (staged)",
+      "priority": "P0",
+      "zone": "mcp-server-application",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APP-split-pollNews",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-pollNews",
+      "updated_at": "2026-08-25T13:25:17Z",
+      "secondary_claimed_at": "2026-08-25T02:17:40Z",
+      "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+      "secondary_dispatch_target": "dev-mcp-server",
+      "updated_by": "qa/verify-committed-20260825T1340Z",
+      "redispatch_count": 3,
+      "qa_verified_at": "2026-08-25T13:40:00Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat (3 commits) + bun test (61-file/562-test pollNews set) + bun tsc --noEmit + mock-guard.sh + size-lint-justification.sh + docker compose build/up mcp-server (single-service rebuild) + docker logs + docker exec bun -e (live rag_analyses query)",
+          "args": "commits=72bcaf940,1a7fca8b2,82029f65b; pollNews.ts + 9 new usecases/pollNews/*.ts files; rebuilt container 765b82247ce8 StartedAt=2026-08-25T13:17:22Z; live VPS-push poll cycle observed 2026-08-25T13:22:53-13:23:00Z",
+          "live_value_observed": "3/3 commits ancestor=yes; pollNews.ts=269L thin orchestrator (read in full, zero undisclosed inline logic); tsc 0 errors; mock-guard PASS; size-lint 1 pre-existing unrelated offender only; targeted suite 561 pass/1 fail (contention-only timeout flake, 6/6 pass in isolation with and without CI, root mechanism confirmed at resolveFetchers.ts:71/82); post-rebuild live production poll cycle fetched=43/inserted=3/duplicates=40/errors=0, all 3 new rag_analyses rows independently confirmed present in the real named-volume market.db with correct real content",
+          "observed_at": "2026-08-25T13:40:00Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
