@@ -1,0 +1,81 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "P2",
+  "createdAt": "2026-08-25T07:06:49Z",
+  "dedup_key": "cowork-step47-tick-field-is-wallclock-too-not-just-the-filename",
+  "payload": {
+    "tick": "2026-08-25T07:00Z",
+    "verdict": "WORK",
+    "drift_min": 3,
+    "pressure_mode": "adaptive",
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "errors": [],
+    "one_shots": [],
+    "new_signals": 7,
+    "fanout_gate": {
+      "headroom_mb": 5128,
+      "headroom_floor_mb": 1500,
+      "load1m_as_parsed": "3",
+      "load1m_true": "3.62",
+      "cores": 12,
+      "threshold": 24,
+      "degraded": false,
+      "max_parallel": 4,
+      "note": "Same verdict under both the broken and the correct load value this tick — coincidence, not correctness. Headroom alone would have carried it."
+    },
+    "telemetry": {
+      "signal_backlog": 34,
+      "dev_queue_depth": 700,
+      "dev_head": "idle",
+      "lanes": {
+        "backlog": 561,
+        "ready": 109,
+        "review": 26,
+        "qa": 3,
+        "in_progress": 1,
+        "active_sprints": 19
+      }
+    },
+    "findings": [
+      {
+        "id": "CYCLE-SNAPSHOT-NEVER-PROMOTED",
+        "severity": "P2",
+        "occurrence": "5th consecutive live confirmation",
+        "summary": "Step 4.7 names the snapshot by wall clock; emit_pressure_state looks it up by nominal tick.",
+        "this_tick": "wrote docs/data/cycle-snapshot-07:05.json against nominal tick 07:00 -> cycle_snapshot_promoted:false",
+        "NEW_DETAIL": "The defect is not only the FILENAME. The fence passes --arg tick \"$FILE_TICK\" too, so the .tick FIELD INSIDE the file is also wall-clock: this tick's file carries tick:\"07:05\" when the nominal tick is 07:00. A fix that renames the file but leaves the field would still miss a content-based lookup. Prior 4 reports said 'named by wall clock' and understated it.",
+        "deterministic": "FILE_TICK=$(date -u +%H:%M) is pure bash inside the fence — no LLM substitution involved, so this fires identically on every tick regardless of dispatcher.",
+        "executed_as_written": "Ran the fence verbatim rather than hand-substituting a nominal name. Hand-correcting would break the evidence chain and is an unrecorded flow edit; the router does not edit flow docs.",
+        "fix": "docs/agents/cowork-team/flow/tick-snapshot.md — FILE_TICK must be the nominal tick, used for BOTH the filename and the --arg tick value. No server change.",
+        "owner_hint": "agent-father"
+      },
+      {
+        "id": "STEP51-LOAD-PARSE-LOCALE-TRUNCATION",
+        "severity": "P2",
+        "occurrence": "2nd live reproduction",
+        "summary": "Step 5.1's LOAD_1MIN parse splits on the decimal comma under the live fr_FR locale and truncates.",
+        "measured_this_tick": "uptime emitted 'load averages: 3,62 3,36 3,13'; the flow-as-written pipeline returned 3; true value 3.62.",
+        "both_locales_wrong": "fr_FR truncates at the decimal comma (3,62 -> 3). LC_ALL=C removes the commas the -F',' split depends on and concatenates all three averages instead. Pinning LC_ALL=C is NOT the fix — it is a second bug.",
+        "verified_fix": "uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}' — yields 3.62 under both locales.",
+        "why_it_matters_now": "While pressure_mode was legacy, HEADROOM_MB was forced null so DEGRADED was true regardless and this parse never changed an outcome. Under adaptive with headroom 5128 >= floor 1500, the load half is the sole remaining determinant of DEGRADED.",
+        "fails_open": "Both failure modes bias toward max_parallel_default=4, never toward throttling: the truncated integer is always <= true load, and the concatenated string never satisfies a numeric > against the threshold.",
+        "owner_hint": "agent-father"
+      },
+      {
+        "id": "TO-PO-ROWS-HELD-AT-NEW",
+        "severity": "P3",
+        "summary": "All 7 NEW signal rows are to=po. Held at NEW; not marked READ. Deviation from Step 0a as written, stated out loud per standing practice.",
+        "rows": "6x from=chef type=narrative_contradiction (CCATO cohort, ts 2026-08-24T00:00:00Z) + 1x from=dev-team type=system-issue (orphanrepro-20260825T065305Z)",
+        "premise_reverified_not_assumed": "jq '[.slots[]|select(.agent==\"po\")]|length' on docs/data/cowork-schedule.json -> 0. Step 0a's 'route to matching agent slot at Step 5' branch is structurally unreachable for po, so the only reachable outcome is mark-READ-without-delivery.",
+        "SHARPER_THAN_PRIOR_REPORTS": "The 6 CCATO rows carry ts 2026-08-24T00:00:00Z and are 31h old RIGHT NOW. orch-cold-evict.sh evicts on (status in TERMINAL_SIGNAL_STATUSES) AND (ts older than SIGNAL_MAX_AGE_HOURS=24), and READ is in that terminal set. So marking them READ this tick would not merely start a 24h clock — it would make all 6 IMMEDIATELY evictable, untriaged, on this same day. Their NEW status is the only thing protecting them.",
+        "delivery_path_exists": "The dev-team/dashboard drain re-envelopes into orch-state .dev_team_idle_chain.pending_triage_inbox[] and does deliver; the cowork drain has no such step. Verified 3x by source+drained_at cluster, never by row id (the re-envelope discards the original id).",
+        "fix": "Port the pending_triage_inbox re-envelope step into the cowork drain body.",
+        "owner_hint": "agent-father"
+      }
+    ]
+  }
+}
