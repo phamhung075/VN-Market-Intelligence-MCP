@@ -1,0 +1,29 @@
+DBC_2025_Q4.pdf — OSD rotation census (scripts/audits/ocr-orientation-probe.py, --code-root
+pointing at HEAD infrastructure/ocr_orientation.py via bind mount, detection-only, no --ocr).
+Run 2026-08-25 ~20:55Z. All 18 pages probed.
+
+page   1  osd_rotate=  0
+page   2  osd_rotate=  0
+page   3  osd_rotate=  0
+page   4  osd_rotate=  0
+page   5  osd_rotate=  0
+page   6  osd_rotate=  0
+page   7  osd_rotate=  0
+page   8  osd_rotate=  0
+page   9  osd_rotate=  0
+page  10  osd_rotate=  0
+page  11  osd_rotate=  0
+page  12  osd_rotate= 90
+page  13  osd_rotate=  0
+page  14  osd_rotate=  0
+page  15  osd_rotate= 90
+page  16  osd_rotate=  0
+page  17  osd_rotate=  0
+page  18  osd_rotate=  0
+
+RESULT: 2/18 pages rotated (12, 15) — matches the orientation row's commit-message count
+("2 of 18 of DBC_2025_Q4.pdf"). Neither page overlaps qa's previously-reported 6 fired
+pages (4, 10, 11, 13, 14, 16), so those 6 legit-band ink_coverage numbers from the prior
+QA cycle are NOT relabeled by this fix and are carried forward unchanged. Pages 12/15 are
+measured fresh under the orientation-corrected pipeline in this cycle's per-region probe
+(dbc-postfix.jsonl) — see the main findings for their labels and scores.

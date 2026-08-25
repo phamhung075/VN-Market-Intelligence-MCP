@@ -1,0 +1,81 @@
+{
+  "_comment": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS — measurement cycle 2 (redispatch_count=1). Frozen and published BEFORE any per-region measurement was read, per PO ruling triage-20260825T1752Z §3 Phase 3 (\"publish the chosen ids and their hashes BEFORE running, so the sample cannot be revised after seeing results\"). All hashes verified mutually distinct (md5) so n is real, not inflated by corpus duplication (data/pdfs holds 324 files, 188 unique by md5).",
+  "held_out_tuning_document": {
+    "ticker": "FPT",
+    "file": "data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf",
+    "report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
+    "pages": 46,
+    "note": "Discriminator was tuned on this document (page 9 catastrophic miss). Held out — NOT counted toward n. Used only as a positive-control reference."
+  },
+  "sample_n8": [
+    {
+      "category": "agriculture (carried, prior QA cycle document substitution ACCEPTED by PO)",
+      "ticker": "DBC",
+      "file": "data/pdfs/DBC_2025_Q4.pdf",
+      "md5": "632e24d63b0cf86683b86692f2752b3d",
+      "size_bytes": 3413297,
+      "pages": 18,
+      "rotated_pages_osd": [12, 15],
+      "note": "2/18 pages need 90deg correction (measured this cycle via ocr-orientation-probe.py OSD census, see dbc-orientation-census.txt). Neither page is among the 6 pages QA previously found firing the rescue (4,10,11,13,14,16), so those 6 legit-band numbers are NOT invalidated by the orientation fix. Pages 12/15 ARE re-measured fresh this cycle under the orientation-corrected pipeline."
+    },
+    {
+      "category": "bank",
+      "ticker": "VCB",
+      "file": "data/pdfs/VCB_2026_Q2.pdf",
+      "md5": "9dc2d1cd5dd2dc7654b7c7c67a228c32",
+      "size_bytes": 6028106,
+      "pages": 55
+    },
+    {
+      "category": "bank",
+      "ticker": "ACB",
+      "file": "data/pdfs/ACB_2025_Q4.pdf",
+      "md5": "e99b5327239f2ea52198e42f697a0bd4",
+      "size_bytes": 8164508,
+      "pages": 33
+    },
+    {
+      "category": "industrial",
+      "ticker": "HPG",
+      "file": "data/pdfs/HPG_2025_Q4.pdf",
+      "md5": "4cc5d78aab2527e1de1fac981b282f6c",
+      "size_bytes": 7135524,
+      "pages": 33
+    },
+    {
+      "category": "industrial",
+      "ticker": "DGC",
+      "file": "data/pdfs/DGC_2024_Q4.pdf",
+      "md5": "b66ace2882647e9bf14e097a3689206c",
+      "size_bytes": 11760245,
+      "pages": 46
+    },
+    {
+      "category": "consumer-retail",
+      "ticker": "SAB",
+      "file": "data/pdfs/SAB_2025_Q4.pdf",
+      "md5": "8b33aa71a8bf523ea169f448d51de384",
+      "size_bytes": 8930010,
+      "pages": 44
+    },
+    {
+      "category": "consumer-retail",
+      "ticker": "FRT",
+      "file": "data/pdfs/FRT_2025_Q4.pdf",
+      "md5": "726bca6228cd6c0edb2e73d439ad6eba",
+      "size_bytes": 7997081,
+      "pages": 28
+    },
+    {
+      "category": "real-estate",
+      "ticker": "DIG",
+      "file": "data/pdfs/DIG_2025_Q2.pdf",
+      "md5": "598918d229666b800d0143145ef3a267",
+      "size_bytes": 6241342,
+      "pages": 39,
+      "note": "DIG_2025_Q2.pdf and DIG_2024_Q2.pdf are byte-identical (same size, same corpus-duplication pattern as DBC's 3 identical Q4 files) — only ONE of the pair is in this sample, so it counts once toward n, correctly."
+    }
+  ],
+  "selection_method": "Smaller/typical quarterly filing chosen over the largest annual filing available per ticker where a same-ticker size choice existed (VCB, DIG), purely to bound container wall-clock for a CPU-only DocLayout-YOLO+PaddleOCR pipeline across n=8 real documents within one measurement cycle. Decided BEFORE any run for these two tickers, on file size alone (a resource constraint), never on content — no region was read before this choice.",
+  "stratification_check": "banks(VCB,ACB)=2 industrials(HPG,DGC)=2 consumer-retail(SAB,FRT)=2 real-estate(DIG)=1 + DBC(carried) = 8. Meets triage-20260825T1752Z AC floor (>=2/>=2/>=2/>=1)."
+}
