@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-25T16:36:00Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-08-25T16:35:18Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 51,
+    "note": "Single-slot fan-out to the Bash-less leaf worker; SESSION_ID_LINE carries the resolved owner_client_session as a literal because refine_bctc_md cannot expand it itself. Step 5.3 DEFERRED per BGFAN-1. signal_backlog 36->51 this tick is TRANSIENT, not floor growth: +15 files are hook-generated notebook-cap signals and all carry a full {from,to,type,payload,priority,createdAt} envelope, so they are drainable. The 16:30Z set is re-emitted VERBATIM at 16:31Z (identical apart from timestamp) — a state condition emitted as a per-write event, and distinct ts defeats envelope dedup, same class as the duplicate auditor_cycle_loss rows. cycle_snapshot_promoted:false for the 20th consecutive emit; this tick s snapshot landed at 16:34, again not a multiple of 5, so again unfindable by cycle-bootstrap SKILL.md:58 5-min-rounded lookup."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-25T16:36:00Z"
+}
