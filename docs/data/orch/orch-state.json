@@ -127,514 +127,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-25T02:47:03Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-36d074",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-0059ae",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-c75b2d",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-898c9a",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-e98142",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-22f0c2",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-a01eef",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-46ee55",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-5c8e7c",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-258d58",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-bd6086",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-b9275a",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-c610ae",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-ec9b00",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-0141e9",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-7a6882",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-6133ab",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-3d4916",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-a98155",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-454dee",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-037ef8",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-e29c8c",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-96a9cd",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
-      {
-        "id": "ntg-20260824T000000Z-technical_indicators-VNM-3af0c3",
-        "ts": "2026-08-24T00:00:00Z",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        }
-      },
       {
         "id": "ntg-20260824T203614Z-technical_indicators-VNM-82a3ee",
         "ts": "2026-08-24T20:36:14Z",
@@ -677,78 +173,6 @@
         "triaged_at": "2026-08-24T10:56:41Z",
         "triaged_by": "po (triage-20260824T1050Z, router hand-dispatch)",
         "disposition": "FOLD onto FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP (2nd occurrence, 2nd distinct report in 2 days) + MINTED FIX-BCTC-IMGDEG-SIGNAL-SUMMARY-CONTRADICTS-ITS-OWN-LIVE-CONFIDENCES. THIS SIGNAL IS FALSE ABOUT ITS OWN SUBJECT ON TWO AXES - re-measured at source this tick via get_bctc_refined(report_id=1f53ef33-8f50-489b-8505-689740692ab0) through the gateway wrapper, not taken from the dispatch. (i) COUNT: THREE units carry an image_unavailable flag, not the 2 named in payload.affected_unit_ids - unit-0004 conf 0.75 flags [continuation_marker_missing:page7, image_unavailable:pages6-8]; unit-0005 conf 0.65 flags [image_unavailable, garbled_ocr_layout]; unit-0006 conf 0.70 flags [image_unavailable, ocr_row_alignment_uncertain]. (ii) THRESHOLD: NONE of the three is at or below the <=0.6 the summary asserts; the true range is 0.65-0.75. MECHANISM PINNED in apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts: (a) shouldSignalImageFetchDegradation() fires on strict equality occurrenceCount===threshold(2) - a rising edge that by its own header 'never re-fires on the 3rd, 4th ... occurrence' - and nothing ever amends the emitted row, so affected_unit_ids is a point-in-time snapshot presented as the report's final extent. unit-0006 was refined at 09:04:24, 10s AFTER this row's own ts 09:04:14, which is exactly why it is missing. (b) buildBctcImageFetchDegradedRow() templates the literal 'capped <=0.6 confidence' unconditionally and never reads a confidence value at all - byte-for-byte the same hardcoded-summary-contradicts-payload defect as CCATO defect (C) at scripts/narrative-truth-gate.sh:421-423, in a second, independent emitter. (c) The row carries NO dedup_key (yesterday's sibling bctc-imgdeg-69fcd047 only has one because PO stamped it by hand at triage) - same missing-dedup_key defect as CCATO defect (B). UNDERLYING AND WORSE THAN THE SUMMARY BUG: the <=0.6 cap that the writer's own file header calls 'BY DESIGN' is a prose instruction to the refine_bctc_md subagent (table-page.md / continuation-stitch.md) with no server-side clamp at the push_bctc_refined_unit boundary. Live data refutes it 3/3, so any downstream consumer filtering on confidence<=0.6 to find image-degraded units silently returns ZERO for this report. Not closed as noise: the fetch-plane degradation itself is real and now recurring, and the emitter's own falsity is the newly minted row."
-      },
-      {
-        "id": "sys-20260824T024142-2359",
-        "ts": "2026-08-24T02:41:42Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "auditor_cycle_missing",
-        "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 11h (cadence 4h)",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T00:00Z",
-        "triaged_at": "2026-08-24T13:20:31Z",
-        "triaged_by": "po",
-        "disposition": "REHOUSED-TO-ROW",
-        "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Rehoused into FIX-AUDITOR-TIER2-CYCLE-MISSING-NO-COMPLETION-EVIDENCE-IN-11H."
-      },
-      {
-        "id": "sys-20260824T024318-584b",
-        "ts": "2026-08-24T02:43:18Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "cron_fire_gap",
-        "summary": "ragFtsRebuildCron stale 822.5h (35 days) — last run 2026-07-20",
-        "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
-        "dedup_key": "auditor-a29-fire-gap:ragFtsRebuildCron",
-        "triaged_at": "2026-08-24T13:20:31Z",
-        "triaged_by": "po",
-        "disposition": "FOLDED-TO-ROW",
-        "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Folded into FIX-CRONS-FIVE-STALE-NEVER-FIRING-RAGFTSREBUILD-35-DAYS (scope extended to 10 signals this tick). Archiving on schedule is correct."
-      },
-      {
-        "id": "sys-20260824T024328-67a0",
-        "ts": "2026-08-24T02:43:28Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "cron_fire_gap",
-        "summary": "vnstockTradingStatsRefresh stale (check A-29)",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
-        "dedup_key": "auditor-a29-fire-gap:vnstockTradingStatsRefresh",
-        "triaged_at": "2026-08-24T13:20:31Z",
-        "triaged_by": "po",
-        "disposition": "FOLDED-TO-ROW",
-        "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Folded into FIX-CRONS-FIVE-STALE-NEVER-FIRING-RAGFTSREBUILD-35-DAYS (scope extended to 10 signals this tick). Archiving on schedule is correct."
-      },
-      {
-        "id": "sys-20260824T024333-48f8",
-        "ts": "2026-08-24T02:43:33Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "cron_fire_gap",
-        "summary": "monthlySignalQualityAudit MISSED 2018.7h overdue",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
-        "dedup_key": "auditor-a29-fire-gap:monthlySignalQualityAudit",
-        "triaged_at": "2026-08-24T13:20:31Z",
-        "triaged_by": "po",
-        "disposition": "FOLDED-TO-ROW",
-        "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Folded into FIX-CRONS-FIVE-STALE-NEVER-FIRING-RAGFTSREBUILD-35-DAYS (scope extended to 10 signals this tick). Archiving on schedule is correct."
       },
       {
         "id": "sys-20260824T024827-1503",
@@ -1102,7 +526,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 8h (cadence 4h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -1116,7 +540,7 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 0 distinct codes (expected ≥25)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t3:2026-08-25T02:00Z",
@@ -1130,7 +554,7 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports: 6 low-confidence (expected ≤5)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -1144,7 +568,7 @@
         "type": "db_integrity_breach",
         "summary": "bctc_vps_queue: 1 stale pending >72h (expected 0)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -19095,57 +18519,6 @@
             "observed_at": "2026-08-24T18:34:35Z"
           }
         }
-      },
-      {
-        "id": "FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK",
-        "type": "FIX",
-        "status": "DONE_VERIFIED",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "created_at": "2026-08-25T01:26:42Z",
-        "created_by": "po/triage-20260825T0107Z",
-        "updated_at": "2026-08-25T02:42:43Z",
-        "dedup_key": "reaper:orphan-mint-no-session-presence-liveness-check",
-        "title": "server-reaper mints orphan-signals keyed ONLY on lock TTL expiry with ZERO liveness check — gcExpiredLocks' Phase-1 scan never consults session-presence, so a presence-REGISTERED, demonstrably-live session's long-running task is falsely orphaned the moment its TTL lapses",
-        "desc": "CONFIRMED AT SOURCE by po triage 2026-08-25T01:07Z (session 036ceaf1) — read verbatim from the implementation, NOT inferred from the signal. Two dev-team recurring-bug envelopes (d89d8226 and its correction 4a5a8e12, carrying corrects_envelope_id) collapse to ONE finding; envelope 2 supersedes envelope 1's root cause and ONLY envelope 2's premise is built on here.\n\nTHE PREDICATE (apps/mcp-server/src/infrastructure/db/coordinationStore.ts, gcExpiredLocks() Phase 1 pre-GC scan):\n  WHERE expires_at + ? < unixepoch('now')\n    AND task_kind IN (ORPHAN_EMIT_ALLOW_LIST)\n    AND task_id NOT LIKE 'published:%'\n    AND task_id NOT LIKE 'cron:%'\n    AND task_id NOT LIKE 'cron-registration:%'\n    AND task_id != 'dev-team-cron-singleton'\nTTL expiry is the SOLE liveness proxy. The row's own owner_client_session IS selected by that query — but only to be copied into the emitted signal payload as original_owner_client_session. It is never used to ask whether that session is still alive. There is no join, no subquery and no lookup against task_kind='session-presence' anywhere in the function.\n\nLIVE EVIDENCE: orphan-signal:task:FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING was minted 2026-08-24T23:59:49Z against a lock owned by session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb — a session that was presence-REGISTERED and LIVE at mint time (started_at 2026-08-24T21:09:38Z, heartbeat_at 2026-08-25T01:09:58Z, continuously running, executed ticks 00:37Z / 00:54Z / 01:07Z) and was still live when this row was written. Observed re-trips of the same false orphan: 00:37Z and 01:07Z.\n\nWHY ENVELOPE 1'S FRAMING IS INSUFFICIENT (deliberately NOT built on): 'the S2 dispatch convention leaves the sprint-task lock unreleased on the success path' is a real contributing factor but NOT the generator. A fix designed against it would leave the defect fully intact for any task that legitimately outlives its TTL — the reaper would still falsely orphan a correctly-behaving, mid-flight, long-running agent.\n\nCRITICAL DESIGN CONSTRAINT — THE GUARD MUST BE SUPPRESS-ONLY, NEVER ASSERT-DEAD. Sibling row SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS (backlog, P2) measured task_list_held(kind=session-presence) returning 1 row while >=3 sessions were demonstrably live, and presence registration is OPT-IN, so an ABSENT presence row does NOT mean the session is dead. Required polarity: presence row PRESENT and unexpired => SUPPRESS the mint; presence ABSENT => fall through to exactly today's behaviour. Under that polarity an undercounting roster can only make the guard weaker, never wrong — which is why this row deliberately does NOT depend_on the SPIKE and must not be blocked behind it.\n\nCHEAP TO IMPLEMENT: session-presence rows live in the SAME task_locks table (task_kind='session-presence'), so the guard is one NOT EXISTS correlated subquery added to the existing Phase-1 SELECT — same transaction, no new I/O, no new table, no schema change.\n\nDO NOT COPY THE CRON STEP 1b.1 ORACLE VERBATIM: envelope 2 proposes mirroring the oracle in .claude/skills/cron-detect-loop/SKILL.md Step 1b.1. Open row FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE (ready[], P0) documents at source that that oracle is broken in BOTH directions across 3 cron families and cost an 8h10m dispatcher outage on 2026-08-23. Take the SHAPE (cross-check presence before acting on lock state); never that implementation.",
-        "acceptance": "AC-1 gcExpiredLocks' Phase-1 scan must NOT emit an orphan-signal for an expired row whose owner_client_session matches a task_kind='session-presence' row with expires_at > unixepoch('now'). Phase-2 DELETE behaviour is UNCHANGED — the expired lock itself still GCs; only the adoption-signal mint is suppressed.\nAC-2 POLARITY TEST (the load-bearing one): an expired row whose owner_client_session has NO presence row MUST still emit exactly as today. Absence of presence is never treated as proof of life or of death — it is simply not a suppression trigger. A patch that inverts this (emit only when presence is absent-and-confirmed) is a REJECT.\nAC-3 NULL-safety: an expired row with owner_client_session IS NULL must not accidentally match a presence row whose own owner_client_session is NULL; it emits as today.\nAC-4 regression test reproducing the live incident: claim a sprint-task under session S with a short TTL, register a session-presence row for S with a long TTL, let the sprint-task lock expire, run gcExpiredLocks — assert ZERO orphan-signal rows for that task_id AND assert the expired sprint-task row was still deleted.\nAC-5 no regression in the existing reaper/coordination suites — compare the failing FILE SET against the documented pre-existing baseline, never the exit code (reference_mcpserver_fullsuite_preexisting_failure_baseline).",
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
-        ],
-        "baseline_pass": "cd apps/mcp-server && bun test src/__tests__/task-lock-reaper-timer.test.ts src/__tests__/FU-LOCKSTORE-EXPIRED-GC.test.ts src/infrastructure/__tests__/coordinationStore.test.ts — green BEFORE and AFTER; full-suite comparison by failing-FILE-SET vs the documented pre-existing baseline, never by exit code.",
-        "related_to": [
-          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-          "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
-          "FIX-ORPHANADOPTION-TREEHYGIENE-EMPTY-ZONE-REPOWIDE-REVERT",
-          "SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS",
-          "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
-          "FIX-SPRINT-TASK-HEARTBEAT-LOCK"
-        ],
-        "depends_on": [],
-        "discovered_by": "dev-team ticks 2026-08-24T23:59Z / 2026-08-25T00:37Z / 01:07Z (recurring-bug envelopes d89d8226 + correction 4a5a8e12); routed + source-verified by po triage 2026-08-25T01:07Z",
-        "coverage_verified_by_po": "Re-verified independently this tick via scripts/po-board-dedup-search.sh over the NON-TERMINAL lanes on 'reaper', 'orphan', 'presence' and 'liveness', then by READING each candidate in full rather than trusting its title. RESULT: no row covers the MINTING side. Rebuttals of the near-misses, each checked at source: (a) backlog FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD's title does say 'stop false-orphaning long agents', which looks like coverage — but its own audit_ref.note scopes that clause to fix_spec(b)/AC2, whose successor row is FIX-SPRINT-TASK-HEARTBEAT-LOCK; (b) that successor's four subtasks are owner_client_session binding, sprint-task TTL raise, a heartbeat loop in execute-tier.md, and INV-GATEWAY-1 cleanup — i.e. keep the CLAIMANT's lock fresh so it never expires. That is the opposite end of the same symptom and leaves the reaper's own predicate untouched: any task outliving even a raised TTL is still falsely orphaned. (c) backlog SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS is the INVERSE direction (roster misses live sessions; here the roster HAS the session and the reaper never looks). (d) backlog FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS is the same DEFECT CLASS (lock possession read as liveness) in a different component (the SF-1 singleton gate), not this call site. (e) ready[] FIX-ORPHAN-FR4-FR5-*, backlog FIX-ORPHANADOPTION-TREEHYGIENE-* are both adopter-side. Cold archive docs/data/orch/archive/2026-08.json also carries no reaper-side row.",
-        "promoted_at": "2026-08-25T01:44:34Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-25T02:19:32Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "dev-mcp-server",
-        "commit_sha": "0f6891872",
-        "notebook_commit_sha": "a2e52c745",
-        "implementation_note": "Added SUPPRESS-ONLY NOT EXISTS presence-liveness guard to gcExpiredLocks() Phase-1 SELECT in coordinationStore.ts. AC-1..AC-4 satisfied: 5 new tests in task-lock-coordination-store.test.ts (AC-1 suppress-on-live-presence, AC-2 polarity absent-presence-still-emits, AC-2b expired-presence-still-emits, AC-3 NULL-safety, AC-4 live-incident regression). Targeted suite 89/89 pass (baseline 84/0). tsc clean. Tool count 184 / cron count 88 unchanged. Phase-2 DELETE unaffected.",
-        "drain_source_lane": "review",
-        "qa_verified_at": "2026-08-25T02:42:43Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted x2 incl. mutation) + bun tsc --noEmit + grep(DDD/security) + mock-guard.sh + bun test (full suite)",
-            "args": "commits=0f6891872,a2e52c745,ffbd8cca7; files=apps/mcp-server/src/infrastructure/db/coordinationStore.ts,apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts",
-            "live_value_observed": "ancestor=yes(x3); stat touches 2/2 claimed files; targeted bun test 89 pass/0 fail/250 expect; mutation-test 87 pass/2 fail (AC-1,AC-4 red only), file reverted clean; tsc 0 errors; ddd/security grep clean; mock-guard PASS; full-suite 15467 pass/40 skip/51 fail/1285 files -- failing set = 15 baseline files + 1 unrelated isolated-pass flake (102-job-news-poll)",
-            "observed_at": "2026-08-25T02:42:43Z"
-          }
-        },
-        "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED — independent re-verification: 3 commits (0f6891872 fix+tests, a2e52c745 notebook, ffbd8cca7 decision journal) confirmed on main ancestry via git merge-base --is-ancestor; git show --stat confirms both claimed files touched. Targeted suite 89/89 pass (task-lock-coordination-store + task-lock-reaper-timer + FU-LOCKSTORE-EXPIRED-GC + infrastructure/coordinationStore). Independent mutation test (neutered presence.expires_at>unixepoch('now') to a bogus fixed threshold) flips exactly AC-1+AC-4 red (87/89), all other cases stay green -- confirms suppress-only polarity is load-bearing, not decorative; file reverted clean (git diff empty after). tsc --noEmit 0 errors; DDD grep (infra/application imports) clean; security grep (process.env/secrets) clean; mock-guard.sh PASS. Phase-2 DELETE query read at source -- separate unconditional statement, no presence check, structurally unaffected. Full apps/mcp-server suite: 51 fail/16 files = all 15 documented-baseline files + 1 new environmental flake (102-job-news-poll, 5000ms timeout, zero references to coordinationStore/task_locks, reproduced 10/10 pass in isolation) -- not attributable to this change."
       }
     ],
     "head": {
@@ -22919,7 +22292,7 @@
         "last_served_tick": "2026-08-25T01:16:34Z"
       }
     },
-    "_updated_at": "2026-08-25T02:15:21Z",
+    "_updated_at": "2026-08-25T02:47:03Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23147,6 +22520,176 @@
         "createdAt": "2026-08-25T02:07:40Z",
         "drained_at": "2026-08-25T02:12:55Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "ntg-20260824T000000Z-technical_indicators-VNM-36d074",
+          "ntg-20260824T000000Z-technical_indicators-VNM-a01eef",
+          "ntg-20260824T000000Z-technical_indicators-VNM-c610ae"
+        ]
+      },
+      {
+        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "ntg-20260824T000000Z-technical_indicators-VNM-0059ae",
+          "ntg-20260824T000000Z-technical_indicators-VNM-c75b2d",
+          "ntg-20260824T000000Z-technical_indicators-VNM-46ee55",
+          "ntg-20260824T000000Z-technical_indicators-VNM-5c8e7c",
+          "ntg-20260824T000000Z-technical_indicators-VNM-ec9b00",
+          "ntg-20260824T000000Z-technical_indicators-VNM-0141e9"
+        ]
+      },
+      {
+        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "ntg-20260824T000000Z-technical_indicators-VNM-898c9a",
+          "ntg-20260824T000000Z-technical_indicators-VNM-e98142",
+          "ntg-20260824T000000Z-technical_indicators-VNM-258d58",
+          "ntg-20260824T000000Z-technical_indicators-VNM-bd6086",
+          "ntg-20260824T000000Z-technical_indicators-VNM-7a6882",
+          "ntg-20260824T000000Z-technical_indicators-VNM-6133ab"
+        ]
+      },
+      {
+        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "ntg-20260824T000000Z-technical_indicators-VNM-22f0c2",
+          "ntg-20260824T000000Z-technical_indicators-VNM-b9275a",
+          "ntg-20260824T000000Z-technical_indicators-VNM-3d4916"
+        ]
+      },
+      {
+        "envelope_id": "6c7d4f0bebcb8a6afe87513cfeabaf55c8ecba728ce707a2336a59a9adf91e34",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-2 cycle possibly missing — no completion evidence in 8h (cadence 4h)",
+        "createdAt": "2026-08-25T02:38:23Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "sys-20260825T023823-10cf"
+        ]
+      },
+      {
+        "envelope_id": "7a9d0d5c25819655ed321f794e5005f4b4f445469893656b2dff20114e256d45",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "priority": "CRITICAL",
+        "payload": "daily_ohlcv: 0 distinct codes (expected ≥25)",
+        "createdAt": "2026-08-25T02:40:42Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "sys-20260825T024042-6445"
+        ]
+      },
+      {
+        "envelope_id": "7c7f79361c13cb89e141ef07726e1b8e373f916f2868f1217d637f6d7555d68a",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "priority": "WARN",
+        "payload": "financial_reports: 6 low-confidence (expected ≤5)",
+        "createdAt": "2026-08-25T02:40:52Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "sys-20260825T024052-601e"
+        ]
+      },
+      {
+        "envelope_id": "42cda8cf3eccf4d600737bca635072e7464815fa0f8d37892c2e37232d7ce930",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "priority": "WARN",
+        "payload": "bctc_vps_queue: 1 stale pending >72h (expected 0)",
+        "createdAt": "2026-08-25T02:40:54Z",
+        "drained_at": "2026-08-25T02:47:03Z",
+        "routed_to": "PO Step 0-SIG",
+        "collapsed_row_ids": [
+          "sys-20260825T024054-360e"
+        ]
       }
     ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
