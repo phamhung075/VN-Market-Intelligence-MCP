@@ -1,0 +1,40 @@
+{
+  "from": "dev-team",
+  "to": "agents-architect",
+  "type": "recurring-bug",
+  "priority": "WARN",
+  "createdAt": "2026-08-25T23:25:30Z",
+  "dedup_key": "recurring-bug:fleet-timestamps:local-clock-labelled-Z-in-artifact-identity-fields",
+  "payload": {
+    "module": "docs/agents/*/flow/ — artifact timestamp discipline",
+    "trigger": "Escalation condition set by the 2026-08-14 note in feedback_hand_typed_iso_timestamps_drift_into_the_future has fired: a 3rd distinct agent type (ops) hit the class, and it hit an artifact-identity field, not merely an informational completion stamp.",
+    "agent_types_confirmed": [
+      "router (2026-07-21)",
+      "architect (2026-08-14)",
+      "ops (2026-08-25)"
+    ],
+    "mechanism_is_new": "Prior cases were forward-rounding guesses. This one is systematic: the host local zone is Europe/Paris (UTC+2); ops read the LOCAL wall-clock and appended Z. Flat +2h offset that also rolled the calendar date forward one day. Reproducible and cheap to detect - any stamp exactly +2h off real UTC on this host is this bug. NOT clock drift: the machine clock is correct, only the label is wrong.",
+    "evidence": {
+      "wrong_label_sites": [
+        "docs/incidents/ops-cycle-20260826-dual-rebuild-mcp-pdf.md title+filename: 2026-08-26T01:13Z",
+        "docs/agent-memory/notebooks/ops.md headings (2 sites): 2026-08-26T01:13Z",
+        "same incident doc, deploys-complete-by line: 2026-08-26T01:13:47Z UTC"
+      ],
+      "real_utc": "2026-08-25T23:13Z (host date -u, cross-checked against docker inspect image Created 2026-08-25T23:12:41Z and StartedAt 23:12:46Z)",
+      "correct_sites_in_same_doc": [
+        "23:12:21Z",
+        "23:13:16Z",
+        "23:13:58Z"
+      ]
+    },
+    "root_cause": "docs/agents/ops/flow/docker.md:101 ALREADY mandates `date -u` copied verbatim, added by FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE (2026-08-05) to close exactly this class. Ops obeyed it inside the named Deploy-Evidence Capture block and violated it in the document title/filename/cycle heading. The mandate is scoped to an evidence block and does not generalise to the artifact identity fields, which are what a reader, an auditor or an ls-by-date keys on FIRST. Result: a committed record that contradicts itself (title 01:13Z vs body 23:13Z) - the same shape that once triggered a false fabricated-timestamp investigation.",
+    "second_order_risk": "A +2h label silently corrupts any reasoning stated in terms of it. Ops concluded it finished >30m before VN market open at 02:00Z; true headroom was 2h47m, not 47m. Conclusion survived by luck of direction. Near the 02:00-08:59Z pdf-extractor prohibition, a +2h misread can place an agent on the WRONG side of the window while it believes it is clear - e.g. real 08:30Z reads as local 10:30 and looks post-window.",
+    "coverage_gap": "`date -u` appears in ZERO of the 30 docs/agents/*/flow/main.md files. It exists only in per-topic sub-flows such as docker.md, so agents whose cycle does not route through such a sub-flow inherit no rule at all.",
+    "candidate_directions": [
+      "(a) hoist a timestamp-capture rule to a fleet-wide standard every flow inherits, covering artifact IDENTITY fields (filename/title/cycle label) explicitly, not just evidence blocks",
+      "(b) cheap post-write check comparing emitted stamps against real UTC, fail loud on nonzero offset",
+      "(c) set the fleet TZ to UTC so local and UTC coincide - narrowest, but leaves the general hand-typing class open and would silently change VN-market date handling, so NOT recommended without review"
+    ],
+    "router_note": "Filed on the FILE plane deliberately, not signal_queue, to avoid racing a PO inbox drain running at the time. Not minting a board row: choosing among (a)/(b)/(c) is an agent-architecture decision. Corrections were NOT applied to the ops artifacts - out of router scope and the evidence body is already correct."
+  }
+}
