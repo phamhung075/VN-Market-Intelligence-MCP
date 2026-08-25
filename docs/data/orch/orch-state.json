@@ -12312,8 +12312,10 @@
         ],
         "desc": "BACKSTOP for FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR (which is the root cause — land that first; this row exists so the NEXT variant of the same class self-heals instead of silently freezing the pipeline again).\n\nCOVERAGE GAP, grep-verified at source this tick:\n  WF-3 RESUME-ATTEMPT-BOUND (main.md:441) and WF-4 STALE-AGE 2h (main.md:469) — shipped 2026-08-14 under FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE — are keyed off `.head.active_task_id` + the in_progress[] row's own claimed_at. Both are `.head`-pin checks. Neither can ever observe a qa[] row, because a stranded qa[] row does not pin `.head` at all.\n  WF-1d REVIEW-LANE (shipped same day, FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND) DOES read review[]/qa[], but its own text states 'NO lane-move — the row is already correctly resident where Review-Lane QA-Drain/SECONDARY-Drain expect it'. That premise is true for review[] and FALSE for qa[]: QA-Drain claims FROM review[] only, so nothing anywhere re-dispatches a qa[]-resident row. qa[] is a terminal parking lot for anything that enters it without a completing QA session.\n  Net: in_progress[] has a resume-attempt bound AND a 2h stale-age check; review[] has two drains (QA-Drain + SECONDARY-Drain); qa[] has NEITHER a drain NOR a watchdog.\n\nMEASURED CONSEQUENCE 2026-08-14T08:37Z: qa[] 10/10 = QA_CAP, 9 of 10 stranded (4 with a rendered verdict whose lane-move never executed, 4 with zero QA activity ever, 1 soak-parked on an expired next_recheck_not_before). `QA_WIP -lt QA_CAP` therefore evaluated false on every tick and the whole review->qa pipeline was dead, with 54 eligible review[] rows queued behind it. Required a manual PO cap-clear (this task's own sibling write) to restart.\n\nSECOND, INDEPENDENT DEFECT FOUND WHILE TRIAGING — do not fold away: next_recheck_not_before has no reader. FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER carried next_recheck_not_before=2026-08-08T23:06:00Z; the window elapsed 5.4 days ago and nothing in the fleet ever re-evaluates that field, so a deliberate, time-bounded park silently became permanent. Any watchdog designed here MUST also treat an elapsed next_recheck_not_before as a wake trigger, or deliberate parks keep converting into strandings.\n\nTHIRD, RELATED: lane-move writes do not re-stamp claimed_at/claimed_by. FIX-SCHEDULER-DOUBLE-REGISTRATION sat in qa[] carrying claimed_at 2026-07-29T02:17:07Z / claimed_by 'dev-team (bounded-1 auto-pickup)' — its ORIGINAL backlog->in_progress stamp, never re-stamped when ops moved it into qa[] on 2026-08-08. Any age computed from those fields is wrong (reported 16d, actual 6d). FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER had both fields NULL because it entered qa[] via a PO reopen write (31cf962db), never via the drain script. A stale-age watchdog keyed naively on claimed_at is therefore unsound on this lane today — mirror WF-4's own corroboration discipline (it deliberately keys off the row's claimed_at, never .head.updated_at, AND cross-checks `git log --since=<claimed_at> --grep=<task_id>` before acting).\n\nACCEPTANCE:\nAC-1 a qa[] row with no completing QA session within a bounded threshold is detected and acted on. Threshold to be justified against measured QA verify-committed close-time, not copied blind from WF-4's 2h — QA verify runs a real test suite and legitimately takes longer than a head pin.\nAC-2 corroboration before acting, mirroring WF-4: `git log --since=<arrival> --grep=<task_id>` match => real QA progress landed, do NOT bounce; no match => act.\nAC-3 action on a genuinely stranded row is the vc-changes-shaped bounce (qa[]->review[], status QA->REVIEW, redispatch_count+=1, next_agent=qa) so QA-Drain re-picks it by priority_rank — never a silent delete, never a status flip without the lane-move.\nAC-4 an elapsed next_recheck_not_before is an explicit wake trigger, not a suppressor (see SECOND defect above).\nAC-5 arrival-time source is sound for BOTH entry paths: drain-claimed rows (claimed_at/claimed_by stamped) and off-drain rows placed directly into qa[] by PO/ops reopen writes (both fields null). A null claimed_at must not make a row invisible to the watchdog — that is exactly how FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER hid.\nAC-6 negative controls: (a) a genuinely-active qa[] row inside a legitimate durability window is NOT bounced — use FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's live 24h-window shape as the fixture; (b) in_progress[] rows are unaffected (WF-3/WF-4 keep sole ownership there).\nAC-7 BUG-channel telegram naming task id + strand duration, matching WF-3/WF-4's existing shape.\nAC-8 saturation itself is observable: QA-Drain's `QA_WIP -lt QA_CAP` gate currently no-ops silently when full. Emit a WORK/BUG signal when the gate declines on saturation N ticks running — the gate's own silence is why this went undetected for weeks.",
         "po_scope_note": "next_agent=architect (on the DRS ratified allowlist, dispatchable). Blueprint precedent to follow: docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md, which produced WF-3/WF-4 in this same file — this is the qa[]-lane analogue the router explicitly asked for. Implementation lands in docs/agents/dev-team/flow/main.md (agent-father applies, as it did for WF-3/WF-4); any scripts/ or orchStateSchema.ts companion is a separate developer row, same split precedent.",
-        "updated_at": "2026-08-14T09:11:11Z",
-        "updated_by": "po"
+        "updated_at": "2026-08-25T21:47:47Z",
+        "updated_by": "po",
+        "status_note": "[dev-team/router 2026-08-25T21:47Z] MEASURED LIVE INSTANCES — 2 rows confirmed stranded in qa[] right now,\nages give this watchdog a concrete threshold to be designed against:\n  1. FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED\n     claimed_at=2026-08-14T08:32:49Z by \"dev-team (review-lane qa-drain)\" -- 11d 13h stranded.\n     next_agent=qa, owner=dev-rag-service, no qa_not_before.\n  2. FU-RAG-DEPLOY-MEMORY\n     claimed_at=2026-08-23T11:25:00Z by the same claimer -- 2d 10h stranded.\n     next_agent=qa, no owner, no qa_not_before.\nBoth verified to have NO live coordination lock: task_list_held(kind=\"sprint-task\") at 21:41Z returned only\ntask:FIX-PDFX-TESSERACT-CONFIDENCE-..., the 3 cron-registration markers and 2 esc-datacov rows -- no\ntask:FIX-RAG-LANCECORE-... and no task:FU-RAG-DEPLOY-MEMORY. So no qa agent is working either row.\nWHY THEY CANNOT SELF-HEAL: scripts/devteam-review-claim-qa-drain.jq selects from review[] and done[] ONLY.\nNothing in the fleet re-selects from qa[]. A row that lands there without its dispatched qa session\ncompleting is terminal-by-omission -- it holds a slot against QA_CAP=10 forever and no gate reports it.\nNote the interaction with cap saturation: these 2 dead rows are 2 of the 3 currently occupying qa[], i.e.\n20% of QA_CAP is permanently consumed by rows nobody is working. At 11 days the older one predates several\nfull rotations of every other lane.\nNOT a duplicate of FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA (that row is about\nthe SKIP branch stranding a row it just lane-moved, a single-tick write-path defect); this row is the\nmissing DETECTION for rows already sitting stale in qa[] regardless of how they got there.",
+        "confirmed_live_at": "2026-08-25T21:47:46Z"
       },
       {
         "id": "FIX-AUDITOR-DATATIER-CRONJOBRUNS-ADHOC-COUNT-NONDETERMINISTIC",
@@ -16108,7 +16110,7 @@
         "next_agent": "architect",
         "created_at": "2026-08-24T23:50:03Z",
         "created_by": "po/triage-20260824T2343Z",
-        "updated_at": "2026-08-24T23:52:51Z",
+        "updated_at": "2026-08-25T21:46:19Z",
         "updated_by": "po",
         "dedup_key": "recurring-bug|secondary-drain-po-default-double-dispatch|docs/agents/dev-team/flow/main.md",
         "title": "One dev-team tick can spawn TWO concurrent po agents: Review-Lane SECONDARY-Drain's resolver defaults to \"po\", and its task:<row-id> lock does not guard Step 1's task:po-triage-<date> lock",
@@ -16128,7 +16130,9 @@
           "FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS"
         ],
         "depends_on": [],
-        "discovered_by": "dev-team recurring-bug signal envelope 622c03db (2026-08-24T22:52:13Z), triaged by po at 2026-08-24T23:50Z"
+        "discovered_by": "dev-team recurring-bug signal envelope 622c03db (2026-08-24T22:52:13Z), triaged by po at 2026-08-24T23:50Z",
+        "status_note": "[dev-team/router 2026-08-25T21:45Z] FIRST CONFIRMED LIVE INSTANCE — row was analysis-derived until now.\nTick 2026-08-25T21:37Z: rotation winner step1_triage spawned `po` for inbox triage (20 envelopes), router\nholding intent:po:triage + task:po-triage-20260825. Immediately after, the head-decoupled SECONDARY-Drain\nin the SAME tick claimed FIX-RAG-COMPACTION-DISK-AMPLIFICATION (review[], next_agent=po, status=REVIEW,\nbranch:null) and resolved secondary_dispatch_target=po -- a second concurrent `po` session.\nBOTH lock keys were free and would have permitted the spawn, exactly as this row predicts:\n (1) SECONDARY-Drain's own resume_key is row-scoped, \"task:FIX-RAG-COMPACTION-DISK-AMPLIFICATION\" --\n     cannot observe that a po session already exists;\n (2) Step 1 PO Triage's S3 key is date-scoped, \"task:po-triage-20260825\" -- cannot observe a\n     row-sign-off po dispatch.\nNeither key names the AGENT, so the two dispatch sites are mutually invisible. main.md's own\nSECONDARY-Drain section already documents this as a \"known, accepted, flagged residual ... Fast-follow\nif observed live: reuse the existing task:on-demand:<agent>:<date> mutex pattern\" -- this is that\nobservation, so the fast-follow condition is now met.\nNOT DISPATCHED: router declined the second po spawn under the CLAUDE.md-mandatory Phase B PRE-CLAIM gate\n(.claude/skills/dispatch-claim/CARD.md), which sits above the flow and is stricter than either lock key.\nNo duplicate ran. Cost of declining is zero -- the claim script never lane-moves, so the same oldest row\nis re-picked next tick (documented throttle-by-design).\nNote the two concurrent po's would NOT have been harmlessly redundant: the triage po performs the durable\ninbox CLEAR (itself carrying the unfixed silent-no-op defect FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-\nJSON-UNDER-ZSH-SILENT-NOOP) while a sign-off po lane-moves a review[] row -- interleaved reads of the same\nboard, not idempotent work.",
+        "confirmed_live_at": "2026-08-25T21:46:18Z"
       },
       {
         "id": "FIX-AUDITOR-C01-DAILY-OHLCV-MEASURES-STALE-HOST-DB-DECOY-FALSE-CRITICAL",
@@ -23115,7 +23119,7 @@
         "supervised": true,
         "created_at": "2026-07-29T10:28:52Z",
         "created_by": "po (spinoff from DIAGNOSE-RAG-SERVICE-RESTART-LOOP close; growth-trajectory axis, separate from the correctness defect)",
-        "updated_at": "2026-08-23T19:07:56Z",
+        "updated_at": "2026-08-25T21:45:03Z",
         "evidence": "MEASURED 2026-07-29T10:22Z on the host bind-mount data/live/lancedb/rag_entries.lance (733 MB total). data/ = 555 MB across 2927 files, of which 38 are >1 MB (5 largest all 19.4-20.0 MB, mtimes 08:40/08:49/10:49/11:02/12:06 local = roughly hourly FULL-TABLE rewrites) and 2878 are <100 KB. _versions/ = 30 MB / 2878 manifests. _indices/ = 136 MB / 735 dirs, of which 540 are EMPTY husks and only 195 hold data. RETENTION ASYMMETRY (this is the finding, and it is measured not inferred — `find -mtime +2` against _COMPACT_RETENTION=timedelta(days=2)): _versions has ZERO files older than the window (oldest manifest 27 jul 13:03); data/ has 33 of 2927 older; _indices has 352 of 735 older, OLDEST 18 jul = 11 DAYS. Same cleanup_older_than parameter, opposite outcomes => optimize(cleanup_older_than=) prunes versions and data fragments but does NOT reclaim _indices.",
         "corrects": "This CORRECTS a framing in the originating spike, which read 2927 data files as 'compaction is not achieving its documented guarantee'. It is achieving it: the 38 large files ARE real compacted outputs and version pruning demonstrably works inside its 2-day window. The 555 MB is not fragment sprawl — it is 2 days of near-hourly full-table rewrites retained by design. The actual problem is the GROWTH TRAJECTORY, which is why this is a separate row from the correctness defect.",
         "question": "Disk cost is O(compaction_cadence x retention_window x corpus_size) and all three are moving the wrong way. repositories.py:43 comments '100 inserts ~= one daily intelligence cycle' and docs/architecture/microservice/rag-service/infrastructure.md:37 assumes 'a 100-insert/day workload'; MEASURED live is 770 POST /index in 6h = ~128/h = ~3070/day, i.e. ~31x the design premise (independently: 94 POST /index in the 30 min before the 10:12Z restart). Corpus is ~11.2k rows growing ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on. At 56k rows each full-table rewrite is ~5x today's ~20 MiB, so 2 days of near-hourly rewrites projects to multiple GB. DECIDE: (1) retune _COMPACT_EVERY / _COMPACT_RETENTION for real traffic, (2) whether _indices orphans need an explicit reclaim path, (3) whether a disk-growth guard belongs in the auditor. READ LanceDB source for the actual _indices retention semantics — do not guess.",
@@ -23143,7 +23147,10 @@
         "claimed_at": "2026-08-23T18:55:25Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "status_note": "2026-08-23T19:06Z dev-rag-service: plan_only/supervised design deliverable produced — docs/architecture-briefs/2026-08-23-fix-rag-compaction-disk-amplification-design.md. Fresh read-only measurement (data/live/lancedb now 366MB, down from 733-785MB via two unrelated 2026-08-14 fixes) revises the row own evidence: dominant remaining cost is 44 orphaned .tmp* staging files (292164KB, 84% of data/) from documented past OOM-kills, invisible to cleanup_older_than by design (LanceDB delete_unverified param, separate knob, defaults False, never passed by this codebase compact() call) - confirmed against installed lancedb==0.25.3 optimize() docstring, not guessed. Secondary: 1602/1647 _indices/<uuid>/ dirs now empty shells, ongoing under healthy operation (Index-optimize step leaves empty dir after file-level cleanup). Ruled out: compact() does NOT re-fire on every restart (per-process in-memory counter) - that mechanism belongs to the already-fixed vector-index defect, not this row. _COMPACT_EVERY retuning not recommended - current cadence already matched to measured traffic. Brief proposes staged Phase1 (isolated repro + one-off manual admin-triggered reclaim, new POST /admin/compact-reclaim-unverified, not cron-wired) -> Phase2 (evidence-gated automatic wiring decision) -> Phase3 (opportunistic empty-dir sweep), with an explicit durability criterion (fast-settling disk metric: re-measure du/find twice >=15min apart post-sweep; Phase2 needs >=24h dmesg-in-VM). No code changed, no table written, no data/live/lancedb/ file touched - read-only throughout per row constraint. Routed to po next (mirrors sibling design-only row RAG-FTS-BUILD-MEMORY-BOUND) to decide whether/how to authorize the phased implementation.",
-        "design_brief": "docs/architecture-briefs/2026-08-23-fix-rag-compaction-disk-amplification-design.md"
+        "design_brief": "docs/architecture-briefs/2026-08-23-fix-rag-compaction-disk-amplification-design.md",
+        "secondary_claimed_at": "2026-08-25T21:45:03Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS",
@@ -23824,10 +23831,10 @@
         "last_served_tick": "2026-08-25T21:12:15Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-25T05:10:32Z"
+        "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-25T21:12:15Z",
+    "_updated_at": "2026-08-25T21:41:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24454,6 +24461,29 @@
         },
         "createdAt": "",
         "drained_at": "2026-08-25T21:12:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4b3977f2309d6e250ab6a67b90285889c39fc4327c65974f27897dffd3caf8d2",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md",
+          "line_count": 180,
+          "cap": 600,
+          "byte_count": 47427,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 11427,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T21:12:58Z",
+        "drained_at": "2026-08-25T21:40:50Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
