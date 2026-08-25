@@ -29557,6 +29557,24 @@
       "triaged_by": "po",
       "disposition": "REHOUSED-TO-ROW",
       "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Rehoused into FIX-AUDITOR-TIER3-SIZECAP-CHECK-JQ-ABORTS-EXIT5-UNEXECUTABLE."
+    },
+    {
+      "id": "sys-20260824T041052-44c9",
+      "ts": "2026-08-24T04:10:52Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "auditor_cycle_loss",
+      "summary": "auditor cycle lost tick=2026-08-24T00:00Z — orphaned marker, mid-run death",
+      "severity": "WARN",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": "auditor-cycle-loss:2026-08-24T00:00Z",
+      "disposition": "FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES",
+      "triaged_at": "2026-08-24T07:37:00Z",
+      "triaged_by": "po",
+      "po_ruling_20260824T0737Z": "ALREADY ACTIONED BY THE CYCLE THAT EMITTED IT — no residual work. docs/agent-memory/notebooks/system-auditor.md:6 (cycle c1003, 04:08-04:12Z) records 'Anomalies: 0 new | 1 folded (D-CYCLE-1: swept 1 stale orphaned marker from 2026-08-24T00:00Z prior-cycle loss)' and :76 grades it 'Durability note (INFO) ... No schedule gaps detected.' This signal (ts 04:10:52Z) is that same cycle's ledger entry, emitted mid-sweep: the marker was already gone when the row landed. Severity WARN overstates the auditor's own INFO grading. Underlying loss class is tracked twice — FIX-AUDITOR-DCYCLE1-MALFORMED-KEY-SENTINEL-COLLAPSES-DISTINCT-LOSSES (P2) and FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES (P1, cited here because a cycle that completed and was then read as lost is exactly its shape). The acute respawn-loop half is under active implementation this tick and was deliberately NOT touched by this triage. No mint."
     }
   ],
   "backlog_detail": [],

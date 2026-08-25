@@ -175,24 +175,6 @@
         "disposition": "FOLD onto FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP (2nd occurrence, 2nd distinct report in 2 days) + MINTED FIX-BCTC-IMGDEG-SIGNAL-SUMMARY-CONTRADICTS-ITS-OWN-LIVE-CONFIDENCES. THIS SIGNAL IS FALSE ABOUT ITS OWN SUBJECT ON TWO AXES - re-measured at source this tick via get_bctc_refined(report_id=1f53ef33-8f50-489b-8505-689740692ab0) through the gateway wrapper, not taken from the dispatch. (i) COUNT: THREE units carry an image_unavailable flag, not the 2 named in payload.affected_unit_ids - unit-0004 conf 0.75 flags [continuation_marker_missing:page7, image_unavailable:pages6-8]; unit-0005 conf 0.65 flags [image_unavailable, garbled_ocr_layout]; unit-0006 conf 0.70 flags [image_unavailable, ocr_row_alignment_uncertain]. (ii) THRESHOLD: NONE of the three is at or below the <=0.6 the summary asserts; the true range is 0.65-0.75. MECHANISM PINNED in apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts: (a) shouldSignalImageFetchDegradation() fires on strict equality occurrenceCount===threshold(2) - a rising edge that by its own header 'never re-fires on the 3rd, 4th ... occurrence' - and nothing ever amends the emitted row, so affected_unit_ids is a point-in-time snapshot presented as the report's final extent. unit-0006 was refined at 09:04:24, 10s AFTER this row's own ts 09:04:14, which is exactly why it is missing. (b) buildBctcImageFetchDegradedRow() templates the literal 'capped <=0.6 confidence' unconditionally and never reads a confidence value at all - byte-for-byte the same hardcoded-summary-contradicts-payload defect as CCATO defect (C) at scripts/narrative-truth-gate.sh:421-423, in a second, independent emitter. (c) The row carries NO dedup_key (yesterday's sibling bctc-imgdeg-69fcd047 only has one because PO stamped it by hand at triage) - same missing-dedup_key defect as CCATO defect (B). UNDERLYING AND WORSE THAN THE SUMMARY BUG: the <=0.6 cap that the writer's own file header calls 'BY DESIGN' is a prose instruction to the refine_bctc_md subagent (table-page.md / continuation-stitch.md) with no server-side clamp at the push_bctc_refined_unit boundary. Live data refutes it 3/3, so any downstream consumer filtering on confidence<=0.6 to find image-degraded units silently returns ZERO for this report. Not closed as noise: the fetch-plane degradation itself is real and now recurring, and the emitter's own falsity is the newly minted row."
       },
       {
-        "id": "sys-20260824T041052-44c9",
-        "ts": "2026-08-24T04:10:52Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "auditor_cycle_loss",
-        "summary": "auditor cycle lost tick=2026-08-24T00:00Z — orphaned marker, mid-run death",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-loss:2026-08-24T00:00Z",
-        "disposition": "FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES",
-        "triaged_at": "2026-08-24T07:37:00Z",
-        "triaged_by": "po",
-        "po_ruling_20260824T0737Z": "ALREADY ACTIONED BY THE CYCLE THAT EMITTED IT — no residual work. docs/agent-memory/notebooks/system-auditor.md:6 (cycle c1003, 04:08-04:12Z) records 'Anomalies: 0 new | 1 folded (D-CYCLE-1: swept 1 stale orphaned marker from 2026-08-24T00:00Z prior-cycle loss)' and :76 grades it 'Durability note (INFO) ... No schedule gaps detected.' This signal (ts 04:10:52Z) is that same cycle's ledger entry, emitted mid-sweep: the marker was already gone when the row landed. Severity WARN overstates the auditor's own INFO grading. Underlying loss class is tracked twice — FIX-AUDITOR-DCYCLE1-MALFORMED-KEY-SENTINEL-COLLAPSES-DISTINCT-LOSSES (P2) and FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES (P1, cited here because a cycle that completed and was then read as lost is exactly its shape). The acute respawn-loop half is under active implementation this tick and was deliberately NOT touched by this triage. No mint."
-      },
-      {
         "id": "sys-20260824T0130-pdf-mem-loop-8f4a",
         "ts": "2026-08-24T07:10:00Z",
         "from": "system-auditor",
