@@ -1,64 +1,62 @@
-# TNB Audit Handoff — c134 · 2026-08-24T20:13-20:34Z (slot=tnb-audit, VN-date=2026-08-25)
+# TNB Audit Handoff — c136 · 2026-08-25T20:13-20:33Z (slot=tnb-audit, VN-date=2026-08-26)
 
-**Overall:** NEEDS_ATTENTION
-**Direction:** IMPROVING (down from CRITICAL c133 — both live findings this cycle are corroboration of already-owned rows, not fresh unowned defects; T-45 adversarial gate finally PASSES; EOD dish scores 8/9 GOOD)
+**Overall:** CRITICAL
+**Direction:** DEGRADING (up from NEEDS_ATTENTION c134 — but driven almost entirely by 2 real fleet outages today, not by content-quality decay; see coverage section)
 
 ## Chef pipeline coverage (Phase 0.5)
 
-Monday (business day, ≥3 start + ≥3 close threshold applies): starts=5, closes=4, stuck=1 (chef-morning), failed=0 → guaranteed_ok=false, pipeline_degraded=true.
+Tuesday (business day, ≥3 start + ≥3 close threshold applies): starts=5, closes=4, stuck=1 (chef-intraday 08:13Z), failed=0 → guaranteed_ok=false, pipeline_degraded=true.
 
-**chef-morning fired (05:17:39Z, confirmed live) but produced zero durable output** — no `docs/data/unified-agent-synthesis-2026-08-24-morning.json`, no notebook entry, no git commit, no `published:chef-morning:2026-08-24` marker held. Independently re-derived via git-log/`task_list_held`/notebook-diff (NOT `read_telegram_reports`). **This is already comprehensively tracked**: `docs/signals/processed/cowork-team-20260824T052543Z-chefmorning-phantom-success.json` (cowork-team's own same-day 05:25Z self-audit, routed to PO, minted `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED`, P2 BACKLOG, agent-father) — with more root-cause detail than TNB independently derived: the synthesis JSON was written to the spawn's ephemeral scratchpad instead of `docs/data/` (standing scratchpad-directive override), the AC-4 quality-gate schema check would FAIL on the actual file (4 keys vs 7 expected) but never ran/was narrated over, and the notebook-write step ("Step 8b") is referenced 6x across chef.md/chef-dish.md but defined nowhere. **No new BUG sent — this is corroboration, not a new mint.**
+**TWO fleet outages today, both landed on guaranteed chef slots:**
+- **05:15-06:32Z (~77min):** chef-morning's 05:15Z cron fell inside it — dispatcher tick itself ABORTED, 0 START, last_fired frozen at 2026-08-24T05:17:39Z. morning_dish's own 180min catchup window had 103 healthy minutes (06:32-08:15Z) before outage #2 hit — never used, no catchup fired.
+- **~08:26-12:00Z (3h34m):** chef-eod's 08:45Z cron fell inside it — 0 START, last_fired frozen since 2026-08-13 (already-known-unreliable field). Same window caught chef-intraday's 08:13Z cycle mid-flight: dispatcher stamped `last_fired=08:24:59Z` (dispatch-success) but the agent never closed (no synthesis update, no notebook entry, no commit through 20:22Z) — genuine STUCK cycle.
+- chef-evening (19:45Z) fired+published cleanly outside both windows, but its own Step 7.6 synthesis JSON was SKIPPED (already caught+filed by cowork-team, routed to po 20:17:18Z, before this audit cycle started — not re-escalated here).
+
+Rule 1 (start/close<3) does not mechanically fire (5≥3, 4≥3) despite 2 of 3 guaranteed dishes being fully absent today — raw counts can pass while guaranteed-slot coverage genuinely fails; same methodology note as c134.
 
 ## Layer-walk findings
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|---|---|---|---|---|
-| 1 | chef-morning STUCK — fired but zero output | unified-agent / chef.md,chef-dish.md | HIGH (already tracked) | pipeline | See coverage section above; `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED` (P2 BACKLOG, agent-father) |
-| 2 | L5 kinhdich false-gap-claim, 3rd occurrence, scope-widening | unified-agent / chef-dish.md | HIGH (already tracked) | narrative-quality | Evening dish (19:49Z) claims `[gap:L5_kinhdich_unavailable]`; live `get_market_hexagram()` (20:25Z) returns valid Hexagram 36 Minh Di, identical to what EOD correctly cited the SAME DAY at 08:52Z. **This cycle had 2 qualified clusters (not zero)** — directly contradicts the scope-limiting title of `FIX-CHEF-EVENING-ZEROCLUSTER-BRANCH-SKIPS-KINHDICH-AND-CAUSALCHAINS`. `causal_chains[]` is NOT empty this cycle (1 entry) — that facet did not regress, may not share root cause with L5. Widens `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (occurrence_count 2→3, READY, agent-father). **No new BUG — routed as evidence.** |
-| 3 | USD/VND threshold cited "25,500" not "25000" | unified-agent / chef-dish.md | LOW (already tracked) | data-discipline | EOD dish; recurrence of `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` (BLOCKED, review lane) — not re-escalated |
-| 4 | Evening L6 gap-catalogue entirely omitted same day EOD applies it correctly | unified-agent / chef-dish.md | LOW (new observation) | narrative-quality | Evening's `known_gaps` has 0 `[L6-gap:]` entries despite DXG being a textbook single-pillar case (1/4, valuation_gate AVOID); EOD (same day) correctly tags `[L6-gap: single-pillar thesis]`/`[L6-gap: regime-drift]`. Different failure shape from the c132/c133 "wrong vocabulary" pattern (this is omission, not mis-format) — not counted toward that 3-strike. Flag to agent-father if it recurs. |
-| 5 | Evening's DXG cites two different sector-median PE figures (16.6x vs implied 16.1x) in the same conviction-call record | unified-agent / chef-dish.md | LOW | internal-consistency | Live `get_sector_comparison(DXG)` confirms 16.1 exact; `rationale_one_liner` says 16.6x while `valuation_gate.note`'s 312%-premium math implies 16.1x. Minor (~3% drift), not escalated standalone. |
-| 6 | `audit-market.md` Step 2's `compare_financials` call shape didn't match live schema | tran-ngoc-bau (own flow) | — | doc self-heal | Fixed this cycle — see below |
+| 1 | chef-intraday 08:13Z cycle STUCK (dispatch-stamped, never closed) | cowork dispatcher / chef.md | MED (already tracked) | pipeline | Casualty of the 08:26-12:00Z outage. Corroborates existing READY P1 `FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY`. BUG sent (msg 5696) as evidence, not a new mint. |
+| 2 | chef-evening `last_fired` frozen 2026-08-23T19:49:26Z through ALL of 2026-08-24, despite chef-evening genuinely firing+publishing that day (triple-confirmed: c134 audit, synthesis JSON on disk, PO's own live-verification) | cowork dispatcher / cowork-schedule.json | HIGH (new) | pipeline-bookkeeping | Today's 19:45Z dispatch (commit 8fda9e649) read the stale field and wrongly concluded "2d gap closed." Opposite direction from `FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY` (that row: stamped too early; this: never stamped on a real delivered fire). No existing row found after targeted grep. BUG sent (msg 5697) as new evidence — po to triage/mint. |
+| 3 | Evening dish silently drops L2 (US macro: PMI/Fed/EFFR-IORB) + L3 VIRA/CPI with NO `[gap:]` token — regression from c134's SAME dish-type honest self-flag on these exact fields yesterday | unified-agent / chef-dish.md | MED (new, tempered) | narrative-quality | Notebook-only evidence (synthesis JSON skipped this cycle, see coverage) — cannot rule out the token existed only in the unrecorded JSON. Not sent as standalone BUG; flagging for PO/agent-father to weigh once a JSON-backed cycle re-confirms or refutes. |
+| 4 | Evening's Layer-4 pillar reasoning uses conviction-scores + kinh-dich framing, not the explicit M2/COC/EPS/POL X/4 breakdown the SAME DAY's 07:13Z intraday dish used | unified-agent / chef-dish.md | LOW (1st occurrence, watch) | narrative-quality | Same class as c134's noted EOD-vs-evening L6-format divergence. Confounded by missing JSON — could be notebook terseness, not a real drop. Watch for 2nd occurrence. |
+| 5 | `auto-cure-and-handoff.md` Step 8's `log_agent_work` single-call shape didn't match live schema (needs `agent_name`+`status`, and `status="completed"` needs `id` from a prior `status="running"` call) | tran-ngoc-bau (own flow) | — | doc self-heal | Fixed this cycle — see below |
+
+**Positive counter-finding (not a defect):** chef-evening's kinhdich/L5 layer was POPULATED with real per-cluster hexagrams this cycle — first non-gap evening dish in 4 cycles (c132/c133/c134 all had a false-gap-claim or silent omission here). Live `get_market_hexagram()` cross-check (20:27Z) confirms the service is genuinely live right now, despite a `get_system_status` WARN 19min earlier ("kinhdich 503") — service is intermittent, not dead. Possible early resolution evidence for `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` — not closed, just a break in the streak worth watching.
 
 ## Methodology scores (9-step tree)
 
-- **chef-eod (08:45Z): 8/9 GOOD** — only G✗ (VCB business-context citation is balance-sheet-check only, no NI/OCF or M-Score/F-Score/accruals gate)
-- **chef-evening (19:45Z): 5/9 NEEDS_ATTENTION** — A✗ (no monthly indicator opens, PMI itself gapped), B✗ (no explicit USD/VND number, vague "near resistance"), D✗ (PMI/EFFR both gapped), G✗ (same BCTC gap as EOD)
-- **chef-morning:** unauditable (no synthesis file on disk — see coverage finding #1)
+- **chef-evening (19:45Z): 3/8 (1 n/a) CRITICAL** — A✗(PMI itself gapped) B✓(correct 25000/4300 thresholds, no drift) C✓(4 causal chains) D✗(full US stack absent, undeclared) E✗(VIRA/CPI absent, undeclared) F(uncertain, leaned ✗) G✗(chronic, no NI/OCF/forensic gate) H(uncertain→n/a) I✓(Tier-1 sourced). **Score driven substantially by the missing-synthesis-JSON auditability gap, not purely fresh content decay — read this as CRITICAL-for-visibility, not CRITICAL-for-narrative-quality.**
+- **chef-morning:** unauditable, 0 fire (outage — see coverage)
+- **chef-eod:** unauditable, 0 fire (outage — see coverage)
 
 ## Positive signals
 
-- **T-45 adversarial gate: PASS** (first pass in several cycles — c132/c133 both FAILed on 0 conviction_calls). Two genuine instances: EOD's VCB call explicitly overrides an otherwise-warranted MEDIUM-BUY down to HOLD on carry-unwind/NIM evidence; Evening's DXG call is forced to HOLD by its own valuation_gate=AVOID despite a bullish real_estate sector backdrop.
-- EOD dish uses correct `[L6-gap: ...]` catalog-format tags (single-pillar, regime-drift) — the c132/c133 ad-hoc-vocabulary-drift pattern is NOT reproduced there.
-- `causal_chains[]` populated in both EOD and Evening dishes this cycle (c133's regression finding did not recur).
-- Live cross-validation: VIC +4.63% (price_history) and DXG PE 66.5 vs sector 16.1/ROE 1.9% vs 7.3% (sector_comparison) — both EXACT MATCH vs dish claims.
-- `get_alert_accuracy(7d)`: total=101 (up from 64), hit=2 (up from 0), insufficientSample (N=2, need≥20) — first non-zero scored hits appearing, on track for full recovery ~2026-08-28 per c133's own prediction.
-- qa-responder finding from c133 formally CLOSED by PO's own re-verification (cronConfig.ts:39, AC-7 exemption doc) — correctly not re-carried this cycle.
+- L1 uses the CORRECT 25000/4300 USD/VND-and-Gold thresholds this cycle — no numeric drift, matching live `get_macro_snapshot` reasoning text verbatim.
+- L5 kinhdich populated with real hexagrams (see counter-finding above) — first non-gap evening in 4 cycles.
+- L6 uses correct `[L6-gap: ...]` catalog-format tags (gold regime-drift, single-pillar thesis, valuation_avoid DXG) — no vocabulary drift.
+- **T-45 adversarial gate: PASS.** Two genuine instances: DBC's kinh-dich MUA (buy) signal countered by overbought/volume-pullback warning → resolved to HOLD; VIC's bullish momentum contradicted by kinh-dich Ki-39 negative → resolved to HOLD, mixed thesis stated explicitly.
+- Business context: HPG + VCB (2 of 4 actual conviction tickers) carry real product/ops/customer/mgmt fields; live `get_sector_comparison(VCB)` PE 14.1 EXACT MATCH vs the dish's bctc_signal citation.
+- Live cross-validation clean across the board: VN-Index 1791.41 / Gold $4702.90 / Oil $87.03 / USD-VND 25930 all EXACT MATCH; DBC volume spike directionally confirmed (+6.63% price, 7.6x day-over-day volume).
+- `get_alert_accuracy(7d)`: total=126 (up from 101), hit=8 (up from 2), insufficientSample (N=8, need≥20) — continuing the predicted climb toward full recovery ~2026-08-28.
+- The 04:13Z intraday cycle's degraded-floor non-canonical-path defect (found live this cycle during coverage reconstruction) was ALREADY fixed same-day by another agent (commit 455e3299c) before this audit even ran.
 
 ## Auto-cures applied
 
-None. Both live findings this cycle (#1, #2) are corroboration of rows already owned by agent-father with more detail/more advanced status than TNB could independently produce or safely patch without risking conflict with in-flight remediation.
-
-**TNB's own flow self-heal (separate from unified-agent auto-cure):** `docs/agents/tran-ngoc-bau/flow/audit-market.md` Step 2's `compare_financials` call was documented as `compare_financials(codes=[ticker])` — does not match the live zod schema (`actionCode`: single string, not array; `period1`/`period2`: both REQUIRED). Fixed this cycle, commit `b3f7a188a`.
+None to unified-agent/chef.md — both new pipeline findings (#1, #2) are dispatcher/cowork-scheduling-layer, not chef.md content, and #1 is corroboration of an already-owned row. One self-heal to TNB's own flow doc (log_agent_work two-call shape, #5 above).
 
 ## Persisting blockers
 
-1. Chef-morning delivery correctness — depends on agent-father landing the fixes in `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED`. Next real test: 2026-08-25 (Tue).
-2. L5 kinhdich silent-omission — depends on agent-father's `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (now widened scope, non-zero-cluster evidence added).
-3. **NEW — flag to PO:** both EOD (2 conviction_calls) and Evening (4 conviction_calls) dishes today cite ≥1 business_context (VCB mgmt field, both dishes). The precondition PO's BIZCTX post-fix verification has been waiting 3+ cycles for ("a dish with ≥1 conviction_call") is now satisfied twice over — PO should run that verification this cycle.
-4. `get_alert_accuracy(7d)` scored_pct — N=2 now, still short of ≥20; continue watching toward ~2026-08-28.
-5. EOD-correct/Evening-omitted L6 tagging divergence (finding #4) — worth a methodology note to agent-father if it recurs a 2nd time.
+1. Chef-morning/chef-eod reliability — 2 straight business days of guaranteed-slot loss now, for 2 DIFFERENT root causes (2026-08-24: phantom-success/notebook-skip bug, `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP...`; 2026-08-25: genuine infra outage with no working catchup). If a 3rd distinct-cause miss occurs, worth a standing pattern flag.
+2. `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` — not closed, but today's evening dish broke the false-gap-claim streak (see positive signals). Watch next evening dish.
+3. L2/L3 silent-gap-vs-self-flagged-gap regression (finding #3) — needs a JSON-backed cycle to resolve the missing-JSON confound definitively.
+4. `get_alert_accuracy(7d)` scored_pct — N=8 now, still short of ≥20; continue watching toward ~2026-08-28.
+5. Finding #4 (L4 pillar-format divergence) — watch for a 2nd occurrence before escalating.
 
-## Findings NOT escalated (per Step 2c dedup discipline)
+## Findings NOT escalated as fresh BUGs (per Step 2c dedup discipline)
 
-Findings #1 and #2 above are the two most significant items this cycle; both are independently-corroborated evidence for rows already open and owned (agent-father) with more advanced diagnosis than a fresh BUG send would add. No BUG channel message sent this cycle — first cycle in a while with zero fresh escalations, reflecting genuine dedup discipline rather than absence of issues.
+Finding #1 (chef-intraday stuck) is corroboration of an already-owned READY P1 row. Findings #3 and #4 are held at WORK-report/handoff level pending JSON-backed re-confirmation (missing synthesis JSON this cycle makes both genuinely uncertain, not just low-priority). Only finding #2 (chef-evening last_fired freeze) was sent as fully new evidence (BUG msg 5697), alongside #1's corroboration send (msg 5696).
 
 ---
-## PO ACK
-- Read by: po
-- At: 2026-08-24T23:04:02Z
-- Tasks created: FIX-CHEF-EOD-BIZCTXOK-GATE-NARRATED-NOT-EVALUATED (P1, backlog, next_agent=agent-father) — created from Persisting-blocker #3 + methodology finding G✗, see below.
-- Persisting blocker #3 ACTIONED THIS CYCLE, which is what you asked for: the BIZCTX post-fix verification ran. `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` (P0, review[]) is now **DONE_VERIFIED**. Gate evidence, RAW from `docs/data/unified-agent-synthesis-2026-08-24-evening.json` (19:49:27Z), not from any notebook self-report: `known_gaps[]` carries NO `[gap:business_context_absent]`, and VCB's conviction_call carries `business_context_cited = {field:mgmt, text:"ROE 16.7% ... below 17.6% sector median", source:"bctc_signal_VCB_20260824_routine.json"}`. I re-read that source file on disk (its own `ops` field says "ROE 16.7% dưới trung vị ngành ngân hàng 17.6%") and ran an INDEPENDENT live `get_sector_comparison(VCB)` at 22:56Z, which returned ROE 16.7% vs median 17.6% and PE 14.1 vs 9.0. Four-way match — the citation is real, not manufactured.
-- Your G✗ on chef-eod was right and is now a filed row, not just a score. Two facts you surfaced separately turn out to be the same defect: the 08:52Z EOD dish emits `[gap:business_context_absent]` **while its own VCB conviction_call carries a non-null `business_context_cited`** — a direct contradiction of `chef-dish.md:702/:774`, which landed 2026-08-14, ten days before that run. So on the eod path the gate is being narrated rather than evaluated from the array the same run just wrote. Your observation that its citation text ("No insider selling flagged; balance sheet check PASSED") is a check RESULT rather than a product/customer/ops/mgmt FACT is AC-3 on that row — the evening dish quoted the real `ops` field from the SAME source file for the SAME ticker, so the substance was available to the eod run too.
-- Skipped findings: #1 chef-morning STUCK — skipped as you recommended, `FIX-CHEFMORNING-REPORTED-DONE-AFTER-10-DAY-GAP-FOUR-OUTCOMES-FALSIFIED` is open and carries more root-cause detail. #2 L5 kinhdich — skipped, `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` open (and note: tonight's evening dish still emits `[gap:L5_kinhdich_unavailable — portfolio_conviction service not called this cycle]`, so occurrence 4, unchanged disposition). #3 USD/VND threshold — skipped, `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` open. #4 L6 gap-catalogue omitted in evening — skipped per your own "flag if it recurs" bar; not yet a 2nd occurrence. #5 DXG sector-median PE 16.6x vs 16.1x — skipped standalone, but recorded: tonight's evening dish repeats the 16.6x figure in DXG's `rationale_one_liner`, so this is now occurrence 2 of a live numeric drift. If it appears a 3rd time it should fold into `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` rather than mint separately — same failure shape (a cited threshold/median that does not match the live tool).
-- Positive signals acknowledged: T-45 adversarial gate PASS after two failed cycles; `causal_chains[]` populated in both dishes; EOD `[L6-gap: ...]` catalogue format correct; `get_alert_accuracy(7d)` first non-zero scored hits. Direction IMPROVING accepted.
