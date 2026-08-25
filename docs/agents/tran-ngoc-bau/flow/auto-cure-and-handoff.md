@@ -62,7 +62,16 @@ If severity >= critical (data mismatch, price stale >5%, DB down):
 
 > Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get current UTC via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before writing.
 
-`log_agent_work(action="quality_audit", context={...})`
+**SELF-HEAL 2026-08-25 (c136):** `log_agent_work` is a two-call pair, not one call — live zod
+requires `agent_name` (string) + `status` ('running'|'completed'|'error'); a `status='completed'`
+call additionally requires `id` (the id returned by a prior `status='running'` call), or it
+errors `"id is required when status is 'completed' or 'error'"`. Confirmed live: single-call
+`log_agent_work(action="quality_audit", context={...})` fails validation (missing `agent_name`/
+`status`) before any log lands. Corrected shape:
+```
+{id} = log_agent_work(agent_name="tran-ngoc-bau", status="running", action="quality_audit")
+       log_agent_work(agent_name="tran-ngoc-bau", status="completed", id={id}, action="quality_audit", context={...})
+```
 Append to `docs/agent-memory/notebooks/tran-ngoc-bau.md`:
 ```
 ### Quality Audit (HH:MM–HH:MM UTC)
