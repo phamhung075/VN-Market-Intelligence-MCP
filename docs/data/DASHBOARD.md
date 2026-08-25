@@ -2098,3 +2098,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-13 · bctc-discover: 513 stale pending records (>72h)
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** bctc_vps_queue
+**Details:** 513 pending records in BCTC queue older than 72 hours (oldest from 2026-05-15)
+**Impact:** Queue processing pipeline may have stalled; BCTC extraction not completing
+**Root cause:** PDF extraction or data enrichment backlog
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T12:16:13Z (signal sys-20260825T121606-2ad8, system-auditor -> po, dedup_key=stale_pending_bctc:bctc-discover:B-13, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
