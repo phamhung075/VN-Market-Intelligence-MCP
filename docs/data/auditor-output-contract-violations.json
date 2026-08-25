@@ -478,5 +478,11 @@
     "cycle_tag": "cron:auditor-t3:2026-08-25T02:00Z",
     "from": "system-auditor",
     "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-25T05:03:55Z",
+    "cycle_tag": "cron:auditor-tdata:2026-08-25T05:03:23Z",
+    "from": "system-auditor",
+    "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
   }
 ]
