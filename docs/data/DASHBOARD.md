@@ -2434,3 +2434,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · cron fire-gap: brokerSanctionsSweep
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server cron brokerSanctionsSweep
+**Details:** last run 2026-07-31 08:00:01, overdue 614.6h vs 36.0h threshold (STALE), known since 2026-08-25T14:38Z
+**Impact:** broker sanctions sweep not running
+**Root cause:** job scheduling/execution gap, longstanding
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:05Z (signal sys-20260825T223716-5ae8, system-auditor -> po, dedup_key=auditor-a29-fire-gap:brokerSanctionsSweep, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
