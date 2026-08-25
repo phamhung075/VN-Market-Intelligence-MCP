@@ -253,6 +253,39 @@ export function readOrchStateOrNull(orchStatePath: string): OrchState | null {
 /** Maximum number of CAS retry attempts before giving up. */
 export const CAS_MAX_RETRIES = 3;
 
+/** A signal row that opted in to content dedup by carrying a `dedup_key`. */
+type DedupableSignalRow = OrchStateSignalRow & { dedup_key?: string; occurrences?: number; last_seen_ts?: string };
+
+/**
+ * FIX-CCATO-NTG-... AC-6 — a non-empty `dedup_key` IS a collapse instruction:
+ * same key + same `type` bumps `occurrences`/`last_seen_ts` on the existing
+ * row instead of appending. Blast radius today = narrative_contradiction only
+ * (no other in-process caller sets `dedup_key`, so their behaviour is
+ * byte-identical). The row `id` cannot serve as the key — its uuid4 suffix
+ * makes every duplicate id-unique BY CONSTRUCTION, which is exactly why an
+ * id-uniqueness guard is structurally blind to this class.
+ */
+function collapseOrPrepend(
+  existing: readonly OrchStateSignalRow[],
+  incoming: OrchStateSignalRow,
+): OrchStateSignalRow[] {
+  const key = (incoming as DedupableSignalRow).dedup_key;
+  if (typeof key !== "string" || key.length === 0) return [incoming, ...existing];
+
+  const hit = existing.findIndex(
+    (r) => r.type === incoming.type && (r as DedupableSignalRow).dedup_key === key,
+  );
+  if (hit < 0) return [incoming, ...existing];
+
+  const prev = existing[hit] as DedupableSignalRow;
+  const bumped: DedupableSignalRow = {
+    ...prev,
+    occurrences: (prev.occurrences ?? 1) + 1,
+    last_seen_ts: incoming.ts,
+  };
+  return [...existing.slice(0, hit), bumped, ...existing.slice(hit + 1)];
+}
+
 /**
  * Append a row to orch-state.json .signal_queue.rows[] atomically.
  *
@@ -310,11 +343,12 @@ export function appendSignalQueueRow(
 
     // Step 2: read + apply mutation
     const state = JSON.parse(readFileFn(orchStatePath)) as OrchState;
+    const existing = state.signal_queue?.rows ?? [];
     state.signal_queue = {
       ...state.signal_queue,
       _updated_at: nowIso,
       _updated_by: updatedBy,
-      rows: [cappedRow, ...(state.signal_queue?.rows ?? [])],
+      rows: collapseOrPrepend(existing, cappedRow),
     };
 
     // Step 3: compare mtime AFTER modification but BEFORE the rename.

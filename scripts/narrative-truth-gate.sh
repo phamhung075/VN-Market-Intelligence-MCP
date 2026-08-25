@@ -409,6 +409,23 @@ now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:
 today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 now_compact = now_iso.replace(":", "").replace("-", "")
 
+def build_summary(agent, dimension, ticker_or_dim, tool, returned_value, max_len=120):
+    """AC-5 (FIX-CCATO-NTG-...): summary DERIVED from the probe evidence.
+
+    Byte-faithful twin of buildContradictionSummary() in
+    apps/mcp-server/src/infrastructure/signals/narrativeContradictionGuards.ts.
+    The old template asserted '... returned non-null data' unconditionally and
+    never read returned_summary, so a row whose own payload said the opposite
+    still read as an accusation. Budgeted to the 120-char HC-2 cap.
+    """
+    head = f"CCATO: {agent} claimed no {dimension} for {ticker_or_dim}; {tool} returned: "
+    budget = max_len - len(head)
+    if budget <= 1:
+        return head[:max_len]
+    value = str(returned_value)
+    return head + (value[:budget - 1] + "\u2026" if len(value) > budget else value)
+
+
 rows = []
 for v in verdicts:
     if v["result"] != "FAIL":
@@ -420,10 +437,14 @@ for v in verdicts:
         "from": agent_id,
         "to": "po",
         "type": "narrative_contradiction",
-        "summary": (f"CCATO: {agent_id} claimed absence of {v['dimension']} data for "
-                    f"{v['ticker_or_dim']} but {v['tool']} returned non-null data"),
+        "summary": build_summary(agent_id, v["dimension"], v["ticker_or_dim"],
+                                 v["tool"], v["returned_summary"]),
         "severity": "MED",
         "status": "NEW",
+        # AC-6: keyed on the FINDING, not the emission — the row id's uuid4 suffix
+        # makes every duplicate id-unique BY CONSTRUCTION, so it cannot dedup.
+        # Same grammar as buildDedupKey() in narrativeContradictionGuards.ts.
+        "dedup_key": f"narrative_contradiction:{agent_id}:{v['tool']}:{v['ticker_or_dim']}:{today}",
         "payload": {
             "agent_id": agent_id,
             "claim": v["claim_text"],
@@ -442,8 +463,25 @@ PYEOF
 
   if [[ -n "$NEWROWS" && "$NEWROWS" != "[]" ]]; then
     NOW_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    # AC-6 (FIX-CCATO-NTG-...): honour dedup_key on append. A repeat emission of an
+    # already-queued finding bumps .occurrences / .last_seen_ts on the existing row
+    # instead of adding a second one. Mirrors collapseOrPrepend() in
+    # apps/mcp-server/src/infrastructure/orchStateStore.ts. A row with no dedup_key
+    # (any other producer) is appended verbatim, exactly as before.
     if jq --argjson newrows "$NEWROWS" --arg now "$NOW_ISO" --arg who "narrative-truth-gate" \
-         '.signal_queue.rows += $newrows | .signal_queue._updated_at = $now | .signal_queue._updated_by = $who' \
+         'reduce $newrows[] as $r (.;
+            (($r.dedup_key // "") as $k
+             | if $k == ""
+               then null
+               else (.signal_queue.rows
+                     | map(.type == $r.type and (.dedup_key // "") == $k)
+                     | index(true))
+               end) as $i
+            | if $i == null
+              then .signal_queue.rows += [$r]
+              else .signal_queue.rows[$i] |= (.occurrences = ((.occurrences // 1) + 1) | .last_seen_ts = $r.ts)
+              end)
+          | .signal_queue._updated_at = $now | .signal_queue._updated_by = $who' \
          "$ORCH_STATE" | bash "$ORCH_APPLY"; then
       echo "[INFO] narrative-truth-gate: narrative_contradiction signal(s) appended to .signal_queue.rows via orch-apply.sh"
     else

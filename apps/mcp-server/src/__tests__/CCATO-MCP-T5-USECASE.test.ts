@@ -55,10 +55,26 @@ const ONE_CANDIDATE_BODY = "VNM không có dữ liệu kỹ thuật phiên này.
 const TWO_CANDIDATE_BODY =
   "VNM không có dữ liệu kỹ thuật phiên này. Khối ngoại không có dữ liệu giao dịch hôm nay.";
 
+/**
+ * FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID:
+ * `writeSignalsFn` MUST be stubbed by default here. Five cases below reach a
+ * FAIL verdict without naming it (cache-hit rsi 60; null-cache rsi 61; no-cache
+ * rsi 61; the 2-call determinism case at rsi 62.1; the missing-tool_null_markers
+ * case) — and runNarrativeTruthGate falls back to the REAL
+ * writeNarrativeContradictionSignals at the REAL DEFAULT_ORCH_STATE_PATH when
+ * neither `writeSignalsFn` nor `orchStatePath` is supplied. With the frozen
+ * `now` below, every `bun test` run therefore appended 6 rows to the LIVE
+ * docs/data/orch/orch-state.json carrying ts 2026-08-24T00:00:00Z and no
+ * dedup_key — the exact {60, 61, 61, 62.1, 62.1, "not found in database"}
+ * multiset PO measured live at 12/24/24/12 across 12 batches. Cases that need
+ * to inspect the call still override it explicitly; the spread keeps them
+ * winning.
+ */
 function baseDeps(overrides: Partial<RunNarrativeTruthGateDeps> = {}): RunNarrativeTruthGateDeps {
   return {
     loadClaimToolMapFn: () => CLAIM_MAP,
     now: new Date("2026-08-24T00:00:00Z"),
+    writeSignalsFn: () => {},
     ...overrides,
   };
 }

@@ -26,6 +26,16 @@ Exception: `CURRENT=$(cat docs/data/orch/orch-state.json)` inside a **bash-only 
 | `.task_board` dedup keyword search | `jq --arg kw "<kw>" '[.task_board \| (.active_sprints[].tasks[], .backlog[], .archive[]) \| select(.title \| test($kw;"i"))]' docs/data/orch/orch-state.json` | ~200 tokens typical |
 | `.sprint_goal` current sprint | `jq '.sprint_goal.entries[0]' docs/data/orch/orch-state.json` | ~80 tokens |
 | `.signal_queue` NEW rows | See `.claude/skills/signal-dashboard/dashboard-protocol.md § READ` | ~200 tokens |
+| `.signal_queue` row count by finding | `jq '[.signal_queue.rows[] | {dedup_key, n: (.occurrences // 1)}]' docs/data/orch/orch-state.json` | ~100 tokens |
+
+> **`.signal_queue.rows[]` dedup (FIX-CCATO-NTG-...-FORGED-WRITER-ID, 2026-08-25).** A row carrying a
+> non-empty `dedup_key` is COLLAPSED on append: a later emission with the same `dedup_key` AND the same
+> `type` bumps `.occurrences` / `.last_seen_ts` on the existing row instead of adding a second one
+> (`appendSignalQueueRow` in `apps/mcp-server/src/infrastructure/orchStateStore.ts`, and the jq append in
+> `scripts/narrative-truth-gate.sh`). So **row count != emission count** — read `.occurrences // 1` when
+> you need volume. Rows WITHOUT a `dedup_key` are appended verbatim, unchanged. The row `id` is not a
+> dedup handle: several emitters give it a uuid4 suffix, which makes every duplicate id-unique by
+> construction (this is why an id-uniqueness guard is structurally blind to duplicate-content rows).
 
 ---
 

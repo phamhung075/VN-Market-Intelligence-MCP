@@ -106,12 +106,22 @@ describe("CCATO-MCP-T4 — buildNarrativeContradictionRow", () => {
     expect(row.from).toBe("digest-predict");
     expect(row.to).toBe("po");
     expect(row.type).toBe("narrative_contradiction");
+    // AC-5 (FIX-CCATO-NTG-...): the summary now QUOTES the probe evidence. The old
+    // template asserted "... returned non-null data" without ever reading
+    // returned_summary, so a row whose own payload said the opposite still read as an
+    // accusation (7 such rows were filed against chef). Kept byte-faithful to the bash
+    // engine's new template at scripts/narrative-truth-gate.sh.
+    // Evidence tail is budgeted to the 120-char HC-2 cap, so a long probe value is
+    // elided with "…" rather than silently chopped by appendSignalQueueRow.
     expect(row.summary).toBe(
-      "CCATO: digest-predict claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+      "CCATO: digest-predict claimed no technical_indicators for VNM; get_technical_indicators returned: RSI 62.1, MACD bullis…",
     );
+    expect(row.summary.length).toBeLessThanOrEqual(120);
     expect(row.severity).toBe("MED");
     expect(row.status).toBe("NEW");
     expect(row.payload_ref).toBeNull();
+    // AC-6: keyed on the finding, not the emission.
+    expect(row.dedup_key).toBe("narrative_contradiction:digest-predict:get_technical_indicators:VNM:2026-08-06");
     expect(row.payload).toEqual({
       agent_id: "digest-predict",
       claim: FINDING.claim_text,

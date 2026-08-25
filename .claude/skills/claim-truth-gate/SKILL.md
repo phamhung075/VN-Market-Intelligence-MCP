@@ -116,6 +116,25 @@ structurally forbidden from writing `orch-state.json` themselves
 (`cowork-boundary/SKILL.md`); this server-side emit is why Path A exists at
 all, not just a Bash-avoidance convenience.
 
+**Emitted row contract (FIX-CCATO-NTG-...-FORGED-WRITER-ID, 2026-08-25) — both paths identical:**
+- `summary` QUOTES the probe evidence (`... {tool} returned: <value>`, budgeted to the 120-char
+  HC-2 cap). It no longer asserts "returned non-null data" unconditionally, which previously let a
+  row whose own `payload.returned_value` said the opposite still read as an accusation.
+- `dedup_key` = `narrative_contradiction:{agent_id}:{tool}:{ticker_or_dim}:{cycle}` — keyed on the
+  FINDING, not the emission. A repeat emission of an already-queued finding BUMPS `.occurrences` /
+  `.last_seen_ts` on the existing row instead of appending a second one. Do not expect one row per
+  gate run; count `occurrences`. (The row `id` cannot dedup: its uuid4 suffix makes every duplicate
+  id-unique by construction.)
+- Path A screens each candidate at the write boundary and QUARANTINES rather than appends when the
+  row fails a check — never a silent drop. Greppable markers, one per class:
+  `NTG-GUARD-REFUSED-TEST-HARNESS-LIVE-WRITE` (a `NODE_ENV=test` process aimed at the live
+  `orch-state.json` — refused outright), `NTG-GUARD-QUARANTINED-CLOCK-SKEW` (row `ts` more than
+  15 min from the wall clock, either direction), `NTG-GUARD-QUARANTINED-NULL-MARKER-CONTRADICTION`
+  (`returned_value` contains a `claim-tool-map.json` `.tool_null_markers` entry — that is an honest
+  NULL, structurally impossible for a FAIL). Quarantined candidates land in
+  `docs/data/telemetry/narrative-contradiction-quarantine.jsonl` (gitignored) with their marker and
+  reason. If a gate run reports FAIL but no row appears in `.signal_queue.rows[]`, grep that file.
+
 ## Self-correct in-cycle protocol (brief §4.6 — mandatory on FAIL, both paths)
 1. Re-call the mapped tool named on the `[FAIL]` line (`tool=<name> ticker=<ticker>`) directly: `call_tool(server="vn-market", tool=<name>, arguments=...)`.
 2. Rewrite the offending sentence in `post_body` using the real returned values.

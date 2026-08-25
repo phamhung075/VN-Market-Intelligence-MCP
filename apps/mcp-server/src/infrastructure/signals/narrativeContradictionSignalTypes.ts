@@ -57,4 +57,16 @@ export interface NarrativeContradictionFinding {
  */
 export interface NarrativeContradictionSignalRow extends OrchStateSignalRow {
   payload: NarrativeContradictionPayload;
+  /**
+   * AC-6 (FIX-CCATO-NTG-...): content dedup key, `narrative_contradiction:
+   * {agent_id}:{tool}:{ticker_or_dim}:{cycle}` — keyed on the FINDING, not the
+   * emission, so repeat emissions of one finding collapse instead of appending.
+   * The row `id` cannot serve this role: its uuid4 suffix makes every duplicate
+   * id-unique BY CONSTRUCTION.
+   */
+  dedup_key: string;
+  /** Set by orchStateStore on a dedup_key collapse; absent on a first emission. */
+  occurrences?: number;
+  /** ts of the most recent collapsed emission; absent on a first emission. */
+  last_seen_ts?: string;
 }
