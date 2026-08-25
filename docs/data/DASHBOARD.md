@@ -2446,3 +2446,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · cron fire-gap: ragFtsRebuildCron
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server cron ragFtsRebuildCron
+**Details:** last run 2026-07-20 20:15:01, overdue 866.3h vs 36.0h threshold (STALE), known since 2026-08-24
+**Impact:** RAG FTS index rebuild not running
+**Root cause:** job scheduling/execution gap, longstanding
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:06Z (signal sys-20260825T223718-1f1a, system-auditor -> po, dedup_key=auditor-a29-fire-gap:ragFtsRebuildCron, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
