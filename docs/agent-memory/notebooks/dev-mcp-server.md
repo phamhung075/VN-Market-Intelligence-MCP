@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-24 — FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (review-lane SECONDARY-drain, PO-authorized implementation) → BLOCKED (partial, agent-father dependency)
-
-**Session:** 007e33e4-b453-4bb3-8ab1-ef31495906a3. PO ratified the plan 2026-08-15 (`po_goahead_20260815T055435`) with 3 mandatory corrections (AC-5/6/7); this session wrote the code, which had never actually landed despite the ratification.
-
-**Fix:** `KNOWN_LEGIT_PREFIXES` (D4-R1b exclusion whitelist) was a hardcoded TS array that missed bctc-analyst's data-quality escalation lock kind, which had already renamed itself once (`data-quality-anomaly:` → `bctc-dataquality:`) and, by the time this session ran, had drifted a second time to `esc-datacov:`/`esc-deepdive:` (both already whitelisted separately). Promoted the list to `docs/data/system-map.json` `.project.coordination.known_legit_lock_prefixes` (bare `string[]`, AC-5 — an earlier plan draft's verbatim block nested it one level deeper, which would have silently shipped inert). `KNOWN_LEGIT_PREFIXES` is now a mutable module binding, re-read once per `runTasksMdJanitor()` cycle via `refreshKnownLegitPrefixes()` (AC-7 — the job is a daily cron in a long-lived process; a module-scope const would have made every future SSOT edit inert until container restart, the seedWatchlist precedent explicitly does NOT transfer here). AC-6: added a system-map.json-only sentinel prefix (`d4-ssot-liveness-canary:`) + positive-path tests, since every `isKnownLegitPattern()` assertion in the suite passes identically whether the real SSOT or the code's fallback constant supplied the list — only a dedicated sentinel can prove the SSOT is actually wired, not silently degrading behind a `console.warn`.
-
-**Tests:** `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts` extended 27→34 (both drifted prefixes, a negative control proving lookalike-but-unknown ids still trip D4, 3 new SSOT/fallback tests with an `afterEach` reset since the whitelist is now shared mutable module state). 34/34 pass.
-
-**NOT shipped this pass:** spec §5c/§5d — `docs/agents/system-auditor/{handlers,audit-dimensions}.md` prose sync. `docs/agents/**` is agent-father's exclusive zone; this agent has no authorization to write there regardless of what the plan proposed. Consequence: the base row's "both doc lists byte-identical" acceptance item is satisfied on the code+data side (one SSOT, not three copies) but not the doc-prose side — those two files still enumerate the pre-fix 8-prefix list and still carry a stale "code not updated" claim this row's own spec already found false. Left the row `BLOCKED` (not signed off) with `next_agent: agent-father` rather than claiming full acceptance.
-
-**Board:** `review[]` stays `review[]`, `status: REVIEW → BLOCKED`, `next_agent: agent-father`. `.head` untouched by this write (picked up and passed through an in-flight peer ready-lane-consumer reassignment unrelated to this task — not acted on, out of scope for this dispatch).
-
-**Evidence:** commit `db0ed7c02` (`tasksMdJanitorJob.ts` + test file + `system-map.json` + spec doc, explicit pathspec) + commit `080340915` (orch-state.json board write, explicit pathspec, isolated from the many other unrelated dirty files present in the working tree at write time). Full `apps/mcp-server` suite: 52 fail/17 files vs documented ~50/15 baseline, zero overlap with `tasksMdJanitor`/D4/`system-map`/`coordination` — delta is pre-existing 5000ms-timeout network-dependent tests. `bun tsc --noEmit` clean.
-
-Zone health: PO's own AC-5/6/7 corrections independently re-verified against the spec text and landed as specified (not rubber-stamped), a genuine zone-boundary conflict (docs/agents/**) surfaced and reported rather than silently overstepped or silently dropped, held escalation locks (esc-deepdive:FPT, esc-datacov:HPG/FPT) left untouched per the row's DO-NOT-RELEASE note | HEALTHY, one dependency (agent-father) outstanding.
-
 ## 2026-08-24 — CCATO-MCP-T7-SKILL-DUAL-PATH (RLC dispatch) → review[]
 
 **Session:** 7fd9c60a-9854-4589-9e98-e4c5e7e9168d. Depends on T6-TOOL-REGISTRATION (DONE_VERIFIED) — read T5/T6's shipped artifacts + the architect brief (`docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md` §3.4) as spec source since the board row carried no `detail_ref`.
@@ -51,3 +35,17 @@ Probe strategy chosen per assertion, real code path wherever the test env allows
 **Evidence:** commit `14048b9dc` (new test file only, explicit pathspec, `apps/mcp-server/` only — no commit-mutex claim, per INV-GATEWAY-1).
 
 Zone health: bun test 7/7 pass on the new file (isolated + in full suite), tsc clean, 184 tools / 88 cron jobs intact, full-suite failing-file-set has zero overlap with this task's change | HEALTHY.
+
+## 2026-08-25 — FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK (dev-team BOUNDED-1 auto-pickup) → review[]
+
+**Session:** 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb. PO confirmed the defect at source (triage 2026-08-25T01:07Z): `gcExpiredLocks()`'s Phase-1 pre-GC scan (`coordinationStore.ts`) keyed orphan-signal minting on lock TTL expiry alone, never consulting `task_kind='session-presence'` — a live, presence-registered session's long-running task was falsely orphaned the instant its TTL lapsed.
+
+**Fix:** added one correlated `NOT EXISTS` subquery to the existing Phase-1 SELECT — SUPPRESS-ONLY, never assert-dead: presence row PRESENT+unexpired for the row's `owner_client_session` → suppress the mint; presence ABSENT (no match, or `owner_client_session IS NULL`) → fall through to exactly today's behaviour (an undercounting roster can only make the guard weaker, never wrong). Self-join on `task_locks`, same transaction, zero schema change. Phase-2 DELETE unaffected — the expired lock still GCs either way.
+
+**Tests:** 5 new cases added to `task-lock-coordination-store.test.ts`'s AC-11 block: AC-1 (suppress on live presence match), AC-2 (polarity, load-bearing — absent presence still emits exactly as today), AC-2b (expired presence row does NOT suppress), AC-3 (NULL-safety, no spurious NULL=NULL match), AC-4 (regression repro of the live incident — short-TTL sprint-task + long-TTL presence row survives GC with zero signal minted, lock still deleted). Targeted 4-file suite 89/89 pass (baseline was 84/0). `bun tsc --noEmit` clean. Tool count 184 / cron count 88 unchanged (infra-only change).
+
+**Board:** `in_progress[]` → `review[]` (`status:REVIEW`, `next_agent:qa`), `.head` idle-reset in the same write.
+
+**Evidence:** commit `0f6891872` (`coordinationStore.ts` + test file, explicit pathspec) + decision-journal STEP `dev-mcp-server-S93` in `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md`.
+
+Zone health: bun test 89/89 pass (5 new, 0 regressed), tsc clean, 184 tools / 88 cron jobs intact, guard is structurally suppress-only (polarity cannot invert by accident since suppression requires an actual EXISTS match, never an absence) | HEALTHY.
