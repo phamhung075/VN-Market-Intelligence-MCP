@@ -1,0 +1,63 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-25T16:07:00Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30,
+      "market-watcher-eod": 30,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-25T16:06:19Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 36,
+    "note": "3-slot fan-out, MAX_PARALLEL=4 (headroom 3974>=1500, load1m 7.20 <= 2x12) so single batch. due_reasons/cadence_minutes are the matcher output verbatim and carry a 4th key market-watcher-offhours, which the declared supersedes pair (market-watcher-eod.supersedes) resolved out of MATCHES in-script before Step 4b — 3 slots matched, not 4. Step 5.3 off-flow detector DEFERRED per BGFAN-1 timing contract: all 3 spawns backgrounded, return text not available at Step 5b; de-stamp reconciliation gated on last_fired still equalling 2026-08-25T16:06:19Z. Step 6.0 emitted last_regime=unknown because cycle-snapshot-latest.json is stale since 2026-08-23T00:09Z (cycle_snapshot_promoted:false, 19th consecutive) — this tick s own fresh snapshot carries macro_snapshot.data.signals.carry.regime=NEUTRAL, so the promotion gap actively degraded a real value to unknown."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-25T16:07:00Z"
+}
