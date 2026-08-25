@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "priority": "normal",
+  "dedup_key": "cowork-tick-2026-08-25T08:00Z",
+  "createdAt": "2026-08-25T08:08:00Z",
+  "payload": {
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "drift_min": 3,
+    "leader_lock": "acquired",
+    "slots_fired": 4,
+    "slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "collision_warn": "Step 4b fired: agent_id=alert-commander matched 2 slots (alert-commander-market, cron */15 2-8 * * 1-5; alert-commander-critical, cron 0 */4 * * *). No declared supersedes/superseded_by between them, so both spawned per R3. WARN sent to work channel, non-blocking as specified.",
+    "new_signals": 0,
+    "drain": "no-op, 4th consecutive clean tick",
+    "pressure_age_min": 13.9,
+    "calendar_status": "open",
+    "headroom_mb": 5287,
+    "degraded": false,
+    "max_parallel": 4,
+    "snapshot_written": "cycle-snapshot-08:05.json (16567 B, .tick=08:05, created_at=08:05:08Z) against nominal 08:00 — ON a 5-min boundary but OFF the nominal, the inverse of c253",
+    "registered_prediction": "REGISTERED BEFORE THE AGENTS RETURN. This tick spawns FOUR agents against ONE snapshot, which turns the reader-derivation question from one sample per tick into four samples in one tick, across three distinct agent types (news-scout, market-watcher, alert-commander x2).\n\nWriter key this tick: cycle-snapshot-08:05.json (raw wall clock 08:05:08Z). Nominal tick: 08:00.\n\nNote the polarity is INVERTED from c253: 08:05 is ON a 5-min boundary but OFF the nominal. So this tick a NOMINAL-keyed reader probes 08:00 and MISSES, while a ROUNDED-wall-clock reader spawning ~08:07-08:12 probes 08:05 or 08:10 and HITS only on 08:05. c253 was the exact opposite. Whatever the four agents do, one of the two models is falsified for this tick.\n\nPredictions: (1) the four returns will NOT all use the same derivation -- if they do agree, the \"per-cycle LLM discretion\" model is weakened and something agent-specific is in play; (2) alert-commander-market and alert-commander-critical, being the SAME agent and flow spawned in the same second, are the cleanest pair -- if THEY disagree, derivation is per-invocation, not per-agent.\nFalsifier for (1): all four report the same probed key.\n",
+    "promoter_finding": "NEW, and it materially changes the fix framing. Step 6.0 emitted at 08:06:45Z with cycle-snapshot-08:05.json already on disk since 08:05:08Z -- 97 seconds old -- and still returned cycle_snapshot_promoted:false (9th consecutive). So the promoter is NOT failing for want of a fresh file.\n\nStronger: cycle-snapshot-latest.json is 4468 B while every Step 4.7 snapshot today is ~16.6 KB, with the SAME four toplevel keys. A promoter that copied the writer's file would produce ~16 KB. It does not. It BUILDS its own smaller payload.\n\nImplication: \"unify the writer and reader keys\" may not even be the right frame for the promoter -- it may not read the writer's snapshot files at all, in which case latest's .tick=00:00 is its own construction and there is nothing to unify, only a third semantic to delete or document. This remains an INFERENCE: emit_pressure_state's source has still not been read. Architect must read it before designing. Do not carry this forward as established.\n",
+    "token_contract_finding": "spawn-fanout.md's own Consumer Contract for the token reads: \"derives its window key from the token's leading 10 characters\". That is the DATE portion, for publish-marker keys -- and the two wired consumers named there (unified-agent chef.md Step 0.5, digest-predict main.md) are both marker-key consumers.\n\nSo the token is not merely unwired for the snapshot case; the documented contract does not COVER it. Nothing anywhere tells a consumer to use the HH:MM portion for a snapshot filename. The fix is therefore not \"wire the existing contract into cycle-bootstrap\" -- it is to extend the contract to the time portion first, then wire it. A reader that follows the contract as written today still cannot key a snapshot correctly.\n",
+    "deferred_destamp": "DEFERRED reconciliation owed on all four slots when their task notifications arrive (BGFAN-1 TIMING CONTRACT). Step 5b stamped last_fired=2026-08-25T08:06:37Z for all four. Prior values, for de-stamp only on a genuine MARKER_HITS>=2 and only if the field still equals this tick's stamp:\n  news-scout-offhours      <- 2026-08-25T04:05:33Z\n  market-watcher-offhours  <- 2026-08-25T04:05:33Z\n  alert-commander-market   <- 2026-08-25T07:50:38Z\n  alert-commander-critical <- 2026-08-25T04:05:33Z\nNote the three 04:05:33Z values are identical to the second because those three slots share cron \"0 */4 * * *\" and genuinely fired in one batch at 04:00Z -- this is a same-batch fire, NOT the bulk-restore signature that identical mtimes usually indicate.\n",
+    "recurring": {
+      "cycle_snapshot_promoted_false": "9th consecutive",
+      "load_parse_locale_defect": "6th occurrence. uptime yielded a comma-decimal (\"1,90\") through the flow's parse. Verdict unaffected this tick (1.90 vs threshold 24 — fails open). Verified fix:\n  uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'\nDo NOT pin LC_ALL=C — pinning it is what produces the concatenation garbage.\n",
+      "regime_status_wrong_key": "Reconfirmed. telemetry.md Step 6.0's documented lookup key regime_status does not exist anywhere in the snapshot. The live value is at macro_snapshot.data.signals.carry.regime — NEUTRAL this tick. Consequence: pressure-state.last_regime has read \"unknown\" on every emit.\n"
+    }
+  }
+}
