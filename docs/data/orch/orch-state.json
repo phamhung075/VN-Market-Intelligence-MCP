@@ -23457,9 +23457,407 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T16:22:00Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-25T16:41:11Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "927a9e8c4dc724637f34842cbb4c7ef460d354a7d3336aa6eb9fe2e37e7c61b3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T16:36:00Z",
+          "matched_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "won_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/refine_bctc_md/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "refine-bctc-slot-4": "cron"
+          },
+          "cadence_minutes": {
+            "refine-bctc-slot-4": null
+          },
+          "last_fired_timestamp": "2026-08-25T16:35:18Z",
+          "last_fired_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "16:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 51,
+          "note": "Single-slot fan-out to the Bash-less leaf worker; SESSION_ID_LINE carries the resolved owner_client_session as a literal because refine_bctc_md cannot expand it itself. Step 5.3 DEFERRED per BGFAN-1. signal_backlog 36->51 this tick is TRANSIENT, not floor growth: +15 files are hook-generated notebook-cap signals and all carry a full {from,to,type,payload,priority,createdAt} envelope, so they are drainable. The 16:30Z set is re-emitted VERBATIM at 16:31Z (identical apart from timestamp) — a state condition emitted as a per-write event, and distinct ts defeats envelope dedup, same class as the duplicate auditor_cycle_loss rows. cycle_snapshot_promoted:false for the 20th consecutive emit; this tick s snapshot landed at 16:34, again not a multiple of 5, so again unfindable by cycle-bootstrap SKILL.md:58 5-min-rounded lookup."
+        },
+        "createdAt": "2026-08-25T16:36:00Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "af14590115f93110151885cf0400c7c95a010fcd7331aeb35c4e0b1d6e34828f",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "high",
+        "payload": {
+          "title": "Review-Lane SECONDARY-Drain can spawn a SECOND concurrent PO — its outer_claim key does not intersect Step 1's S3 guard",
+          "hit_live": "dev-team tick 2026-08-25T16:07Z",
+          "mechanism": "SECONDARY-Drain's dispatcher-wrap claims resume_key = 'task:' + picked.id (docs/agents/dev-team/flow/main.md, Review-Lane SECONDARY-Drain section). Step 1 PO Triage's S3 dedup guard claims triage_key = 'task:po-triage-' + YYYYMMDD (main.md:1186). These are DIFFERENT keys. When a SECONDARY-Drain pick carries secondary_dispatch_target='po' while a PO spawned via Step 1 (or via the sanctioned router-direct path, main.md:1206-1212) is still running, the row-scoped claim succeeds and a second PO starts concurrently. Both write docs/data/orch/orch-state.json.",
+          "observed": "Tick 16:07Z picked RAG-FTS-BUILD-MEMORY-BOUND (_lane=review, status=REVIEW, secondary_dispatch_target=po) at 16:15:36Z while a router-direct PO (task:po-triage-20260825, claimed 16:02Z) was live and had already written the board (task_board._updated_by='po (triage-20260825T1612Z)'). Router did NOT spawn; it claimed task:RAG-FTS-BUILD-MEMORY-BOUND and handed the row to the running PO by message instead.",
+          "why_it_matters": "Two concurrent POs on the same board is the failure this fleet has already paid for once — see feedback_phaseb_intent_key_is_freeform_so_two_sessions_run_same_agent_concurrently. The S3 guard was built to stop exactly this and does not cover the SECONDARY-Drain path.",
+          "proposed_fix": "Before spawning, SECONDARY-Drain should ALSO probe the agent-scoped guard for its resolved secondary_dispatch_target (e.g. task:po-triage-<YYYYMMDD> when target='po'), and on a held guard route the row to the running agent instead of spawning. Same shape as the QA-Drain/SLS lane-narrower-than-claim-script family.",
+          "related_class": "rtr-20260825T1545-qadrainskip (SKIP-branch strands the row it skips; task_claim not re-entrant so the holder can be YOURSELF) — same family: a guard whose key is narrower than the condition it is meant to guard.",
+          "second_finding": "AC-6 of FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY confirmed live this tick. The flow pipes the claim through `| bash scripts/orch-apply.sh || true`, discarding the exit code. Router captured it separately (exit=0) and only then could distinguish 'claim applied' from 'nothing eligible'. An orch-apply ABORT is still byte-identical to an empty pick on the sanctioned path."
+        },
+        "createdAt": "2026-08-25T16:18:00Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "28c969f469cee51a51641288e64d89a4441fe1ad6cdfff7041a5890925be2a11",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-25T16:30:03Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3e301e9c8c79cabe1944521aec507995b0fa519edfa3b8f11cd142d1a4d078d3",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/po.md",
+          "tied_sections": "3:20260825000000000:## 2026-08-25T16:03-16:24Z — I cleared a head-of-line block and re-created it nine seconds later on a different row\n54:20260825000000000:## 2026-08-25T15:18-15:30Z — my own numbers from 13:45Z were wrong, and the \"defect\" I was sent to fix wasn't there\n99:20260825000000000:## 2026-08-25T13:45-14:05Z — I ruled against the standing OCR goal, then found the bigger lever behind it",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-25T16:25:24Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "39b587cbfbccadec0e1268e1a290194f563514928f8989e00fd481ad7fa1907d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "tied_sections": "9:20260824000000000:## c134 · 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)\n39:20260824000000000:## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-25T16:30:05Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4e02c6e55ce45370c26ce648b558713788b021a56398b9d5d14c9938f1338b30",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "tied_sections": "9:20260824000000000:## c134 · 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)\n39:20260824000000000:## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-25T16:31:37Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cbaf936ec968dfcfe568ff9d43761c52709225922bb3fca0fcbc7a81e3e82758",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 186,
+          "cap": 200,
+          "byte_count": 27694,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:30:06Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a5d285acdb1a267179704ad8d271f5225dd31d9dbece3c71816e4aa1caa785c0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 186,
+          "cap": 200,
+          "byte_count": 27694,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:31:37Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e9234ad771c92b163b4e6546050af2ea7490c3a8b6bb4585c240bc71b083dca9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/po.md",
+          "line": 99,
+          "heading": "## 2026-08-25T13:45-14:05Z — I ruled against the standing OCR goal, then found the bigger lever behind it",
+          "section_count": 3,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-25T16:25:24Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "74b8f22aeb01a7a08cb8d56d9990ead300e910e000b8c145c65c36eea29adac0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line": 39,
+          "heading": "## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "section_count": 2,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-25T16:30:05Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "93246d0dd9a4273d5ca4b58bd4855c5a9e9ecd2b9dd4124c4050ba02bef6fec8",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line": 39,
+          "heading": "## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "section_count": 2,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-25T16:31:37Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0815edf53afa8e99ef48ac703e2a9bf52f8beefb28966d73e61858cf56182101",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 15307,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:30:05Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "db6f7fdadcb58f4dcd316b48ba8f6d1f9b15143a135ab03427bbf0ecd6b156e9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 15307,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:31:37Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fb128f1045517e5de97a3cf26b7d2f3eb96c31e451328947367554454807da14",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 112,
+          "cap": 200,
+          "byte_count": 19953,
+          "byte_cap": 12000,
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "undroppable_line_count": 41,
+          "undroppable_byte_count": 13916,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:30:04Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d917339fd5a498543cadd86b5c90037877e39ba74fe7c32085f5b6163013fb7a",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 112,
+          "cap": 200,
+          "byte_count": 19953,
+          "byte_cap": 12000,
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "undroppable_line_count": 41,
+          "undroppable_byte_count": 13916,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:31:36Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "14c8a2a9e125566a0db7b198ca4231cbd8ccfb8a90ab7f9191284714240c612e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 58,
+          "cap": 200,
+          "byte_count": 39860,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:30:04Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a8d06b4f3dbdb62ae6d6eadc49de957bd05a11fbe44c418631a527b4498073b5",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 58,
+          "cap": 200,
+          "byte_count": 39860,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T16:31:36Z",
+        "drained_at": "2026-08-25T16:41:11Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,

@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_defaulted",
+  "priority": "normal",
+  "createdAt": "2026-08-25T16:25:24Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/po.md",
+    "tied_sections": "3:20260825000000000:## 2026-08-25T16:03-16:24Z — I cleared a head-of-line block and re-created it nine seconds later on a different row\n54:20260825000000000:## 2026-08-25T15:18-15:30Z — my own numbers from 13:45Z were wrong, and the \"defect\" I was sent to fix wasn't there\n99:20260825000000000:## 2026-08-25T13:45-14:05Z — I ruled against the standing OCR goal, then found the bigger lever behind it",
+    "direction_applied": "newest_first",
+    "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "3e301e9c8c79cabe1944521aec507995b0fa519edfa3b8f11cd142d1a4d078d3",
+    "processedAt": "2026-08-25T16:41:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

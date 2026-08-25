@@ -13,5 +13,11 @@
     "proposed_fix": "Before spawning, SECONDARY-Drain should ALSO probe the agent-scoped guard for its resolved secondary_dispatch_target (e.g. task:po-triage-<YYYYMMDD> when target='po'), and on a held guard route the row to the running agent instead of spawning. Same shape as the QA-Drain/SLS lane-narrower-than-claim-script family.",
     "related_class": "rtr-20260825T1545-qadrainskip (SKIP-branch strands the row it skips; task_claim not re-entrant so the holder can be YOURSELF) — same family: a guard whose key is narrower than the condition it is meant to guard.",
     "second_finding": "AC-6 of FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY confirmed live this tick. The flow pipes the claim through `| bash scripts/orch-apply.sh || true`, discarding the exit code. Router captured it separately (exit=0) and only then could distinguish 'claim applied' from 'nothing eligible'. An orch-apply ABORT is still byte-identical to an empty pick on the sanctioned path."
+  },
+  "_processed": {
+    "fingerprint": "af14590115f93110151885cf0400c7c95a010fcd7331aeb35c4e0b1d6e34828f",
+    "processedAt": "2026-08-25T16:41:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
