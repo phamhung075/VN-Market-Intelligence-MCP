@@ -2,10 +2,10 @@
   "from": "dev-team",
   "to": "ops",
   "type": "bug-escalation",
-  "priority": "P0",
+  "priority": "P3",
   "createdAt": "2026-08-25T05:43:06Z",
   "dedup_key": "mcp-server:container-wedge-20260825T0516Z|event-loop-blocked-after-write-invisibility",
-  "summary": "mcp-server-1 is process-wedged since 2026-08-25T05:16:16Z — 27+ minutes with ZERO log output. All call_tool(server=vn-market) hang; docker exec into the container also hangs. NOT OOM, NOT restart-looping, CPU ~0 — a blocked event loop. Last line logged before total silence was an ASYNC write-invisibility ERROR (107 prices written, 0 visible). Every gateway-dependent fleet gate (SF-1, fire-election, task_claim/release) is unreachable; the 05:37Z dev-team tick could not proceed. frontend-1 went unhealthy alongside it but has since RECOVERED and is now flapping with slow 2s responses — probably a secondary effect of proxying to the wedged upstream, not a second independent wedge.",
+  "summary": "[SUPERSEDED 2026-08-25T06:44:09Z — WRONG ROOT CAUSE, do not action; see docs/signals/dev-team-20260825T055205Z.json] mcp-server-1 is process-wedged since 2026-08-25T05:16:16Z — 27+ minutes with ZERO log output. All call_tool(server=vn-market) hang; docker exec into the container also hangs. NOT OOM, NOT restart-looping, CPU ~0 — a blocked event loop. Last line logged before total silence was an ASYNC write-invisibility ERROR (107 prices written, 0 visible). Every gateway-dependent fleet gate (SF-1, fire-election, task_claim/release) is unreachable; the 05:37Z dev-team tick could not proceed. frontend-1 went unhealthy alongside it but has since RECOVERED and is now flapping with slow 2s responses — probably a secondary effect of proxying to the wedged upstream, not a second independent wedge.",
   "payload": {
     "observed_live_at": "2026-08-25T05:43:49Z",
     "incident_start": "2026-08-25T05:16:16Z",
@@ -56,6 +56,12 @@
       "cron-detect-loop self-arm: local CronList classify found all 4 crons present-and-correct -> no-op. Cross-session marker guard (Steps 1a-1c) could not run (gateway), but is moot when no CronCreate fires.",
       "Did NOT dispatch the 05:37Z tick. Did NOT restart any container. Did NOT re-arm com.vn-market.fleet-push."
     ],
-    "correction_note": "An earlier draft of this signal described frontend-1 as wedged alongside mcp-server. That was true at 05:27Z-05:39Z but had ceased to be true by 05:43Z; corrected before filing. Only mcp-server is wedged."
+    "correction_note": "An earlier draft of this signal described frontend-1 as wedged alongside mcp-server. That was true at 05:27Z-05:39Z but had ceased to be true by 05:43Z; corrected before filing. Only mcp-server is wedged.",
+    "superseded_by": {
+      "signal": "docs/signals/dev-team-20260825T055205Z.json",
+      "marked_at": "2026-08-25T06:44:09Z",
+      "reason": "This signal blamed an app-level blocked event loop in mcp-server. That root cause is WRONG. The real fault was the Docker VM fs event-injection layer (FATAL at 05:47:39.42Z); the count=107/visible_now=0 write-invisibility this signal reported is exactly what a failing fs-sharing layer produces, i.e. it was collateral, not the cause.",
+      "action_for_ops": "Do NOT investigate mcp-server application code on the basis of this signal. Read the superseding signal instead. Retained rather than deleted so the corrected diagnosis has an audit trail."
+    }
   }
 }

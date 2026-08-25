@@ -2,10 +2,10 @@
   "from": "dev-team",
   "to": "ops",
   "type": "bug-escalation",
-  "priority": "P0",
+  "priority": "P1",
   "createdAt": "2026-08-25T05:52:05Z",
   "dedup_key": "docker-desktop:vm-fs-event-injection-fatal-20260825T0547Z|dockerd-stopped-daemon-unreachable",
-  "summary": "CORRECTION + ESCALATION. Docker Desktop's Linux VM hard-failed at 2026-08-25T05:47:39Z with 'FATAL: running services: running fs: injecting event blocked for 60s' — dockerd stopped, hypervisor process stopped, ALL containers down. Every docker CLI call now returns 'Docker Desktop is unable to start'. This SUPERSEDES the root-cause attribution in dev-team-20260825T054306Z.json, which blamed an app-level blocked event loop in mcp-server. The mcp-server silence from 05:16:16Z was almost certainly the FIRST symptom of this same VM filesystem-sharing layer degrading, not an independent app bug.",
+  "summary": "[RESOLVED 2026-08-25T06:32:52Z — root cause UNFIXED] CORRECTION + ESCALATION. Docker Desktop's Linux VM hard-failed at 2026-08-25T05:47:39Z with 'FATAL: running services: running fs: injecting event blocked for 60s' — dockerd stopped, hypervisor process stopped, ALL containers down. Every docker CLI call now returns 'Docker Desktop is unable to start'. This SUPERSEDES the root-cause attribution in dev-team-20260825T054306Z.json, which blamed an app-level blocked event loop in mcp-server. The mcp-server silence from 05:16:16Z was almost certainly the FIRST symptom of this same VM filesystem-sharing layer degrading, not an independent app bug. || UPDATE: outage lasted 45m13s and ended via a manual cold start from outside this session, NOT a self-heal and NOT the 06:00:41Z relaunch (which failed to bootstrap the engine). All 13 containers healthy, both named volumes intact, no data loss. Downgraded P0->P1: nothing is blocked now, but the fs event-injection FATAL is unaddressed and can re-wedge the VM at any time. See .payload.resolution.",
   "payload": {
     "correction_of": "docs/signals/dev-team-20260825T054306Z.json",
     "what_changed": "That signal attributed the mcp-server wedge to an app-level event-loop block after a write-visibility error, with root cause UNCONFIRMED. Host-side Docker logs now show the failure is one layer down: the VM's filesystem event-injection service. The write-invisibility symptom (count=107, visible_now=0 at 05:16Z) is consistent with the fs-sharing layer failing to propagate writes, which is exactly the subsystem that later hard-blocked. Treat the mcp-server wedge as a DOWNSTREAM EFFECT, not the fault.",
@@ -27,10 +27,11 @@
     },
     "asks": [
       "Diagnose the fs event-injection block — this is the virtiofs/osxfs file-sharing layer. Check which bind-mount was being watched when it blocked; the repo bind-mount (./docs/data, ./data/pdfs) is the prime suspect given the fleet writes those paths constantly.",
-      "Recover the daemon. Because the socket exists and no hypervisor error was written, a normal Docker Desktop restart is the FIRST thing to try and is likely sufficient. Escalate to the user only if that fails.",
+      "[SATISFIED 06:32:52Z — daemon recovered via a manual cold start from outside this session. NOTE the original text below was WRONG and is retained only as a correction record: a normal restart was NOT sufficient — the 06:00:41Z relaunch failed to bootstrap the engine and a SECOND full launch was required.] Original: Recover the daemon. Because the socket exists and no hypervisor error was written, a normal Docker Desktop restart is the FIRST thing to try and is likely sufficient. Escalate to the user only if that fails.",
       "CRITICAL SAFETY CONSTRAINT — do NOT under any circumstances 'rebuild the VM from scratch' (i.e. remove ~/Library/Containers/com.docker.docker/Data/vms) as a recovery step. On Docker Desktop/Mac, named volumes live INSIDE the VM disk image; that step DESTROYED market_data and bctc-page-images on 2026-07-15 and required a 361MB backup restore. If the daemon does return, verify market_data volume integrity (row counts + MAX(date)) BEFORE trusting green health.",
       "Investigate whether Docker Desktop's Resource Saver / pause feature is enabled. A pause->resume transition ~600ms before the fs FATAL suggests resume-from-pause is the trigger. If so, disabling Resource Saver is a candidate permanent fix for a recurring outage class.",
-      "Re-check whether the mcp-server write-invisibility symptom (count=107, visible_now=0) still reproduces once the daemon is healthy. If it does NOT, that confirms it was fs-layer collateral and the earlier app-level bug hypothesis can be closed."
+      "[NOW TESTABLE — daemon is healthy as of 06:32:52Z] Re-check whether the mcp-server write-invisibility symptom (count=107, visible_now=0) still reproduces. If it does NOT, that confirms it was fs-layer collateral and the earlier app-level bug hypothesis (superseded signal dev-team-20260825T054306Z.json) can be formally closed.",
+      "RECURRENCE GUARD (new, promoted to primary ask now that the outage itself is over): the failure chain is reproducible-looking — pause->resume at 05:47:38.78Z, apiproxy broken-pipe burst, dockerd explicit Stop at 05:47:39.19Z, fs FATAL at 05:47:39.42Z. Capture Resource Saver / auto-pause settings state BEFORE changing anything, then treat ask 3 as the permanent fix candidate. Also worth noting: the first relaunch not bootstrapping means any runbook that says \"just restart Docker Desktop\" is insufficient — document the two-launch recovery."
     ],
     "probe_defect_found": {
       "severity": "P2",
@@ -88,6 +89,26 @@
       "why": "The signature is composed from the SET of currently-failing checks. A progressive infra failure changes that set at each phase, so every tick mints a fresh key and debounce never engages. Debounce only works for a failure that presents identically each time.",
       "harm": "Each T1 tick during a prolonged outage returns spawn_decision=SPAWN for what is one continuous incident. Absent a router-side judgement call, that is one subagent spawned per 30 minutes for the entire duration of the outage.",
       "fix_direction": "Debounce on incident identity rather than exact check-set equality — e.g. suppress when the new failing set is a SUPERSET of a still-in-window signature, or key on the most-severe failing check rather than the full concatenation."
-    }
+    },
+    "resolution": {
+      "status": "OUTAGE_RESOLVED_ROOT_CAUSE_UNADDRESSED",
+      "recorded_at": "2026-08-25T06:43:41Z",
+      "resolved_at": "2026-08-25T06:32:52Z",
+      "outage_window": "05:47:39.42Z (fs FATAL) -> 06:32:52.49Z (engine running) = 45m13s",
+      "how_it_recovered": "NOT a self-heal. Backend log shows a FRESH COLD START at 06:32:51.230Z (desktop state:InitState + two pidfile \"assuming pid re-use, removing it\" warnings + feature-flag refetch + cli-context re-switch). This is a distinct, second launch — the 06:00:41Z relaunch reached onApplicationDidFinishLaunching but NEVER started the engine (no starting-engine line until 06:32:51.426Z). Router took no daemon action at any point (router-only scope); the second launch came from outside this session.",
+      "verification": {
+        "engine": "06:32:51.426Z starting -> 06:32:52.485Z running (linux/virtualization-framework)",
+        "containers": "13/13 Up and (healthy) — alert-engine, api-gateway, flaresolverr, frontend, kinh-dich-service, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis, mcp-gateway",
+        "named_volumes_intact": [
+          "vn-market-intelligence-mcp_market_data",
+          "vn-market-intelligence-mcp_bctc-page-images"
+        ],
+        "health_endpoints": "localhost:3000/health=200, localhost:3001/=200",
+        "gateway": "https://zenmidi.com/gateway/mcp=200; task_heartbeat round-trip OK",
+        "data_loss": "none detected — both named volumes present, all services healthy on first boot, no restore step needed"
+      },
+      "why_this_still_matters": "The fs event-injection FATAL is UNFIXED. Recovery was a manual relaunch, not a repair. The same pause->resume transition can re-wedge the VM at any time, and the first relaunch attempt FAILING to bootstrap means recovery is not reliably one-click. Asks 0, 2, 3 below remain fully open."
+    },
+    "priority_change_note": "Downgraded P0 -> P1 at 2026-08-25T06:43:41Z: the live outage is over and the fleet is healthy, so nothing is currently blocked. The root cause is unaddressed and the recurrence risk is real, so this stays open rather than being closed."
   }
 }
