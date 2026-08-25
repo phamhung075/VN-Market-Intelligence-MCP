@@ -1,3 +1,25 @@
+## 2026-08-25 Data-Tier Audit (06:58:59Z)
+
+**Context:** Container fleet recovered ~06:45Z from docker daemon crash (05:31Z–06:45Z outage). Scan at 07:00:48Z, 15 minutes post-recovery.
+
+**Counts (from `scripts/db-integrity-counts.sh`):**
+- OHLC violations: 336 (unchanged, 20 distinct dates 2026-05-15 to 2026-06-12)
+- Scale anomalies (>100x): 0
+- VN index cache: 1 row
+- Low-confidence reports (<0.2): 52
+
+**Key findings:**
+1. **daily_ohlcv (336 OHLC violations):** Known historical residue, not a regression. No fresh violations in last 2 days. Verdict: BY-DESIGN.
+2. **deep_fetch_stats:** Empty (class a, production writer). However, deep-fetch jobs (deepFetchMainJob, deepFetchVpsJob) ran successfully at 06:55:01Z post-recovery. Stats recording may be disabled. Verdict: REAL (WARN). Already-open task: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
+3. **deep_fetch_queue:** 2552 rows total; 30 pending and 34 vps-failed rows stuck from 2026-08-18 (7 days old). Did not clear during recovery. Verdict: REAL (WARN). Same task as above.
+4. **price_alerts, alert_engine_records:** Both empty (expected by design—on-demand tool and separate DB respectively). Verdict: BY-DESIGN.
+
+**Data freshness:** All key sources fresh post-recovery. market_prices: 2026-08-25T07:00:42.799Z. daily_ohlcv newest: 2026-08-25.
+
+**History entry:** docs/data/db-integrity-history.json (entry appended, array capped at 200, counts embedded).
+
+**Anomalies needing dev-team action:** None NEW. Both deep-fetch issues already tracked in open task.
+
 ## Tier-DATA (2026-08-25T05:41:12Z)
 
 **Audit Run:** DB Data-Anomaly Sweep
@@ -38,51 +60,3 @@
 **History entry:** Appended to `docs/data/db-integrity-history.json` (entry [200] of max 200, capped).
 
 See `docs/data/db-integrity-history.json` for full detail.
-
-## c1016 · 2026-08-25T03:30Z
-### Audit Run Tier-1 (2026-08-25T03:30Z)
-- Tier: 1 | Verdict: ALL_GREEN (pre-gate)
-- Checks passed: docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents
-- Findings: 1 signal emitted (verified mcp-server deployment mismatch)
-- Status: PASS with 1 WARN item
-
-### Pre-Gate Evidence
-- Source: scripts/agents-flow/auditor-tier1-probe.sh
-- File: docs/data/auditor-tier1-last-trigger.json
-- Timestamp: 2026-08-25T03:53:53Z
-- Result: ALL_GREEN (all 6 checks passed)
-  - docker_ps: PASS
-  - health_3000: PASS
-  - health_3001: PASS
-  - disk: PASS
-  - mem_creep: PASS
-  - launchd_agents: PASS (expected-disabled by user policy)
-
-### Acknowledged Conditions (Known, Not New Signals)
-1. **com.vn-market.docker-events** — exit-status 143 (acknowledged degraded, tracked via backlog fix)
-2. **com.vn-market.fleet-push** — deliberately disabled by user (Disabled=1 in plist)
-   - Architect brief: docs/architecture-briefs/2026-08-25-fix-auditor-tier1-launchd-expected-disabled.md
-   - Developer agent implementing: FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED
-   - Action: NO DUPLICATE SIGNAL (constraint: known issue, fix in-flight)
-
-### A-32 Finding: mcp-server Deployment Mismatch
-**Signal emitted:** sys-20260825T035603-1fb9 (WARN, severity WARN)
-**Check ID:** A-32
-**Issue:** Running mcp-server image is 13+ hours older than latest verified fix
-- Fix commit: 0f6891872 (landed 2026-08-25T01:54:59Z)
-- Commit description: "reaper stops orphan-minting TTL-expired locks owned by a live presence-registered session"
-- Marked done_verified: ~02:5x (per pre-gate context)
-- Running image creation: 2026-08-24T12:41:49Z (13+ hours old)
-- No rebuild occurred between commit and current time
-- **Defect reproduction confirmed:** 03:03Z/03:06Z against live presence-registered locks
-- Both instances released after confirming underlying tasks succeeded
-- Expected next occurrence: ~04:49Z when dispatch locks age out
-- **Root class:** Verified-in-repo vs verified-in-production gap
-
-### Durability Sweep
-[durability-sweep] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0
-
-### Contract Status
-- No contract contradictions
-- Probe NOT re-run (constraint: avoid dedup-ledger mutation)
-- Verdict sourced from trigger file (read-only, evidence use only)
