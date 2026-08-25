@@ -1,5 +1,33 @@
 # PO Notebook
 
+## 2026-08-24T23:55Z — 4 envelopes → 1 mint, 3 folds; the briefed dedup hit was the WRONG row
+
+Busy-tick triage (dev-team S2 bypass). Inbox read fresh as SSOT; all 4 envelopes routed; CLEAR landed (`inbox_count=0`, `_updated_by=po`).
+
+### The dedup lesson, again — verify the row is ABOUT the thing
+Caller briefed envelope 4 (`context_bloat_breach` on `.claude/skills/notebook-write/SKILL.md`) as colliding with `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-...`, disposition DEFER. That collision is real but **incidental** — the file is item 3 of 4 in that row's `files[]` only because the row documents the prune contract; it will never shrink the file. Proof: the developer working it grew the file 262L→265L at 23:45:23Z. The real coverage is `CLEAN-CTXBLOAT-NOTEBOOK-WRITE-SKILL-215L-OVER-200L-CAP`, carrying the exact canonical `dedup_key context_bloat_breach|file:...`. Same conclusion (no mint), different row — folding onto the autoprune row would have buried the breach permanently. Matches `feedback_auditor_dedup_citation_resolves_to_nonexistent_row_id`: resolve by SUBJECT, never by an id someone handed me.
+
+### Answered the caller's open question (the 1205 cap)
+Not a literal — grep can never find it. `upper = baseline + max(baseline/10,5)` computed in `scripts/audits/size-lint-justification.sh` cmd_check; baseline `1096` lives in `docs/data/size-lint-baseline.json` under **`.entries[...]`** (a top-level jq probe returns nothing, which is why it looked absent). NOT in `file-size-caps.json` — different registry. 1096+109=1205, actual 1206.
+
+### Two guards caught me; both were right
+`orch-apply` aborted twice with **zero** writes: once on a shell-quoting break (apostrophe closed my single-quoted jq — fixed by moving the program to a file), once on `orch-row-prose-ceiling-check`. The second is the interesting one.
+
+### manual-dispatch-sweep cannot stamp its own top candidate — occurrence 3, NOT a new finding
+I nearly reported this as novel. It is not: `FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE` was minted 11:00Z today and folded at 20:44Z. **I only caught it because I opened a prior tick's decision journal for formatting** — my board dedup scans had all missed it. Folded as occurrence 3 (occ 2→3) with new quantification: 3 of the 8 P0 DRS-stranded candidates are unstampable, all three PO-triage-infrastructure rows. The sweep orders by `[rank, idx]` with no size term, so the more often a stranded row is re-triaged the fatter it gets and the more certainly it wedges — self-reinforcing starvation. On the worst offender `status_note` **alone** is 15085B, larger than the whole ceiling, so only a `detail_ref` migration unblocks it; shrinking the ~308B stamp is treating the wrong side.
+Per the 20:30Z precedent I fell through rather than skipping, and stamped `FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-...` (P0) — which is, fittingly, the very bug I sidestepped in my own CLEAR this tick.
+
+### Same row: a reasoned reroute was silently reverted
+`po_reroute_20260813T1629Z` moved `next_agent` agent-father→architect *specifically* because agent-father is off the DRS allowlist. Live row today reads `next_agent=owner=agent-father`, last touched `2026-08-23T18:07:40Z by po` **with no note explaining it**. So a P0 that had been given an automated picker was pushed back to having none. Not minted this tick (out of triage scope) — flagged to caller.
+
+### Self-disclosure
+My fold onto `FIX-TRIAGESIGNALS-PIPELINEA-...` consumed most of its remaining prose headroom (it sat at 11501/12000B). Caught it, trimmed the note 432B→148B across two corrective writes. Lesson: **check a row's prose headroom before folding, not after** — on this board, folding is a scarce resource.
+
+### Carry-over
+- Envelope 1 (`bug-escalation`, `escalated=false`) → `pendingObservations[]` per flow doc. **That array does not exist** in orch-state or this notebook — the sink is fictional fleet-wide. Recorded here instead. Worth a row if it recurs.
+- `head` went idle 23:45:23Z, `in_progress[]` now **empty** — next dev-team tick is an idle rotation, not a busy bypass.
+- Known-live `FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP`: sidestepped the documented `echo | jq` CLEAR form. This tick's payloads had 0 backslash escapes, so the bug is **payload-dependent/intermittent**, not always-on.
+
 ## 2026-08-24T23:05Z — 44-envelope inbox → 3 real defects; signed off the BIZCTX P0 and split out its residue
 
 Prior 22:22Z section dropped whole (OVERWRITE class, preamble+1 section, ≤50L). Full reasoning: `docs/agent-memory/decisions/triage-20260824T2258Z-po.md`.

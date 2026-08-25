@@ -13156,10 +13156,11 @@
         "dedup_key": "context_bloat_breach|file:.claude/skills/notebook-write/SKILL.md",
         "verification_gate": "file <=200L AND <=12000B, with a size-justification header if an exemption is claimed",
         "status_note": "[po/triage-2026-08-11T17:10:08Z] Routed per docs/agents/po/flow/triage-signals-longtail.md context_bloat_breach row (NOT PO-owned; hand off to claude-manager-helper for prune). SIGNAL: pendingSignals context_bloat_breach from context-bloat-backstop-hook, 2026-08-11T15:12:48Z — class=skill-file, reason=line-cap,byte-cap, overage=15L / 1016B, action_required=prune_or_split. DEDUP PERFORMED (non-terminal lanes, /notebook-write.*SKILL|context.?bloat/): FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS (about the hook`s justification-suppression logic, not this file), CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 (notebook .md files, different target set), CLEAN-SKILL-BLOAT-TASK-LOCK (a DIFFERENT skill file), FIX-POSTCYCLE-STEP45-NB-WRITE-AC3 (behavioural AC, not size). No row targets THIS file. Minted. NOTE FOR THE IMPLEMENTER: this skill is loaded every cycle by essentially every notebook-writing agent in the fleet, so the overage is paid fleet-wide per cycle — prefer a lazy-load split of the rarely-needed sections over line-shaving the hot path.",
-        "updated_at": "2026-08-15T04:01:32Z",
-        "occurrence_count": 2,
+        "updated_at": "2026-08-24T23:52:51Z",
+        "occurrence_count": 3,
         "updated_by": "po",
-        "po_occurrence_20260815T0359": "SECOND FIRE, AND THE FILE HAS GROWN 17% WHILE THIS ROW SAT IN BACKLOG. New context_bloat_breach envelope f087b608 (2026-08-15T00:28:50Z) reports 245L/15058B. PO re-measured live at 2026-08-15T03:56Z: 251L / 15807B. Compare this row's own title and mint measurement of 2026-08-11T17:10Z: 215L / 13016B. So +36 lines / +2791 bytes in under 4 days, i.e. the overage against the 200L/12000B cap has gone from 15L/1016B to 51L/3807B — nearly 4x. The row's title is now materially wrong and should be re-titled on pickup. Folded per triage-signals.md dedup discipline, not re-minted. STANDING OBSERVATION for whoever owns cap enforcement: the cap is REPORTED but not ENFORCED — nothing prevented four days of further growth on a file the hook was already flagging, and this skill is loaded by essentially every notebook-writing agent every cycle, so the overage is paid fleet-wide per cycle."
+        "po_occurrence_20260815T0359": "SECOND FIRE, AND THE FILE HAS GROWN 17% WHILE THIS ROW SAT IN BACKLOG. New context_bloat_breach envelope f087b608 (2026-08-15T00:28:50Z) reports 245L/15058B. PO re-measured live at 2026-08-15T03:56Z: 251L / 15807B. Compare this row's own title and mint measurement of 2026-08-11T17:10Z: 215L / 13016B. So +36 lines / +2791 bytes in under 4 days, i.e. the overage against the 200L/12000B cap has gone from 15L/1016B to 51L/3807B — nearly 4x. The row's title is now materially wrong and should be re-titled on pickup. Folded per triage-signals.md dedup discipline, not re-minted. STANDING OBSERVATION for whoever owns cap enforcement: the cap is REPORTED but not ENFORCED — nothing prevented four days of further growth on a file the hook was already flagging, and this skill is loaded by essentially every notebook-writing agent every cycle, so the overage is paid fleet-wide per cycle.",
+        "po_occurrence_20260824T2350Z": "THIRD FIRE. New context_bloat_breach envelope 780d175b (2026-08-24T23:30:59Z) reports 262L / 16499B, reason=byte-cap, class=skill-file. PO re-measured live at 2026-08-24T23:47Z: 265L / 16816B — the file grew a further 3L / 317B in the ~16 minutes between the hook firing and PO reading it. Full trajectory against the 200L/12000B cap: 2026-08-11 215L/13016B (overage 15L/1016B) -> 2026-08-15 251L/15807B (51L/3807B) -> 2026-08-24 265L/16816B (65L/4816B). The byte overage is now 4.7x its mint value over 13 days. THE 2026-08-15 STANDING OBSERVATION ON THIS ROW (\"the cap is REPORTED but not ENFORCED\") just earned its sharpest data point: the last 3 lines were added at 23:45:23Z by the developer working FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, which lists this exact file as item 3 of 4 in its files[] — so an agent holding the file in scope pushed it FURTHER over a cap the hook was flagging in the same hour, and nothing stopped it. Re-title on pickup; the 215L/200L figures in the title are now two revisions stale. DEDUP NOTE FOR THE NEXT TRIAGER: FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (moved to review[] at 23:45:23Z) also names this file and will keep surfacing as a dedup hit, but it is about the drop-candidate selection logic in notebook-auto-prune.sh and only touches this file to document that contract — it is an INCIDENTAL filename match and will never shrink the file. THIS row is the real coverage for the size breach; do not fold future context_bloat_breach envelopes for this path onto the autoprune row.\n"
       },
       {
         "id": "FIX-COWORK-CATCHUP-FRESHNESS-WINDOW-EXPIRES-DURING-EXECUTION-OUTAGE",
@@ -15789,11 +15790,11 @@
           "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
         ],
         "status_note": "SAME FILE as the umbrella row FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (docs/agents/po/flow/triage-signals.md) and the same owner (agent-father) — dispatch both in ONE agent-father hop, they do not conflict (routing table vs the CLEAR block, different sections). PO worked around it this tick by reading ids directly from the file, so the 10 envelopes DID clear (verified inbox_len 10 -> 0, _updated_by=po); the doc, however, is still wrong and the next agent to follow it verbatim will silently fail again. Sibling in kind, not in cause: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR is prose-with-no-actuator; this one is an actuator that EXISTS, looks executable, and lies about its exit status — arguably worse, because a reviewer greps for the orch-apply.sh pipe, finds it, and moves on. | [po 2026-08-24T14:40:11Z] REPRODUCED LIVE THIS TICK, and the reproduction CORRECTS THIS ROW'S OWN TITLE. Running the documented CLEAR block verbatim (docs/agents/po/flow/triage-signals.md lines 52-53, `consumed_ids=$(echo \"$pendingSignals\" | jq -c ...)`) against the real 22-envelope inbox under zsh failed with: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1`, then `jq: invalid JSON text passed to --argjson`, then `[orch-apply] ERROR: stdin produced empty candidate — aborting (no write)`. Minimal repro confirmed independently: `zsh -c 'x='{\"a\":\"line1\\nline2\"}'; echo \"$x\" | jq -c .'` reproduces the same parse error, because zsh's builtin echo interprets backslash escapes by default while bash's does not. TITLE CORRECTION: it is NOT a SILENT-NOOP. It is a FAIL-LOUD ABORT — orch-apply refuses the empty candidate and leaves the live file untouched, so the inbox is never half-drained and nothing is silently lost. That is strictly better than the title implies and should be reflected in the row (rename away from -SILENT-NOOP), but the IMPACT is still total: the CLEAR can never succeed under zsh, so the inbox drains to zero only if the operator substitutes printf, which is exactly how it was cleared this tick (22 envelopes, ORCH_APPLY_DECLARED_INBOX_TRIAGED, conservation inbox_row_identity=clean). This is the mechanism behind the documented 64-envelope backlog accumulation. FIX: replace both `echo \"$x\" |` with `printf '%s' \"$x\" |` at lines 52-53.",
-        "updated_at": "2026-08-24T20:46:49Z",
-        "po_manual_dispatch_flagged_at": "2026-08-24T11:00:21Z",
+        "updated_at": "2026-08-24T23:58:08Z",
+        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. NOT the rank-1 candidate: rank-1 (FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED) is prose-frozen at 34589B and its Step-2 stamp hard-aborts at the prose-ceiling gate — reproduced live this tick and minted as FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE. Selected rank-2 instead, and the skip is recorded here rather than left silent.",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
         "updated_by": "po (triage Step 0-SIG 2026-08-24T2030Z)",
         "occurrence_count": 2,
         "po_occurrence_2_20260824T2052Z": "[po/triage 2026-08-24T20:52Z — OCCURRENCE 2, REPRODUCED LIVE BY A DIFFERENT SESSION running triage-signals.md § Step 0-SIG's CLEAR block VERBATIM. The block is still shipped broken.]\n\nWHAT WAS RUN: the executable CLEAR block as written in docs/agents/po/flow/triage-signals.md, unmodified — `pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' ...)`, then `consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')`, then `--argjson ids \"$consumed_ids\"`.\n\nWHAT HAPPENED, verbatim: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1` on the `echo \"$pendingSignals\" | jq` hop; `pre-CLEAR depth:` printed EMPTY; `declaring  envelope_ids` printed with an empty count; then `jq: invalid JSON text passed to --argjson`. Post-write readback: inbox depth STILL 16, _updated_by still \"dev-team\", _updated_at still 2026-08-24T20:24:01Z. The CLEAR was a complete no-op.\n\nTHE TRIGGER IS IN THE PAYLOADS, WHICH IS WHY THIS IS NOT INTERMITTENT AND WILL RECUR: this tick's inbox held four cowork-team envelopes whose `payload` is a JSON object with a multi-line `note` field (the 19:47Z chef-evening collision note, the 20:06Z 3-slot fan-out note, the 20:21Z tnb-audit note) plus five notebook-auto-prune envelopes whose `tied_sections` field embeds literal newlines. Round-tripping that through a zsh shell variable and back through `echo` is what injects the unescaped control characters. Any tick whose inbox contains a multi-line payload — i.e. essentially every tick that drains cowork-fire telemetry — hits this. The 16-envelope inbox this tick is the normal case, not an edge case.\n\nWHY IT IS A SILENT NO-OP RATHER THAN A LOUD FAILURE, and this is the part that makes it P0: the block ends with `|| true`, so the shell exit status is 0 whatever happens. An agent that trusts the exit code — or that simply does not read back — reports \"inbox cleared\" having cleared nothing, and the same 16 envelopes are re-delivered and re-triaged next tick. That is exactly how a 64-envelope backlog accumulated once already (recorded in this doc's own header).\n\nTHE WORKAROUND THAT ACTUALLY LANDED, this tick, and the shape the fix should take: eliminate the shell round-trip entirely. Derive the id list straight from the file into a file — `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json > ids.json` — then pass it with `--slurpfile ids ids.json` and index `$ids[0]`, and read the CSV for ORCH_APPLY_DECLARED_INBOX_TRIAGED from its own file via `$(cat ids.csv)` (safe: hex ids and commas only, no control characters). Verified: inbox depth 16 -> 0, _updated_by=po. The defensive property the doc requires is preserved — PO compared the 16 freshly-derived ids against the 16 read at the top of Step 0-SIG before writing, all 16 matched by prefix, no envelope had arrived in between.\n\nSECOND, INDEPENDENT INSTANCE OF THE SAME CLASS THE SAME TICK (different call site, same root cause): PO wrote a triage fold note via a zsh single-quoted variable piped to `jq --arg`. orch-apply returned OK, `occurrence_count` landed correctly, and the note field landed as an EMPTY STRING (readback LEN=0). Detected only by reading back the FIELD CONTENT — the exit code, the lane counts and the conservation check were all green. So the blast radius of this defect class is wider than the CLEAR block: it is every `jq --arg` in every PO flow doc that carries agent-authored prose. Whoever fixes the CLEAR block should sweep for the pattern rather than patch the one site.\n"
@@ -16429,7 +16430,7 @@
         "priority": "P0",
         "created_at": "2026-08-23T18:07:39Z",
         "created_by": "po",
-        "updated_at": "2026-08-24T18:32:06Z",
+        "updated_at": "2026-08-24T23:56:08Z",
         "updated_by": "po",
         "check_id": "CI-RED-0c938085",
         "dedup_key": "ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md",
@@ -16443,7 +16444,8 @@
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Selected over the two rank-0 ties (FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED, FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP) because the rank-0 tiebreak is array index — arbitrary, not value — and this is the row that actually turns the signal-type-coverage-guard CI job green. All three are the same file (docs/agents/po/flow/triage-signals.md) and the same owner, so one agent-father hop lands all three.",
-        "third_unrouted_type_20260824": "po 2026-08-24 measured a THIRD unrouted Pipeline-A type this file also needs and this row does not cover: `system_issue` UNDERSCORE (1 envelope, from system-auditor, severity CRITICAL, envelope 31b7f837, held back from the inbox CLEAR alongside your 3). Only the HYPHEN form `system-issue` has a routing row (triage-signals.md:39); the underscore form appears ONLY inside the `**CORRECTION` stats table at line 72, which guard-signal-type-coverage.sh's pipeline_b_section() parser deliberately SKIPS, so it is not routed. Tracked separately as FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (P1, agent-father, same file) because that one needs a real emitter-vs-alias decision, not the mechanical table append this row scopes. Land all of them in the same agent-father hop; CI cannot go honestly green while any of the 4 envelopes is still unrouted."
+        "third_unrouted_type_20260824": "po 2026-08-24 measured a THIRD unrouted Pipeline-A type this file also needs and this row does not cover: `system_issue` UNDERSCORE (1 envelope, from system-auditor, severity CRITICAL, envelope 31b7f837, held back from the inbox CLEAR alongside your 3). Only the HYPHEN form `system-issue` has a routing row (triage-signals.md:39); the underscore form appears ONLY inside the `**CORRECTION` stats table at line 72, which guard-signal-type-coverage.sh's pipeline_b_section() parser deliberately SKIPS, so it is not routed. Tracked separately as FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (P1, agent-father, same file) because that one needs a real emitter-vs-alias decision, not the mechanical table append this row scopes. Land all of them in the same agent-father hop; CI cannot go honestly green while any of the 4 envelopes is still unrouted.",
+        "po_occurrence_20260824T2350Z": "2026-08-24: live recurring-bug fire (envelope 622c03db) routed via to-fallback, gap confirmed still open (grep=0). Detail in po notebook 2026-08-24."
       },
       {
         "id": "FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW",
@@ -17002,8 +17004,8 @@
         "baseline_pass": true,
         "created_at": "2026-08-24T11:00:21Z",
         "created_by": "po (triage-20260824T1050Z, manual-dispatch-sweep pre-check)",
-        "updated_at": "2026-08-24T20:42:06Z",
-        "updated_by": "po (triage Step 0-SIG 2026-08-24T2030Z)",
+        "updated_at": "2026-08-24T23:57:55Z",
+        "updated_by": "po",
         "dedup_key": "proseceiling_structural_field_gap:po_manual_dispatch_stamp",
         "files": [
           "scripts/orch-row-prose-ceiling-check.mjs",
@@ -17020,7 +17022,8 @@
         ],
         "po_not_a_duplicate": "Non-terminal lanes swept for proseceiling|prose_ceiling|manual_dispatch|manual-dispatch before minting. FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET is the 2026-08-15 precedent for a DIFFERENT field family and is not on an open lane. FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW (2026-07-31) is the closest in subject but its cause is the opposite: a row that WAS stamped and then not dispatched, cured by the flag_reentrant staleness window. This row is a stamp that CANNOT LAND AT ALL, and flag_reentrant is what converts it from a one-tick miss into permanent starvation.",
         "po_occurrence_2_20260824T2044Z": "[po/triage 2026-08-24T20:44Z — OCCURRENCE 2, same day, INDEPENDENTLY REPRODUCED BY A DIFFERENT PO SESSION that had not read this row first.] The dev-team idle-tick PO ran manual-dispatch-sweep Step 1 verbatim at 20:31Z: 127 candidates (up from 106 at 11:00Z — 88 DRS-STRANDED-OFF-ALLOWLIST, 38 BACKLOG-XOR-GAP, 1 READY-XOR-SUP-OR-PLANONLY), sorted [rank, idx], SAME top candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED, still po_manual_dispatch_flagged_at=null. Ran Step 2 stamp verbatim -> \"[orch-row-prose-ceiling-check] ABORTED — 1 row(s) with net new inline growth past ORCH_ROW_PROSE_CEILING_BYTES=12000\" / \"[orch-apply] ABORTED: row prose ceiling check exit 1 — live file untouched\"; post-write readback confirms flagged_at is STILL null. This row predicted that outcome exactly, 9h40m earlier.\n\nTHREE THINGS THIS ADDS. (1) THE WEDGE IS CONFIRMED DETERMINISTIC ACROSS SESSIONS, not a one-off — two independent runs, same selection, same abort, no state change between them. That upgrades AC-4 from prudent to required: AC-2 alone would fix today's four fields but the sweep would still wedge on the next unstampable family, and there is now measured evidence that every sweep tick between the two runs also actuated nothing. (2) THE STARVATION SET GREW 106 -> 127 IN NINE HOURS while the sweep stamped zero rows, so the queue this defect starves is growing faster than the sweep could drain it even if unblocked. (3) THE OFFENDING ROW GREW TOO — FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED measured 34589B at 11:00Z and 35011B at 20:44Z. It is getting further from stampable, not closer, so waiting for it to be pruned is not a viable alternative to AC-2.\n\nTHIS TICK APPLIED AC-4 BY HAND rather than ending with nothing actuated: PO fell through past the blocked #1 (and past #2/#3, which are members of an existing undispatched PO BATCH and reachable only as that batch) to the first stampable candidate, FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE (P0, BACKLOG-XOR-GAP, 1802B), which stamped and dispatched cleanly. That hand-application is evidence AC-4 is implementable and cheap; it is NOT a substitute for shipping it.\n\nSECOND, UNRELATED DEFECT OBSERVED WHILE FILING THIS AND WORTH ITS OWN ATTENTION: PO's first attempt to write THIS note used a zsh single-quoted shell variable piped to jq --arg. orch-apply reported OK, occurrence_count landed as 2, and the note field landed as an EMPTY STRING (readback: LEN=0). The write \"succeeded\" while silently discarding its entire payload. Same class as the open row FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP, and further evidence for it: only a post-write readback of the FIELD CONTENT — not orch-apply's exit code, not a lane/count check — catches it. Re-written here via jq --rawfile from a file.\n",
-        "occurrence_count": 2
+        "occurrence_count": 3,
+        "po_occurrence_3_20260824T2358Z": "OCCURRENCE 3 — third independent PO session, same top candidate, same hard abort, folded not re-minted. 2026-08-24T23:54Z (session 036ceaf1): ran manual-dispatch-sweep Step 1, top candidate by sort_by([rank,idx]) was again FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (rank 0, P0, never flagged). Step 2 stamp aborted: [orch-row-prose-ceiling-check] live=34589B -> candidate=34897B, live file untouched, readback confirms po_manual_dispatch_flagged_at still ABSENT. Occurrence 2 was 20:44Z the same day at 35011B; between the two the row got SMALLER (peer edit) and it still aborts, which rules out \"one bad row that is about to be trimmed\" as an explanation.\n\nNEW QUANTIFICATION THIS OCCURRENCE (was not on this row before): the wedge is not one row. Of the 8 P0 DRS-STRANDED-OFF-ALLOWLIST candidates live at 23:54Z, 3 are at/over the 12000B ceiling and so are unstampable (FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED 34589B, FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP ~12.4KB, FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS ~12.2KB) while the other 5 are 1.5-2.9KB and stamp fine. Note the pattern in WHICH rows are wedged: all three are PO-triage-infrastructure rows, i.e. rows that get re-triaged every tick and therefore accumulate fold prose. The sweep orders by [rank, idx] with no size term, so the more often a stranded row is re-examined the fatter it gets and the more certainly it becomes unstampable — a self-reinforcing starvation, not a coincidence.\n\nROOT-CAUSE NOTE FOR THE IMPLEMENTER: on the worst offender, status_note ALONE is 15085B — larger than the whole 12000B ceiling. So no amount of trimming the sweep's own 4-field stamp (~308B) can ever fit; only a detail_ref cold-store migration of that row unblocks it. Any fix that tries to shrink the stamp is treating the wrong side.\n\nDISCLOSURE FROM THIS TICK, relevant to AC design: PO folded a 432B triage note onto FIX-TRIAGESIGNALS-PIPELINEA-... which sat at 11501/12000B, consuming most of its remaining headroom and pushing it toward the same wedge. Caught on readback and trimmed to 148B over two corrective writes. This is the mechanism by which rows cross the ceiling in the first place: routine triage folds, each individually reasonable. A fix should make headroom visible AT FOLD TIME, not only at abort time.\n"
       },
       {
         "id": "FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK",
@@ -17974,7 +17977,7 @@
         "next_agent": "dev-mcp-server",
         "created_at": "2026-08-24T23:10:43Z",
         "created_by": "po/triage-20260824T2258Z",
-        "updated_at": "2026-08-24T23:13:00Z",
+        "updated_at": "2026-08-24T23:52:51Z",
         "dedup_key": "prepush-gate-red:size-lint|file:apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
         "title": "Pre-push size-lint is RED on bctcScalarAggregator.ts by ONE line (baseline=1096 tol=109 upper=1205, actual=1206) — any sanctioned push, and CI's own gate, is blocked until it clears",
         "desc": "MEASURED LIVE, not inferred: PO ran the sanctioned backstop `bash scripts/fleet-worktree-push.sh` at 2026-08-24T23:09Z. tsc gate PASSED, behind=0, then `[size-lint] FAIL — 1 offending file(s) (scanned 1431): apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts — baseline-tolerance-exceeded (baseline=1096L actual=1206L upper=1205L)` -> `[pre-push] BLOCKED` -> push aborted, 117 commits still unpushed. The gate's rule (scripts/audits/size-lint-justification.sh:118-121) is upper = baseline + max(baseline/10, 5) = 1096 + 109 = 1205. The file is at 1206. ONE LINE over.\n\nROOT CAUSE IS NAMED AND IS TODAY'S WORK: the last commit to touch that file is 28f8509fc (2026-08-24) 'fix(bctc): salvage orphaned worktree agent-ae9ed2cd6f04b3686 — HPG general-bucket scalar fallback + PARTIAL reflow eligibility'. That commit belongs to CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS, which is DONE_VERIFIED. A row signed off as verified pushed the pre-push gate red and nothing caught it — the salvage was verified on its own content, never against the gate its content had to pass.\n\nTHIS IS THE SERIAL PATTERN, do not treat it as a one-off (see po memory feedback_serial_sizelint_offender_read_as_false_done_verified_closure): the same log shows the PREVIOUS blockers were tasksMdJanitorJob.ts (1012L) and ocr_gateway.py (594L); both are now well under (472L / 515L) and this third file tripped immediately behind them. Each fix uncovers the next offender, so 'size-lint green' must be re-measured at fix time, never assumed from a prior pass.\n\nSECOND, SEPARATE BLOCKER ON THE SAME PATH — even a green gate will not help until this is fixed: `com.vn-market.fleet-push` is NOT LOADED in launchd. `launchctl list | grep vn-market` returns only docker-events, docker-cleanup, socat-tls-bridge and cowork-guaranteed-slot-firer. Its log docs/agent-memory/sessions/fleet-push.log last wrote 2026-08-24 14:13 local. So the authoritative 30-min push trigger is dead and the only pushes happening are opportunistic agent-invoked ones. Folded as corroboration onto FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE, which predicted exactly this regrowth.",
@@ -17994,7 +17997,9 @@
         "depends_on": [],
         "discovered_by": "po Step PUSH-BACKSTOP, live `bash scripts/fleet-worktree-push.sh` run 2026-08-24T23:09Z (abort signal docs/signals/fleet-push-abort-push-fail-20260824T230902Z.json)",
         "po_correction_20260824T2315Z": "PREMISE CORRECTED AND ROW RE-PRICED P0 -> P1 by its own author, ~5 minutes after minting, before anyone picked it up. WHAT IS STILL TRUE (measured, unchanged): running `bash scripts/fleet-worktree-push.sh` at 23:09Z produced `[size-lint] FAIL — 1 offending file(s) ... bctcScalarAggregator.ts — baseline-tolerance-exceeded (baseline=1096L actual=1206L upper=1205L)` -> `[pre-push] BLOCKED`. The gate is genuinely red, by one line, and the offender traces to commit 28f8509fc which belongs to a DONE_VERIFIED row. Fix it. WHAT WAS WRONG: I framed this as an emergency because '117 commits are stranded and the fleet's only push actuator aborts every run'. Both halves are false. `com.vn-market.fleet-push` is DELIBERATELY DISABLED by the user (installed plist Disabled=1, re-verified via plutil at 23:15Z) and the unpushed backlog is therefore INTENDED, not a symptom. A red gate that blocks a push nobody is supposed to be making is a real defect but not a fleet emergency. AC-3 IS WITHDRAWN — it required `git rev-list --count origin/main..HEAD` to drop to 0, which would have directed an implementer to do the one thing the standing constraint on FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED explicitly forbids. Do not satisfy AC-3. AC-1, AC-2 and AC-4 stand unchanged and are the whole row. DISCLOSURE: I invoked the push script myself, per my own flow doc's Step PUSH-BACKSTOP, which is unaware of the disarm — the push was rejected by the red gate so nothing reached origin, but the attempt should not have been made and the flow doc that told me to make it is now filed as FIX-PO-PUSHBACKSTOP-FLOWDOC-INSTRUCTS-PUSH-AGAINST-STANDING-DISARM.",
-        "updated_by": "po"
+        "updated_by": "po",
+        "occurrence_count": 2,
+        "po_occurrence_20260824T2350Z": "OCCURRENCE 2 — folded, not re-minted. New auto-push-abort envelope 12710087 (fleet-worktree-push, reason=push-fail, createdAt 2026-08-24T23:09:02Z, its own snapshot said ahead=117). Per triage-signals.md the auto-push-abort rule REQUIRES re-measuring the premise rather than trusting the envelope count; PO re-measured at 23:44Z: `git rev-list --count origin/main..HEAD` = 124 (NOT 117 — the envelope count was stale by 7 commits, exactly as that rule predicts), behind = 0, and `wc -l` on the offender still returns 1206. Premise NOT resolved: the gate is still red on the same one line. dedup_key for this envelope class is auto-push-abort:push-fail; this row IS that incident, so no separate row was minted. THRESHOLD PROVENANCE — RESOLVED THIS TICK, recorded so nobody re-derives it: the 1205 ceiling is not a literal anywhere and grepping for \"1205\" will always fail. It is computed at runtime in scripts/audits/size-lint-justification.sh cmd_check as upper = baseline + max(baseline/10, 5). The baseline 1096 lives in docs/data/size-lint-baseline.json under .entries[\"apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts\"] (BASELINE_FILE is set at that script line 58, overridable via SIZE_LINT_BASELINE_OVERRIDE; the script slurps .entries into a temp TSV at line 102, which is why a top-level jq probe of that JSON returns nothing). 1096 + max(109,5) = 1205; actual 1206. It is NOT in docs/data/file-size-caps.json — that is a separate, unrelated cap registry and contains no entry for this file. AC-2 on this row (prefer trimming over re-baselining) is unaffected by the provenance; both knobs are now precisely located.\n"
       },
       {
         "id": "FIX-PO-PUSHBACKSTOP-FLOWDOC-INSTRUCTS-PUSH-AGAINST-STANDING-DISARM",
@@ -18025,6 +18030,39 @@
         ],
         "depends_on": [],
         "discovered_by": "po self-report — followed push-backstop.md at 2026-08-24T23:09Z and invoked the push against a standing disarm; caught at 23:15Z when auditor commit ca52f1af0 named it EXPECTED-DISABLED"
+      },
+      {
+        "id": "FIX-DEVTEAM-SECONDARY-DRAIN-PO-DEFAULT-DOUBLE-DISPATCHES-PO-UNDER-TWO-UNGUARDING-LOCK-KEYS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-08-24T23:50:03Z",
+        "created_by": "po/triage-20260824T2343Z",
+        "updated_at": "2026-08-24T23:52:51Z",
+        "updated_by": "po",
+        "dedup_key": "recurring-bug|secondary-drain-po-default-double-dispatch|docs/agents/dev-team/flow/main.md",
+        "title": "One dev-team tick can spawn TWO concurrent po agents: Review-Lane SECONDARY-Drain's resolver defaults to \"po\", and its task:<row-id> lock does not guard Step 1's task:po-triage-<date> lock",
+        "desc": "SOURCE: recurring-bug signal from dev-team, envelope 622c03db, to=architect, priority=HIGH, createdAt 2026-08-24T22:52:13Z. Landed in .dev_team_idle_chain.pending_triage_inbox and triaged by PO at 2026-08-24T23:50Z.\n\nMECHANISM (PO VERIFIED AT SOURCE, not relayed): docs/agents/dev-team/flow/main.md:982 documents resolved_secondary_dispatch_target($detail_items) (scripts/lib/devteam-eligibility.jq) as: effective next_agent if present-non-empty AND not \"dev-team\", ELSE \"po\". PO read that line directly this tick and confirms the \"po\" default verbatim, including the deliberate design note explaining why \"po\" and not \"architect\" was chosen. Same section states SECONDARY-Drain ALWAYS falls through to Step 1 - PO Triage regardless of outcome and NEVER jumps to end. Step 1 then claims task:po-triage-<YYYYMMDD> and spawns po. So on any tick where SECONDARY-Drain's resolver defaults to po, ONE tick issues TWO po spawns under two lock keys that do not guard each other: task:<row-id> vs task:po-triage-<date>. Step 1's S3 outer_claim is the flow's only PO dedup guard and it is structurally blind to the SECONDARY-Drain spawn that just happened in the same tick.\n\nOBSERVED (from the signal, PO did NOT re-verify the 22:37Z tick transcript): tick cron:dev-team:2026-08-24T22:37Z. SECONDARY-Drain picked review[] row FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (status=REVIEW, next_agent=null) -> resolver default po -> spawned. Step 1 was then reachable: task:po-triage-20260824 was verified UNHELD at 22:52Z, so its S3 claim would have succeeded and spawned a second concurrent po. The second spawn was suppressed by an out-of-band intent:po:triage busy-guard (CLAUDE.md PRE-CLAIM Phase B) that is NOT part of this flow.\n\nBLAST RADIUS: two concurrent PO sessions both writing docs/data/orch/orch-state.json. PO's triage-signals.md Step 0-SIG performs the pending_triage_inbox CLEAR (subtractive, declared via ORCH_APPLY_DECLARED_INBOX_TRIAGED). Two concurrent CLEARs over the same envelope set is a lost-update / double-triage hazard on a drain-to-zero queue. PO owns that CLEAR unconditionally on every invocation path (FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ), so there is no second party that would notice the loss.\n\nFREQUENCY: every tick where SECONDARY-Drain picks a status=REVIEW row whose next_agent is null/empty/dev-team. The signal reports 4 of 15 then-eligible review[] rows had next_agent=null. PO measured review[] at 24 rows this tick but did not re-derive the eligible subset. Routine path, not an edge case.\n\nWHY P1 AND NOT P0 (stated so the next reader does not re-litigate it): the hazard is latent, not an active outage. In the one observed occurrence the second spawn never happened because the router's Phase B busy-guard caught it. P0 in this backlog is also already 8-deep in the DRS-stranded-off-allowlist class, and DRS's tiebreak is array index rather than age, so a fresh P0 appended here would rank last in its own band and would not actually move sooner than a P1. Re-price up if a double-spawn is ever observed reaching two live PO sessions.\n\nNOT DUPLICATES (PO dedup-scanned backlog/ready/in_progress/review/qa/done/done_verified/archive by subject, not by id): FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY (readback lane narrowness), FIX-DONELANE-SECONDARY-DRAIN-BLIND-TO-ACTIVE-SPRINTS-NESTED-DONE-TASKS (candidate-set breadth), FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS (single-key liveness vs possession, not two non-guarding keys), FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (same defect CLASS - two dispatch paths sharing no task_id namespace - but a different pair of paths: router intent vs cowork slot dispatcher), FIX-REENTRANT-BRANCH-SHARED-SESSION-UUID-DOUBLE-DISPATCH (shared session UUID defeating re-entrancy, different mechanism). None covers the SECONDARY-Drain -> po resolver default.\n\nSIGNAL'S OWN SUGGESTED DIRECTIONS, recorded verbatim and explicitly NOT ratified by PO: (a) give Step 1's S3 wrap a same-tick guard that sees SECONDARY-Drain's resolved target; (b) make SECONDARY-Drain JUMP TO end when its resolved target is po; (c) unify both PO dispatches behind one stable intent key. The signal itself says this is architect's call and to NOT assume (b) - note (b) would silently reduce SECONDARY-Drain throughput on the exact null-next_agent rows it exists to drain, which is why it is not a free choice.",
+        "acceptance": "AC-1 architect picks (a), (b), (c) or a fourth option IN WRITING, naming the throughput/complexity tradeoff for each. Do NOT assume (b) - the signal explicitly forbids it and (b) trades a dedup fix for a drain regression on null-next_agent review[] rows. AC-2 the chosen guard makes it structurally impossible for ONE dev-team tick to issue two po spawns; demonstrate against a fixture or replay, not prose - a narrated guarantee is not acceptance. AC-3 the guard MUST NOT depend on CLAUDE.md PRE-CLAIM Phase B intent:po:triage. That is a router-side, out-of-band mechanism, is not part of dev-team's flow, and is precisely what masked this defect on 2026-08-24T22:37Z; a fix that only holds when a router happens to be in the loop is rejected. AC-4 delivery split by commit zone: the docs/agents/dev-team/flow/main.md edit belongs to agent-father (docs/agents/ is agent-father's commit zone, and agent-father is OFF the DRS allowlist so it needs a manual/PO dispatch fold or a flow_actuator_fix signal); any scripts/lib/devteam-eligibility.jq or scripts/devteam-review-claim-secondary-drain.jq slice splits to a separate developer-owned row. AC-5 re-run scripts/devteam-eligibility-resolved-secondary-dispatch-target.test.sh green - it currently asserts the po-default behaviour as CORRECT, so if the chosen design changes that default the test must be updated in the same change, never left contradicting the shipped resolver.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/lib/devteam-eligibility.jq",
+          "scripts/devteam-review-claim-secondary-drain.jq",
+          "scripts/devteam-eligibility-resolved-secondary-dispatch-target.test.sh"
+        ],
+        "baseline_pass": false,
+        "related_to": [
+          "FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY",
+          "FIX-DONELANE-SECONDARY-DRAIN-BLIND-TO-ACTIVE-SPRINTS-NESTED-DONE-TASKS",
+          "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+          "FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS"
+        ],
+        "depends_on": [],
+        "discovered_by": "dev-team recurring-bug signal envelope 622c03db (2026-08-24T22:52:13Z), triaged by po at 2026-08-24T23:50Z"
       }
     ],
     "closed_sprints": [
@@ -24865,91 +24903,9 @@
         "last_served_tick": "2026-08-24T20:24:01Z"
       }
     },
-    "_updated_at": "2026-08-24T23:40:41Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "a59556f7612926c6aeb4b4d51089c511b6d91ca8fa3f8578b5a8a14b37d25766",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-24T23:07:38Z",
-        "drained_at": "2026-08-24T23:13:23Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "622c03db4291f8de42233ae4097604a594749f1ad79d16b0e0332c225285e84f",
-        "source": "file",
-        "from": "dev-team",
-        "to": "architect",
-        "type": "recurring-bug",
-        "priority": "HIGH",
-        "payload": {
-          "module": "docs/agents/dev-team/flow/main.md",
-          "sites": [
-            "Review-Lane SECONDARY-Drain (resolved_secondary_dispatch_target -> \"po\" when next_agent is null/empty/dev-team)",
-            "Step 1 - PO Triage (S3 dispatcher-wrap)"
-          ],
-          "mechanism": "SECONDARY-Drain claims task:<row-id> and spawns its resolved target. Its documented contract is 'ALWAYS falls through to Step 1 - PO Triage regardless of outcome - this lane NEVER JUMPs to end.' Step 1 then claims task:po-triage-<YYYYMMDD> and spawns po. When SECONDARY-Drain's resolver defaults to po (any status=REVIEW row with next_agent null/empty/dev-team), the two dispatches target the SAME agent under two lock keys that do not guard each other: task:<row-id> vs task:po-triage-<date>. Step 1's S3 outer_claim is the only PO dedup guard in the flow and it is blind to the SECONDARY-Drain spawn that just happened in the same tick.",
-          "observed": "tick cron:dev-team:2026-08-24T22:37Z. SECONDARY-Drain picked review[] row FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (status=REVIEW, next_agent=null) -> resolver default po -> spawned. Step 1 was then reachable: task:po-triage-20260824 was verified UNHELD via task_list_held(kind=sprint-task) at 22:52Z, so its S3 claim would have succeeded and spawned a second concurrent po. Second spawn was suppressed manually by an out-of-band intent:po:triage busy-guard (CLAUDE.md PRE-CLAIM Phase B), which is NOT part of this flow.",
-          "blast_radius": "Two concurrent PO sessions both writing docs/data/orch/orch-state.json. PO's triage-signals.md Step 0-SIG performs the pending_triage_inbox CLEAR (subtractive, declared via ORCH_APPLY_DECLARED_INBOX_TRIAGED) - two concurrent CLEARs over the same envelope set is a lost-update / double-triage hazard on a drain-to-zero queue.",
-          "frequency": "Every tick where SECONDARY-Drain picks a status=REVIEW row whose next_agent is null/empty/dev-team. 4 of the 15 currently-eligible review[] rows have next_agent=null, so this is a routine path, not an edge case.",
-          "related_rows_checked_not_duplicates": [
-            "FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY (readback lane narrowness - different defect)",
-            "FIX-DONELANE-SECONDARY-DRAIN-BLIND-TO-ACTIVE-SPRINTS-NESTED-DONE-TASKS (candidate-set breadth - different defect)"
-          ],
-          "suggested_direction": "Either (a) give Step 1's S3 wrap a same-tick guard that sees SECONDARY-Drain's resolved target, or (b) make SECONDARY-Drain JUMP TO end when its resolved target is po (Step 1 will dispatch po anyway on the next tick), or (c) unify both PO dispatches behind one stable intent key. Architect's call - do NOT assume (b)."
-        },
-        "createdAt": "2026-08-24T22:52:13Z",
-        "drained_at": "2026-08-24T23:13:23Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1271008743d87b88e47615f8005f79d7d8776a9af0390058161c45ee0bac844c",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "117",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-24T23:09:02Z",
-        "drained_at": "2026-08-24T23:13:23Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "780d175bf2b2371c9c85f54f4fdf4fd79b1ca39b388b78a41da459b453806b46",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": ".claude/skills/notebook-write/SKILL.md",
-          "line_count": 262,
-          "cap": 200,
-          "byte_count": 16499,
-          "byte_cap": 12000,
-          "class": "skill-file",
-          "reason": "byte-cap",
-          "overage": 62,
-          "byte_overage": 4499,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T23:30:59Z",
-        "drained_at": "2026-08-24T23:40:41Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-24T23:53:30Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,
