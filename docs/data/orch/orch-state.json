@@ -683,6 +683,48 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "auditor-cycle-missing:tier1:2026-08-25T12:00Z"
+      },
+      {
+        "id": "sys-20260825T121606-2ad8",
+        "ts": "2026-08-25T12:16:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover: 513 stale pending records (>72h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
+        "dedup_key": "stale_pending_bctc:bctc-discover:B-13"
+      },
+      {
+        "id": "sys-20260825T121719-3bf9",
+        "ts": "2026-08-25T12:17:19Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "summary": "auditor cycle lost tick=malformed-key — orphaned marker, mid-run death",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-loss:malformed-key"
+      },
+      {
+        "id": "sys-20260825T121722-545e",
+        "ts": "2026-08-25T12:17:22Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 3h (cadence 0.5h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier1:2026-08-25T12:00Z"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -16656,7 +16698,7 @@
         "blocked_reason": "PO 2026-07-15: DO NOT implement standalone. This row scoped as remove-the-release. Implemented alone it REGRESSES the 07-03 leak: chef.md claims the marker at Step 0.5 BEFORE the publish decision, so deleting the release makes every silent/no-post exit leave a marker asserting a publish that never happened — suppressing the next legit dish for up to 28h on single-fire slots. Folded into UC-CCA-P3 (P0 umbrella) which fixes claim-timing + release-immunity together. Root cause CONFIRMED user-visible 2026-07-15 (MARKET ids 932+933) after this row sat in BACKLOG 13d since its own 07-02 2x sighting — starvation, not unknown-cause.",
         "priority": "P1",
         "owner": "po",
-        "updated_at": "2026-08-23T13:38:01Z",
+        "updated_at": "2026-08-25T12:16:43Z",
         "updated_by": "pm",
         "po_unblock_20260806T0824": "UNBLOCKED (was BLOCKED, no owner, no next_agent, no note since mint). Reason: this row's defect stopped being theoretical today. PO verified via task_list_held at 08:22Z and 08:24Z that NO published:chef-evening:2026-08-06 marker is held, ~2h after the 06:37:39Z dish published on that exact key with a declared 28h TTL (chef.md:99, MARKER_TTL=100800). The marker was therefore released post-publish -- which is verbatim what this row's title says chef.md's cleanup does -- and the consequence lands tonight: the 19:45Z fire will re-publish on a key that should still be occupied. PO has ruled that tonight's re-publish is DESIRABLE this once (see po_RULING_tonight_1945Z_fire_20260806T0824 on FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR: the 06:37Z dish was degraded and mislabelled) -- that ruling is a one-off content judgement and does NOT excuse the mechanism. SEQUENCING: architect should treat this as the same marker-lifecycle decision as FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (ready[]/P0/architect) and UC-CCA-P3 (the 'one marker-gate skill, publish-state-conditioned immunity' umbrella) -- three rows, one lifecycle, and fixing key-derivation while leaving the release bug in place just moves the double-publish to a different key.",
         "architect_review_note": "2026-08-06T09:03Z architect (design brief, unified with sibling FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR per PO's explicit \"one lifecycle, one design\" ruling -- both designed together; this row's board fields updated, ANCHOR row left status-unchanged per this cycle's assigned scope with a light cross-ref note added there). Brief: docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md. CORRECTED FINDING: exhaustive grep across chef.md/spawn-fanout.md/cowork-boundary/dwf-ops-runbook.md finds ZERO code paths that call task_release on a published:* key today -- this row's title describes the pre-07-03 shape of the bug, not a live mechanism. The actual 08-05/06 release was a MANUAL PO action (06:53Z, per the sibling ANCHOR row's own note) made on a content-correctness judgment, not a delivery-evidence check. COMPONENT A (closes the retry-drift variant + ANCHOR AC1-3): cowork-catchup-predicate.js already computes scheduled_utc_time/expected_publish_task_id for catch-up candidates, unconsumed by chef.md's Step 0.5 (which still calls `date -u` at execution time, live or retry). Gap found: live on-time matches do not expose the equivalent field either (cowork-match-slots.js computes nominalTick internally today only for drift_min) -- so TASK-COWORK-CATCHUP-3 (READY/developer, already fully designed, handoff exists) wiring catch-up alone would still leave live and catch-up fires deriving keys two different ways. Designed: expose scheduled_utc_time on live MATCHES too (same field name, zero new computation), append scheduled_utc=<ISO8601> to the trigger_prompt built ONCE in spawn-fanout.md Step 5 (benefits every guaranteed slot, not chef alone, per ANCHOR AC5), chef.md Step 0.5 parses it the same way it already parses slot=<slot_id>, falls back to `date -u` only on a genuine ad-hoc invocation. COMPONENT B (closes this row's actual title): new Published Marker Release Gate in spawn-fanout.md -- ANY task_release on published:* (human or automated) must first pass a delivery-evidence check (task_list_held + absence of the synthesis artifact + absence of a matching MARKET message) or is REFUSED and escalated instead of freed; under this gate the 08-06 manual release would have been refused (the artifact existed) and correctly routed as a content/relabeling problem instead of a mutex problem. UC-CCA-P3 (claim-timing) is unchanged/orthogonal -- all three still ship together per PO's sequencing. Files: scripts/agents-flow/cowork-match-slots.js, docs/agents/cowork-team/flow/match-slots.md + spawn-fanout.md, docs/agents/unified-agent/flow/chef.md, docs/protocols/dwf-ops-runbook.md. Zone cross-service/ (multi). BUILD-STANDARD: not-applicable.",
@@ -16665,7 +16707,10 @@
           "TASK-CHEF-MARKER-RELEASE-GATE"
         ],
         "pm_decomposition_complete": true,
-        "pm_closeout_note": "CLOSED AS DECOMPOSED, NOT AS DELIVERED — pm 2026-08-23. All of this row's remaining scope is delegated to children[]; the umbrella itself has no residual work and is_epic_wrapper() already made it non-dispatchable, so leaving it in ready[] only re-routed it to pm every manual-dispatch sweep (the defect this closeout ends). Delivery is tracked on the children, NOT here — do not read this DONE as 'the underlying defect is fixed'. Children: TASK-CHEF-MARKER-RELEASE-GATE."
+        "pm_closeout_note": "CLOSED AS DECOMPOSED, NOT AS DELIVERED — pm 2026-08-23. All of this row's remaining scope is delegated to children[]; the umbrella itself has no residual work and is_epic_wrapper() already made it non-dispatchable, so leaving it in ready[] only re-routed it to pm every manual-dispatch sweep (the defect this closeout ends). Delivery is tracked on the children, NOT here — do not read this DONE as 'the underlying defect is fixed'. Children: TASK-CHEF-MARKER-RELEASE-GATE.",
+        "secondary_claimed_at": "2026-08-25T12:16:42Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-USDVND-THRESHOLD-SSOT",

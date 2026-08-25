@@ -1,14 +1,14 @@
 {
-  "written_at": "2026-08-25T07:51:51Z",
-  "fire_tick": "2026-08-25T07:30Z",
-  "verdict": "ALL_GREEN",
-  "detail": "all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents) — acknowledged-degraded (suppressed — open backlog fix-task tracks it): vn-market-intelligence-mcp-rag-service-1(93.90%)  — expected-disabled (deliberately disabled by user policy, self-expiring, no tracked_by/staleness): com.vn-market.fleet-push(disabled-by-plist) ",
+  "written_at": "2026-08-25T12:10:41Z",
+  "fire_tick": "2026-08-25T12:00Z",
+  "verdict": "FAILURE",
+  "detail": "mem_creep: mem >= 85% threshold (A-30 WARN boundary, mem-creep gate): vn-market-intelligence-mcp-pdf-extractor-1(90.72%) ; ",
   "checks": {
     "docker_ps": "PASS",
     "health_3000": "PASS",
     "health_3001": "PASS",
     "disk": "PASS",
-    "mem_creep": "PASS",
+    "mem_creep": "FAIL",
     "launchd_agents": "PASS"
   }
 }
