@@ -154,65 +154,6 @@
         }
       },
       {
-        "id": "sys-20260824T125005-a30-pdf",
-        "ts": "2026-08-24T12:50:05Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "memory_pressure_transient",
-        "summary": "pdf-extractor A-30: transient memory pressure 96.95% from concurrent OCR tests, not unbounded leak",
-        "severity": "INFO",
-        "status": "triaged",
-        "payload_ref": null,
-        "payload": {
-          "container": "vn-market-intelligence-mcp-pdf-extractor-1",
-          "finding": "A-30 pre-gate threshold exceeded (96.95%), multi-probe discriminator confirms benign",
-          "discrimination": "(b) Transient load from concurrent test run, NOT (a) genuine unbounded leak",
-          "evidence": "10-sample A-30 deep-probe window shows healthy GC sawtooth (94%→99% peak→70% reclaim), 4 reclamation dips, stable VmHWM, dev-pdf-extractor pytest active",
-          "expected_outcome": "Memory pressure will recede when test suite completes"
-        },
-        "dedup_key": "auditor-a30-transient-pdf-extractor-ocr-load-20260824",
-        "triaged_at": "2026-08-24T13:16:43Z",
-        "triaged_by": "po",
-        "disposition": "REFUTED-AND-TRACKED",
-        "related": [],
-        "rerouted_from": "ops",
-        "rerouted_at": "2026-08-24T13:16:43Z",
-        "rerouted_by": "po/triage-20260824T1310Z",
-        "reroute_reason": "to=ops is structurally undeliverable: ops has no signal_queue selector anywhere in the fleet (grep over docs/agents/ops/ and .claude/agents/ops.md = 0 hits) and ops is absent from system-map.json's cowork_signal_recipient set. Rerouted to po, which has a live selector, so the payload is readable rather than immortal-and-unpickable. Structural fix tracked at FIX-SIGNALQUEUE-TO-OPS-HAS-NO-CONSUMER-PRODUCERS-KEEP-ROUTING-THERE. Status deliberately NOT flipped to READ here: READ is in TERMINAL_SIGNAL_STATUSES and would cold-evict the payload in 24h.",
-        "po_triage_20260824T1310Z": "DISPOSITION REFUTED, not accepted. This signal concludes 'transient memory pressure from concurrent OCR tests, NOT unbounded leak' and offers as evidence a healthy GC sawtooth, 4 reclamation dips and a stable VmHWM. Every one of those reads is inside the blind spot PO documented 5.5 HOURS EARLIER at 07:22Z: kernel dmesg shows TWO real CONSTRAINT_MEMCG OOM kills of pdf-extractor python3 WORKER processes on 2026-08-23 at 14:27:11Z and 14:58:52Z (anon-rss ~2.37 and ~2.35 GiB against the 2.5 GiB cap). Docker sets .State.OOMKilled=true only for the container MAIN pid, so a killed CHILD leaves OOMKilled=false, ExitCode=0, RestartCount=0 and VmHWM unmoved — the discriminator cannot see the kills it is being used to rule out. The mem_creep FAILURE on this container is a TRUE POSITIVE. This does not make the auditor wrong to file the signal; it makes the 'benign' verdict unsupported by the instruments cited. Tracked at FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (burst root cause) and FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK (spawn churn, verdict stays RED by AC-3). No ack was granted; PO has now refused a pdf-extractor acked_memory entry four times."
-      },
-      {
-        "id": "sys-20260824T125127-cap-pdf",
-        "ts": "2026-08-24T12:51:27Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "container_capacity_pressure",
-        "summary": "pdf-extractor capacity: 97% peak (2.424GiB / 2.5GiB) — only 76MiB headroom under concurrent load",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "payload": {
-          "container": "vn-market-intelligence-mcp-pdf-extractor-1",
-          "peak_usage": "2.424GiB",
-          "cap": "2.5GiB",
-          "peak_percentage": 96.95,
-          "headroom_mib": 76,
-          "incident_lineage": "ops 2026-08-23 rebuild (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE); previous image also peaked at 99.99% against same 2.5GiB cap",
-          "risk": "Concurrent OCR tests + /extract requests + OCR gateway errors brought container to 97% ceiling; same concurrent mix during ops incident suggests pre-existing thin headroom, not new regression",
-          "note": "Concurrent test run successfully triggered GC and recovered to 76.75% in 5 min. Thin headroom remains a capacity risk for burst workloads. Ops incident AC-9 noted A-30 refutation 'REFUTED, not confirmed', so open question whether post-rebuild memory behavior improves over pre-fix."
-        },
-        "dedup_key": "auditor-capacity-pdf-extractor-thin-headroom-76mib",
-        "triaged_at": "2026-08-24T13:16:43Z",
-        "triaged_by": "po",
-        "disposition": "ACCEPTED-TRACKED",
-        "related": [],
-        "rerouted_from": "ops",
-        "rerouted_at": "2026-08-24T13:16:43Z",
-        "rerouted_by": "po/triage-20260824T1310Z",
-        "reroute_reason": "to=ops is structurally undeliverable: ops has no signal_queue selector anywhere in the fleet (grep over docs/agents/ops/ and .claude/agents/ops.md = 0 hits) and ops is absent from system-map.json's cowork_signal_recipient set. Rerouted to po, which has a live selector, so the payload is readable rather than immortal-and-unpickable. Structural fix tracked at FIX-SIGNALQUEUE-TO-OPS-HAS-NO-CONSUMER-PRODUCERS-KEEP-ROUTING-THERE. Status deliberately NOT flipped to READ here: READ is in TERMINAL_SIGNAL_STATUSES and would cold-evict the payload in 24h.",
-        "po_triage_20260824T1310Z": "ACCEPTED. 97% peak / 76MiB headroom against the 2.5GiB cap is consistent with PO's own dmesg evidence of two real worker OOM kills on 2026-08-23, and this signal's own caution that the A-30 refutation was 'REFUTED, not confirmed' is correct. Folded into FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM; no new row. Standing refusals unchanged: do NOT raise the 2.5GiB cap (live per-container caps already sum to ~13.5GiB against 7.75GiB of host RAM, and raising it would move that row's AC-4 percent-of-cap goalpost, which is metric-masking), and do NOT add pdf-extractor to acked_memory[]. Note for the ops restart now unblocked on FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH: a restart reclaims this burst, so post-restart memory will look better; that is reclamation, not a fix."
-      },
-      {
         "id": "sys-20260824T135127-56bd",
         "ts": "2026-08-24T13:51:27Z",
         "from": "system-auditor",
@@ -16386,6 +16327,36 @@
           "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC"
         ],
         "po_boundary_20260825T1245Z": "BOUNDARY, set at mint time +15min after a second envelope landed on the same producer/consumer pair. There are TWO independent starvation paths between news-scout and alert-commander and they must not be folded into each other. (1) THIS ROW — TEMPORAL: producer cadence 4h > agent_signals TTL 2h, so for ~2h of every producer period no news-scout signal can be inside the consumer's 2h window at all. (2) DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING and its child DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC — ORDERING: on a tick that spawns both in the same second, the consumer reads the bus before the co-producer writes to it. Hard instance 2026-08-25T12:06:55Z, consumer saw id 11394 while the producer wrote 11395-11398 (full record on T4). Fixing the cadence does nothing for the same-tick race, and the recheck guard does nothing for the 2h blind stretch. AC-3's sweep over docs/data/system-map.json should report BOTH axes per pair."
+      },
+      {
+        "id": "FIX-EVENING-GLOBALSNAPSHOT-ZERO-GUARD-DROPS-HANGSENG-ONLY-ROW",
+        "type": "FIX",
+        "title": "Evening summary global-snapshot zero-guard omits hang_seng, so a hang_seng-only commodity_prices row is dropped as absent while the morning briefing surfaces it",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "depends": [],
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-25T13:08:27Z",
+        "created_by": "po/triage-20260825T1251Z",
+        "updated_at": "2026-08-25T13:08:27Z",
+        "updated_by": "po/triage-20260825T1251Z",
+        "dedup_key": "eveningsummary_globalsnapshot:hangseng_zero_guard_parity",
+        "source": "qa signal qa-20260825T082357 (type preserved_bug_no_tracking_row), drained to PO inbox 2026-08-25T12:44:23Z. Survived an independent 27-agent adversarial audit that REFUTED most of its sibling signals; this one was re-verified at source by PO before minting.",
+        "evidence": "Read both files raw 2026-08-25T13:0xZ. apps/mcp-server/src/application/usecases/briefing/queryGlobalSnapshot.ts:32 guards `if (cpRow && (cpRow.vix !== 0 || cpRow.dxy !== 0 || cpRow.sp500 !== 0 || cpRow.hang_seng !== 0))`. apps/mcp-server/src/application/usecases/eveningSummary/queryGlobalSnapshotStep.ts:33 guards `if (gsRow && (gsRow.vix !== 0 || gsRow.dxy !== 0 || gsRow.sp500 !== 0))` — the `hang_seng` disjunct is ABSENT. Both then return hangSeng in the result object (evening line 38, briefing line 37), so the field is wanted; it is only the absence test that ignores it. Net effect: a commodity_prices row with vix/dxy/sp500 all 0 but a real hang_seng is treated as absent data by the evening summary and silently omitted, while the morning briefing publishes it. NOT covered by any existing row: grepped every task_board lane for hang_seng/hangSeng/queryGlobalSnapshot (zero hits) and docs/data/orch/archive/ (one hit, FACTORY-APP-split-assembleEveningSummary, DONE_VERIFIED — the refactor that EXTRACTED this file).",
+        "ac": [
+          "AC-1 READ THE HEADER BEFORE PATCHING — this is the load-bearing unknown. queryGlobalSnapshotStep.ts lines 7-12 state the evening query is 'deliberately NOT the same query as morning briefing's usecases/briefing/queryGlobalSnapshot.ts' and that its behavior was 'preserved verbatim from the pre-split assembleEveningSummary.ts' (FACTORY-APP-split-assembleEveningSummary, DONE_VERIFIED). That note justifies TWO named differences — `ORDER BY fetched_at DESC` vs unordered LIMIT 1, and the prev-* delta fields — and says NOTHING about the zero-guard. Confirm from git history of assembleEveningSummary.ts whether the missing hang_seng disjunct was an intentional product choice or an unnoticed asymmetry that the split faithfully carried over. If intentional, close this row as a documentation fix (state it in the header) and do NOT change behavior.",
+          "AC-2 If AC-1 finds it unintentional, add the single disjunct `|| gsRow.hang_seng !== 0` at queryGlobalSnapshotStep.ts:33 for parity with briefing:32. No other change — do NOT also align the ORDER BY or add prev-* fields; those differences ARE documented as deliberate and are out of scope.",
+          "AC-3 MEASURE REAL-WORLD FREQUENCY AGAINST THE LIVE DB, NOT THE HOST DECOY. Count commodity_prices rows where vix=0 AND dxy=0 AND sp500=0 AND hang_seng<>0. The host-side ./data/market.db is a GITIGNORED DECOY and reading it produces false counts — this exact trap produced a false CRITICAL in the same signal batch this row came from (see FIX-AUDITOR-C01-DAILY-OHLCV-MEASURES-STALE-HOST-DB-DECOY-FALSE-CRITICAL). Query through the runtime/named volume and state which path you read. A zero count does not invalidate the fix but must be reported.",
+          "AC-4 Update the module header note so the next reader can tell which query differences are deliberate and which were defects."
+        ],
+        "verification_gate": "(a) Paste the git-history finding from AC-1 verbatim — 'probably unintentional' is a fail. (b) Show both guard lines side by side post-change. (c) State the AC-3 count AND the exact db path/mechanism used to read it. (d) Read-only on effects: no Telegram publish from any test run.",
+        "po_not_a_duplicate": "Dedup done by SUBJECT, not id token, across every task_board lane plus docs/data/orch/archive/. Zero board hits for hang_seng/hangSeng/queryGlobalSnapshot. The single archive hit is FACTORY-APP-split-assembleEveningSummary (DONE_VERIFIED) — that row EXTRACTED this function and explicitly preserved its behavior verbatim, so it is the row that CARRIED the defect forward, not one that fixes it.",
+        "po_triage_note_20260825T1303Z": "Minted at P2/LOW deliberately. This was the ONLY survivor of the 8 signals drained into the PO inbox at 12:44:23Z: an independent adversarial audit refuted the code-janitor dead-writer claim, showed the '513 stale pending' count was read from the wrong database (already owned by FIX-AUDITOR-C01-DAILY-OHLCV-MEASURES-STALE-HOST-DB-DECOY-FALSE-CRITICAL), and found the tier-2 auditor oracle-soundness premise false with four covering rows already existing. Nothing was minted on those premises."
       }
     ],
     "closed_sprints": [
