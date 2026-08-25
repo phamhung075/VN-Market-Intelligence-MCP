@@ -18663,6 +18663,82 @@
         }
       },
       "router_terminal_shape_repair_20260825T1726Z": "ops wrote .head only and left this row in in_progress[] with status IN_PROGRESS / next_agent=ops — the recurring stranded-in_progress defect. Router moved the lane and reset .head in this single orch-apply write."
+    },
+    {
+      "id": "FIX-NOTEBOOKAUTOPRUNE-GREPC-DOUBLE-EMIT-WRITES-MALFORMED-SIGNAL-JSON",
+      "type": "FIX",
+      "size": "S",
+      "priority": "P1",
+      "status": "DONE_VERIFIED",
+      "zone": "cross-service/",
+      "owner": "developer",
+      "created_at": "2026-08-23T10:17:06Z",
+      "created_by": "po/triage-20260823T1017Z",
+      "updated_at": "2026-08-25T20:26:59Z",
+      "baseline_pass": true,
+      "dedup_checked": true,
+      "dedup_key": "notebook-auto-prune-grep-c-or-echo-0-double-emit",
+      "files": [
+        "scripts/agents-flow/notebook-auto-prune.sh"
+      ],
+      "title": "notebook-auto-prune.sh emits structurally malformed signal JSON whenever a section count is zero — `grep -c ... || echo 0` double-emits at 5 sites, and both currently-malformed files in the signal inbox come from this one bug",
+      "desc": "REPRODUCED DIRECTLY THIS TICK, not inferred. The idiom `VAR=\"$(... | grep -c PATTERN 2>/dev/null || echo 0)\"` is wrong for `grep -c`: on zero matches grep -c PRINTS its own `0` to stdout AND exits 1, so the `|| echo 0` fallback also fires and the capture becomes the two-line string \"0\\n0\". Verified by direct repro: `X=$(grep -c NOMATCH file || echo 0); echo \"[$X]\"` yields `[0` / `0]`. When that value is interpolated into the emitted signal JSON the document is corrupted. LIVE WIRE EVIDENCE: docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-22T232534Z.json line 13 reads `\"sentinel_section_count\": 0` and line 14 is a bare `0,`. `jq .` on that file fails with `parse error: Expected separator between values at line 14, column 2`. AFFECTED SITES (all in scripts/agents-flow/notebook-auto-prune.sh): 477 SECTION_COUNT, 518 SECTION_COUNT, 574 NON_SENTINEL_SECTION_COUNT, 575 SENTINEL_SECTION_COUNT, 601 TIE_COUNT. BLAST RADIUS MEASURED: scanning every docs/signals/*.json this tick, exactly 2 files are invalid JSON and BOTH are notebook-prune-dropped-newest-* files from this writer — i.e. 100% of the signal inbox's malformed-JSON population is produced by this one defect. Those files never reach isDrainableShape() at all, so they are permanently undrainable and invisible to the drain path's own accounting.",
+      "acceptance": [
+        "AC-1: All 5 sites corrected so a zero count yields the single character `0`. `grep -c` already prints 0 on no-match, so the `|| echo 0` fallback is redundant for the no-match case; it is only needed for a genuine grep ERROR (exit 2). Preferred shape: `VAR=\"$(... | grep -c PATTERN 2>/dev/null)\" || VAR=0` — capture first, default only on non-zero exit, then normalize.",
+        "AC-2: Regression test that drives the zero-match path on each of the 5 sites and asserts the emitted signal file parses under `jq .`. Asserting the variable equals \"0\" is NOT sufficient — the observable defect is malformed JSON on disk.",
+        "AC-3: The 2 existing malformed files in docs/signals/ are repaired or removed as part of this fix, and a rerun of the full-inbox scan (`for f in docs/signals/*.json; do jq . \"$f\" >/dev/null || echo INVALID; done`) reports zero invalid files.",
+        "AC-4: Negative control — a NON-zero section count still emits valid JSON with the correct number, proving the fix did not simply hardcode 0."
+      ],
+      "non_goals": [
+        "Do NOT touch scripts/agents-flow/drain-signals.js, isDrainableShape(), isByPathConsumerFamilies(), or the price_anomaly_* files — all owned by FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER and its brief, which deliberately scoped this writer OUT.",
+        "Do not widen the prune logic itself; this is a quoting/exit-code defect only."
+      ],
+      "status_note": "MINTED by po 2026-08-23T10:17:06Z. Flagged by the router during the signal-inbox architect run and deliberately left out of scope by that brief (§3.4/§1) as a separate live writer defect — this row is where it lands. Routed straight to developer with a self-sufficient desc/AC block (no architect hop): the diagnosis is complete, the repro is in hand, the fix is a 5-line quoting correction, and per docs/agents/dev-team/flow/execute-tier.md:123 the direct-execute path is legitimate when the row's own note carries the spec. It does.\n\n[po/triage-2026-08-23T21:08:06Z — FOLD, envelope bd05e417 from dev-team] LIVE VICTIM FILE NAMED, and it confirms this row's diagnosis exactly. dev-team escalated this as a recurring-bug with action_required=mint_fix_task; PO dedup-checked the non-terminal lanes and it resolves onto THIS row, so no new row was minted. The artefact: docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json (1170B) fails JSON.parse at position 581 — a bare '0,' token sits on its own line immediately after \"sentinel_section_count\": 0. That is precisely this row's `grep -c ... || echo` double-emit signature: the zero-count path writes the number twice, so the second copy lands where the next field NAME should be. drain-signals.js logs 'SKIP unparseable' and the file stays resident in docs/signals/ forever. WHY THIS RAISES THE STAKES BEYOND HYGIENE: the malformed signal's own stated purpose is 'this signal exists so the drop is never silent'. A malformed emitter makes the drop exactly silent — notebook-auto-prune proceeds, potentially dropping the NEWEST dated section, and no consumer ever learns. Detection was written and then defeated by its own serializer. SCOPE FENCE from the reporter, preserve it: this is DISTINCT from FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (the drop-RANKING defect the signal was trying to report, already tracked, occurrence 5). This row is the emitter producing invalid JSON; that row is which section gets dropped. Residue cleanup for the stranded file is tracked at CLEAN-SIGNALS-STRANDED-STATE-SWEEP-FILES-PERMANENT-DRAIN-LITTER.\n[QA] Review Record (direct-commit verify): verify-committed PASS (PARTIAL on AC-2 test-coverage breadth). Fix landed on sibling commit 73d4ce10993dbe9dabd8a2a54240218655823410 (task FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE), independently re-verified: ancestry confirmed on main, diff touches all 5 named sites (587/588, 630/631, 699/700, 701/702, 751/752), re-derived via git log (only/most-recent commit touching the file since the fold). AC-1 PASS: all 5 sites now capture-then-default-on-empty, zero 'grep -c ... || echo' executable statements remain (3 comment-only hits). AC-2 PARTIAL: shipped regression T15 drives the NON_SENTINEL/SENTINEL_SECTION_COUNT zero-path end-to-end and asserts jq-parseability + sentinel_section_count==0 (the exact bar AC-2 sets) — reproduced FAIL-before/PASS-after myself against an isolated fixture built from parent commit 091c1242318 (script+libs copied to scratch, live tree untouched, sha256-verified unchanged); the other 4 sites got the identical textual fix (structurally verified) but have no dedicated 5-site JSON-emission harness. AC-3 PASS: full live docs/signals/*.json rescan = 51/51 valid (0 invalid); the 4 specific victim files named in this row's status_note now sit in docs/signals/processed/ with valid sentinel_section_count:0, proving they cleared isDrainableShape() and actually drained (not merely repaired-but-stuck). AC-4 PASS: negative control confirmed at the idiom level (non-zero match still emits correct count, not hardcoded 0). Full test suite 15/15 pass on live tree; DDD/security/mock-guard N/A (shell script, no production source match). Verdict: APPROVE with AC-2 gap noted, non-blocking (functional bar met via the one JSON-emitting call site; breadth gap is cosmetic given identical textual fix at the other 4).",
+      "updated_by": "po (triage-20260825T1700Z)",
+      "po_fold_20260824T1310Z": "FOLD of pending_triage_inbox entry 1 (recurring-bug from dev-team, drained 2026-08-24T13:10Z) — SAME defect, no new row minted. Envelope adds a concrete live artifact: docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json (1170B) fails JSON.parse at position 581, a bare '0,' token on its own line right after \"sentinel_section_count\": 0 — exactly this row's `grep -c ... || echo 0` double-emit. drain-signals.js reports 'SKIP unparseable' and the file stays resident in docs/signals/ forever. Impact statement worth carrying into the fix: the signal's own stated purpose is 'this signal exists so the drop is never silent', and a malformed emitter makes the drop exactly silent.",
+      "dispatch_lane": "qa",
+      "po_lane_move_20260825T1700Z": "BACKLOG -> REVIEW BY PO. The fix LANDED, incidentally, under a different row's commit: 73d4ce109 (2026-08-24T23:40:24Z, developer, filed against FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE) replaced the `grep -c ... 2>/dev/null || echo 0` idiom with `grep -c ... 2>/dev/null` followed by `[ -z \"$VAR\" ] && VAR=0` at ALL FIVE sites this row names. Verified at source by PO this tick, not inferred: scripts/agents-flow/notebook-auto-prune.sh lines 587/588 SECTION_COUNT, 630/631 SECTION_COUNT, 699/700 NON_SENTINEL_SECTION_COUNT, 701/702 SENTINEL_SECTION_COUNT, 751/752 TIE_COUNT. `grep -n 'grep -c.*|| echo' ` now matches only 3 explanatory comment lines (584, 629, 691) and zero executable statements. Moved to review[] with next_agent=qa rather than closed by PO — PO does not self-verify code.",
+      "po_qa_focus_20260825T1700Z": "AC-1 confirm the 5 sites above. AC-2 confirm the emitted JSON is now parseable in the field: post-fix emissions parse (docs/signals/processed/notebook-prune-dropped-newest-docs-agent-memory-notebooks-tran-ngoc-bau-md-2026-08-25T120747Z.json and ...163137Z.json both `jq .` clean), while every pre-fix corpse does not. AC-3 the blast-radius claim in this row's desc is REPRODUCIBLE and was re-measured this tick: scanning all 54 docs/signals/*.json, exactly 4 files are invalid JSON and 100% of them are notebook-prune-dropped-newest-* emitted 2026-08-24T20:41:39Z..22:32:31Z, i.e. inside the pre-fix window (fix at 2026-08-24T23:40:24Z). All 4 fail identically at line 14 with a bare `0,` after `\"sentinel_section_count\": 0`. PO REPAIRED those 4 files in place this tick (deleted the stray line only; no other byte touched) — same disposition a prior PO tick used on the 2026-08-22 pair, see scripts/po-triage-20260823T1157-widen-umbrella-scope-preflight.jq. They will drain normally on the next tick and fold onto the notebook-cap rows. NO QUARANTINE MACHINERY IS NEEDED and none should be built: drain-signals.js:229 deliberately leaves unparseable files in place and warns every tick, and its contract explicitly says 'removed at source' — triage is the sanctioned remover.",
+      "claimed_at": "2026-08-25T20:21:26Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-25T20:26:58Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat/diff + isolated pre/post-fix fixture repro of shipped T15 + full test suite + full docs/signals inbox rescan",
+          "args": "commit=73d4ce10993dbe9dabd8a2a54240218655823410; files=scripts/agents-flow/notebook-auto-prune.sh; fixture_parent=091c1242318d8be8c773c4f4ce4710bdf1c9132d",
+          "live_value_observed": "ancestor=yes; diff touches all 5 sites; T15 FAIL(pre-fix, malformed JSON)/PASS(post-fix, valid JSON sentinel_section_count=0); suite 15/15 pass; live inbox 51/51 valid JSON; 4 named victim files present in docs/signals/processed/ with sentinel_section_count:0",
+          "observed_at": "2026-08-25T20:26:58Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
+      "title": "notebook-auto-prune charges the ENTIRE byte-cap overage to dated journal sections: rolling headings (## Archive, ## Known patterns) carry the MAX sentinel key so they can never be the drop candidate, yet they contribute their full bytes to the overage — every breach is paid for by deleting real cycle history while the actual bloat is retained",
+      "type": "FIX",
+      "priority": "P0",
+      "size": "S",
+      "zone": "cross-service/",
+      "status": "DONE_VERIFIED",
+      "commit": "73d4ce109,bd0d47bed",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
+      "updated_at": "2026-08-25T20:31:51Z",
+      "updated_by": "po (triage-20260825T1700Z)",
+      "owner": "developer",
+      "po_unstrand_20260825T1700Z": "UN-STRANDED BY PO. This P0 sat in review[] with owner=null AND next_agent=null since 2026-08-24T23:45:23Z — the hot row resolved only via docs/data/orch/archive/backlog-detail.json's stale next_agent=developer, which routes a SHIPPED row back to the agent that shipped it (SECONDARY-Drain loop). Implementation is landed: commit 73d4ce109 + bd0d47bed, developer, 2026-08-24T23:44:49Z. Set next_agent=qa so the Review-Lane QA-Drain owns the sign-off. QA EVIDENCE THAT ARRIVED THIS TICK, unprompted and live: 4 notebook_undroppable_remainder_over_cap_breach envelopes reached the PO durable inbox at 2026-08-25T16:30:04Z and 16:31:36Z (docs/agent-memory/notebooks/ba.md x2, digest-predict.md x2), action_required=manual_split_to_archive. That signal type did not exist before this commit — it is AC-1..AC-4's measurement-plane output firing on iteration 1 exactly as designed, on real files, instead of the old wasteful post-virtual-drop AC-5 cardinality trap. VERIFY ALSO (same commit, second defect it closed): all 5 `grep -c ... || echo 0` sites are now `grep -c ... 2>/dev/null` + `[ -z ] && VAR=0` — lines 587/588, 630/631, 699/700, 701/702, 751/752 of scripts/agents-flow/notebook-auto-prune.sh. PO re-read those 10 lines at source this tick; zero `grep -c ... || echo` sites remain in executable code (the 3 residual matches are explanatory comments at 584, 629, 691). ONE OPEN ITEM THIS COMMIT DID NOT CLOSE, do not fold it in: the emitter still never validates its own output (no `jq . \"$sig_file\"` after the heredoc, and the heredoc is `|| true`), so a malformed write stays indistinguishable from success — owned separately by FIX-NOTEBOOK-PRUNE-AC6-SIGNAL-HEREDOC-EMITS-UNPARSEABLE-JSON-UNDRAINABLE-FOREVER (backlog).",
+      "claimed_at": "2026-08-25T20:21:26Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-25T20:31:51Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bash notebook-auto-prune.test.sh + notebook-compose.test.sh + notebook-linecap-sweep.test.sh + shellcheck + sandboxed re-run of committed hook against copies of 4 real notebooks",
+          "args": "commit=73d4ce109,bd0d47bed; files=scripts/agents-flow/notebook-auto-prune.sh,.claude/skills/notebook-write/SKILL.md,scripts/agents-flow/notebook-auto-prune.test.sh,docs/agent-memory/notebooks/developer.md",
+          "live_value_observed": "ancestor=yes both commits; stat touches claimed files; notebook-auto-prune.test.sh 15/15 pass; notebook-compose.test.sh 9/9 pass; notebook-linecap-sweep.test.sh 11/11 pass; shellcheck 3/3 pre-existing info warnings unchanged (0 new); sandbox repro on ba.md/digest-predict.md/tran-ngoc-bau.md/dev-pdf-extractor.md copies: live files sha256-unchanged, honest signal fired on rolling-heavy files with true original counts, identical drop-oldest behavior pre/post on pure-dated files",
+          "observed_at": "2026-08-25T20:31:51Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify (73d4ce109,bd0d47bed): PASS all ACs. Re-executed (not narrated) notebook-auto-prune.test.sh 15/15, notebook-compose.test.sh 9/9, notebook-linecap-sweep.test.sh 11/11; bash -n clean; shellcheck same 3 pre-existing info warnings (0 new). Independently reproduced AC-1..AC-4 in an isolated sandbox against COPIES of 4 real live notebooks (ba.md, digest-predict.md, tran-ngoc-bau.md, dev-pdf-extractor.md -- the file this row cites as previously damaged): live files sha256-verified untouched throughout; retained sections byte-identical pre/post; pre-fix-vs-post-fix output identical on pure-dated files (AC-2 no regression), and post-fix fires the new honest notebook_undroppable_remainder_over_cap_breach with TRUE original counts on rolling-heavy files where pre-fix falls through to the pre-existing misleading no-valid-drop-candidate signal (AC-1). Also verified all 5 grep-c call sites (587,630,699,701,751) fixed, SKILL.md doc updated accurately, decision journal present at sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md:45. Noted non-blocking: SKILL.md pre-existing 15807B cap overage (unrelated debt, developer flagged)."
     }
   ],
   "closed_sprints": [
@@ -30404,6 +30480,58 @@
       "triaged_at": "2026-08-24T14:05:00Z",
       "triaged_by": "po",
       "triage_note": "Tier-2 cycle-missing detector row. Triaged 2026-08-24T14:05Z: the cycle's two claimed anomalies did not survive source verification (A-29 cluster = market-hours stand-down, A-29b = known name-join gap, both already owned). This row is ALSO the concrete instance of the V1 null-tag defect - it carries audit_cycle_tag:null, which is why V1's independent re-read returned 0 for a row that is present and committed. Filed as FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO."
+    },
+    {
+      "id": "ntg-20260824T203614Z-technical_indicators-VNM-82a3ee",
+      "ts": "2026-08-24T20:36:14Z",
+      "from": "po",
+      "to": "po",
+      "type": "narrative_contradiction",
+      "summary": "CCATO: po claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null,
+      "payload": {
+        "agent_id": "po",
+        "claim": "VNM chưa có dữ liệu chỉ báo kỹ thuật.",
+        "tool": "get_technical_indicators",
+        "ticker": "VNM",
+        "probe_ticker": "VNM",
+        "returned_value": "VNM | NEUTRAL | 64.19588114427316 | 63240 | 61430 | 58863 | {\"value\":1298.8652570497725,\"signal\":1124.2055028494524,\"histogram\":174.6597542003201} | {\"upper\":64434.06391410036,\"middle\":61430,\"lower\":58425.93608589964}",
+        "cycle": "2026-08-24",
+        "gate_version": "1"
+      }
+    },
+    {
+      "id": "ntg-20260824T203331Z-macro-macro-17a1b6",
+      "ts": "2026-08-24T20:33:31Z",
+      "from": "tran-ngoc-bau",
+      "to": "po",
+      "type": "narrative_contradiction",
+      "summary": "CCATO: tran-ngoc-bau claimed absence of macro data for macro but get_macro_snapshot returned non-null data",
+      "severity": "MED",
+      "status": "READ",
+      "payload": {
+        "agent_id": "tran-ngoc-bau",
+        "claim": "Chu kỳ EOD 2026-08-24: dữ liệu lạm phát (CPI) và dự trữ ngoại hối (VIRA) không có dữ liệu trong chu kỳ này.",
+        "tool": "get_macro_snapshot",
+        "ticker": "macro",
+        "probe_ticker": "VIRA",
+        "returned_value": "2 | [Macro Snapshot] Status: ok Vn Index: 1788.78 Oil Usd: 92.02 Gold Usd: 4710.40 Usd Vnd: 25980 Data Source: live [Signals] [Investment Clock] Tier: VN_DIRECT Score: 8 Phase: CORE_VN [Oil] Impact: NEUTRAL Price USD: 92",
+        "cycle": "2026-08-24",
+        "gate_version": "1"
+      }
+    },
+    {
+      "id": "tra-20260824T203342",
+      "ts": "2026-08-24T20:33:42Z",
+      "from": "tran-ngoc-bau",
+      "to": "po",
+      "type": "audit-handoff",
+      "summary": "Overall: NEEDS_ATTENTION (chef-morning stuck + L5 false-gap-claim, both corroborated not remint)",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/handoffs/tnb-audit-latest.md"
     }
   ],
   "backlog_detail": [],
