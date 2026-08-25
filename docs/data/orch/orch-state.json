@@ -16484,35 +16484,6 @@
         "po_triage_note_20260825T1303Z": "Minted at P2/LOW deliberately. This was the ONLY survivor of the 8 signals drained into the PO inbox at 12:44:23Z: an independent adversarial audit refuted the code-janitor dead-writer claim, showed the '513 stale pending' count was read from the wrong database (already owned by FIX-AUDITOR-C01-DAILY-OHLCV-MEASURES-STALE-HOST-DB-DECOY-FALSE-CRITICAL), and found the tier-2 auditor oracle-soundness premise false with four covering rows already existing. Nothing was minted on those premises."
       },
       {
-        "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "apps/pdf-extractor/",
-        "owner": "po",
-        "next_agent": "dev-pdf-extractor",
-        "created_at": "2026-08-25T13:45:50Z",
-        "created_by": "po/triage-20260825T1345Z",
-        "updated_at": "2026-08-25T13:58:10Z",
-        "updated_by": "po",
-        "dedup_key": "pdfx-ocr:tesseract-confidence-mean-over-nonempty-rows",
-        "files": [
-          "apps/pdf-extractor/infrastructure/ocr_backends.py"
-        ],
-        "title": "TesseractVieBackend reports confidence as mean(conf) over ONLY the rows it managed to recognise, so a page it almost entirely MISSED self-reports high confidence — this is why AutoFallbackOcrBackend's 0.5 threshold never fires and `auto` mode is byte-identical to tesseract-vie on 30/30 units",
-        "root_cause": "apps/pdf-extractor/infrastructure/ocr_backends.py, TesseractVieBackend.recognize_text(): `valid_rows = data[(data['conf'] > 0) & (data['text'].str.strip() != '')]` then `mean_conf = float(valid_rows['conf'].mean()) / 100.0`. The denominator is the SUCCESSFULLY-RECOGNISED rows, not the rows that should have been recognised. A page where tesseract picks up three header words at conf 92 and loses all forty data rows therefore returns 0.92 — indistinguishable from a clean full-page read. Recall is invisible to the score by construction; only precision-on-what-was-found is measured. PO re-derived this at source 2026-08-25, independent of the reporting specialist.",
-        "evidence": "Measured by dev-pdf-extractor on FPT Q4 2025 (report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65, 46 pages), 4 real sentinel extractions in ephemeral `docker compose run --rm` containers, zero code changes, every result verified by direct readonly bun:sqlite row counts against market.db (NOT push-handler echo). OCR_TEXT_BACKEND=auto produced output BYTE-IDENTICAL to tesseract-vie on all 30/30 table units INCLUDING page 9 — the rescue never fired even once. Page 9 (quarterly income statement) is the proof case: tesseract extracted headers plus a stray '178%' and lost 100% of the revenue/profit figures, while PaddleOCR on the same page returned the full row correctly. So a genuine catastrophic per-page miss exists, a working rescue backend exists, and the confidence signal is the ONLY thing standing between them.",
-        "ac": "(AC-1) Confidence must fall on a near-total page miss. Build a discriminator that accounts for what was NOT recognised — candidates to evaluate and choose between explicitly: recognised-area / table-region-area coverage ratio; recognised row count vs the row count the layout detector found in the same region; mean(conf) weighted by character count with a floor for empty regions. Do not simply lower the 0.5 threshold — that trades one arbitrary constant for another and is an automatic rejection. (AC-2) POSITIVE CONTROL, mandatory and non-substitutable: re-run FPT Q4 2025 page 9 under OCR_TEXT_BACKEND=auto and show the rescue FIRES and the revenue/profit figures land. A unit test on synthetic input does not satisfy this. (AC-3) NEGATIVE CONTROL: re-run the other 29 units under auto and show the rescue does NOT fire on any of them — a discriminator that rescues everything reintroduces PaddleOCR's diacritic regression fleet-wide (see PO ruling in docs/agent-memory/decisions/triage-20260825T1345Z-po.md) and is a rejection. (AC-4) Report the auto-mode wall-clock and peak ru_maxrss for the corrected run; the table phase must stay under the 2.5 GiB per-container cap with the same headroom tesseract-vie has today (peak 1543 MiB, ~60%).",
-        "status_note": "PO RULING 2026-08-25: this row — not a backend swap — is the correct response to the standing 'improve BCTC extraction quality' goal. PaddleOCR adoption was measured and REJECTED (it strips Vietnamese diacritics on nearly every word, runs 1.8x slower, and peaks at 2790 MiB against a 2560 MiB cap). PaddleOCR's single genuine win was page 9, and `auto` already has the mechanism to capture exactly that win without paying the diacritic regression — it is only the confidence signal that is broken. Full ruling + method + what would reopen the backend question: docs/agent-memory/decisions/triage-20260825T1345Z-po.md.",
-        "dedup_checked": "2026-08-25T13:40Z via scripts/po-board-dedup-search.sh over NON-TERMINAL lanes and --all-lanes for /TesseractVie|AutoFallback|confidence.*heuristic|mean.*conf/ and /paddle|PaddleOCR|tesseract|OCR/ and /PEK-IMPL-OCR|ocr.?backend|OCR_BACKEND/. No row on any lane covers the confidence heuristic or the backend-selection question. Nearest neighbours read and rejected: PERF-PEK-PER-PAGE-LATENCY (throughput, not quality), FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE (refine-stage diacritic collapse downstream of OCR), FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY (a different extractor's pytesseract call sites).",
-        "related": [
-          "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
-          "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE"
-        ],
-        "baseline_pass": null
-      },
-      {
         "id": "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
         "type": "FIX",
         "size": "M",
@@ -16753,6 +16724,35 @@
           "FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP"
         ],
         "baseline_pass": null
+      },
+      {
+        "id": "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION",
+        "type": "OPS",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "apps/pdf-extractor/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "created_at": "2026-08-25T15:24:03Z",
+        "created_by": "po/triage-20260825T1524Z",
+        "updated_at": "2026-08-25T15:25:49Z",
+        "updated_by": "po",
+        "depends_on": [
+          "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
+        ],
+        "dedup_key": "pdfx-ops:redeploy-debt-lang-vi-d584d4db2",
+        "title": "d584d4db2 (PaddleOCR text-path lang=en -> vi) is committed on main but INERT in production — vn-market-intelligence-mcp-pdf-extractor-1 was never rebuilt; only ephemeral benchmark containers ran the fixed image",
+        "detail": "Deployment debt only; nothing is broken today. The default text backend is tesseract-vie (OCR_TEXT_BACKEND unset) and the paddleocr path is not the default, so the running pre-fix image serves identical output. The debt is that the running image now lags main on apps/pdf-extractor/ and the divergence compounds silently — exactly the accumulation failure documented on FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (alert-engine: four behaviourally-null commits hid a fifth REAL behaviour change that never executed in production).",
+        "sequencing": "HARD-BLOCKED on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT and this is NOT a formality. That row's own non_goals forbid rebuilding or restarting pdf-extractor because its AC-7 passive longitudinal sampler needs >=12h of cgroup counters, and every memory.* counter resets on container recreation. Rebuilding before AC-7/AC-8 close would destroy that measurement window. Do the sampler first, close the sibling, THEN redeploy.",
+        "market_hours_guard": "pdf-extractor must never be rebuilt or exercised during VN market open, 02:00-08:59 UTC on weekdays.",
+        "acceptance": "AC-1 rebuild pdf-extractor from main HEAD, SINGLE service only, and verify by IMAGE ID that d584d4db2 is an ancestor of the deployed git_sha. AC-2 confirm OCR_TEXT_BACKEND is still unset in the deployed environment, i.e. the default text backend remains tesseract-vie and this redeploy changes no default behaviour. AC-3 no peer container restarted (compare every peer's StartedAt before/after).",
+        "dedup_checked": "po 2026-08-25T15:20Z across all task_board lanes for (pdfx|pdf-extractor) AND (deploy|rebuild|redeploy). Existing rows read and rejected as different subjects: UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT (malloc_trim AC-3 deploy, already DISCHARGED, now MEASURE-ONLY and explicitly forbids a rebuild — recorded as this row's blocker, not its duplicate); FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH (label key bug, not a deploy); FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (the systemic gate defect this is an INSTANCE of — cross-linked only; that row is at 14,205 prose bytes, already over the 12,000 ceiling, so appending an occurrence there would hard-reject at Stage 2.5).",
+        "related": [
+          "OCR-PADDLE-VI-LANG-FIX-AND-REBENCH",
+          "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT",
+          "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER"
+        ]
       }
     ],
     "closed_sprints": [
@@ -17429,6 +17429,39 @@
           "FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA"
         ],
         "updated_by": "pm (decompose)"
+      },
+      {
+        "id": "OCR-PADDLE-VI-LANG-FIX-AND-REBENCH",
+        "type": "FIX",
+        "size": "S",
+        "status": "DONE",
+        "priority": "P1",
+        "zone": "apps/pdf-extractor/",
+        "owner": "dev-pdf-extractor",
+        "created_at": "2026-08-25T15:24:03Z",
+        "created_by": "po/triage-20260825T1524Z (retroactive)",
+        "updated_at": "2026-08-25T15:25:49Z",
+        "updated_by": "po",
+        "closed_at": "2026-08-25T15:24:03Z",
+        "dedup_key": "pdfx-ocr:paddle-lang-vi-fix-and-backend-rebench",
+        "title": "PaddleOCR text-path ran lang=\"en\" (no Vietnamese rec dict), which invalidated the first OCR-backend benchmark; fixed to lang=\"vi\", re-benchmarked on a VALID configuration, and the tesseract->PaddleOCR swap was REJECTED on cap-headroom AND quality, either disqualifying alone",
+        "retroactive_mint_reason": "This work was dispatched by the router on the standing 'improve BCTC extraction quality' goal using lock id OCR-PADDLE-VI-LANG-FIX-AND-REBENCH, which never had a board row behind it — the system-auditor's RAW-CITE gate correctly dropped the citation (0 grep hits under docs/). Minted retroactively into a TERMINAL lane so the id resolves; this row is a record, never a dispatch target. Router process gap, closed here.",
+        "commits": [
+          "d584d4db2181d34b3abb938cb5e5d3ecf78547fe — fix(pdf-extractor): PaddleOCR text-path lang=en -> vi (ocr_adapter.py, ocr_worker.py; pek_engine_adapter.py:410 was already vi)",
+          "9d6ee40f6496143781889471eef071d82ce56bc5 — chore(scripts): persist the OCR backend re-benchmark harness (scripts/audits/ocr-backend-bench.sh + ocr_bench_inner.py)",
+          "1b341403176019cbe42c177d5f43313bddf0dc2d — chore(memory/dev-pdf-extractor): notebook 2026-08-25 OCR-PADDLE-VI-LANG-FIX-AND-REBENCH"
+        ],
+        "measurement": "SECOND benchmark, VALID (lang=\"vi\"), FPT Q4 2025 report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65, 46 pages, ephemeral `docker compose run --rm --no-deps` containers, every result read back by direct readonly bun:sqlite against market.db bctc_layout_units (NOT push-handler echo; count held at 46 across all 3 runs). tesseract-vie: table-phase wall 174.5s, cgroup peak 1631.6 MiB (63.7% of the 2,684,354,560 B cap), 0 hard-limit hits. paddleocr(vi): 414.5s (2.4x), 2684.4 MiB (100%, PINNED at memory.max), 1444 hard-limit hits. auto: 117.2s, 1302.4 MiB (50.9%), 0 hits. Memory is quoted from cgroup memory.current/memory.peak, never ru_maxrss — ru_maxrss double-counts because TesseractVieBackend forks the tesseract binary per cell off an already ~1.5 GiB-resident Python parent.",
+        "ruling": "SWAP REJECTED, on two INDEPENDENT grounds either of which disqualifies alone. (1) CAP HEADROOM: paddleocr(vi) pinned at memory.max with 1444 hard-limit hits — the kernel reclaimed rather than killed, so exit 0 proves nothing about fit. (2) QUALITY: diacritics are still garbled (\"Tai san co dinh\" where tesseract returns the correctly-toned \"Tai san co dinh\"). Root cause read out of the INSTALLED paddleocr==2.10.0 source: \"vi\" is bucketed into a generic \"latin\" rec model shared by 30+ languages — there is NO dedicated Vietnamese recogniser. That is a LIBRARY LIMITATION, not a config bug, so unlike the en->vi fix it is not a one-line change. OCR_TEXT_BACKEND stays unset (default tesseract-vie), unchanged in compose/env. DO NOT REOPEN without a new upstream Vietnamese rec model or a per-page-scoped invocation that does not carry the fleet-wide diacritic cost.",
+        "do_not_cite": "`auto` beating pure tesseract on wall time (117.2s vs 174.5s) is cache/ordering noise, NOT a speedup — auto reproduced tesseract byte-for-byte on all 30/30 table units, i.e. it performed identical work. Never cite it as a performance win.",
+        "carry_forward": "PaddleOCR(vi) DID recover page 9's real revenue/profit figures that tesseract loses ENTIRELY. The correct architecture is therefore NOT replacement but `auto` — tesseract for the ~99% it renders correctly, PaddleOCR as a per-page RESCUE. That rescue never fires today. The blocker is the confidence signal, tracked on FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS, which is the REAL lever on the user's standing goal.",
+        "deployment_gap": "The lang=\"vi\" fix is committed but INERT in production: vn-market-intelligence-mcp-pdf-extractor-1 was NOT rebuilt/redeployed (only ephemeral benchmark containers ran the new image). Low urgency because the default text backend is unchanged and the paddleocr path is not the default. Tracked as OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION.",
+        "dedup_checked": "po 2026-08-25T15:20Z, by SUBJECT not keyword, across task_board.archive[]/closed_sprints[]/done[]/done_verified[] AND the cold archives docs/data/orch/archive/{2026-06,2026-07,2026-08,backlog-detail}.json. Nearest neighbours read and REJECTED as different subjects: FIX-ERRAUDIT-W1-PEK-P0 (PaddleOCR LOAD failure/crash, not lang config), FACTORY-PDF-paddleocr-score-07-mask (cell score default 0.7), FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (worker concurrency), FACTORY-PDF-extract-tesseract-config (DPI/config constant extraction). No archived row covers the lang=en->vi fix or the backend-selection question.",
+        "related": [
+          "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
+          "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION",
+          "PERF-PEK-PER-PAGE-LATENCY"
+        ]
       }
     ],
     "done_verified": [
@@ -19429,6 +19462,41 @@
       "note": "Re-collapsed 3rd time (router, post FIX-SBV-FETCHER-ZERO-VALUE-EMIT verify) — see feedback_orchstate_dual_head_keys_toplevel_authoritative.md. Do not write routing fields here; DeprecatedHeadStubSchema.passthrough() lets them through Zod silently."
     },
     "ready": [
+      {
+        "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "apps/pdf-extractor/",
+        "owner": "dev-pdf-extractor",
+        "next_agent": "dev-pdf-extractor",
+        "created_at": "2026-08-25T13:45:50Z",
+        "created_by": "po/triage-20260825T1345Z",
+        "updated_at": "2026-08-25T15:25:49Z",
+        "updated_by": "po (ruling-20260825T1524Z)",
+        "dedup_key": "pdfx-ocr:tesseract-confidence-mean-over-nonempty-rows",
+        "files": [
+          "apps/pdf-extractor/infrastructure/ocr_backends.py"
+        ],
+        "title": "TesseractVieBackend reports confidence as mean(conf) over ONLY the rows it managed to recognise, so a page it almost entirely MISSED self-reports high confidence — this is why AutoFallbackOcrBackend's 0.5 threshold never fires and `auto` mode is byte-identical to tesseract-vie on 30/30 units",
+        "root_cause": "apps/pdf-extractor/infrastructure/ocr_backends.py, TesseractVieBackend.recognize_text(): `valid_rows = data[(data['conf'] > 0) & (data['text'].str.strip() != '')]` then `mean_conf = float(valid_rows['conf'].mean()) / 100.0`. The denominator is the SUCCESSFULLY-RECOGNISED rows, not the rows that should have been recognised. A page where tesseract picks up three header words at conf 92 and loses all forty data rows therefore returns 0.92 — indistinguishable from a clean full-page read. Recall is invisible to the score by construction; only precision-on-what-was-found is measured. PO re-derived this at source 2026-08-25, independent of the reporting specialist.",
+        "evidence": "Measured by dev-pdf-extractor on FPT Q4 2025 (report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65, 46 pages), 4 real sentinel extractions in ephemeral `docker compose run --rm` containers, zero code changes, every result verified by direct readonly bun:sqlite row counts against market.db (NOT push-handler echo). OCR_TEXT_BACKEND=auto produced output BYTE-IDENTICAL to tesseract-vie on all 30/30 table units INCLUDING page 9 — the rescue never fired even once. Page 9 (quarterly income statement) is the proof case: tesseract extracted headers plus a stray '178%' and lost 100% of the revenue/profit figures, while PaddleOCR on the same page returned the full row correctly. So a genuine catastrophic per-page miss exists, a working rescue backend exists, and the confidence signal is the ONLY thing standing between them.",
+        "ac": "(AC-1) Confidence must fall on a near-total page miss. Build a discriminator that accounts for what was NOT recognised — candidates to evaluate and choose between explicitly: recognised-area / table-region-area coverage ratio; recognised row count vs the row count the layout detector found in the same region; mean(conf) weighted by character count with a floor for empty regions. Do not simply lower the 0.5 threshold — that trades one arbitrary constant for another and is an automatic rejection. (AC-2) POSITIVE CONTROL, mandatory and non-substitutable: re-run FPT Q4 2025 page 9 under OCR_TEXT_BACKEND=auto and show the rescue FIRES and the revenue/profit figures land. A unit test on synthetic input does not satisfy this. (AC-3) NEGATIVE CONTROL: re-run the other 29 units under auto and show the rescue does NOT fire on any of them — a discriminator that rescues everything reintroduces PaddleOCR's diacritic regression fleet-wide (see PO ruling in docs/agent-memory/decisions/triage-20260825T1345Z-po.md) and is a rejection. (AC-4) Report the auto-mode wall-clock and peak ru_maxrss for the corrected run; the table phase must stay under the 2.5 GiB per-container cap with the same headroom tesseract-vie has today (peak 1543 MiB, ~60%).",
+        "status_note": "PO RULING 2026-08-25T15:24Z — SUPERSEDES the 13:45Z status_note, whose PaddleOCR numbers came from the RETRACTED first benchmark (that run used lang=\"en\"; its \"1.8x slower / 2790 MiB vs 2560 MiB cap\" figures are VOID — do not quote them). The swap verdict is UNCHANGED and now rests on a VALID lang=\"vi\" re-benchmark: paddleocr(vi) 414.5s (2.4x tesseract's 174.5s), cgroup peak 2684.4 MiB = 100% of cap, PINNED at memory.max with 1444 hard-limit hits; diacritics still garbled because paddleocr==2.10.0 maps \"vi\" into a generic 30-language \"latin\" rec bucket with no dedicated Vietnamese model — a library limitation, not a config bug. THE BACKEND QUESTION IS CLOSED; do not re-litigate it on this row. What stays open, and what this row is FOR: PaddleOCR(vi) recovers page 9's revenue/profit figures that tesseract loses entirely, so `auto` (tesseract default, PaddleOCR as per-page rescue) is the correct architecture and the ONLY thing blocking it is this confidence defect. Re-confirmed on the second benchmark: auto was byte-identical to tesseract on all 30/30 units, page 9 included. Full ruling: docs/agent-memory/decisions/triage-20260825T1524Z-po.md (supersedes triage-20260825T1345Z-po.md).",
+        "dedup_checked": "2026-08-25T13:40Z via scripts/po-board-dedup-search.sh over NON-TERMINAL lanes and --all-lanes for /TesseractVie|AutoFallback|confidence.*heuristic|mean.*conf/ and /paddle|PaddleOCR|tesseract|OCR/ and /PEK-IMPL-OCR|ocr.?backend|OCR_BACKEND/. No row on any lane covers the confidence heuristic or the backend-selection question. Nearest neighbours read and rejected: PERF-PEK-PER-PAGE-LATENCY (throughput, not quality), FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE (refine-stage diacritic collapse downstream of OCR), FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY (a different extractor's pytesseract call sites).",
+        "related": [
+          "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
+          "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE"
+        ],
+        "baseline_pass": null,
+        "promoted_at": "2026-08-25T15:24:03Z",
+        "promoted_by": "po (ruling-20260825T1524Z)",
+        "po_expedited_at": "2026-08-25T15:24:03Z",
+        "po_priority_ruling_20260825T1524Z": "HELD AT P1, EXPEDITED VIA THE INCIDENT LANE — deliberate, not an oversight. P0 was considered and REJECTED: there is no live outage or crash here, and inflating a quality defect into the P0 band devalues the 6 genuine P0s already in ready[]. Instead this row carries po_expedited_at, which routes it through the Incident-Lane Consumer (scripts/devteam-backlog-claim-incident-lane-consumer.jq) — an UNCONDITIONAL every-tick site with INCIDENT_CAP=2 that is entirely independent of the shared WIP<=2 slot. Measured live at mint time: ZERO other ready[] rows carry po_expedited_at and incident_wip_in_progress = 0, so this row is candidate #1 of 1 in that lane. It is ALSO placed at ready[0] so the fallback Ready-Lane Consumer path (sorts by [priority_rank, array index]) ranks it 1st of 91 in the rank-1 band instead of last. NOTE the rank-1 band is 91 rows, not 69: priority_rank collapses \"high\" (21 rows) and \"P1\" (69 rows) into the same rank.",
+        "po_ac4_baseline_correction_20260825T1524Z": "AC-4's tesseract baseline of \"peak 1543 MiB, ~60%\" was measured on the retracted first run. The VALID second benchmark measures tesseract-vie at 1631.6 MiB = 63.7% of the 2,684,354,560 B cap with 0 hard-limit hits. Hold the corrected run to THAT, and quote cgroup memory.current/memory.peak — never ru_maxrss, which double-counts on this service because TesseractVieBackend forks the tesseract binary per cell off an already ~1.5 GiB-resident Python parent.",
+        "po_zone_probe_correction_20260825T1524Z": "A router probe reported task_zone=null on this row and flagged it as an unspawnable-head risk. FALSE POSITIVE, verified: `task_zone` is not a field of this schema — 0 of 837 board rows carry it and the string appears nowhere under scripts/ or apps/. The real field is `zone`, which has been correctly set to \"apps/pdf-extractor/\" since mint. No zone fix was needed or made."
+      },
       {
         "id": "FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN",
         "type": "FIX",
@@ -23153,8 +23221,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-25T13:45:50Z",
-    "last_triaged_by": "po/triage-20260825T1345Z",
+    "last_triaged_at": "2026-08-25T15:24:03Z",
+    "last_triaged_by": "po",
     "in_progress": []
   },
   "_meta": {
