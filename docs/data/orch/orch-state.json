@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T14:20:58Z",
+    "_updated_at": "2026-08-25T14:26:45Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -696,6 +696,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-25T14:00Z",
         "dedup_key": "pdf_extractor_memory_pressure_investigation:A-30"
+      },
+      {
+        "id": "rtr-20260825T1428-prunedefer",
+        "ts": "2026-08-25T14:26:45Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "The STANDING INSTRUCTION deferring 0a-D signal_queue prune indefinitely rests on two premises that no longer hold: the cited live-probe row is gone from the hot queue (consumed into a DONE_VERIFIED fix), and the 73-row 'triaged' vocabulary fragmentation is fully resolved (live census is now NEW/READ only, zero triaged, zero RETRACTED). Asking PO to re-rule, not asserting the contract is settled.",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router-tick-verification",
+        "dedup_key": "premise_staleness:FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT:prune-deferral-standing-instruction",
+        "detail": "SOURCE: backlog row FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, field po_ruling_signalqueue_prune_deferral_20260721T1811 — 'STANDING INSTRUCTION: 0a-D stays deferred until this row status contract is settled ... When this row closes, the prune is unblocked automatically.' Its stated justification is that pruning 'would destroy the evidence cowork-team warned about', naming signal row po-20260720T052606, described in the sibling field po_fold_from_spike_20260721T1811 as 'LIVE PROBE - DO NOT TIDY ... deliberately held at NEW as the only reproducing instance; mark it READ only as the verified OUTPUT of a confirmed fix.' PREMISE 1 FALSIFIED: po-20260720T052606 is absent from .signal_queue.rows[] and now lives in docs/data/orch/archive/2026-08.json at signal_rows[23] with status='triaged' (never READ), to='unified-agent'. It was NOT lost silently — the same archive records done_tasks[256] = FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE, status DONE_VERIFIED, origin_signal_id='po-20260720T052606'. So the probe was consumed and produced a shipped, QA-verified fix; whether that satisfies 'the verified OUTPUT of a confirmed fix' is PO's call, not the router's. Note its status was 'triaged', which the documented PRUNE predicate (READ/RESOLVED/SUPERSEDED) does not match — so whatever moved it to cold archive was NOT the standard predicate; that path is unidentified and may be worth its own look. PREMISE 2 FALSIFIED: field po_vocabulary_evidence records a census of '73 rows status=triaged, 9 status=NEW, 1 status=RETRACTED' and calls the 73 'structurally unprunable ... a permanently growing hot-file cost with no eviction path.' Live census this tick: {NEW:1, READ:33} — zero triaged, zero RETRACTED. The fragmentation the row was partly minted to fix is gone. STILL TRUE, DO NOT DISTURB: the contract row itself remains open and correctly gated — it is supervised+plan_only, and its effective depends (key is 'depends', not 'depends_on') names FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT, which sits in ready[] at status READY, not DONE_VERIFIED. The 14:07Z SLS turn correctly declined to promote it on exactly that gate, honouring the po_ordering_ruling 'LANDS SECOND'. ROUTER ACTION THIS TICK: 0a-D-PRUNE was evaluated, found 0 rows older than 24h, and orch-cold-evict.sh was NOT invoked — so nothing was evicted and the deferral was not violated either way. ASK: re-rule on whether the standing deferral should continue. As written it is unbounded and self-perpetuating (it releases only when a row closes that is itself gated on a second open row), and its two cited evidentiary reasons are now spent."
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
