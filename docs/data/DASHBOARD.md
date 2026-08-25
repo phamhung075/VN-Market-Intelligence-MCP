@@ -2374,3 +2374,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · vps_route_no_coverage: muasamcong
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** VPS route muasamcong
+**Details:** no mapping in get_vps_proxy_health or get_vps_service_health
+**Impact:** route health cannot be independently verified
+**Root cause:** structural coverage gap (standing)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:01Z (signal sys-20260825T224109-40e2, system-auditor -> po, dedup_key=vps_route_no_coverage:muasamcong:B-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
