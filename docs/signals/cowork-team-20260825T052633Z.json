@@ -1,0 +1,82 @@
+{
+  "id": "cowork-team-20260825T052633Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "microservice_degraded",
+  "priority": "P0",
+  "status": "NEW",
+  "ts": "2026-08-25T05:26:33Z",
+  "dedup_key": "mcpserver-container-hung-0516Z-fleetwide-mcp-outage-plus-mcpcall-failover-is-gateway-not-vnmarket",
+  "subject": "05:15Z tick ABORTED: mcp-server container hung at 05:16:16Z (fleet-wide MCP outage) — and the diagnosis took 6 probes because mcp_call's failover URL is the GATEWAY, not vn-market, and it masks the real error",
+  "payload": {
+    "TICK_OUTCOME": {
+      "tick": "2026-08-25T05:15Z",
+      "verdict": "ERROR",
+      "drift_min": 3,
+      "action_taken": "ABORTED — did NOT run preflight-error-fallback.md",
+      "why_fallback_was_not_run": "Every step of that chain (0a drain, 0b presence, 0b.2 election, 4.6 claims, 4.7 snapshot, 4.8 emit, 6 release) requires MCP. Transport is hard-down on every path. Running it would have produced a cascade of undefined states and half-written locks, not a dispatch.",
+      "election_lock": "cron:cowork:2026-08-25T05:15Z — NO claim landed (both URLs failed before reaching the server). UNVERIFIABLE while transport is down, but leader-lock TTL is 600s so it self-expires by ~05:28Z either way. No manual cleanup needed or possible.",
+      "slots_lost": {
+        "chef-morning": "cron '15 5 * * 1-5' — due EXACTLY at this tick (2026-08-25 is Tuesday, dow=2). guaranteed:true. last_fired 2026-08-24T05:17:39Z.",
+        "alert-commander-market": "cron '*/15 2-8 * * 1-5' — due. last_fired 2026-08-25T05:05:19Z."
+      }
+    },
+    "FINDING_A_THE_OUTAGE": {
+      "what": "vn-market-intelligence-mcp-mcp-server-1 is Up 17 hours (unhealthy) — alive but hung. Every MCP path to vn-market is dead.",
+      "hung_at": "2026-08-25T05:16:16.453Z — last log line emitted, then TOTAL silence (docker logs --since 05:16:17Z returns nothing 8+ min later)",
+      "health": "FailingStreak 8 at 05:21:59Z, 10 by 05:23:24Z. Checks every ~40s, all 'Health check exceeded timeout (10s)'. First failure back-computes to ~05:17:09Z.",
+      "NOT_the_known_memory_signature": {
+        "mem": "503.8MiB / 3GiB = 16.4% — nowhere near pressure",
+        "cpu": "0.13% — idle, not spinning",
+        "RestartCount": 0,
+        "OOMKilled": false,
+        "ExitCode": 0,
+        "StartedAt": "2026-08-24T12:41:53Z (17h, never restarted)",
+        "conclusion": "This is a DEADLOCK / blocked event loop, not resource exhaustion. Do NOT triage it as A-30 memory pressure — every A-30 discriminator axis reads clean."
+      },
+      "last_log_line_before_silence": {
+        "line": "05:16:16.216Z level=error [push-prices] ASYNC: market_prices invisibility confirmed  count=107 visible_now=0",
+        "immediately_preceded_by": "05:16:14.725Z [push-prices] post-upsert verify inserted:107 visible:107 lag_ms:909  +  [push-prices] WAL checkpoint forced count:107",
+        "reading": "107 rows verified visible at write time, then 0 visible on the async re-check ~1.5s after a FORCED WAL checkpoint — and the process went silent immediately after logging it. Correlation is tight but causation is NOT established; I am flagging it as the last observable state, not naming it the cause.",
+        "related_prior_art": "project_mcp_server_write_wedge, feedback_same_db_tools_diverge_rowcount, feedback_integrity_helper_readonly_wal_blinded — same SQLite/WAL visibility family."
+      },
+      "blast_radius": "Fleet-wide. Every agent, every bash mcp_call, every cron preflight, both dispatchers. The gateway itself is HEALTHY (see Finding B proof) — only the downstream is dead."
+    },
+    "FINDING_B_STRUCTURAL_NEW_the_failover_URL_is_the_wrong_server": {
+      "claim": "scripts/agents-flow/mcp-call.sh's mcp_call() advertises 2-URL resilience: primary http://localhost:3000/mcp, failover https://zenmidi.com/vn-market/mcp. The failover is NOT vn-market. It is the GATEWAY. It cannot serve any vn-market tool, and never could.",
+      "proof_1_identity": "initialize against the failover URL returns instructions: 'This server is a gateway / proxy in front of m...' — that is the gateway's own instructions string, not vn-market's.",
+      "proof_2_tool_surface": "tools/call name=task_list_held on that URL -> {'code':-32602,'message':'unknown tool \"task_list_held\"'}. The gateway exposes only meta-tools (list_servers / list_server_tools / search_tools / call_tool).",
+      "proof_3_protocol": "It is STATEFUL — requires initialize -> notifications/initialized -> tools/call with the minted mcp-session-id. mcp_call() posts tools/call bare, by design ('POST to /mcp works STATELESS' per its own header comment).",
+      "the_irony": "mcp-call.sh's OWN header documents this exact error string as the signature of the stateful gateway endpoint, in a comment explaining why mcp_call_gateway_meta() had to be a separate function. The failover URL inside mcp_call() points at precisely the endpoint that comment warns about.",
+      "consequence": "The '2-URL failover' is 1 URL. Whenever localhost:3000 is down — i.e. exactly when failover is supposed to save you — there is no fallback at all. Affects every bash MCP caller fleet-wide: cowork-tick-preflight.sh, dev-team-tick-preflight.sh, coverage-stamp.sh, every agent's bash path.",
+      "NOT_a_URL_typo_to_hand_edit": "Do not 'fix' this by swapping in another host. The gateway CAN reach vn-market, but only through its call_tool wrapper with a full handshake — that is a different calling convention, not a different string. Any real fix is a code change with an owner, per CLAUDE.md's canonical-URL rule."
+    },
+    "FINDING_C_STRUCTURAL_NEW_the_error_reporting_hides_the_actual_fault": {
+      "what": "When URL1 fails at transport level and URL2 returns any 2xx, mcp_call() returns URL2's parse error and SILENTLY DISCARDS URL1's last_err.",
+      "mechanism": "In the for-url loop: URL1 curl_rc!=0 sets last_err then continues. URL2 gets HTTP 200, so the 2?? branch runs '_mcp_call_parse ...; return $?' — returning from INSIDE the loop. The final 'echo [mcp-call] ERROR: $last_err' after the loop is never reached.",
+      "observed_cost_today": "The preflight's detail field read 'fire-election claim transport error: ... method \"tools/call\" is invalid during session initialization'. That message is about an MCP HANDSHAKE. The actual fault was 'primary timed out after 10s, 0 bytes'. It took 6 separate probes to get from the reported error to the real one.",
+      "why_it_is_deterministic_not_flaky": "The gateway always answers 200 with that JSON-RPC error. So whenever the primary is down, the operator is ALWAYS shown the session-init red herring and NEVER shown the timeout. Not intermittent — structural.",
+      "remedy_shape": "Accumulate per-URL errors and surface all of them, or at minimum prepend last_err when a later URL also fails. One-line-ish, but it is a code change with an owner — filing, not touching."
+    },
+    "FINDING_D_EXPOSURE_guaranteed_slot_firer_has_no_MCP_health_precondition": {
+      "what": "launchd Layer C (com.vn-market.cowork-guaranteed-slot-firer, StartInterval=900) fired chef-morning INTO the dead environment.",
+      "evidence": "PID 93455, 'claude --dangerously-skip-permissions -p run docs/agents/unified-agent/flow/chef.md slot=chef-morning', ELAPSED 07:48 at 05:24:20Z -> started ~05:16:34Z — within ~20s of the server going silent.",
+      "current_state_measured_not_assumed": "STAT=S, 0.0% CPU — blocked, not spinning. Write surfaces UNTOUCHED: docs/agent-memory/notebooks/unified-agent.md mtime is still 2026-08-25T02:26:11Z (a previous cycle). Zero writes so far.",
+      "why_this_is_bounded_and_why_I_did_not_kill_it": "chef cannot publish (send_telegram needs MCP) and cannot claim or leak a published marker (task_claim needs MCP). So the documented fabrication/marker-leak failure modes are transport-gated shut. Killing it would be an intervention with no upside over letting it block and exit.",
+      "the_real_residual_risk": "If chef's no-MCP path degrades to narrating rather than exiting, it could still write a notebook entry or synthesis file describing a morning dish that was never produced — which then pollutes fb-market-poster and tran-ngoc-bau downstream. Worth a readback next tick. Related: feedback_chef_fabricated_publish, feedback_chef_leaks_published_marker_on_silent_exit.",
+      "structural_gap": "Layer C has no liveness precondition on the thing every one of its agents depends on. It will keep firing guaranteed slots into a dead MCP every 900s for as long as the outage lasts."
+    },
+    "DISCRIMINATOR_THAT_SETTLED_IT": {
+      "test": "Through the gateway session: list_servers (gateway-local, no downstream hop) vs call_tool -> vn-market/task_list_held (requires the downstream).",
+      "list_servers": "ANSWERED INSTANTLY — {'servers':[{'name':'vn-market','cached_tool_count':184,'tools_cached':true,'transport':'sse'}]}",
+      "call_tool": "TIMED OUT at 25s, 0 bytes",
+      "conclusion": "Gateway healthy, TLS bridge healthy, canonical URL correct. The fault is 100% the vn-market downstream container. This rules out the entire 'gateway 502 / stale /etc/hosts / repoint the URL' family of prior incidents — do NOT go there."
+    },
+    "WHAT_I_DID_NOT_DO_and_why": {
+      "no_container_restart": "Router-only — never implement. A rebuild/restart is ops work with real destructive precedent (feedback_rebuild_recreate_destroys_peers, feedback_vm_rebuild_destroys_named_volumes). PO holds autonomous authority for deploy/rebuild (feedback_po_deploy_rebuild_full_autonomy_no_user_gate); this row is the handoff.",
+      "no_agent_spawn": "Session instruction in force: do not call the Agent tool unless the user requested it. Also, the cowork dispatcher must never spawn dev-team agents (ops/po included).",
+      "no_URL_edit": "CLAUDE.md forbids repointing the canonical gateway URL as an outage workaround, and Finding B is a calling-convention defect, not a string typo."
+    },
+    "RECOMMENDED_NEXT": "Restart vn-market-intelligence-mcp-mcp-server-1 (single service only — never docker compose down/up, per feedback_rebuild_recreate_destroys_peers). Capture a stack/heap dump BEFORE the restart if the deadlock is to be root-caused, because a restart destroys the only evidence. Then mint rows for Findings B, C, D — all three are live regardless of this outage."
+  }
+}
