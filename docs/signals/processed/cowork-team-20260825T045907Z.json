@@ -61,5 +61,11 @@
       "kinhdich_price_contradiction": "c246 makes it SEVEN consecutive alert-commander cycles: DBC BAN 100%, VIC GIU 81% against rallies. Still no gate covers it, still unfiled as a task.",
       "snapshot_naming": "unchanged from the 04:45Z filing -- writer raw-minute / reader-SPEC round-5 / reader-ACTUAL raw-minute / promoter nominal-quarter; 36 of 46 names unreachable by spec."
     }
+  },
+  "_processed": {
+    "fingerprint": "fe0aeef21048b57b3711023bcc9be483a1d13256af21736ecfc7c5d2dc6e8ceb",
+    "processedAt": "2026-08-25T05:09:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

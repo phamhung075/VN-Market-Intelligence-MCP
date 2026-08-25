@@ -25,5 +25,11 @@
       "frozen_latest": "cycle-snapshot-latest.json still frozen at tick 00:00 / 2026-08-23T00:09:29Z, serving stale context to anything that reads it instead of a per-tick file.",
       "chef_offspec_writes": "docs/agent-memory/notebooks/chef-intraday.md + docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json still untracked. Deliberately NOT committed — tracking them would enshrine an off-surface path. Needs a canonical-path ruling first."
     }
+  },
+  "_processed": {
+    "fingerprint": "5db09bfb0e45d6a0645ecae326248b150d3256d36f62cea47563cf613b6a476e",
+    "processedAt": "2026-08-25T05:09:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

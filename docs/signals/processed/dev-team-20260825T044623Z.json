@@ -113,5 +113,11 @@
     ],
     "related_open_row": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (backlog[], P1, undispatched) is the same two-plane class on the DRS side.",
     "router_note": "Router does not author task rows. Filed as a signal for PO/architect triage."
+  },
+  "_processed": {
+    "fingerprint": "5b27270be3f16fa71a047950c2d966b63edca950fc57aa22b05834ce33337168",
+    "processedAt": "2026-08-25T05:09:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

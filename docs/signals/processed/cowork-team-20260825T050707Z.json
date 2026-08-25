@@ -69,5 +69,11 @@
       "chef_0413Z": "filed at 04:59Z -- cycle wrote both artifacts to undeclared paths, canonical unified-agent.md has no entry for it, dish reported SENT.",
       "kinhdich": "seven consecutive alert-commander cycles of DBC BAN 100% / VIC GIU 81% against rallies; no gate, no task row."
     }
+  },
+  "_processed": {
+    "fingerprint": "6eb5dd9fd6a15b8bea09661214f0b098c5268773e652d9773af1a7da6592dd04",
+    "processedAt": "2026-08-25T05:09:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

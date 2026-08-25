@@ -43,5 +43,11 @@
       "blocked_rows": "FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS (P1, next_agent dev-mcp-server) and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, next_agent developer) — BOTH still dispatch_lane:null, so DRS cannot pick either. Every agent cycle now ends in a failed push."
     },
     "side_observation_not_a_claim": "docs/data/ holds 47 cycle-snapshot files. Today's are 16131-16564 B; yesterday's are 3068-4468 B — a ~5x payload size difference I have not explained and am not asserting a cause for. Same-name collisions across days (e.g. cycle-snapshot-04:46.json from 2026-08-24) are contained by the 7-minute freshness gate, so this is a note, not a defect."
+  },
+  "_processed": {
+    "fingerprint": "16bf104f0c1ecf79548920b229618a805714b84ceff8904b5cfc6fc2958aa487",
+    "processedAt": "2026-08-25T05:09:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
