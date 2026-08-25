@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 2 row(s) (2 from review[], 0 from done[]), highest-ranked FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-25T04:18:56Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-25T04:27:34Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22052,6 +22051,39 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
         "updated_at": "2026-08-25T04:03:26Z",
         "updated_by": "developer"
+      },
+      {
+        "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "REVIEW",
+        "size": "M",
+        "zone": "docs/agents/dev-team/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-14T11:23:11Z",
+        "created_by": "pm",
+        "title": "Incident-Lane Consumer: main.md integration (Session-Gate→Step-1 anchor, unconditional)",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "depends": [
+          "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS"
+        ],
+        "verification_gate": "incident-lane-consumer-mainflow-v1",
+        "updated_at": "2026-08-25T04:27:11Z",
+        "updated_by": "agent-father",
+        "claimed_at": "2026-08-25T04:18:56Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "agent-father",
+        "completed_at": "2026-08-25T03:01:55Z",
+        "completed_by": "agent-father",
+        "commit": "94716bfe6",
+        "branch": null,
+        "status_note": "\n[agent-father 2026-08-25T03:01:55Z] SHIPPED 94716bfe6 (local commit; NOT pushed -- standing push-disarm in force, com.vn-market.fleet-push untouched, no ack/plist edit made). New Section Incident-Lane Consumer (ILC) - Head-Decoupled Invocation wired into docs/agents/dev-team/flow/main.md at the Session-Gate->Step-1 anchor, FIRST of the three unconditional blocks there (ILC -> SECONDARY-Drain -> QA-Drain Head-Decoupled -> Step 1), per architect brief docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md S4d. Calls the already-shipped scripts/devteam-backlog-claim-incident-lane-consumer.jq (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, DONE_VERIFIED, commit cd0039432) verbatim -- no script logic re-derived or duplicated. INCIDENT_CAP=2 independent budget, batch-claim, BGFAN-1 fan-out, single unconditional site (no rotation gate, no head.status gate). SECONDARY-Drain's own intro sentence updated in place (no longer physically first at this anchor); one new Reusable Scripts bullet; one Invariants clause naming all three independent concurrency budgets (WIP<=2, qa[]<QA_CAP, INCIDENT_CAP); size-justification header appended (+88L, 1279->1367). DEVIATION FLAGGED, NOT SILENTLY RECONCILED: two live-caught defects in the neighbouring Review-Lane SECONDARY-Drain section were deliberately NOT copied into this new section (out of this row's own scope to retrofit that section itself) -- (1) SECONDARY-Drain's own readback queries .task_board.review[] only, but its own claim script's stated candidate set is review[] UNION done[], so a done[]-origin claim silently vanishes from that readback; this section's own readback instead scans EVERY .task_board lane generically. (2) SECONDARY-Drain's own spawn text hardcodes a false 'status=REVIEW, branch:null' premise; this section's own spawn text derives status/lane/claimed_by from the actually-picked row. Both flagged here for a follow-up row against SECONDARY-Drain itself, not fixed in this row. -> qa.\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED: main.md:942+1339 falsely claim wip_in_progress 'excludes'/INCIDENT_CAP 'never competes' with the shared WIP<=2 budget. Live-reproduced false: scripts/lib/devteam-eligibility.jq wip_in_progress (L115-118) has NO claimed_by filter (only incident_wip_in_progress, L158-162, does); WIP/WIP2/WIP3/WIP4 (main.md L622/658/746/805) all call the unfiltered wip_in_progress -- 2 in-flight incident rows can saturate the shared budget and starve BOUNDED-1/SLS/RLC/DRS to zero. Fix: correct L942/L1339 to match the jq file's own documented deliberate-asymmetry note (L153-157) -- incident rows ARE counted by wip_in_progress (conservative direction), not excluded. Full trace: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S205. All other ACs (ILC placement, SECONDARY-Drain intro, Reusable Scripts bullet, shared-instrument 13 ILC assertions all PASS) independently verified true.",
+        "drain_source_lane": "review",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-25T04:27:11Z"
       }
     ],
     "qa": [
@@ -22231,37 +22263,6 @@
         "next_agent": "qa",
         "updated_by": "dev-mcp-server",
         "redispatch_count": 3
-      },
-      {
-        "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "QA",
-        "size": "M",
-        "zone": "docs/agents/dev-team/",
-        "owner": "agent-father",
-        "next_agent": "qa",
-        "created_at": "2026-08-14T11:23:11Z",
-        "created_by": "pm",
-        "title": "Incident-Lane Consumer: main.md integration (Session-Gate→Step-1 anchor, unconditional)",
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "depends": [
-          "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS"
-        ],
-        "verification_gate": "incident-lane-consumer-mainflow-v1",
-        "updated_at": "2026-08-25T04:18:56Z",
-        "updated_by": "agent-father",
-        "claimed_at": "2026-08-25T04:18:56Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "agent-father",
-        "completed_at": "2026-08-25T03:01:55Z",
-        "completed_by": "agent-father",
-        "commit": "94716bfe6",
-        "branch": null,
-        "status_note": "\n[agent-father 2026-08-25T03:01:55Z] SHIPPED 94716bfe6 (local commit; NOT pushed -- standing push-disarm in force, com.vn-market.fleet-push untouched, no ack/plist edit made). New Section Incident-Lane Consumer (ILC) - Head-Decoupled Invocation wired into docs/agents/dev-team/flow/main.md at the Session-Gate->Step-1 anchor, FIRST of the three unconditional blocks there (ILC -> SECONDARY-Drain -> QA-Drain Head-Decoupled -> Step 1), per architect brief docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md S4d. Calls the already-shipped scripts/devteam-backlog-claim-incident-lane-consumer.jq (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, DONE_VERIFIED, commit cd0039432) verbatim -- no script logic re-derived or duplicated. INCIDENT_CAP=2 independent budget, batch-claim, BGFAN-1 fan-out, single unconditional site (no rotation gate, no head.status gate). SECONDARY-Drain's own intro sentence updated in place (no longer physically first at this anchor); one new Reusable Scripts bullet; one Invariants clause naming all three independent concurrency budgets (WIP<=2, qa[]<QA_CAP, INCIDENT_CAP); size-justification header appended (+88L, 1279->1367). DEVIATION FLAGGED, NOT SILENTLY RECONCILED: two live-caught defects in the neighbouring Review-Lane SECONDARY-Drain section were deliberately NOT copied into this new section (out of this row's own scope to retrofit that section itself) -- (1) SECONDARY-Drain's own readback queries .task_board.review[] only, but its own claim script's stated candidate set is review[] UNION done[], so a done[]-origin claim silently vanishes from that readback; this section's own readback instead scans EVERY .task_board lane generically. (2) SECONDARY-Drain's own spawn text hardcodes a false 'status=REVIEW, branch:null' premise; this section's own spawn text derives status/lane/claimed_by from the actually-picked row. Both flagged here for a follow-up row against SECONDARY-Drain itself, not fixed in this row. -> qa.",
-        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
