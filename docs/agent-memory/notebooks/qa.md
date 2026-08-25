@@ -35,3 +35,15 @@ Lane-moved via the mandated `jq | orch-apply.sh` actuator (dry-run via `ORCH_APP
 **Scope respected — did not fault the row for row 3's job.** The brief's own sequencing note says row 3 supersedes this block later and this hotfix does not make Step 3e work on `ready[]`/`backlog[]` parents; verdict is scoped to AC-4 (distinct refusal per class, live file byte-identical) and AC-5 (shell wrapper propagates orch-apply failure) only, both confirmed met.
 
 Lane-moved via the mandated `jq | orch-apply.sh` actuator, `qa[]->done_verified[]`, self-verified by re-read; RC-VERIF `raw_probe` fields filled from checks actually executed above. Full record: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md` STEP qa-S223.
+
+## cycle-850 · 2026-08-25T23:46Z · FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE, router-dispatched AC-2/AC-3 close — DONE_VERIFIED, review[]->done_verified[]
+
+**Never trusted the confidence field, exactly as instructed — the row exists because it self-reports high confidence on garbage.** Read raw extracted TEXT before/after on every named exemplar page instead. Resolved the real filenames myself rather than trusting the cited names: DBC pages 12/15 garbled only in `DBC_2024_Q4.pdf` + `DBC_2025_Q4.pdf` (byte-identical duplicate PDFs under distinct filename keys) — every other DBC quarter file already held clean text at those pages, so a blind "run it on DBC" would have been wrong.
+
+**AC-2 (live DB invalidation):** dry-run then `--apply` via `scripts/migrations/reextract-pdf-ocr-orientation.ts` against the real bind-mounted live DB (`DB_PATH=data/live/market.db`, not the stale host `data/market.db`) for all 3 resolved filenames. VIC (71pp) ran ~7min in background; both DBC files ~1min each. Row counts preserved post-migration (71/18/18).
+
+**AC-3 (after-measurement):** BEFORE = reversed/mirrored mojibake on every sampled page (DBC 12/15 both files; 13 of VIC's 19 cited rotated pages: 10,11,31,34,35,48,57,60,61,65,66,70,71). AFTER = correct upright Vietnamese with proper diacritics on every one (e.g. DBC p12 "Tăng, giảm TSCĐ hữu hình", VIC p60 "PHỤ LỤC 1 — CƠ CẤU TỔ CHỨC"). Non-rotated control pages (VIC p1/p3/p5) confirmed unaffected. Does not touch `bctc_refined_units`/`window_status` — out of this row's scope by design.
+
+**Found + disclosed, did not silently absorb or drop:** `VIC_2025_Q4.pdf` + `VIC_2026_Q2.pdf` carry the same pre-fix garble, unremediated — outside this row's named scope, filed as a follow-up signal (`docs/signals/pdfocr-orientation-corpus-additional-affected-files-20260825T234250Z.json`) to `po` rather than expanding scope unbounded.
+
+Lane-moved via the mandated `jq | orch-apply.sh` actuator (dry-run rehearsed via `ORCH_APPLY_LIVE_FILE_OVERRIDE` first), `review[]->done_verified[]`, self-verified by re-read on the live file. RC-VERIF `raw_probe` filled from checks actually executed above. Full record: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md` STEP qa-S224.
