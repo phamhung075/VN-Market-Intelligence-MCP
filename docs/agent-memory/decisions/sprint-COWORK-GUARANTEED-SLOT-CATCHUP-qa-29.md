@@ -178,3 +178,12 @@
 - Trust the developer's own AC-3/AC-4 page numbers from prose — REJECTED, re-ran the persisted harness myself against the real PDF; all 9 pages matched to the exact integer.
 **why-decision:** All 6 AC met (AC-6 met as scoped: name+wire the in-zone leg, name the out-of-zone leg — the AC's own text does not require wiring a leg this zone cannot reach). Zero new test failures, zero regressions on the confirmed-identical upright pages, mechanism avoids the OOM-shape by construction and measures cost on the mandated cgroup metric. APPROVED.
 **why-change:** No change from plan — verify-committed path, `vc-approved`.
+
+### STEP qa-S223 · qa · 2026-08-25T21:20:00Z
+**task-id:** FIX-PM-3E-FAILLOUD-HOTFIX
+**what-done:** Re-verify against corrected commit `2b653dbde` (not the prior-round `04ee05faa`), per redispatch note. Independently re-ran `bash -n` on the extracted Step 3e fence (main.md:169-223, identical line numbers both commits): pre-fix reproduces `syntax error near unexpected token ')'` at block line 43; post-fix parses clean, confirming the router's data point. Went further than a parse check: replayed BOTH branches (closeout + non-closeout) against a full live-shaped scratch fixture (real board + 1 synthetic in_progress row) via `ORCH_APPLY_LIVE_FILE_OVERRIDE`, running the exact shipped jq verbatim through real `orch-apply.sh` (Zod+conservation+prose-ceiling gates all fired for real). 4/4 scenarios: non-closeout NOT-FOUND refusal (correct fixed message, exit 1, fixture byte-identical), non-closeout TERMINAL-lane refusal (same), non-closeout happy path (next_agent applied, exit 0, full validator PASS), closeout happy path (row moved in_progress->done with status/closed_at/children, exit 0). Live orch-state.json confirmed untouched throughout (grep 0 hits for the synthetic test id, git diff clean).
+**what-considered:**
+- Trust agent-father's "12/12 replayed" claim on prose alone — REJECTED (feedback_router_verify_raw_not_badges); re-ran independently instead, smaller N but both branches + the exact line that broke.
+- Require bun test/tsc/DDD/security scans — REJECTED, zone is a flow markdown doc (bash+jq), no bun test references it; same standard prior QA round applied.
+**why-decision:** Diff is exactly the one apostrophe escape QA's own prior CHANGES_REQUESTED specified, nothing else changed; independent parse + functional replay both confirm the fix resolves the total-block-unparseable defect without altering the sound guard logic. APPROVED.
+**why-change:** No change from plan — verify-committed path, `vc-approved`.
