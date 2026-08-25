@@ -8,5 +8,11 @@
     "FIX-PDFX-OCR-ORIENTATION-UNDETECTED-ROTATED-BCTC-PAGES-READ-UPSIDE-DOWN",
     "FIX-REFINEBCTC-SKIPSET-NO-STATUS-FILTER-FAILED-UNITS-PERMANENTLY-TERMINAL"
   ],
-  "createdAt": "2026-08-25T20:37:47Z"
+  "createdAt": "2026-08-25T20:37:47Z",
+  "_processed": {
+    "fingerprint": "8297ab3e3e4d48ceeb48c8ef98ccc7bfaa33fd88a4a5abed3eaa2c1a74cb8e7b",
+    "processedAt": "2026-08-25T20:52:56Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -23845,7 +23845,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T20:17:18Z",
+    "_updated_at": "2026-08-25T20:52:56Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24028,6 +24028,195 @@
         "createdAt": "2026-08-25T19:54:47Z",
         "drained_at": "2026-08-25T20:17:18Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "93f62cc41bcf04d5fb885679ca8232f8e83440b3e3ba90fb500cd4bc06289bc6",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## FIX 2026-08-25T19:55Z — FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-undroppable-remainder-over-cap-breach (P1, router hand-dispatch, off DRS allowlist)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-25T20:21:03Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5e2246cf4d8dd2f7df0aa3cb449a967430709b5a388345361e1b5d60b433912c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c136 · 2026-08-25T20:13-20:32Z (slot=tnb-audit; this session=7a47f7c6-8c8b-4939-929d-461d20cd32da; VN-date=2026-08-26)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-25T20:33:27Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a6f4535fac35c5343408f3acea08f3a9f7dc1ed79e1113a214c2ef90ead40514",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md",
+          "line_count": 161,
+          "cap": 600,
+          "byte_count": 41025,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 5025,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T20:30:57Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d29a686f9b8dcdf51f7b7982216c6566fdb70c1f875b2c10a860603aa5e1fd40",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 113,
+          "cap": 200,
+          "byte_count": 43139,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 31139,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T20:33:08Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "90f0ebdf1e0e9e4aa959d8e5926492240c4484d20c07e53afc2f23c08b18d021",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T20:22:18Z",
+          "matched_slots": [
+            "tnb-audit"
+          ],
+          "won_slots": [
+            "tnb-audit"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/tran-ngoc-bau/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "tnb-audit": "cron"
+          },
+          "cadence_minutes": {
+            "tnb-audit": null
+          },
+          "last_fired_timestamp": "2026-08-25T20:21:24Z",
+          "last_fired_slots": [
+            "tnb-audit"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:15",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 5,
+          "signal_backlog": 32,
+          "note": "Single guaranteed daily slot tnb-audit (cron 13 20 * * *), last fired 2026-08-24T20:19:58Z — clean 24h cadence, no miss. Step 5.1 gate NOT degraded: container_vm_headroom_mb=5817 >= floor 1500, load_1min=3.61 <= 24 (12 cores x factor 2), MAX_PARALLEL=4, single-slot batch. OBSERVATION 1 (drain, notable): signal_queue had 0 NEW rows this tick, but row rtr-20260825T1952-preflightreentrantrun — which the 20:00Z dispatcher tick DELIBERATELY held at NEW for po (po selects NEW; marking READ is the known silent-loss path) — now reads status=READ with BOTH drained_at AND read_at NULL. A genuine po pickup stamps at least one of those. Status flipped without either timestamp is the signature of a status-only write, i.e. the row may have been consumed by nothing. Not filed on one observation; recorded here so the next occurrence corroborates rather than re-derives. Queue is now 53 READ + 1 RESOLVED, 0 NEW. OBSERVATION 2 (recurring, already routed to architect, NOT landed): tick snapshot written as docs/data/cycle-snapshot-20:20.json against nominal tick 20:15 — producer names by raw wall-clock date -u +%H:%M, consumer (cycle-bootstrap/SKILL.md:58) rounds to nearest 5-min slot. 5-min drift is inside the consumer's 7-min selection window so this tick resolves, but the defect is unfixed. Do NOT fix by rounding the producer. OBSERVATION 3 (29th consecutive): emit_pressure_state returned cycle_snapshot_promoted=false; docs/data/cycle-snapshot-latest.json is still the 2026-08-23T02:09 copy and reports regime UNKNOWN. Step 6.0's last_regime was therefore sourced from THIS tick's live snapshot (NEUTRAL) rather than the stale latest — passing latest would have injected a 2-day-old UNKNOWN into pressure-state. Same deviation as the 20:00Z tick. OBSERVATION 4 (22nd+ consecutive): calendar_status='open' emitted at 20:21Z Tuesday, well outside VN market hours (02:00-08:00 UTC) — computation defect, not staleness (stale_warning=false, emit is 0s old). OBSERVATION 5: last_volatility_level='unknown' again — this tick's snapshot contains ZERO fields matching /volatil/i, reconfirming the field has no producer anywhere in the pipeline. Still unfiled. DEFERRED: Step 5.3 off-flow router-latch detection cannot run at spawn time (BGFAN-1 background spawn — Step 5b stamped last_fired before any return text exists). Will be applied on the tran-ngoc-bau completion notification; de-stamp target if it scores >=2/6 distinct OFFFLOW_MARKERS is the PRIOR value 2026-08-24T20:19:58Z (never null), and only if last_fired still equals 2026-08-25T20:21:24Z at that moment."
+        },
+        "createdAt": "2026-08-25T20:22:18Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0bacbb69f80017ea3b8f1eab378f28fbf3be9fde09cc3e65cbcc2b552ff427d5",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 12899,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T20:33:06Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "694ad6caa34d77f84b0d87dad7c9c012b57a7c2566836a99877cdbd4e0d72bb5",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 12860,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T20:33:13Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8297ab3e3e4d48ceeb48c8ef98ccc7bfaa33fd88a4a5abed3eaa2c1a74cb8e7b",
+        "source": "file",
+        "from": "dev-pdf-extractor",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "FOURTH OCR CONSTRUCTION SITE, OUTSIDE apps/pdf-extractor/. FIX-PDFX-OCR-ORIENTATION landed (905e32be1) and corrects orientation at all 3 named pdf-extractor sites + page_rasterizer. But the text PO actually read through get_bctc_page_text (source='sqlite_ocr') comes from market.db pdf_extracted_text, which is written by apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts::ocrOnePage() -- 'pdftoppm -r 200 | tesseract stdin stdout -l vie+eng', NO --psm and NO orientation detection (tesseract then defaults to psm 3: layout analysis, not orientation detection). Reached in production from composition-root.ts section 4b on every mcp-server start, for every PDF in data/pdfs/. Confirmed for report 1f53ef33-8f50-489b-8505-689740692ab0: bctc_layout_units has ZERO rows, so the PEK path produced nothing and 100% of that report's refine input is this mcp-server tesseract read. CONSEQUENCE: the 25 FAILED units stay unrecoverable and re-running the refiner re-reads the same garble. FIX NEEDED (dev-mcp-server zone): add orientation detection to ocrOnePage (--psm 1, or an image_to_osd pre-pass + rotate), THEN invalidate: DELETE FROM pdf_extracted_text WHERE filename = ? and let extractAndStorePdfPages re-OCR. Deleting BEFORE the ocrOnePage fix just re-writes the same garble. Full detail: docs/protocols/bctc-extraction-runbook.md section 'Page Orientation' -> GAP note.",
+        "createdAt": "2026-08-25T20:37:47Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cb87e55717324adf00b5bb5652e5d7179c35a2e71d7c5cc01b2b422aa1ed21a8",
+        "source": "file",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "priority": "high",
+        "payload": "docs/handoffs/tnb-audit-latest.md",
+        "createdAt": "2026-08-25T20:35:33Z",
+        "drained_at": "2026-08-25T20:52:56Z",
+        "routed_to": "PO Step 0-TNB"
       }
     ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
