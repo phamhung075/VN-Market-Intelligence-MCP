@@ -58,6 +58,20 @@
       "Diagnosed the outage from host-side Docker logs only (no container action, no daemon restart attempted — recovery is ops scope).",
       "Took NO recovery action: did not restart Docker Desktop, did not kill any Docker process, did not touch the VM data directory.",
       "Filed this corrected escalation superseding the root-cause attribution in dev-team-20260825T054306Z.json."
-    ]
+    ],
+    "post_filing_update": {
+      "observed_at": "2026-08-25T06:10:59Z",
+      "headline": "A clean Docker Desktop relaunch was attempted and FAILED to bootstrap the VM. Ask #2 of this signal (\"a normal restart is the FIRST thing to try and is likely sufficient\") is now empirically FALSIFIED — do not spend a cycle on it.",
+      "evidence": {
+        "relaunch": "com.docker.backend.log 2026-08-25T06:00:41Z — onApplicationDidFinishLaunching, auth.enforcer \"unholding Engines, they will start now\". Backend pids changed from 14369/14371/14372 to 5809/5827/5828, confirming a genuine process relaunch (not a reconnect).",
+        "vm_never_started": "vm/init.log has NOT advanced a single line past the 05:47:39.421Z FATAL in the 7+ minutes since the relaunch. The VM is not booting at all — this is not a slow bootstrap.",
+        "backend_idle": "After 06:00:41Z the backend log contains only analytics traffic (06:05:39Z marlin batch). No engine-start progress of any kind.",
+        "cli_surface_changed": "docker CLI error moved from \"Docker Desktop is unable to start\" (backend answering, refusing) to \"Cannot connect to the Docker daemon at unix:///Users/admin/.docker/run/docker.sock\" (nothing listening). The socket FILE is still present; no process is bound to it.",
+        "still_not_hypervisor_signature": "hypervisor.error.json is STILL absent, so this remains distinct from the 2026-07-15 incident despite the relaunch failure."
+      },
+      "revised_recommendation": "Escalate toward host-level action sooner than this signal originally implied. The remaining bounded CLI step is the comprehensive teardown-to-zero (killall -9 Docker \"Docker Desktop\" com.docker.backend com.docker.build com.docker.dev-envs vpnkit; pkill -9 -i docker) followed by one clean `open -a Docker` — worth EXACTLY ONE attempt. If the socket still does not bootstrap after that, STOP and escalate to the user for GUI recovery / reboot. Do NOT re-run the ladder repeatedly; that failure mode is already documented.",
+      "constraint_reaffirmed": "The do-NOT-rebuild-the-VM constraint in asks[2] is UNCHANGED and becomes MORE important as pressure to escalate rises. Removing ~/Library/Containers/com.docker.docker/Data/vms destroys every named volume including market_data.",
+      "tick_status": "dev-team 06:07Z tick also did not dispatch — preflight verdict=ERROR, SF-1 gate unreachable (curl exit=52, empty reply). Third consecutive blocked tick. Per docs/standards/gateway-call-contract.md de-escalation guidance, no fresh P0 was raised for the recurrence; this update amends the existing one instead."
+    }
   }
 }
