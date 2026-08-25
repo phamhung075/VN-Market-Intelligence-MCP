@@ -1,50 +1,54 @@
 # PO Notebook
 
-## 2026-08-25T12:51-13:10Z — I corrected my own carry-over: INCIDENT_CAP was never 2/2
+## 2026-08-25T13:45-14:05Z — I ruled against the standing OCR goal, then found the bigger lever behind it
 
-Targeted tick: one SECONDARY-Drain disposition + one INCIDENT_CAP ruling + a coordinator correction on 8
-inbox signals. Journal: `docs/agent-memory/decisions/triage-20260825T1251Z-po.md`.
-**1 signed off · 1 expedited · 1 minted · 5 refused on refuted premises.**
+27-envelope triage + the PaddleOCR ruling. Journal: `docs/agent-memory/decisions/triage-20260825T1345Z-po.md`.
+**10 minted · 4 folded · 1 dispatched · 1 P0 acceptance probe RUN and FAILED · inbox 27→0.**
 
-### The retraction
-Last cycle said "both `INCIDENT_CAP` slots still spent — do not stamp a third". **Wrong, and it was
-self-inflicted throttling.** Live: `po_expedited_at` at ANY depth across ALL lanes = **0**; `in_progress[]`
-= **0**; `incident_wip_in_progress` via the real `devteam-eligibility.jq` (not a hand-written predicate) =
-**0**. **0/2 — free for a day** while I declined to use them. Cold-eviction was only half the cause: three PO
-escalations exist solely as **bespoke per-tick prose keys** (`po_expedite_20260824T1056Z`, `..0737Z`,
-`..0716Z`) and `is_po_expedited` reads ONLY `.po_expedited_at`. **Two are still on hot lanes — never evicted
-at all.** Tell for the class: a field humans clearly write and no code has ever read.
+### The ruling
+**Do not adopt `paddleocr`. Do not adopt `auto`. Keep `tesseract-vie`.** The directive said "improve quality of
+extraction BCTC" and PaddleOCR *strips Vietnamese diacritics on nearly every word* — it fails the goal's own
+objective. Also 1.8x slower and peaks **2790 MiB against a 2560 MiB cap** (the specialist called that
+"98.5-100%"; it is *over*). Zero deploy needed: `OCR_TEXT_BACKEND` is unset in every compose/env file and on the
+live container, so the default already IS `tesseract-vie`.
 
-### Verify the lane before feeding it
-Dry-ran the real ILC claim script in scratch on the live board: baseline picks **0**; with one stamp it picks
-exactly that row, `ready[]->in_progress[]`, head->developer. Only then did I stamp. Chose CCATO (P0, ready[]
-index **104 of 108**, last of 8 P0s — array-index-tiebreak starvation). **Left slot 2 free on purpose:**
-`in_progress[]` stranded rows 4x with exactly ONE live test of the fix; two strands kill the lane
-permanently, one costs half. Correcting my carry-over again: `TASK-BRANCHGUARD-POSTCHECKOUT-HOOK` is
-**P1/TODO** not P0, and `FIX-MONTHLYSIGNALQUALITY..` sits in `backlog[]` while ILC is `ready[]`-only.
+But the data supports a conclusion nobody drew. Paddle's one win (page 9: tesseract lost 100% of the
+revenue/profit figures) is **not** an argument for the backend — it is proof that a catastrophic per-page miss
+exists and *nothing detects it*. `auto` was byte-identical on 30/30 units because the rescue never fired. I read
+`ocr_backends.py` myself: confidence is `mean(conf)` over the rows it **found**, so recall is invisible by
+construction and 3 header words at conf 92 score 0.92 on a page that lost 40 rows. The question was never
+"which backend" — it was "why is the trigger blind". `FIX-PDFX-TESSERACT-CONFIDENCE-...-TOTAL-PAGE-MISS` now
+carries the goal.
 
-### Re-verify the row's own prose before spending a slot on it
-CCATO claimed "108 rows, 27x amplification, EMITTER STILL LIVE". First two now **stale** (2 rows left, both
-real distinct clocks); third **true** — 6 brand-new rows first appear at `ddab2f4c` (08-25T07:07:04Z), frozen
-ts `2026-08-24T00:00:00Z` (31h stale, kills "clock read once at midnight"), zero `dedup_key`. `git log -S` on
-the uuid suffixes separates a **live emission** from a stale-full-doc restore. Rewrote the note — also forced,
-since the row was 13010 B over a 12000 B ceiling and the guard hard-rejects growth: correct-and-shrink did both.
+### The bigger lever, found by accident
+`pek_engine_adapter.py` ~1146-1165: when a pluggable backend is injected — the live config for **every**
+backend — the whole table region collapses into ONE cell carrying the *region* bbox. The legacy `paddle_table`
+branch it replaced iterated per-line results. So PEK-IMPL-OCR traded table structure for pluggability
+fleet-wide, tesseract included. That is a strictly larger BCTC-quality lever than the backend choice ever was,
+and it independently explains the 30/30 byte-identical result. Routed to architect — the port signature
+literally cannot express what the caller needs, so it is a contract decision, not an edit.
 
-### DONE is not terminal where it counts
-`FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS` needed no decision — PO APPROVED 2026-07-21; its only defect
-was stopping at DONE. `deps_satisfied` demands `DONE_VERIFIED` ("plain DONE is NOT sufficient"), so
-`FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` sat undispatchable **5 weeks** on that alone — `false` before, `true`
-after. Unlike the 8 wrappers archived at 12:30Z this one **shipped**, so DONE_VERIFIED rests on a real
-re-probe (commit ancestor of HEAD, 3-file `--stat`, 6/6 ACs re-read at HEAD), not a fabricated one.
+### I ran the probe instead of re-filing it
+QA said subtask-4 of `FIX-ORPHAN-FR4-FR5` "needs a gateway-capable session". I am one. Ran it: the FR-2 Rung B
+shape returns **`released:0`** and the lock stays held; the control (release under the dead session's own id)
+returns `released:1`. `original_owner_client_session` is accepted and **ignored**. The doc half landed, so the
+row looks complete on inspection while being dead — 15 days of review missed it. **This falsifies
+`feedback_orphan_signal_unreleasable_null_client_session_and_activesprints_only_flip`.** Second finding: the AC
+demands "a real NULL-owner orphan-signal row" and there are **0** live — as written it needs a production death
+to satisfy. Restated as a synthetic-fixture probe.
 
 ### Carry-over
-- **ILC now has exactly 1 input.** If CCATO is unclaimed next dev-team tick, the lane is broken somewhere the
-  dry-run cannot see — falsifiable prediction.
-- Slot 2 held free — stamp BRANCHGUARD next tick **only if** slot 1 drained. **Never stamp an escalation as
-  `po_<verb>_<tick>Z`**: canonical `po_expedited_at`, or the lane cannot see it.
-- 5 `auditor_cycle_*` signals inboxed, deliberately unminted: called true positives by the audit, but I did not
-  verify that outage myself. Reject the trigger-file oracle (suppresses a correct alarm) and the debounce GC
-  reset (test-locked AC-4).
-- `FIX-BCTC-BANK-SUMMARY-MAPPING` duplicated across two lanes — pre-existing, not mine; `orch-apply` dup-key
-  is raw-text JSON keys, so duplicate row *ids* pass every stage.
-- Standing push disarm in force — nothing pushed.
+- **I was wrong once this tick and recorded it.** `task_list_held` filters on `kind`, NOT `task_kind` (the
+  latter is silently ignored → returns everything; response field is `task_kind`, the trap is real). CARD.md is
+  CORRECT there. Its actual bugs: `payload={...}` must be a string, and Phase A omits required `owner_agent`.
+- **Prose ceiling is now a starvation mechanism, not an annoyance.** manual-dispatch Step 2 could not stamp
+  ranks 0/2/3 (34589B/12249B/12156B); the sweep is the *only* dispatch path for that class, and the longer a row
+  is stranded the more prose it accretes. Could not fold onto the row that owns the sibling symptom — it is
+  **11967B, 33 bytes under the ceiling**. Candidate set 127→146 in 9h.
+- Before folding anything: **size-check the target first.** 4 of my intended folds were impossible; those
+  dispositions went to the journal and one `signal_queue` row to qa instead.
+- 22 of 27 envelopes were already covered by earlier ticks today. Envelope 16 claimed "zero board row tracks
+  it" — false. Envelope 17 asks a question already decided **three times**; the real bug is the emitter's
+  missing liveness predicate, so it will re-ask forever.
+- INCIDENT_CAP slot 2 still free — nothing this tick justified overriding that. `.head` untouched.
+- Standing push disarm in force — committed, nothing pushed.
