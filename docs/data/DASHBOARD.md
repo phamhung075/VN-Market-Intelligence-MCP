@@ -2398,3 +2398,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-13 · stale pending BCTC row id=255870
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** bctc_vps_queue
+**Details:** id=255870 action_code=BID period=2025-Q4 status=pending attempts=0 created_at=2026-04-28 19:21:55, ~119 days old, never attempted
+**Impact:** BID Q4-2025 report never processed
+**Root cause:** 0 attempts recorded — likely never picked up by the fetch worker
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:03Z (signal sys-20260825T224141-78ec, system-auditor -> po, dedup_key=data_stale:bctc-vps-queue-255870:B-13, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
