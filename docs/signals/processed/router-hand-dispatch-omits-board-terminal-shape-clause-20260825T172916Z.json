@@ -24,5 +24,11 @@
       "router_repair_commit": "a976faab0",
       "prompt_keyword_census": "in_progress=0, TERMINAL=0, done_verified=0, orch-apply=0, lane=2 over 6667 chars"
     }
+  },
+  "_processed": {
+    "fingerprint": "ed6c17ec0e18c882e6116d44ac86b32a5f22886af8d219d9787e5d3a6dd48d2e",
+    "processedAt": "2026-08-25T18:10:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

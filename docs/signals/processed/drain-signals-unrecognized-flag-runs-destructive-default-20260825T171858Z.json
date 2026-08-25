@@ -24,5 +24,11 @@
       "sys-20260825T170808-1ae7 (auditor-tier1-probe debounce cadence; that script mutates its own reported decision, also distinct)"
     ],
     "class_note": "Third fleet script found in one session whose read-only-looking invocation is not read-only. The other two: auditor-tier1-probe.sh (a second run debounces against its own first run and returns a false DEBOUNCED, burning the spawn grant) and guard-signal-type-coverage.sh --check (auto-mints a board row and applies an orch-apply write). Worth considering whether a fleet-wide convention is the real fix rather than three separate patches."
+  },
+  "_processed": {
+    "fingerprint": "a2b478e09c7b993ae4bfab702afaf495baa848a89d716032e1e6d0b96ac89226",
+    "processedAt": "2026-08-25T18:10:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

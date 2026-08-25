@@ -4,41 +4,75 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services & software exports (offshore dev for Japan/US/APAC), telecom (FPT Telecom, equity-method since 2026), education (FPT Edu), digital transformation consulting",
-  "customer": "Enterprise IT buyers globally (offshore outsourcing clients), domestic broadband/telecom subscribers, students across FPT's education network",
-  "ops": "Q1-2026 net revenue 12,480 tỷ VND (-22.3% YoY headline due to FTEL deconsolidation to equity method; +8.7% YoY on comparable basis); gross margin 34.0%; operating margin 22.0%; net profit 2,477 tỷ VND (+13.8% YoY comparable). ROE 28.3% (sector-annualized) vs sector median 10.6% — well above peers.",
-  "mgmt": "EY_SPREAD +2.25pp → FAIR (PE 13.8 vs sector median 17.3, -20% discount; PB 3.6 vs 1.5, +136% premium). KinhDich: Que Tieu Qua (62), TRUNG TINH/GIU, 37% confidence. ESC-5 TRUE (7/15 refine units <0.50 confidence, min=0.45) — Opus deep-dive GUARD-HELD (session-owned, expires ~2026-08-25T21:23Z).",
-  "supporting": {
-    "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
-    "esc_2": {
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore, notably Europe/Japan +44.4% growth), SME telecom subscribers, university/K-12 students",
+  "ops": "Gross margin 34.0%, operating margin 22.0%, EBITDA 3,157.7 ty VND. Reported revenue -22.3% YoY (FTEL deconsolidated to equity-method from 2026-01-01); on comparable (like-for-like) basis revenue +8.7% YoY, PBT +16.3% YoY.",
+  "mgmt": "ROE 6.2% raw quarterly (28.3% sector-comparison annualized, vs sector median 10.6%); D/E 0.40x; consistent profitable-growth track record.",
+  "cycle_id": "20260825-1800",
+  "slot": "bctc-analyst-slot-2",
+  "valuation": {
+    "pe": 13.8,
+    "pb": 3.6,
+    "earning_yield_pct": 7.25,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR",
+    "sector": "Cong nghe",
+    "sector_pe_median": 17.3
+  },
+  "kinhdich": {
+    "que": "Tieu Qua (62)",
+    "xu_huong": "TRUNG TINH",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 37
+  },
+  "esc_gate": {
+    "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+    "ESC-2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "esc_3": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
-      "quarters_required": 4
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+      "coverage_guard_held": true
     },
-    "esc_4": {
+    "ESC-4": {
       "result": false,
       "non_operating_share_pct": 2
     },
-    "esc_5": {
+    "ESC-5": {
       "result": true,
-      "min_confidence": 0.45,
+      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
       "low_confidence_unit_count": 7,
-      "escalation_status": "GUARD-HELD"
-    },
-    "confidence_pct": 81,
-    "refine_status": "DONE",
-    "insider_signal": "none material",
-    "legal_risk": "none",
-    "overdue": "Q2-2026 report overdue since 2026-07-30 (Q1-2026 latest extracted)"
+      "min_confidence": 0.45,
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ]
+    }
   },
-  "generated_at": "2026-08-25T15:20:00Z",
+  "escalation_status": "GUARD-HELD",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "insider_signal": "no significant activity",
+  "legal_risk": "none",
+  "overdue": true,
+  "evidence_fragment_ids": [
+    1535,
+    1536
+  ],
+  "regime": "NEUTRAL (fallback)",
+  "carry_regime": "NEUTRAL",
+  "generated_at": "2026-08-25T18:20:00Z",
   "_processed": {
-    "fingerprint": "0b84f06598931b0b01bfaa8774def7ee1bc29675e4465f5d54ca86714be378a6",
-    "processedAt": "2026-08-25T15:30:58Z",
+    "fingerprint": "1b877ab64e2195395a9f0855a669c99e43562005c07588177a5d440550390531",
+    "processedAt": "2026-08-25T18:10:10Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

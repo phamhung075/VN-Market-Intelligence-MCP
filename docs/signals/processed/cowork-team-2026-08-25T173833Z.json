@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-25T173833Z",
-    "matched_slots": ["digest-daily"],
-    "won_slots": ["digest-daily"],
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/digest-predict/flow/main.md"],
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "digest-daily": "cron" },
-    "cadence_minutes": { "digest-daily": null },
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
     "last_fired_timestamp": "2026-08-25T17:37:10Z",
-    "last_fired_slots": ["digest-daily"],
+    "last_fired_slots": [
+      "digest-daily"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "First non-drain-only tick after 3 consecutive drain-only WORK ticks (16:45Z/17:00Z/17:15Z). dev_head=unknown is an HONEST unknown, not a placeholder: .dev_team_idle_chain.head is KEY-ABSENT in orch-state.json (verified this tick) — do not read it as the fabricated-envelope tell. Step 5.2 consistency check PASSED for digest-daily (flow_path == trigger_prompt first-line path == docs/agents/digest-predict/flow/main.md), i.e. the 2026-07-29 flow_path/trigger_prompt divergence fix still holds on the very slot it was written for. Step 5.3 DEFERRED per BGFAN-1 (background spawn, no return text at stamp time); pre-write last_fired was 2026-08-24T17:34:17Z if a de-stamp correction is later needed. Step 4.7 wrote docs/data/cycle-snapshot-17:35.json while the nominal tick is 17:30 and emit_pressure_state returned cycle_snapshot_promoted=false — this tick is a causally-complete instance of the wallclock-vs-nominal-tick promotion defect (routed to architect, commit 0d77460a3), and is DISTINCT from the preceding drain-only ticks where the same counter read false merely because Step 4.7 skipped and no snapshot existed. last_volatility_level=unknown is structural: zero fields matching /volatil/i exist anywhere in the fresh snapshot, so that field has no producer at all — distinct from the known regime_status wrong-key defect, where the value does exist at .macro_snapshot.data.signals.carry.regime (read live as NEUTRAL and passed through this tick). Step 5.1 documented load parse yielded 2 vs correct 2.53 (occurrence 11) — benign here, both far below the 2x12=24 degraded threshold. Signal drain: 2 NEW rows held for PO (rtr-20260825T1645-ocrrotation, sys-20260825T170808-1ae7), drained_rows=0, neither routable to digest-predict."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T173833Z"
+  "createdAt": "2026-08-25T173833Z",
+  "_processed": {
+    "fingerprint": "3e7b843a206c41d7e7e0dcb72ea34308234848cd9bdd0b4d368f65a71d1a1b95",
+    "processedAt": "2026-08-25T18:10:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

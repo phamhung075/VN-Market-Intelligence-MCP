@@ -23607,7 +23607,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T17:10:26Z",
+    "_updated_at": "2026-08-25T18:10:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23845,6 +23845,500 @@
         },
         "createdAt": "2026-08-24T22:32:31Z",
         "drained_at": "2026-08-25T17:10:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1b877ab64e2195395a9f0855a669c99e43562005c07588177a5d440550390531",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore, notably Europe/Japan +44.4% growth), SME telecom subscribers, university/K-12 students",
+          "ops": "Gross margin 34.0%, operating margin 22.0%, EBITDA 3,157.7 ty VND. Reported revenue -22.3% YoY (FTEL deconsolidated to equity-method from 2026-01-01); on comparable (like-for-like) basis revenue +8.7% YoY, PBT +16.3% YoY.",
+          "mgmt": "ROE 6.2% raw quarterly (28.3% sector-comparison annualized, vs sector median 10.6%); D/E 0.40x; consistent profitable-growth track record.",
+          "cycle_id": "20260825-1800",
+          "slot": "bctc-analyst-slot-2",
+          "valuation": {
+            "pe": 13.8,
+            "pb": 3.6,
+            "earning_yield_pct": 7.25,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR",
+            "sector": "Cong nghe",
+            "sector_pe_median": 17.3
+          },
+          "kinhdich": {
+            "que": "Tieu Qua (62)",
+            "xu_huong": "TRUNG TINH",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 37
+          },
+          "esc_gate": {
+            "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "ESC-4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "ESC-5": {
+              "result": true,
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "low_confidence_unit_count": 7,
+              "min_confidence": 0.45,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ]
+            }
+          },
+          "escalation_status": "GUARD-HELD",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "insider_signal": "no significant activity",
+          "legal_risk": "none",
+          "overdue": true,
+          "evidence_fragment_ids": [
+            1535,
+            1536
+          ],
+          "regime": "NEUTRAL (fallback)",
+          "carry_regime": "NEUTRAL",
+          "generated_at": "2026-08-25T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e624f9d6f2374eba6c982287876031c2a68e558d8b96649ab22c6be2fec50a1d",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (construction steel, HRC/CRC flat steel), steel pipe, agriculture/livestock feed side-business",
+          "customer": "Domestic construction contractors/distributors, export steel buyers, feed-mill/livestock customers",
+          "ops": "Revenue 52,900.8 ty VND, gross margin 15.8%. Reported operating_profit=0 (data-quality corruption in source feed — 38th+ consecutive cycle unresolved, flagged to dev-team). Net profit 9,055.9 ty VND exceeds gross profit, consistent with the operating_profit=0 corruption, not a real financial event.",
+          "mgmt": "ROE 6.5% raw quarterly (12.7% sector-comparison annualized, vs sector median 2.9%); analyst forecasts (Shinhan VN, 2026-08-25) see FY2026 NPAT +56% YoY, driven by domestic construction demand.",
+          "cycle_id": "20260825-1800",
+          "slot": "bctc-analyst-slot-2",
+          "valuation": {
+            "pe": 14.2,
+            "pb": 1.7,
+            "earning_yield_pct": 7.04,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR",
+            "sector": "Thep",
+            "sector_pe_median": 32.6
+          },
+          "kinhdich": {
+            "que": "Khon (47)",
+            "xu_huong": "BAT LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 25
+          },
+          "esc_gate": {
+            "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "ESC-4": {
+              "result": "DISCARDED",
+              "reason": "operating_profit=0 corrupt source data, non_operating_share unreliable"
+            },
+            "ESC-5": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "escalation_status": "N/A",
+          "insider_signal": "no significant activity",
+          "legal_risk": "none",
+          "overdue": true,
+          "data_quality_flag": "operating_profit=0 corrupt (recurring, 38th+ cycle)",
+          "evidence_fragment_ids": [
+            1537,
+            1538
+          ],
+          "regime": "NEUTRAL (fallback)",
+          "carry_regime": "NEUTRAL",
+          "generated_at": "2026-08-25T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "48123e176b4c452f310b2f5706000dd685d2e2f2e6fa602ef783d2ac7605b772",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Retail and corporate banking, trade finance, bancassurance/card cross-sell (incl. Visa Hanoi Metro-MeGO co-brand card)",
+          "customer": "Retail depositors/borrowers, corporate/SOE lending clients, card/payment users",
+          "ops": "Net interest income 17,421 ty VND, operating margin 80.9% (bank cost structure). Net profit 9,462.1 ty VND. OCF/NI ratio 1.37x (Q1-2026) — healthy cash conversion.",
+          "mgmt": "ROE 4.2% raw quarterly (16.7% sector-comparison annualized, vs sector median 17.6% — below peer median); Vietcombank Visa Hanoi Metro-MeGO card won Stevie Gold Award 2026 (brand/execution track record).",
+          "cycle_id": "20260825-1800",
+          "slot": "bctc-analyst-slot-2",
+          "valuation": {
+            "pe": 14.1,
+            "pb": 2.2,
+            "earning_yield_pct": 7.09,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR",
+            "sector": "Ngan hang",
+            "sector_pe_median": 9
+          },
+          "kinhdich": {
+            "que": "Tieu Qua (62)",
+            "xu_huong": "TRUNG TINH",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 37
+          },
+          "esc_gate": {
+            "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "ESC-3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio_pct": 36.81
+            },
+            "ESC-4": "N/A (bank — non-operating-share formula not applicable to bank P&L structure)",
+            "ESC-5": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "escalation_status": "N/A",
+          "insider_signal": "no significant activity",
+          "legal_risk": "none",
+          "overdue": true,
+          "evidence_fragment_ids": [
+            1539,
+            1540
+          ],
+          "regime": "NEUTRAL (fallback)",
+          "carry_regime": "NEUTRAL",
+          "generated_at": "2026-08-25T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "13976c1e86d9890fa41014a684d37a85c7fcbcb1cc33bdf094a71604523dec00",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 67,
+          "cap": 200,
+          "byte_count": 41220,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 29220,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T17:41:04Z",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3e7b843a206c41d7e7e0dcb72ea34308234848cd9bdd0b4d368f65a71d1a1b95",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T173833Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-25T17:37:10Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 33,
+          "note": "First non-drain-only tick after 3 consecutive drain-only WORK ticks (16:45Z/17:00Z/17:15Z). dev_head=unknown is an HONEST unknown, not a placeholder: .dev_team_idle_chain.head is KEY-ABSENT in orch-state.json (verified this tick) — do not read it as the fabricated-envelope tell. Step 5.2 consistency check PASSED for digest-daily (flow_path == trigger_prompt first-line path == docs/agents/digest-predict/flow/main.md), i.e. the 2026-07-29 flow_path/trigger_prompt divergence fix still holds on the very slot it was written for. Step 5.3 DEFERRED per BGFAN-1 (background spawn, no return text at stamp time); pre-write last_fired was 2026-08-24T17:34:17Z if a de-stamp correction is later needed. Step 4.7 wrote docs/data/cycle-snapshot-17:35.json while the nominal tick is 17:30 and emit_pressure_state returned cycle_snapshot_promoted=false — this tick is a causally-complete instance of the wallclock-vs-nominal-tick promotion defect (routed to architect, commit 0d77460a3), and is DISTINCT from the preceding drain-only ticks where the same counter read false merely because Step 4.7 skipped and no snapshot existed. last_volatility_level=unknown is structural: zero fields matching /volatil/i exist anywhere in the fresh snapshot, so that field has no producer at all — distinct from the known regime_status wrong-key defect, where the value does exist at .macro_snapshot.data.signals.carry.regime (read live as NEUTRAL and passed through this tick). Step 5.1 documented load parse yielded 2 vs correct 2.53 (occurrence 11) — benign here, both far below the 2x12=24 degraded threshold. Signal drain: 2 NEW rows held for PO (rtr-20260825T1645-ocrrotation, sys-20260825T170808-1ae7), drained_rows=0, neither routable to digest-predict."
+        },
+        "createdAt": "2026-08-25T173833Z",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9597578bd5b28f0746142d176fbac1e7830ffbaae013b942614c8a48505b94e9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T18:06:42Z",
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": null
+          },
+          "last_fired_timestamp": "2026-08-25T18:06:10Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "18:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 37,
+          "note": "First non-drain-only tick since 17:30Z (four drain-only ticks intervened). guaranteed:false so Layer C launchd firer does not cover this slot; ps-grep peer probe run pre-claim returned no peer process, and slot claim returned claimed:true — no dual-plane exposure this tick. Step 4.7 ran and wrote cycle-snapshot-18:05.json against nominal tick 18:00, so cycle_snapshot_promoted:false here is the ROUTED wall-clock-vs-nominal defect (causally complete), not the drain-only skip cause seen on the four preceding ticks. last_volatility_level emitted unknown: zero fields matching /volatil/i exist anywhere in the snapshot — no producer at all, structurally distinct from the regime_status wrong-key bug (regime value does exist, read live as NEUTRAL from .macro_snapshot.data.signals.carry.regime). dev_head unknown is an honest KEY-ABSENT read of .dev_team_idle_chain.head. Step 5.3 off-flow detector DEFERRED per BGFAN-1 (spawn in-flight at stamp time); prior last_fired 2026-08-24T18:03:21Z retained for the de-stamp contract if it later fails."
+        },
+        "createdAt": "2026-08-25T18:06:42Z",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a2b478e09c7b993ae4bfab702afaf495baa848a89d716032e1e6d0b96ac89226",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "medium",
+        "payload": {
+          "script": "scripts/agents-flow/drain-signals.js",
+          "mechanism": "Unrecognized CLI flags fall through to the default action, which is the REAL drain (durable append + mv of files into docs/signals/processed/ + signals.db INSERT). There is no usage/help path and no unknown-flag rejection.",
+          "observed_live": {
+            "at": "2026-08-25T17:10:26Z",
+            "invocation": "node scripts/agents-flow/drain-signals.js --help",
+            "effect": "5 signal files moved to docs/signals/processed/, 5 envelopes appended to .dev_team_idle_chain.pending_triage_inbox, signals.db db_count 565 -> 570",
+            "intent": "operator was reading usage, not draining"
+          },
+          "why_it_matters": "An operator or agent inspecting usage silently mutates the signal plane. In this instance the drain was wanted anyway so nothing was lost, but the same call on a tick where a drain was NOT wanted would move files out of the inbox mid-triage. Note the durable-append-before-destructive ordering held correctly throughout - this is a CLI-contract defect, not a data-integrity one.",
+          "candidate_directions": [
+            "reject unknown flags with a non-zero exit and a usage block (safest, smallest)",
+            "add an explicit --help/-h usage path",
+            "require an affirmative --commit/--apply flag for the destructive path, making dry-run the default"
+          ],
+          "not_duplicate_of": [
+            "FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-MODE-MUTATES-BOARD-AND-DEDUPS-BY-KEY-NOT-SUBJECT (different script; that one's --check mode mutates, this one's unknown-flag fallback executes)",
+            "sys-20260825T170808-1ae7 (auditor-tier1-probe debounce cadence; that script mutates its own reported decision, also distinct)"
+          ],
+          "class_note": "Third fleet script found in one session whose read-only-looking invocation is not read-only. The other two: auditor-tier1-probe.sh (a second run debounces against its own first run and returns a false DEBOUNCED, burning the spawn grant) and guard-signal-type-coverage.sh --check (auto-mints a board row and applies an orch-apply write). Worth considering whether a fleet-wide convention is the real fix rather than three separate patches."
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a4055c6bfaca018ca7be87c47dd736e7d5c174654a00d161c71020fd209538b6",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 67,
+          "cap": 200,
+          "byte_count": 41220,
+          "byte_cap": 12000,
+          "section_count": 4,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T17:41:02Z",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7bf8c88a3c2bf9c0696a68378f63b46f78a3a76ddd4762ea10e6fee4d0a4f0c4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 62,
+          "cap": 200,
+          "byte_count": 40491,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T17:43:49Z",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "415eb4041411f54e480abfd66c77c90645f275d2b8567017f884c8580f8f0e5a",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 70,
+          "cap": 200,
+          "byte_count": 41835,
+          "byte_cap": 12000,
+          "section_count": 4,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T17:44:03Z",
+        "drained_at": "2026-08-25T18:10:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ed6c17ec0e18c882e6116d44ac86b32a5f22886af8d219d9787e5d3a6dd48d2e",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "medium",
+        "payload": {
+          "observed_live": "2026-08-25T17:17Z the router hand-dispatched `ops` onto OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION. ops did the work correctly and returned VERDICT: DEPLOYED with sound CODE_PROOF, but wrote ONLY `.head` (status->done_verified, next_agent->po) and left the row in `task_board.in_progress[]` with status IN_PROGRESS / next_agent=ops. Commit 21bf66b93 changed 5 lines of .head and nothing else. Router caught it on artifact readback and repaired lane+head in one orch-apply write (commit a976faab0); in_progress 1->0, done_verified 47->48, head reset to idle.",
+          "mechanism": "The spawn prompt DID contain a section headed 'Terminal shape — end your run with exactly this', but its body was the REPORT contract (VERDICT/CONTAINER/CODE_PROOF/OCR_TEXT_BACKEND/MEM/COMMIT/ROW/NEXT), not the BOARD contract. Keyword census of that 6667-char prompt: in_progress=0 hits, done_verified=0 hits, orch-apply=0 hits. The single `ROW:` report line said 'lane/status/next_agent you wrote back, read back from the committed file' — which presupposes a lane write without ever specifying WHICH lane or that the row must LEAVE in_progress[]. An agent reading that reasonably satisfies it by reporting the lane it observed.",
+          "contrast": "The router's qa-dispatch prompts in the same session DO carry the board clause verbatim: 'TERMINAL SHAPE — required: the row must NOT be left in .task_board.qa[] with status=QA. Lane-move it in the SAME orch-apply write ... then COMMIT the board write.' The clause exists and is well-drafted; it is simply not applied uniformly across agent types. The heading collision ('Terminal shape' meaning two different contracts) is what let the omission pass a self-review.",
+          "why_it_matters": "Rows stranded in in_progress[] have deadlocked all four WIP pickers on four separate prior occasions. This instance also left `.head` non-idle while pinned to a row sitting in a WIP lane — a shape in which the head-idle dispatch chain (BOUNDED-1 -> SLS -> RLC -> DRS -> QA-Drain) is unreachable AND the row stays re-pickable. The 2026-08-23 fix for the stranded-in_progress defect was an explicit terminal-shape line in the SPAWN PROMPT, so its coverage is exactly as good as the router's per-dispatch prompt drafting. That makes it a discipline, not a guard — no code enforces it and nothing detects its absence.",
+          "class_note": "Second confirmed instance of the same class: router hand-dispatch silently skips a guarantee the templated dispatch path provides. The first was hand-dispatch running no deps_satisfied() check (2026-08-23, five P0 rows rooted in three nonexistent prerequisites). Hand-dispatch is not a thin wrapper over templated dispatch; it is a separate path with its own, smaller, undocumented set of guarantees.",
+          "candidate_directions": [
+            "Extract the board terminal-shape clause into ONE reusable snippet under .claude/skills/dispatch/ and require every spawn prompt to paste it, so it cannot be forgotten per-dispatch. Rename the report-format section so the two contracts stop sharing the word 'terminal shape'.",
+            "Add a post-return router check (cheap, deterministic): after any agent returns, assert no row remains in in_progress[] whose next_agent equals the agent that just returned, and that .head.active_task_id is not pinned to a row sitting in a WIP lane. This detects the omission regardless of prompt drafting.",
+            "Make it a real guard rather than a discipline: have the dispatch-claim path record the dispatched row id + agent, and have the dev-team tick refuse to advance while a returned agent's row is still in in_progress[] — turning a silent strand into a loud one."
+          ],
+          "not_duplicate_of": [
+            "FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog.585 — that is about claim-key scoping, not terminal shape)",
+            "the 2026-08-23 stranded-in_progress row (that fix landed and was live-tested; this is the coverage hole the fix's chosen mechanism leaves open, not a regression of it)"
+          ],
+          "evidence": {
+            "ops_commit": "21bf66b93 (5 insertions / 5 deletions, .head only)",
+            "router_repair_commit": "a976faab0",
+            "prompt_keyword_census": "in_progress=0, TERMINAL=0, done_verified=0, orch-apply=0, lane=2 over 6667 chars"
+          }
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T18:10:10Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

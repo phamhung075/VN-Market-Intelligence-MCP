@@ -4,39 +4,65 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel production (long steel, HRC, billets) and construction materials",
-  "customer": "Construction/infrastructure contractors, steel distributors, export markets",
-  "ops": "Q1-2026 net revenue 52,901 tỷ VND; gross margin 15.8%; net profit 9,056 tỷ VND. Operating Profit line reported as 0 tỷ VND — DATA QUALITY ISSUE, corrupt/unextracted field, 37th+ consecutive cycle unresolved. Validation warning: net profit exceeds gross profit (possible non-operating income, unverified). ROE 12.7% (sector-annualized) vs sector median 2.9%.",
-  "mgmt": "EY_SPREAD +2.04pp → FAIR (PE 14.2 vs sector median 32.6, -57% discount). KinhDich: Que Khon (47), BAT LOI/GIU, 25% confidence (low-confidence bearish lean). ESC-4 DISCARDED this cycle (operating_profit=0 corrupt input, cannot compute non_operating_share).",
-  "supporting": {
-    "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
-    "esc_2": {
+  "product": "Steel production (construction steel, HRC/CRC flat steel), steel pipe, agriculture/livestock feed side-business",
+  "customer": "Domestic construction contractors/distributors, export steel buyers, feed-mill/livestock customers",
+  "ops": "Revenue 52,900.8 ty VND, gross margin 15.8%. Reported operating_profit=0 (data-quality corruption in source feed — 38th+ consecutive cycle unresolved, flagged to dev-team). Net profit 9,055.9 ty VND exceeds gross profit, consistent with the operating_profit=0 corruption, not a real financial event.",
+  "mgmt": "ROE 6.5% raw quarterly (12.7% sector-comparison annualized, vs sector median 2.9%); analyst forecasts (Shinhan VN, 2026-08-25) see FY2026 NPAT +56% YoY, driven by domestic construction demand.",
+  "cycle_id": "20260825-1800",
+  "slot": "bctc-analyst-slot-2",
+  "valuation": {
+    "pe": 14.2,
+    "pb": 1.7,
+    "earning_yield_pct": 7.04,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR",
+    "sector": "Thep",
+    "sector_pe_median": 32.6
+  },
+  "kinhdich": {
+    "que": "Khon (47)",
+    "xu_huong": "BAT LOI",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 25
+  },
+  "esc_gate": {
+    "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+    "ESC-2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "esc_3": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
-      "quarters_required": 4
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+      "coverage_guard_held": true
     },
-    "esc_4": {
+    "ESC-4": {
       "result": "DISCARDED",
-      "reason": "operating_profit=0 corrupt"
+      "reason": "operating_profit=0 corrupt source data, non_operating_share unreliable"
     },
-    "esc_5": {
+    "ESC-5": {
       "result": false,
-      "reason": "report_id=null, refine_status=PARTIAL"
-    },
-    "confidence_pct": 80,
-    "refine_status": "PARTIAL",
-    "insider_signal": "none material",
-    "legal_risk": "none",
-    "overdue": "Q2-2026 report overdue since 2026-07-30 (Q1-2026 latest extracted)"
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
   },
-  "generated_at": "2026-08-25T15:20:00Z",
+  "escalation_status": "N/A",
+  "insider_signal": "no significant activity",
+  "legal_risk": "none",
+  "overdue": true,
+  "data_quality_flag": "operating_profit=0 corrupt (recurring, 38th+ cycle)",
+  "evidence_fragment_ids": [
+    1537,
+    1538
+  ],
+  "regime": "NEUTRAL (fallback)",
+  "carry_regime": "NEUTRAL",
+  "generated_at": "2026-08-25T18:20:00Z",
   "_processed": {
-    "fingerprint": "0d709ebab8d1ca250e7b8f9363005d36f2d59680314ec0b38b9f13c0178a0f00",
-    "processedAt": "2026-08-25T15:30:58Z",
+    "fingerprint": "e624f9d6f2374eba6c982287876031c2a68e558d8b96649ab22c6be2fec50a1d",
+    "processedAt": "2026-08-25T18:10:10Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

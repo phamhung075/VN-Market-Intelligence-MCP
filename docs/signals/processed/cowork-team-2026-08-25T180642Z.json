@@ -45,5 +45,11 @@
     "note": "First non-drain-only tick since 17:30Z (four drain-only ticks intervened). guaranteed:false so Layer C launchd firer does not cover this slot; ps-grep peer probe run pre-claim returned no peer process, and slot claim returned claimed:true — no dual-plane exposure this tick. Step 4.7 ran and wrote cycle-snapshot-18:05.json against nominal tick 18:00, so cycle_snapshot_promoted:false here is the ROUTED wall-clock-vs-nominal defect (causally complete), not the drain-only skip cause seen on the four preceding ticks. last_volatility_level emitted unknown: zero fields matching /volatil/i exist anywhere in the snapshot — no producer at all, structurally distinct from the regime_status wrong-key bug (regime value does exist, read live as NEUTRAL from .macro_snapshot.data.signals.carry.regime). dev_head unknown is an honest KEY-ABSENT read of .dev_team_idle_chain.head. Step 5.3 off-flow detector DEFERRED per BGFAN-1 (spawn in-flight at stamp time); prior last_fired 2026-08-24T18:03:21Z retained for the de-stamp contract if it later fails."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T18:06:42Z"
+  "createdAt": "2026-08-25T18:06:42Z",
+  "_processed": {
+    "fingerprint": "9597578bd5b28f0746142d176fbac1e7830ffbaae013b942614c8a48505b94e9",
+    "processedAt": "2026-08-25T18:10:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
