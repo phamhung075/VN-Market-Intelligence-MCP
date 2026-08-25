@@ -30,3 +30,6 @@
 
 ## 2026-08-25T14:30Z Scan 66
 - Checks: Pre-check gate (0 src/ changes), 3 sweeps (memory-prune, notebook-linecap, cold-archive) | Findings: 0 new DRY violations | Action: shipped 0 | backlog 0 | clean | memory-prune signal SIGNAL-SKIP (pre-gate already routed), cold-archive skipped (not 1st of month)
+
+## 2026-08-25T22:32Z Scan 67
+- Checks: Pre-check gate (0 src/ changes), 3 sweeps (memory-prune, notebook-linecap, cold-archive) | Findings: 0 new DRY violations | Action: shipped 0 | backlog 0 | clean | memory-prune signal SIGNAL-SKIP (pre-gate already routed) but signal_queue row appended per pre-gate contract (cj-20260825T223214) | 4 notebooks safe-fail over byte-cap | cold-archive skipped (not 1st of month)
