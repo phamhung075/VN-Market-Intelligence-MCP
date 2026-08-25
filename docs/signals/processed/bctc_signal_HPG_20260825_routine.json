@@ -4,65 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel production (construction steel, HRC/CRC flat steel), steel pipe, agriculture/livestock feed side-business",
-  "customer": "Domestic construction contractors/distributors, export steel buyers, feed-mill/livestock customers",
-  "ops": "Revenue 52,900.8 ty VND, gross margin 15.8%. Reported operating_profit=0 (data-quality corruption in source feed — 38th+ consecutive cycle unresolved, flagged to dev-team). Net profit 9,055.9 ty VND exceeds gross profit, consistent with the operating_profit=0 corruption, not a real financial event.",
-  "mgmt": "ROE 6.5% raw quarterly (12.7% sector-comparison annualized, vs sector median 2.9%); analyst forecasts (Shinhan VN, 2026-08-25) see FY2026 NPAT +56% YoY, driven by domestic construction demand.",
-  "cycle_id": "20260825-1800",
-  "slot": "bctc-analyst-slot-2",
-  "valuation": {
-    "pe": 14.2,
-    "pb": 1.7,
-    "earning_yield_pct": 7.04,
-    "ey_spread_pp": 2.04,
-    "verdict": "FAIR",
-    "sector": "Thep",
-    "sector_pe_median": 32.6
-  },
-  "kinhdich": {
+  "product": "Sản xuất thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ — tích hợp từ khai thác quặng đến thành phẩm (Khu liên hợp gang thép Dung Quất).",
+  "customer": "Nhà thầu xây dựng, nhà phân phối vật liệu xây dựng trong nước, khách hàng xuất khẩu HRC (ASEAN, EU).",
+  "ops": "Biên lợi nhuận gộp 15.8%; operating_profit ghi nhận 0 (dữ liệu OCR lỗi/thiếu, cờ corrupt tồn tại 39+ chu kỳ liên tiếp); lợi nhuận ròng vượt lợi nhuận gộp (9.055,9 tỷ > 8.365,1 tỷ) — validation passed_with_warnings, khả năng thu nhập ngoài hoạt động lớn hoặc lỗi trích xuất.",
+  "mgmt": "PE 14.2x chiết khấu -57% so với trung vị ngành thép; ROE 12.7% trên trung vị ngành (2.9%); D/E không xác định do dữ liệu OCR thiếu.",
+  "ey_spread_pct": 2.04,
+  "valuation_verdict": "FAIR",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "kd_reading": {
     "que": "Khon (47)",
-    "xu_huong": "BAT LOI",
-    "khuyen_nghi": "GIU",
-    "do_tin_cay_pct": 25
+    "trend": "BAT LOI",
+    "signal": "GIU",
+    "confidence_pct": 25
   },
   "esc_gate": {
-    "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-    "ESC-2": {
-      "result": false,
-      "imbalance_pct": 0
-    },
-    "ESC-3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "quarters_required": 4,
-      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
-      "coverage_guard_held": true
-    },
-    "ESC-4": {
-      "result": "DISCARDED",
-      "reason": "operating_profit=0 corrupt source data, non_operating_share unreliable"
-    },
-    "ESC-5": {
-      "result": false,
-      "report_id": null,
-      "existing_refine_status": "PARTIAL"
-    }
+    "esc1": "unevaluable-scope-reduced-no-bash-glob-tool",
+    "esc2": "FALSE (imbalance=0.00%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters via get_cash_flow) — coverage guard COVERAGE-GUARD-HELD, no re-emit",
+    "esc4": "DISCARDED — operating_profit=0 corrupt data, non_operating_share unevaluable (39th+ cycle)",
+    "esc5": "FALSE (report_id=null, existing_refine_status=PARTIAL)"
   },
-  "escalation_status": "N/A",
-  "insider_signal": "no significant activity",
-  "legal_risk": "none",
-  "overdue": true,
-  "data_quality_flag": "operating_profit=0 corrupt (recurring, 38th+ cycle)",
+  "escalation_status": "NO_ESCALATION",
+  "report_overdue": true,
+  "overdue_quarter": "Q2-2026",
+  "insider_signal": "no significant signal (Không có tín hiệu giao dịch nội bộ đáng kể)",
+  "legal_risk": "no risk signals in window",
+  "investment_clock_phase": "Overheat",
   "evidence_fragment_ids": [
-    1537,
-    1538
+    1555,
+    1556
   ],
-  "regime": "NEUTRAL (fallback)",
-  "carry_regime": "NEUTRAL",
-  "generated_at": "2026-08-25T18:20:00Z",
+  "as_of_utc": "2026-08-25T21:15:00Z",
   "_processed": {
-    "fingerprint": "e624f9d6f2374eba6c982287876031c2a68e558d8b96649ab22c6be2fec50a1d",
-    "processedAt": "2026-08-25T18:10:10Z",
+    "fingerprint": "8bb65303cefd4c465181056fb9f9ffb269bbf763d3d837161495932b37a62e18",
+    "processedAt": "2026-08-25T21:12:13Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

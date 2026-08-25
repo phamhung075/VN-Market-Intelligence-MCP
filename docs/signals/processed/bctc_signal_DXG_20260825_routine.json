@@ -1,54 +1,46 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "N/A",
+  "quarter": "Q2-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real-estate development (residential projects, southern VN focus)",
-  "customer": "Homebuyers/investors in DXG-developed residential projects",
-  "ops": "get_bctc_full returns \"Chua co du lieu\" — 42nd+ consecutive cycle with no extracted BCTC data despite DXG_2026_Q2.pdf on file since 2026-08-01. Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median).",
-  "mgmt": "No BCTC-derived management track-record data available this cycle (extraction gap).",
-  "cycle_id": "20260825-1800",
-  "slot": "bctc-analyst-slot-2",
-  "valuation": {
-    "pe": 66.5,
-    "pb": 1.2,
-    "earning_yield_pct": 1.5,
-    "ey_spread_pp": -3.5,
-    "verdict": "AVOID",
-    "sector": "Bat dong san",
-    "sector_pe_median": 16.1
-  },
-  "kinhdich": {
+  "product": "Phát triển bất động sản dân dụng (căn hộ, khu đô thị) tại TP.HCM và các tỉnh lân cận phía Nam.",
+  "customer": "Người mua nhà ở, nhà đầu tư thứ cấp bất động sản dân dụng khu vực phía Nam.",
+  "ops": "Không có dữ liệu BCTC trích xuất (Chưa có dữ liệu BCTC — 43+ chu kỳ liên tiếp); chỉ số so sánh ngành (live get_sector_comparison): PE 66.5x cao hơn trung vị ngành BĐS +312%, PB 1.2x ngang bằng ngành, ROE 1.9% dưới trung vị ngành (7.3%).",
+  "mgmt": "Dữ liệu BCTC vẫn chưa được trích xuất từ VPS proxy — báo cáo Q2-2026 quá hạn từ 30/07/2026; định giá PE cao bất thường trong khi ROE thấp là dấu hiệu cần thận trọng, không xác nhận được từ báo cáo tài chính do thiếu dữ liệu.",
+  "ey_spread_pct": -3.5,
+  "valuation_verdict": "AVOID",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "kd_reading": {
     "que": "Tuy (45)",
-    "xu_huong": "THUAN LOI",
-    "khuyen_nghi": "THAN TRONG",
-    "do_tin_cay_pct": 75,
-    "note": "diverges from AVOID valuation verdict — flagged, not reconciled (recurring pattern)"
+    "trend": "THUAN LOI",
+    "signal": "THAN TRONG",
+    "confidence_pct": 75
   },
   "esc_gate": {
-    "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-    "ESC-2": "N/A (no BCTC data — Chua co du lieu)",
-    "ESC-3": "N/A (no BCTC data)",
-    "ESC-4": "N/A (no BCTC data)",
-    "ESC-5": "N/A (no report_id resolvable — no BCTC data)"
+    "esc1": "N/A — no BCTC data",
+    "esc2": "N/A — no BCTC data",
+    "esc3": "N/A — no BCTC data",
+    "esc4": "N/A — no BCTC data",
+    "esc5": "N/A — no BCTC data"
   },
-  "escalation_status": "N/A",
-  "insider_signal": "no significant activity",
-  "legal_risk": "none",
-  "overdue": true,
-  "data_quality_flag": "Chua co du lieu — 42nd+ cycle, cash-flow-anomaly (c162) still pending dev-team pickup",
+  "escalation_status": "NO_ESCALATION",
+  "data_gap": "BCTC extraction pending — sector-comparison ratios only this cycle, per reprocess-vs-new-filing guard downgrade rule",
+  "report_overdue": true,
+  "overdue_quarter": "Q2-2026",
+  "insider_signal": "no significant signal (Không có tín hiệu giao dịch nội bộ đáng kể)",
+  "legal_risk": "no risk signals in window",
+  "investment_clock_phase": "Overheat",
   "evidence_fragment_ids": [
-    1541,
-    1542,
-    1543
+    1559,
+    1560,
+    1561
   ],
-  "regime": "NEUTRAL (fallback)",
-  "carry_regime": "NEUTRAL",
-  "generated_at": "2026-08-25T18:20:00Z",
+  "as_of_utc": "2026-08-25T21:15:00Z",
   "_processed": {
-    "fingerprint": "dd7183a7c8d9d443f9f7f04f3550a027f8fd9a01ef5ffe00ae07916ea8158bec",
-    "processedAt": "2026-08-25T18:51:04Z",
+    "fingerprint": "9fa3a78752a5e7ab55f5cd5cee45086c04eaaa69b974efb9bb8292cf8176ea6f",
+    "processedAt": "2026-08-25T21:12:13Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,59 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, trade finance, bancassurance/card cross-sell (incl. Visa Hanoi Metro-MeGO co-brand card)",
-  "customer": "Retail depositors/borrowers, corporate/SOE lending clients, card/payment users",
-  "ops": "Net interest income 17,421 ty VND, operating margin 80.9% (bank cost structure). Net profit 9,462.1 ty VND. OCF/NI ratio 1.37x (Q1-2026) — healthy cash conversion.",
-  "mgmt": "ROE 4.2% raw quarterly (16.7% sector-comparison annualized, vs sector median 17.6% — below peer median); Vietcombank Visa Hanoi Metro-MeGO card won Stevie Gold Award 2026 (brand/execution track record).",
-  "cycle_id": "20260825-1800",
-  "slot": "bctc-analyst-slot-2",
-  "valuation": {
-    "pe": 14.1,
-    "pb": 2.2,
-    "earning_yield_pct": 7.09,
-    "ey_spread_pp": 2.09,
-    "verdict": "FAIR",
-    "sector": "Ngan hang",
-    "sector_pe_median": 9
-  },
-  "kinhdich": {
+  "product": "Ngân hàng bán lẻ và doanh nghiệp: cho vay, huy động vốn, thanh toán, bancassurance.",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/SME, đối tác bancassurance (Vietcombank Visa Hanoi Metro-MeGO đạt Giải Vàng Stevie 2026).",
+  "ops": "Thu nhập lãi thuần 17.421 tỷ VND; lợi nhuận hoạt động chiếm 80.9% doanh thu; ROE 16.7% dưới trung vị ngành ngân hàng (17.6%); PE 14.1x cao hơn ngành +57%, PB 2.2x cao hơn ngành +45% — định giá premium so với nhóm ngân hàng peer.",
+  "mgmt": "OCF/NI ratio 1.37x quý gần nhất (dòng tiền hoạt động vượt lợi nhuận ròng, chất lượng lợi nhuận tốt, ESC-3 divergence=36.81% < ngưỡng 40%); báo cáo Q2-2026 quá hạn từ 14/08/2026.",
+  "ey_spread_pct": 2.09,
+  "valuation_verdict": "FAIR",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "kd_reading": {
     "que": "Tieu Qua (62)",
-    "xu_huong": "TRUNG TINH",
-    "khuyen_nghi": "GIU",
-    "do_tin_cay_pct": 37
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 37
   },
   "esc_gate": {
-    "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-    "ESC-2": {
-      "result": false,
-      "imbalance_pct": 0.37
-    },
-    "ESC-3": {
-      "result": false,
-      "quarters_returned": 4,
-      "divergence_ratio_pct": 36.81
-    },
-    "ESC-4": "N/A (bank — non-operating-share formula not applicable to bank P&L structure)",
-    "ESC-5": {
-      "result": false,
-      "report_id": null,
-      "existing_refine_status": "PARTIAL"
-    }
+    "esc1": "unevaluable-scope-reduced-no-bash-glob-tool",
+    "esc2": "FALSE (imbalance=0.37%)",
+    "esc3": "FALSE (4/4 quarters, divergence_ratio=36.81% < 40%)",
+    "esc4": "N/A (bank — non_operating_share heuristic not applicable)",
+    "esc5": "FALSE (report_id=null, existing_refine_status=PARTIAL)"
   },
-  "escalation_status": "N/A",
-  "insider_signal": "no significant activity",
-  "legal_risk": "none",
-  "overdue": true,
+  "escalation_status": "NO_ESCALATION",
+  "report_overdue": true,
+  "overdue_quarter": "Q2-2026",
+  "insider_signal": "no significant signal (Không có tín hiệu giao dịch nội bộ đáng kể)",
+  "legal_risk": "no risk signals in window",
+  "investment_clock_phase": "Overheat",
   "evidence_fragment_ids": [
-    1539,
-    1540
+    1557,
+    1558
   ],
-  "regime": "NEUTRAL (fallback)",
-  "carry_regime": "NEUTRAL",
-  "generated_at": "2026-08-25T18:20:00Z",
+  "as_of_utc": "2026-08-25T21:15:00Z",
   "_processed": {
-    "fingerprint": "48123e176b4c452f310b2f5706000dd685d2e2f2e6fa602ef783d2ac7605b772",
-    "processedAt": "2026-08-25T18:10:10Z",
+    "fingerprint": "fc5b077c523fcbd417ed0c19c450fd434634c31701e2d454c0c51995a679628a",
+    "processedAt": "2026-08-25T21:12:13Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
