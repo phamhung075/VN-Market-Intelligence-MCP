@@ -1,3 +1,26 @@
+## Tier-DATA (2026-08-25T05:41:12Z)
+
+**Audit Run:** DB Data-Anomaly Sweep
+
+**Tables checked:** 17 high-value tables, deterministic counts from scripts/db-integrity-counts.sh
+
+**Counts (immutable read-mode):**
+- ohlc_violations: 336 (stable residue, 0 fresh in last 2d, across 20 distinct dates)
+- scale_gt100x: 0
+- vnindex_cache_rows: 1
+- low_confidence_reports: 52
+
+**Findings Summary:**
+1. **daily_ohlcv OHLC violations (336 rows)** — Stable residue from prior data extraction issues. Fresh violations in last 2 days: 0. Pipeline currently produces correct data. Tracked under open repair tasks: LINT-OHLCV-WRITE-BYPASS and CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR. Verdict: NOISE (no new anomalies).
+
+**Other tables (already-open):**
+- `deep_fetch_stats` (class=a, production writer) — already-open: sys-20260806T065709-49e3
+- `deep_fetch_queue` (2549 rows, 2482 expired) — already-open: FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD
+- `cron_job_runs` (212 error/crashed rows) — already-open: FIX-CRON-RUNS-NULL-ERRORMSG
+- `macro_indicators` (1 row, stale 17.5h) — already-open: FIX-MACRO-INDICATORS-EMPTY-COLUMNS
+
+**Exit:** 0 (RECORD OK, no new signals)
+
 ## Tier-DATA DB Data-Anomaly Sweep
 
 **Scan timestamp:** 2026-08-25T04:00:23Z  
@@ -63,65 +86,3 @@ See `docs/data/db-integrity-history.json` for full detail.
 - No contract contradictions
 - Probe NOT re-run (constraint: avoid dedup-ledger mutation)
 - Verdict sourced from trigger file (read-only, evidence use only)
-
-## c1015 · 2026-08-25T03:30Z
-### Audit Run Tier-DATA (2026-08-25T03:30Z)
-- Tier: DATA | Tables checked: 17 | Findings: 4 (1 HIGH REAL, 3 INFO NOISE)
-- Anomalies: 0 new signals | dedup-skipped: 2 (deep_fetch_stats already tracked, ohlcv violations already tracked)
-- Status: STABLE (no new anomalies; known issues remain tracked)
-
-### Findings Summary
-
-**1. daily_ohlcv — 336 persistent OHLC H>=O,C,L violations**
-- Violations count: 336 (unchanged from last cycle)
-- Distinct dates affected: 20 (NOT concentrated on a single date)
-- Fresh violations (last 2 days): 0 (no new violations this cycle)
-- Scale anomalies (>100x): 0
-- Root cause: Known residual from prior data extraction issues
-- Status: BY-DESIGN (tracked under LINT-OHLCV-WRITE-BYPASS + CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR)
-- Signal status: DEDUP-SUPPRESSED (same violation population as 2026-08-25T03:00Z scan)
-
-**2. deep_fetch_stats — empty (class=a)**
-- Row count: 0 (unchanged from last cycle)
-- Production writer: deepFetchQueueStore.ts:173
-- Producer health: deep_fetch_queue has 2540 rows, 2475 expired, 31 pending, 34 vps-failed, newest entry 2026-08-25T03:27:15
-- Root cause: Stats aggregation pipeline stalled; producer is live but consumer not generating stats
-- Severity: HIGH (class=a — production writer exists, 0 rows is a real breach)
-- Signal status: ALREADY-OPEN (tracked as FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD)
-
-**3. price_alerts — empty (class=c)**
-- Row count: 0
-- Writer provenance: on-demand MCP tool only (priceAlertTools.ts:148)
-- Root cause: Expected empty; tool-driven table populated only on explicit tool invocation
-- Severity ceiling: INFO (class=c — no production job writes to this table)
-- Verdict: NOISE (not a pipeline failure)
-
-**4. alert_engine_records — empty (class=b)**
-- Row count: 0
-- Writer provenance: separate database file (alert_engine.db, not market.db)
-- Root cause: Table has zero production writers against market.db by design
-- Severity ceiling: INFO (class=b — expected empty by construction)
-- Verdict: NOISE (not a pipeline failure)
-
-### Data Quality Metrics (deterministic sqlite output)
-```
-scan_ts: 2026-08-25T03:29:09Z
-ohlc_violations_count: 336
-scale_gt100x_count: 0
-vnindex_cache_rows_count: 1
-low_confidence_reports_count: 52
-ohlc_violation_distinct_dates: 20
-daily_ohlcv_total: 789924
-market_prices_freshness: 2026-08-25T03:28:42.500Z
-```
-History record: docs/data/db-integrity-history.json (appended 2026-08-25T03:29:55Z)
-
-### Durability Sweep
-- Marker files swept: 0
-- Malformed keys: 0
-- Stale drafts: 0
-- Schedule gaps: t1=0, t2=0, t3=0
-
-### Contract Status
-- No contract contradictions
-- Durability sweep completed successfully
