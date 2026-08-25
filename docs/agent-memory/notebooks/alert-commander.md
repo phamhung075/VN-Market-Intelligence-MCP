@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-25 12:08 UTC | **Sprint:** FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE
+**Last updated:** 2026-08-25 16:08 UTC | **Sprint:** FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c254 · 2026-08-25T08:08:49Z (slot=alert-commander-market, tick=08:05)
-- Signals: tick-snapshot hit 08:05 (fresh, 1.6min old) → skipped `get_cycle_bootstrap`, used `$CYCLE_SNAPSHOT.macro_snapshot`. `get_macro_calendar` + `get_agent_signals`(agent, 2h) + chain_catalyst/price_anomaly explicit filters ALL empty of the 6 consumed types — only 2 self-produced `verified_decision` (id11336 Brent macro, id11337 DBC price_surge) on bus. No candidate ticker to evaluate. Fired: 0 | Suppressed: 0 | MARKET: none. Gateway healthy (Step 0-GW probe OK, single attempt).
-- ChainCatalyst: 0 fired | 0 suppressed | no chain_catalyst signal in window.
-- Watchlist-opp: 0 candidates (no urgent_news/chain_catalyst named a ticker this cycle) → gate fails, no fire.
-- Position-danger: `get_alerts(type=price)` clean ("Không có cảnh báo nào đang hoạt động"); DBC +6.63% is a rally not a drop, no ticker singleDayDrop>5% flagged. Gate fails, no candidate.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean; bus carries no `legal_risk`/`verified_chain`/`crisis_velocity`. `get_crisis_early_warning` primary indicator clean ("Không có tín hiệu khủng hoảng nào"); corp-reputation sub-50 unchanged BSR39.0/FPT42.5/KDH41.0/PLX37.0 deteriorating, not itself CRITICAL.
-- Regime: NEUTRAL (fallback — macro_snapshot JSON shape has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp, source_tier=2) | vol NORMAL (rv_20d_pctile=0.4036, gk_vol_20d_pct=16.01, drawdown_252d=16.38%) | `get_vn_liquidity_state` OMO+interbank blocked (honest-NULL, source unreachable) | `get_foreign_room` market_saturation_pct=5.77% (top-10 tickers, room_utilization_pct null across all — data-quality gap; outflow_z_5d=-1.48) | Pivot window: TRUE (pivotWindowWarning: "Entering pivot window September 2026 in 7 days"). VN-Index 1791.41 (+2.63), VN market OPEN (02:00-08:59 UTC). Silent exit — no MARKET/WORK send. `log_agent_work` id=2138.
 
 ## c255 · 2026-08-25T08:11:39Z (slot=alert-commander-critical, tick=08:05)
 - Signals: tick-snapshot hit 08:05 (fresh) → `$CYCLE_SNAPSHOT.macro_snapshot`; 6 explicit signal_type queries found urgent_news×2 (VIC id11338, VPB id11339 — both posted ~08:08 by news-scout, AFTER peer c254's earlier bus read) + chain_catalyst×2 (gold-surge id11340, Iran-sanctions/trade_war id11341). Fired: 1 | Suppressed: 3 | MARKET: 1 (market-wide advisory).
@@ -29,3 +21,11 @@
 - Position-danger: `get_alerts(type=price)` clean ("Không có cảnh báo nào đang hoạt động"); no stopLossHit/singleDayDrop>5% candidate.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean; bus carries no `legal_risk`/`verified_chain`/`crisis_velocity`. `get_crisis_early_warning` primary indicator clean; corp-reputation sub-50: BSR24.0(danger)/PLX34.0(warning)/VCB46.5(warning) deteriorating, not itself CRITICAL.
 - Regime: NEUTRAL (fallback — macro_snapshot JSON shape has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp, source_tier=2) | vol NORMAL (rv_20d_pctile=0.4036, gk_vol_20d_pct=16.01, drawdown_252d=16.38%) | `get_vn_liquidity_state` errored (macro-indicators service unavailable, honest-SKIP) | `get_foreign_room` market_saturation_pct=24.25% (top-10 tickers; VCB room_utilization=66.93% highest, outflow_z_5d=-1.48) | Pivot window: TRUE (pivotWindowWarning: "Entering pivot window September 2026 in 7 days"). VN-Index 1791.41(+2.63), VN market CLOSED (outside 02:00-08:59 UTC). Silent exit — no MARKET/WORK send. `log_agent_work` id=2140.
+
+## c257 · 2026-08-25T16:08:08Z (slot=alert-commander-critical, tick=16:00)
+- Signals: no fresh tick-snapshot (no cycle-snapshot-16:06.json exact-tick match; 16:04.json ignored per exact-match rule) → direct `get_cycle_bootstrap` + `get_macro_snapshot` (JSON shape, text field present) + `get_macro_calendar` + `get_market_context`(6h) + `get_alerts`(price) + `get_agent_signals`(agent,2h,status=all) → "Không có tín hiệu mới" (aggregate empty, all 6 consumed types zero). No candidate ticker. Fired: 0 | Suppressed: 0 | MARKET: none. Gateway healthy (Step 0-GW probe OK, single attempt).
+- ChainCatalyst: 0 fired | 0 suppressed | no chain_catalyst signal in window.
+- Watchlist-opp: 0 candidates (no ticker-named signal this cycle) → gate fails, no fire.
+- Position-danger: `get_alerts(type=price)` clean ("Không có cảnh báo nào đang hoạt động"); no stopLossHit/singleDayDrop>5% candidate.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean; bus carries no `legal_risk`/`verified_chain`/`crisis_velocity`. `get_crisis_early_warning` primary indicator clean ("Không có tín hiệu khủng hoảng nào"); corp-reputation sub-50: BSR24.0(danger)/PLX34.0(warning)/VCB46.5(warning) deteriorating, unchanged from c256, not itself CRITICAL.
+- Regime: NEUTRAL (fallback — macro_snapshot JSON shape has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp, source_tier=2) | vol NORMAL (rv_20d_pctile=0.4036, gk_vol_20d_pct=16.01, drawdown_252d=16.38%) | `get_vn_liquidity_state` OMO+interbank blocked (honest-NULL, source unreachable) | `get_foreign_room` market_saturation_pct=24.25% (top-10 tickers; VCB room_utilization=66.93% highest, outflow_z_5d=-1.48) | Pivot window: TRUE (pivotWindowWarning: "Entering pivot window September 2026 in 7 days"). VN-Index 1791.41(+2.63), VN market CLOSED (outside 02:00-08:59 UTC). Silent exit — no MARKET/WORK send. `log_agent_work` id=2142.
