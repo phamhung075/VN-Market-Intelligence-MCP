@@ -2218,3 +2218,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-05 · foreign-flow data stale 18.8h (CRITICAL)
+**Severity:** CRITICAL | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** data-source/foreign-flow
+**Details:** Last update 2026-08-25 (18.8h ago), expected 1-min cadence
+**Impact:** Foreign investor flow data 18.8h stale - CRITICAL indicator for market sentiment
+**Root cause:** daily_foreign_flow table shows 18.8h gap on highest-cadence source (1-min cycle)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T18:50:54Z (signal sys-20260825T185022-08f4, system-auditor -> po, dedup_key=data_stale:foreign-flow:B-05, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
