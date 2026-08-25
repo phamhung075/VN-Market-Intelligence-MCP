@@ -189,3 +189,87 @@ ephemeral benchmark containers.
 
 ### Status
 DONE — no swap performed, code fix committed, redeploy flagged to ops.
+
+---
+
+## Cycle 2026-08-25 — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
+
+**Zone:** apps/pdf-extractor/ | **Size:** S | P1 (incident lane, `po_expedited_at`)
+
+### Defect
+`TesseractVieBackend.recognize_text()` reported confidence as
+`mean(conf)` over `valid_rows = data[(conf > 0) & (text != '')]`. The
+denominator was the rows it MANAGED to read, not the rows it should have —
+recall was invisible by construction. A table region where Tesseract caught a
+header band and lost every data row still self-reported 0.708, so
+`AutoFallbackOcrBackend`'s 0.5 gate never fired and `auto` was byte-identical
+to tesseract-vie on 30/30 FPT Q4 2025 units.
+
+### Fix
+`confidence = min(precision, recall)` in BOTH backends.
+`recall = _ink_coverage()` — fraction of the crop's Otsu foreground pixels
+inside a box the engine emitted text for. Threshold constant untouched at 0.5.
+Paddle got the same treatment because `AutoFallback` picks with
+`paddle_conf >= tess_conf`, which is meaningless across two different metrics.
+
+### Measured before choosing (all 51 real table regions, FPT Q4 2025)
+Built `scripts/audits/ocr-confidence-probe.sh` first and computed every AC-1
+candidate side by side rather than arguing from the armchair:
+
+| metric | pg9 (the miss) | lowest legit | verdict |
+|---|---|---|---|
+| mean(conf) — today | 0.7084 | 0.7122 pg34 | 0.5% apart — dead |
+| char-weighted mean | 0.7121 | 0.6876 pg34 | **INVERTED** |
+| recognised-area/crop-area | 0.1183 | 0.0896 pg16 | **INVERTED** |
+| recognised-lines/detected | 1.0000 | 1.0000 all | **inert** |
+| **ink coverage** | **0.1740** | **0.6739 pg40** | **3.9x, no overlap** |
+
+### Verify
+AC-2 page 9: 122 → 452 chars, 9/9 figures, read by readonly bun:sqlite on
+`market.db` (never push echo). AC-3: rescue fired 1x in 51 regions (page 9
+only) AND 29/30 units byte-identical by sha256 to a tesseract-vie run of the
+same commit. AC-4 (cgroup only): table phase 117.26s vs 112.97s same-session
+(+3.8%), peak 1274.9 MiB = 49.8% of the 2560 MiB cap, 0 hard-limit hits.
+pytest 1086 pass / 1 pre-existing fail; import-linter 3/3 KEPT; G12 30 green /
+6 negative fixtures correctly red; PEK zero-diff.
+
+### Learned
+1. **Two of the three candidates the task itself named rank a GOOD region
+   BELOW the broken one.** Had I implemented any named candidate on trust, it
+   would have passed a synthetic unit test and failed the corpus. Measuring all
+   four before writing production code cost one 7-minute probe run and was the
+   whole cycle.
+2. **`min()` over product/harmonic is a semantic choice, not a numeric one.**
+   Both alternatives separated page 9 too. But under an F1 a region read
+   perfectly and only 34% covered scores 0.507 and clears a 0.5 gate — high
+   precision buying back collapsed recall is the exact defect being fixed, so
+   the combinator must forbid it structurally, not just on today's numbers.
+3. **My own instrument lied first.** The first `auto` run reported
+   `rescue_fire_count = 0` while page 9 was visibly fixed — I had added the
+   `RESCUE FIRED` log AFTER the image build, so the counter was measuring a
+   binary that never contained it. Caught by `docker run --entrypoint sh ...
+   grep -c 'RESCUE FIRED' /app/...` = 0 while `_recall_adjusted_confidence` = 4.
+   **Grep the built image for the instrument before trusting the instrument.**
+4. **Meter mismatch nearly produced a false AC-4 regression.** The row's 174.5s
+   baseline is TABLE-PHASE; the harness reported a whole-run wall (~350s, most
+   of it DocLayout-YOLO). Reported as-is it would have read as 2x slower.
+   Harness now times the table phase explicitly.
+5. **`python3 -m importlinter.cli lint-imports` exits 0, prints nothing and
+   evaluates nothing** — a false green. Only the `lint-imports` entrypoint runs
+   the contracts (3 kept, 0 broken). Same class as `feedback_fence_false_green`.
+6. Ink-ratio measurement was already an idiom here — `page_zoning.py` computes
+   `row_density` as a dark-pixel ratio. The new cell score is now dimensionally
+   consistent with the row-bands it sits beside.
+
+### Commit
+`e9144ea75` fix(pdf-extractor): make OCR confidence recall-aware so a missed page can fail
+
+Zone health: HEALTHY. **NOT DEPLOYED** — image rebuilt for the ephemeral
+verification containers only; the live container was deliberately not recreated
+(ops zone). Inert in production twice over: the container is pre-fix, and prod
+runs `OCR_TEXT_BACKEND` unset = `tesseract-vie`, so the rescue does not engage
+until someone sets `auto`. Debt tracked by
+`OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION`.
+
+### Status
+REVIEW → next_agent=qa (head reset to idle in the same orch-apply write)
