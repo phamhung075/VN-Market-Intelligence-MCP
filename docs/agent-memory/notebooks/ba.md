@@ -1,6 +1,32 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-23 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-25 | **Sprint:** BCTC-ANALYTICS-LAYER
+
+## FIX-BCTC-BANK-SUMMARY-MAPPING (cycle 2) · 2026-08-25
+
+Dev-team Design-Router re-dispatch of a row that already went through a FULL po→ba→architect→pm→
+dev→qa cascade in 2026-07 (W1-W5 + 2 follow-on fixes, all QA-approved) — re-fired because the
+router's own evidence quotes the same 229157%/total_assets=0 numbers from June. Read all 4 prior
+architect briefs/spikes first; did NOT re-run the settled 07-01/07-03 root-cause recon (3 stacking
+parser/classifier bugs — column-order, bold-markup classifier miss, section-vocab gap — all
+grep-confirmed still present/fixed at HEAD). Live-traced why the fix never took effect: CTG's and
+VCB's `bctc_refined_units` are 100% `window_status=FAILED` with `flags=["agent_error:no_spawn_path_
+option_y"]`, frozen at `refined_at=2026-06-15` — a decommissioned legacy in-container spawn path
+(Option-Y ruling) misfired once, and an already-shipped anti-headpoison guard
+(`getBctcPendingRefineTool.ts`, `FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON`) now permanently
+excludes any report whose units are ALL terminal from ever being re-offered to the fleet cron — so
+neither bank ticker has ever been exercised by the (now-fixed) pipeline. Only 3 report_ids DB-wide
+have zero successful refine units; CTG+VCB are 2 of them. Confirmed live: the identity-serve-guard
+(W1) already hard-blocks CTG's corrupt reading today ([CORRUPT DATA — SKIP], confidence 0%) — the
+FAIL_LOUD requirement is already met at the serve layer; the router's evidence block is the
+*stored* pre-guard scalar row, not what `get_bctc_full` actually returns live. Reconfirmed
+OWNER_DECISION = dev-mcp-server (`bctc_md_tables`, the pdf-extractor bridge table, has exactly 1
+row in the whole DB). Flagged VCB's current "clean" PASS as an unvalidated frozen legacy-extractor
+value, not a real non-regression baseline. Flagged `bctcScalarAggregator.ts` at 1206L/1205L-cap
+size-lint landmine for the downstream dev leg. Wrote FR-1..FR-4 (FR-1 = architect SPIKE: design a
+generic, flag-keyed retry/reset path for permanently-excluded reports), 0 PO blockers. Spec:
+`docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md` § Cycle 2. Row moved `in_progress[]`→`ready[]`,
+`next_agent=architect`, `.head` reset idle, via `orch-apply.sh`. Decision journal STEP ba-S2.
 
 ## UC-MDH-P2 · 2026-08-23
 
@@ -47,30 +73,9 @@ forecloses backend work/deep-linking/WRITE-path fix as explicit out-of-scope. Sp
 `ba_spec_complete`, `ba_handoff`, `ba_completed_at`, `next_agent=architect` via `orch-apply.sh`
 (conservation 767↔767). Decision journal STEP ba-S18.
 
-## UC-SDF-P6 · 2026-08-23
-
-Design-Router dispatch (P1, cross-service/): router's own note already flagged the title
-("generate cron-registry.json") as stale (file exists since 07-15, self-demoted to
-system-map.json via its own `_ssot`); re-verified live and found 4 NEW findings beyond the
-note. Root cause of the 69-vs-70 internal self-contradiction: `1190-pipeline-watchdog.
-test.ts:301` hardcodes `expect(schedulerFileCount).toBe(69)`. cron-registry.json/system-
-map.json share length=70 today by COINCIDENCE — content diff shows 6 name-level divergences
-+1 stray null entry, not interchangeable. Live-recomputed project-stats.json's 88
-(61 table-driven + 22 bespoke + 5 summaryJobs call-sites) matches `gen-project-stats.ts`'s
-own generator exactly — confirms 88-vs-70 is a genuine counting-UNIT divergence (call-sites
-vs distinct-job-names), not drift. "fix gen-project-stats stale probe" (row's own note) already
-shipped (c9e7ed717) — dropped from scope. Consumer-footprint check inverts the file's own
-`_ssot` claim: cron-registry.json has 3 live test consumers, system-map.json's crons[] has 0.
-Wrote FR-1..FR-7 (all infrastructure/tooling layer) + 4 PO blockers (Q1 canonical direction,
-Q2 counting-unit ruling, Q3 recommend splitting `po_scope_expansion_20260722`'s session-
-CronCreate liveness-plane content into its own row — sibling to 2 still-BACKLOG parts of the
-same 3-part ruling, structurally different open-design problem — Q4 FR-7 sits in agent-father's
-exclusive `docs/agents/**` zone). Spec: `docs/handoffs/UC-SDF-P6-BA-spec.md`. Row moved
-`in_progress[]`→`backlog[]` (status BLOCKED, next_agent=po), `.head` reset idle, same
-`orch-apply.sh` write per router's explicit terminal-shape constraint. Decision journal STEP
-ba-S19.
-
 ## Archive
+
+UC-SDF-P6 (08-23): dropped from live notebook 2026-08-25 (AC-2 retention — landing FIX-BCTC-BANK-SUMMARY-MAPPING's cycle-2 section pushed dated-section count to 4, over the 3-section steady state; this is the oldest of the 4, dropped whole per AC-2). Design-Router dispatch (P1, cross-service): cron-registry.json vs system-map.json 69-vs-70 divergence traced to a hardcoded test assertion, not drift; 4 PO blockers on canonical direction/counting-unit/scope-split. Full text in git history (this file, commit `d7a588bf5` and earlier, or `git show HEAD:docs/agent-memory/notebooks/ba.md` before this cycle); spec `docs/handoffs/UC-SDF-P6-BA-spec.md`; decision journal STEP ba-S19.
 
 FIX-GHOSTZONE-P0-PAIR (08-22): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER's section pushed the file over cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). PO triage-dispatch: 2 of 5 minted "ghost zone" rows (P0, shared regression shape — "what the API serves must match MAX(date) in the table"), both `apps/mcp-server/`, zero file overlap — (1) CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST (newest-N select + ASC-rewrap, avoids corrupting `buildSnapshot`/`buildSeries`), (2) FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD (push `NOT NULL` guard into the `MAX(date)` subquery). 0 PO blockers on either. Full text in git history (this file, commit `7df31bd34` and earlier); specs still live at `docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md` and `docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md`; decision journal STEP ba-S16/ba-S17.
 

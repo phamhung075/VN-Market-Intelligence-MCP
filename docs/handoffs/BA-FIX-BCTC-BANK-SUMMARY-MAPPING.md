@@ -195,3 +195,47 @@ ZONE: apps/mcp-server/
 NEXT: pm — decompose the 5 work units (W1-W5) per the brief; do NOT mint any dev-pdf-extractor task (explicitly not pinned).
 HANDOFF: docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md + docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md
 PIPELINE: continue
+
+---
+
+## [BA] Cycle 2 re-scoping — 2026-08-25 (dispatch: dev-team Design-Router Sweep, session 036ceaf1)
+
+**Status: SPEC COMPLETE. 0 PO blockers. NEXT: architect — narrow, targeted SPIKE (NOT a repeat of the 07-01/07-03 cycles).**
+
+W1-W5 (this doc), `FIX-BCTC-BANK-BS-COLUMN-ORDER` (FIX-A/C/D), `FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP` (FIX-B, folded into COLUMN-ORDER's PR per its own dev journal), and `FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW` ALL shipped and are QA-approved. Re-read all 4 architect briefs/spikes + every decision journal for this task chain before re-probing live — did not re-derive prior art. All 4 fixes are confirmed STILL PRESENT at HEAD (`resolveColumnLayout`, `bctcIdentityGuard.ts` wired into all 3 serve paths, commit `8b4f977fd` cross-window layout threading). Yet the row's own dispatch evidence (net_margin_pct=229157%, total_assets=0 for CTG 2026Q1) is UNCHANGED from 2026-07-01. Root cause has **relocated**, not persisted unfixed.
+
+### Live RAW re-probe (2026-08-25, named-volume `market.db`, read-only docker exec)
+
+1. **FAIL_LOUD (constraint #3) is ALREADY satisfied at the serve layer.** `bctcIdentityGuard.ts` (W1) is live and wired into `get_bctc_full`/`get_financial_summary`/`compare_financials`; `total_assets<=0` hard-trips it. A real `get_bctc_full(CTG)` call today returns `[CORRUPT DATA — SKIP]` confidence 0%, NOT the raw 229157%/3.6e14 numbers — those are the *stored* `financial_reports` scalar columns, not what gets served. The router dispatch-prompt's evidence block is the pre-guard stored row, not a live served response — flag this so it is not re-copied forward as "currently being served" in the next cascade.
+2. **CTG's `total_assets` is genuinely 0 because its `bctc_table_rows` (55 rows, 20 `code=NULL`, ALL mistagged `statement_section=balance_sheet` incl. visibly income-statement-shaped labels) are `extracted_at="2026-06-15 23:36:47"` — the SAME pre-fix garbled snapshot from before any 2026-07 fix shipped.** They were never regenerated.
+3. **Traced to `bctc_refined_units`: ALL 56 units for CTG's report_id (`96e36139-…`) are `window_status=FAILED`, `refined_at="2026-06-15 23:30:48"`, `flags=["agent_error:no_spawn_path_option_y"]`.** That flag is a hardcoded literal (`bctcRefineJob.ts:113`) fired when the now-**deleted** legacy in-container `spawn("claude",…)` production path (Option-Y §0.7.2 ruling, see file header) is invoked without test-injected deps — i.e. CTG's report was run through a pipeline stage decommissioned in favor of the fleet-cron/Task-tool-driven flow (`docs/agents/refine_bctc_md/`), guaranteeing instant 100% failure across every window, once, on 2026-06-15.
+4. **VCB (`31f2a9a9-…`, the row's OTHER named DoD ticker) has the IDENTICAL signature: 20/20 units FAILED, same timestamp, same flag.** VCB's currently-"clean"/passing scalar summary is — as the 2026-07-01 architect brief already flagged — a frozen residual from the older non-bank-aware flat-text extractor, never validated by the real bank-aware pipeline. Do NOT treat VCB's current PASS as a stable non-regression baseline: a future genuine refine of VCB is a fresh result to verify, not an existing behavior to merely preserve.
+5. **DB-wide, only 3 `report_id`s have ZERO successful (`DONE`) refine units: CTG's `96e36139`, VCB's `31f2a9a9`, and one unrelated 3rd report (`78b06684-…`).** Narrow, enumerable, not a wide outage.
+6. **These 3 reports can never be retried automatically.** `getBctcPendingRefineTool.ts` deliberately excludes any report whose `bctc_refined_units` are ALL terminal (`window_status IN ('DONE','FAILED')`) with zero remaining non-terminal windows — shipped intentionally as `FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON` / `FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` to stop a permanently-broken report from starving the FIFO queue. Correct in general — but it permanently strands these 3 reports: none of the 2026-07 parser/classifier fixes has ever had a chance to run against CTG's or VCB's real content, because neither report has been offered to the fleet cron since the 2026-06-15 legacy-path misfire.
+
+### Reconfirmed OWNER_DECISION: dev-mcp-server (unchanged)
+
+`bctc_md_tables` (pdf-extractor→mcp-server bridge table) has exactly **1 row in the entire database** — re-verified live today, not re-quoted from the July brief. It is not the live ingestion path for ANY ticker, CTG/VCB included. Every implicated file (`bctcRefineJob.ts`, `getBctcPendingRefineTool.ts`, `bctc_refined_units` state, `refinedMarkdownParser.ts`, `bctcScalarAggregator.ts`, `bctcIdentityGuard.ts`) lives under `apps/mcp-server/`. `dev-pdf-extractor` is not implicated by any evidence found in either cycle. Reaffirm dev-mcp-server as sole owner; do not re-open the pdf-extractor question.
+
+### FR (cycle-2 scope — supersedes cycle-1's FR-1/FR-3, carries FR-2/FR-4/FR-5/FR-6/FR-7 as non-regression floors, already met)
+
+- **FR-1 [architect SPIKE, MANDATORY FIRST]** — DDD layer: application (`getBctcPendingRefineTool.ts` eligibility query, `bctcRefineJob.ts` flag semantics). Design a SAFE re-trigger/reset path for reports permanently excluded from `get_bctc_pending_refine` because 100% of their units terminated FAILED via the now-deleted legacy spawn path — GENERIC (any report matching this shape, not a CTG/VCB/`78b06684` allowlist). Candidate levers to weigh (not to blind-implement): (a) a one-off migration resetting `bctc_refined_units.window_status` for units whose `flags` contain `agent_error:no_spawn_path_option_y` specifically (a decommissioned-pipeline signature, distinguishable from genuine content-failure flags) back to a re-refinable state; (b) a narrower eligibility carve-out in the exclusion query for exactly this flag signature; (c) confirm with PO/ops whether a fleet-cron re-run was simply never scheduled vs. structurally impossible today.
+- **FR-2 [non-regression, domain, `bctcScalarAggregator.ts`]** — once CTG/VCB get a genuine successful refine pass, re-verify the existing generic bank B02-TCTD row→scalar mapping (structurally sound per the 07-03 SPIKE, unchanged since) against the newly-produced real rows. Do not assume it still holds without a fresh check — it has never been exercised against real CTG/VCB content end-to-end.
+- **FR-3 [size-lint pre-flight, process]** — `apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts` is **1206L against a computed 1205L cap** (baseline 1096 in `docs/data/size-lint-baseline.json`, formula `baseline+max(baseline/10,5)` per `scripts/audits/size-lint-justification.sh:121`). ANY net-positive line change to this file trips the fleet-wide pre-push size-lint gate today, even a 1-line comment. dev-mcp-server MUST plan a split (e.g. carve the bank B02-TCTD row→scalar mapping into its own module) OR request a baseline bump BEFORE editing this file.
+- **FR-4 [non-regression, FAIL_LOUD]** — the identity-serve-guard is confirmed live and correctly hard-blocking CTG's current corrupt reading today; must not regress while FR-1/FR-2 land.
+
+### Blockers
+Zero PO blockers — same as cycle 1; all opens are architect/dev-mcp-server technical questions.
+
+### Edge cases
+- A `window_status=FAILED` unit is not one homogeneous class: `agent_error:no_spawn_path_option_y` (decommissioned-pipeline artifact, safe/expected to reset-and-retry) must be distinguished from genuine content-failure flags (`ocr_corruption`, `page_text_not_found`, `content_mismatch`, …, which a blind retry would likely reproduce). Any reset mechanism must key off the flag signature, not bare `window_status=FAILED`, or it risks masking real recurring content-quality failures as retriable.
+- VCB is not a safe "already fixed" reference for this row's own done_verified bar — see §4 above.
+
+### Decision journal
+`docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-ba.md` STEP ba-S2.
+
+## RETURN (cycle 2)
+DONE: BA re-scoping complete — root cause RELOCATED (not scalar-mapping, not the 2026-07 parser/classifier bugs, which are fixed and confirmed present at HEAD but never exercised) to a refine-pipeline retry-eligibility gap permanently stranding CTG+VCB (+1 unrelated report) at 100% FAILED units since a pre-Option-Y legacy-spawn misfire on 2026-06-15. FAIL_LOUD requirement already satisfied at the serve layer (guard live, confirmed). OWNER_DECISION reconfirmed dev-mcp-server. 0 PO blockers.
+NEXT: architect — targeted SPIKE per FR-1 (retry/reset design). Do NOT re-litigate scalar-mapping/column-order/classifier — already fixed, confirmed present at HEAD; re-running that recon would be pure duplication.
+HANDOFF: docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md (this section) + prior art: `docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md`, `docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md`, `docs/spikes/SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION.md`
+PIPELINE: continue
