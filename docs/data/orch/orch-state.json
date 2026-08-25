@@ -682,6 +682,20 @@
         "payload_ref": null,
         "provenance": "router-source-verification",
         "dedup_key": "premise_refutation:FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES:rungb-precondition-null-owner"
+      },
+      {
+        "id": "sys-20260825T142316-4385",
+        "ts": "2026-08-25T14:23:16Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor memory analysis: genuine working set pressure, not leak",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-25T14:00Z",
+        "dedup_key": "pdf_extractor_memory_pressure_investigation:A-30"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -23073,7 +23087,7 @@
         "last_served_tick": "2026-08-25T06:54:09Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-25T02:15:21Z"
+        "last_served_tick": "2026-08-25T14:22:46Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-25T02:53:07Z"
@@ -23088,7 +23102,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T14:20:58Z",
+    "_updated_at": "2026-08-25T14:22:46Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
