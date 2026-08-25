@@ -37,5 +37,11 @@
     "related_but_distinct_archive_row": "CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER (DONE) — the row that ADDED these gates; confirms design intent and the mirrored precedent"
   },
   "router_did_not_do": "No fix attempted — router-only. No gate edited, no window changed, no flow file touched. Detection and routing only.",
-  "suggested_owner": "po -> architect (the fix shape is a design choice: time-bounded window e.g. --since=25.hours, or last-successful-run watermark, or drop the gate for daily crons where the scan is the point)"
+  "suggested_owner": "po -> architect (the fix shape is a design choice: time-bounded window e.g. --since=25.hours, or last-successful-run watermark, or drop the gate for daily crons where the scan is the point)",
+  "_processed": {
+    "fingerprint": "28ec4ef5968f7de02845c3ec739c381d2a7f0d5e44ece06f8c1e0a86296b9841",
+    "processedAt": "2026-08-25T13:10:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
