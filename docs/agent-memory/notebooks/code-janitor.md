@@ -27,3 +27,6 @@
 
 ## 2026-08-25T12:08Z Scan 65
 - Checks: Pre-check gate (0 src/ changes), 3 sweeps (memory-prune, notebook-linecap, cold-archive) | Findings: 0 new DRY violations | Action: shipped 0 | backlog 0 | clean | memory-prune signal routed (cj-20260825T120801) | 4 notebooks safe-fail over byte-cap (ba.md 19953B, digest-predict.md 39860B, tran-ngoc-bau.md 30902B, dev-rag-service.md 27694B)
+
+## 2026-08-25T14:30Z Scan 66
+- Checks: Pre-check gate (0 src/ changes), 3 sweeps (memory-prune, notebook-linecap, cold-archive) | Findings: 0 new DRY violations | Action: shipped 0 | backlog 0 | clean | memory-prune signal SIGNAL-SKIP (pre-gate already routed), cold-archive skipped (not 1st of month)
