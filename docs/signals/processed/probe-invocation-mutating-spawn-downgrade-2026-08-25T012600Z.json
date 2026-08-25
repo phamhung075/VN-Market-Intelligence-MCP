@@ -28,5 +28,11 @@
     "dedup_note": "Matched by SUBJECT against the hot board and docs/data/orch/archive/2026-08.json before filing. ready.106 and backlog.506 both touch this script or its ledger but neither is about the entrypoint idempotency contract. No existing row covers this.",
     "reported_by": "router (dev-team dispatcher), self-observed while probing",
     "self_disclosure": "The router itself caused the double-invocation, by re-running the probe to get clean JSON after a tail filter truncated the first output. The tick was NOT suppressed - run 1 SPAWN was correctly treated as authoritative per the cron prompt, and the system-auditor was spawned. Filed so the next caller is not so lucky."
+  },
+  "_processed": {
+    "fingerprint": "7926f1f5697cf2d53bdfa274f0bf5681b979780f08a2826da6ffcf5a406692d0",
+    "processedAt": "2026-08-25T01:41:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

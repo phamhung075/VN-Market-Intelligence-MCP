@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-25T01:36:50Z",
-    "matched_slots": ["news-scout-sentiment"],
-    "won_slots": ["news-scout-sentiment"],
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/news-scout/flow/main.md"],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "news-scout-sentiment": "cadence" },
-    "cadence_minutes": { "news-scout-sentiment": "30" },
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": "30"
+    },
     "last_fired_timestamp": "2026-08-25T01:35:58Z",
-    "last_fired_slots": ["news-scout-sentiment"],
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "1 slot, 1 batch (MAX_PARALLEL=4 from live _fanout SSOT; headroom 2995MB >= 1500 floor, load1m 2.48 <= 24 = 2x12 cores -> not degraded). Drain no-op (0 NEW signal_queue rows), no one-shots, no Step 4b collision. Consistency + existence checks PASS. Slot token claimed ttl=180 and released after spawn. SERVER-COMPUTED FIELDS MEASURED, NOT FABRICATED: dev_head from canonical top-level .head (idle, updated 00:29:46Z by ba) NOT the deprecated .task_board.head stub; devq = ready[] length; signal_backlog = docs/signals/*.json file count excluding cowork-team-*. DEFECT 1 (3rd consecutive tick, both halves observed again): emit_pressure_state returned cycle_snapshot_promoted=false -- Step 4.7 named its file by WALL CLOCK (cycle-snapshot-01:34.json) while the tool looks it up by NOMINAL tick (01:30); cycle-snapshot-latest.json is consequently still frozen at 2026-08-23T02:09 with .market_context typed string, so last_regime fell back to macro_snapshot.data.signals.carry.regime=UNKNOWN and last_volatility_level to unknown (no volatility key exists in that file at all). DEFECT 2 (remedy now confirmed): spawn-fanout.md Step 5.1's load parse uses awk -F',' which splits on this host's comma decimal separator -- measured side by side this tick, LC_ALL=C uptime gives 2.48 while the doc-literal parse gives 2, i.e. silent truncation to the integer part. Harmless at a threshold of 24, latent at the boundary (24.9 -> 24 passes <=24). Fix is the same LC_ALL=C pin verify-a30-mcp-memory-reclamation.sh already carries. Step 5.3 off-flow check is DEFERRED per the BGFAN-1 timing contract; PRE-WRITE last_fired for a possible de-stamp: news-scout-sentiment=2026-08-24T01:33:50Z (de-stamp only if last_fired still equals 2026-08-25T01:35:58Z at detection time)."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T01:36:50Z"
+  "createdAt": "2026-08-25T01:36:50Z",
+  "_processed": {
+    "fingerprint": "01ba03d4c602d0f42ebacd323f796f8258a3f777074c906fc44144c140de6b96",
+    "processedAt": "2026-08-25T01:41:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

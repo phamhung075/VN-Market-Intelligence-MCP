@@ -22355,9 +22355,99 @@
         "last_served_tick": "2026-08-25T01:16:34Z"
       }
     },
-    "_updated_at": "2026-08-25T01:27:13Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-25T01:41:39Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "01ba03d4c602d0f42ebacd323f796f8258a3f777074c906fc44144c140de6b96",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T01:36:50Z",
+          "matched_slots": [
+            "news-scout-sentiment"
+          ],
+          "won_slots": [
+            "news-scout-sentiment"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-sentiment": "cadence"
+          },
+          "cadence_minutes": {
+            "news-scout-sentiment": "30"
+          },
+          "last_fired_timestamp": "2026-08-25T01:35:58Z",
+          "last_fired_slots": [
+            "news-scout-sentiment"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "01:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 111,
+          "signal_backlog": 35,
+          "note": "1 slot, 1 batch (MAX_PARALLEL=4 from live _fanout SSOT; headroom 2995MB >= 1500 floor, load1m 2.48 <= 24 = 2x12 cores -> not degraded). Drain no-op (0 NEW signal_queue rows), no one-shots, no Step 4b collision. Consistency + existence checks PASS. Slot token claimed ttl=180 and released after spawn. SERVER-COMPUTED FIELDS MEASURED, NOT FABRICATED: dev_head from canonical top-level .head (idle, updated 00:29:46Z by ba) NOT the deprecated .task_board.head stub; devq = ready[] length; signal_backlog = docs/signals/*.json file count excluding cowork-team-*. DEFECT 1 (3rd consecutive tick, both halves observed again): emit_pressure_state returned cycle_snapshot_promoted=false -- Step 4.7 named its file by WALL CLOCK (cycle-snapshot-01:34.json) while the tool looks it up by NOMINAL tick (01:30); cycle-snapshot-latest.json is consequently still frozen at 2026-08-23T02:09 with .market_context typed string, so last_regime fell back to macro_snapshot.data.signals.carry.regime=UNKNOWN and last_volatility_level to unknown (no volatility key exists in that file at all). DEFECT 2 (remedy now confirmed): spawn-fanout.md Step 5.1's load parse uses awk -F',' which splits on this host's comma decimal separator -- measured side by side this tick, LC_ALL=C uptime gives 2.48 while the doc-literal parse gives 2, i.e. silent truncation to the integer part. Harmless at a threshold of 24, latent at the boundary (24.9 -> 24 passes <=24). Fix is the same LC_ALL=C pin verify-a30-mcp-memory-reclamation.sh already carries. Step 5.3 off-flow check is DEFERRED per the BGFAN-1 timing contract; PRE-WRITE last_fired for a possible de-stamp: news-scout-sentiment=2026-08-24T01:33:50Z (de-stamp only if last_fired still equals 2026-08-25T01:35:58Z at detection time)."
+        },
+        "createdAt": "2026-08-25T01:36:50Z",
+        "drained_at": "2026-08-25T01:41:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7926f1f5697cf2d53bdfa274f0bf5681b979780f08a2826da6ffcf5a406692d0",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "recurring-bug",
+        "priority": "high",
+        "payload": {
+          "title": "auditor-tier1-probe.sh is invocation-mutating: any double-run within a tick silently downgrades SPAWN to DEBOUNCED",
+          "observed_at": "2026-08-25T01:26:00Z",
+          "fire_tick": "2026-08-25T01:00Z",
+          "severity": "high",
+          "summary": "scripts/agents-flow/auditor-tier1-probe.sh performs a read-modify-write of docs/data/auditor-tier1-spawn-debounce.json inside _spawn_debounce_decision() on EVERY invocation. The script is therefore not idempotent: calling it twice in one cron tick consumes the spawn slot on run 1 and returns DEBOUNCED on run 2. The downgrade is one-directional (SPAWN to DEBOUNCED, never the reverse), so a careless re-run can only ever SUPPRESS a legitimate audit, never cause a spurious one. Failure is silent - both runs emit well-formed JSON and nothing marks the second as a re-derivation.",
+          "evidence": {
+            "script": "scripts/agents-flow/auditor-tier1-probe.sh",
+            "write_path": "_spawn_debounce_decision() at :910, ledger mutation at :931-940 (last_spawn_at, spawn_count+1, window_expires_at)",
+            "called_from": ":1084 spawn_decision=$(_spawn_debounce_decision <signature>)",
+            "live_reproduction": "2026-08-25T01:00Z tick. Run 1 at 01:21:47Z gave spawn_decision=SPAWN and stamped the ledger last_spawn_at=2026-08-25T01:21:47Z spawn_count=8 window_expires_at=2026-08-25T02:21:47Z. Run 2 at 01:23:02Z, same tick, same signature, gave spawn_decision=DEBOUNCED. Only last_seen_at moved; the ledger itself stayed correct.",
+            "signature": "launchd_agents:com.vn-market.fleet-push"
+          },
+          "why_it_matters": "The tier-1 cron prompt explicitly instructs the caller to read spawn_decision from THIS tick own JSON directly and NOT to re-derive it. That instruction is currently the ONLY thing standing between a re-run and a suppressed audit - the safety lives in prose in a cron prompt, not in the script. The same prompt carries a deliberate fail-open clause for a missing or unparseable spawn_decision, which shows the design intent is that a read fault must never silently suppress. An invocation-mutating probe defeats that intent through a different door: the decision is not missing, it is silently WRONG.",
+          "contributing_factor": "The probe conflates two jobs in one entrypoint - emitting a health verdict (naturally idempotent, safe to call for any reason: debugging, shape-checking, piping to jq) and consuming a rate-limit token (inherently single-shot). Anyone who treats it as the former corrupts the latter.",
+          "proposed_remedy": "Split the two jobs. Options in order of preference: (a) add a --decide flag so the ledger write happens only under --decide, making the bare invocation a pure read; (b) have callers READ docs/data/auditor-tier1-last-trigger.json, which the probe already writes with the full verdict, rather than re-invoking; (c) make the ledger write idempotent per fire_tick by keying the entry on (signature, fire_tick) so a second run in the same tick is a no-op rather than a downgrade. Option (c) is the most robust because it fixes the hazard even for callers who never read the docs.",
+          "do_not": "Do NOT address this by re-arming com.vn-market.fleet-push or by adding or retargeting an ack-ledger entry for it - both are explicitly FORBIDDEN by task_board.ready.106 status_note. This row is about the probe entrypoint contract only, NOT about the fleet-push signature that happened to expose it.",
+          "related_rows": {
+            "ready.106": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED owns the fleet-push FALSE POSITIVE that generated the signature. Different defect, same script. Currently dispatch_lane=null so it is unpickable.",
+            "backlog.506": "FIX-AUDITOR-TIER1-SIDECAR-FILES-HAVE-NO-COMMITTER-AT-ALL owns the fact that this exact ledger file is perpetually uncommitted. Same file, different defect."
+          },
+          "dedup_note": "Matched by SUBJECT against the hot board and docs/data/orch/archive/2026-08.json before filing. ready.106 and backlog.506 both touch this script or its ledger but neither is about the entrypoint idempotency contract. No existing row covers this.",
+          "reported_by": "router (dev-team dispatcher), self-observed while probing",
+          "self_disclosure": "The router itself caused the double-invocation, by re-running the probe to get clean JSON after a tail filter truncated the first output. The tick was NOT suppressed - run 1 SPAWN was correctly treated as authoritative per the cron prompt, and the system-auditor was spawned. Filed so the next caller is not so lucky."
+        },
+        "createdAt": "2026-08-25T01:26:00Z",
+        "drained_at": "2026-08-25T01:41:38Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,
