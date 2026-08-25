@@ -1,0 +1,17 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "priority": "high",
+  "createdAt": "2026-08-25T16:18:00Z",
+  "payload": {
+    "title": "Review-Lane SECONDARY-Drain can spawn a SECOND concurrent PO — its outer_claim key does not intersect Step 1's S3 guard",
+    "hit_live": "dev-team tick 2026-08-25T16:07Z",
+    "mechanism": "SECONDARY-Drain's dispatcher-wrap claims resume_key = 'task:' + picked.id (docs/agents/dev-team/flow/main.md, Review-Lane SECONDARY-Drain section). Step 1 PO Triage's S3 dedup guard claims triage_key = 'task:po-triage-' + YYYYMMDD (main.md:1186). These are DIFFERENT keys. When a SECONDARY-Drain pick carries secondary_dispatch_target='po' while a PO spawned via Step 1 (or via the sanctioned router-direct path, main.md:1206-1212) is still running, the row-scoped claim succeeds and a second PO starts concurrently. Both write docs/data/orch/orch-state.json.",
+    "observed": "Tick 16:07Z picked RAG-FTS-BUILD-MEMORY-BOUND (_lane=review, status=REVIEW, secondary_dispatch_target=po) at 16:15:36Z while a router-direct PO (task:po-triage-20260825, claimed 16:02Z) was live and had already written the board (task_board._updated_by='po (triage-20260825T1612Z)'). Router did NOT spawn; it claimed task:RAG-FTS-BUILD-MEMORY-BOUND and handed the row to the running PO by message instead.",
+    "why_it_matters": "Two concurrent POs on the same board is the failure this fleet has already paid for once — see feedback_phaseb_intent_key_is_freeform_so_two_sessions_run_same_agent_concurrently. The S3 guard was built to stop exactly this and does not cover the SECONDARY-Drain path.",
+    "proposed_fix": "Before spawning, SECONDARY-Drain should ALSO probe the agent-scoped guard for its resolved secondary_dispatch_target (e.g. task:po-triage-<YYYYMMDD> when target='po'), and on a held guard route the row to the running agent instead of spawning. Same shape as the QA-Drain/SLS lane-narrower-than-claim-script family.",
+    "related_class": "rtr-20260825T1545-qadrainskip (SKIP-branch strands the row it skips; task_claim not re-entrant so the holder can be YOURSELF) — same family: a guard whose key is narrower than the condition it is meant to guard.",
+    "second_finding": "AC-6 of FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY confirmed live this tick. The flow pipes the claim through `| bash scripts/orch-apply.sh || true`, discarding the exit code. Router captured it separately (exit=0) and only then could distinguish 'claim applied' from 'nothing eligible'. An orch-apply ABORT is still byte-identical to an empty pick on the sanctioned path."
+  }
+}
