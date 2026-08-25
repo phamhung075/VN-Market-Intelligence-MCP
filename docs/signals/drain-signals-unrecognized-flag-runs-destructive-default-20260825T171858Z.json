@@ -1,0 +1,28 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "priority": "medium",
+  "subject": "drain-signals.js executes the real destructive drain on an UNRECOGNIZED flag (--help)",
+  "payload": {
+    "script": "scripts/agents-flow/drain-signals.js",
+    "mechanism": "Unrecognized CLI flags fall through to the default action, which is the REAL drain (durable append + mv of files into docs/signals/processed/ + signals.db INSERT). There is no usage/help path and no unknown-flag rejection.",
+    "observed_live": {
+      "at": "2026-08-25T17:10:26Z",
+      "invocation": "node scripts/agents-flow/drain-signals.js --help",
+      "effect": "5 signal files moved to docs/signals/processed/, 5 envelopes appended to .dev_team_idle_chain.pending_triage_inbox, signals.db db_count 565 -> 570",
+      "intent": "operator was reading usage, not draining"
+    },
+    "why_it_matters": "An operator or agent inspecting usage silently mutates the signal plane. In this instance the drain was wanted anyway so nothing was lost, but the same call on a tick where a drain was NOT wanted would move files out of the inbox mid-triage. Note the durable-append-before-destructive ordering held correctly throughout - this is a CLI-contract defect, not a data-integrity one.",
+    "candidate_directions": [
+      "reject unknown flags with a non-zero exit and a usage block (safest, smallest)",
+      "add an explicit --help/-h usage path",
+      "require an affirmative --commit/--apply flag for the destructive path, making dry-run the default"
+    ],
+    "not_duplicate_of": [
+      "FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-MODE-MUTATES-BOARD-AND-DEDUPS-BY-KEY-NOT-SUBJECT (different script; that one's --check mode mutates, this one's unknown-flag fallback executes)",
+      "sys-20260825T170808-1ae7 (auditor-tier1-probe debounce cadence; that script mutates its own reported decision, also distinct)"
+    ],
+    "class_note": "Third fleet script found in one session whose read-only-looking invocation is not read-only. The other two: auditor-tier1-probe.sh (a second run debounces against its own first run and returns a false DEBOUNCED, burning the spawn grant) and guard-signal-type-coverage.sh --check (auto-mints a board row and applies an orch-apply write). Worth considering whether a fleet-wide convention is the real fix rather than three separate patches."
+  }
+}
