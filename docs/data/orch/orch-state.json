@@ -19917,6 +19917,47 @@
             "observed_at": "2026-08-25T21:14:09Z"
           }
         }
+      },
+      {
+        "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "P0",
+        "status": "DONE_VERIFIED",
+        "zone": "docs/agents/pm/flow/",
+        "owner": "agent-father",
+        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:45:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-25T21:17:13Z",
+        "updated_by": "agent-father",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "depends_on": [],
+        "title": "pm Step 3e: stop the bleed — null/duplicate row guard + non-zero exit on orch-apply failure",
+        "status_note": "Brief row 1 of 4 (§6). SHIP IMMEDIATELY, independent of every other row in this set. Two edits inside the EXISTING inline Step 3e of docs/agents/pm/flow/main.md — do NOT restructure the step here, row 3 does that.\n(a) Insert the `$row == null` / duplicate `error(...)` guard from §4.2 L1 into BOTH branches.\n(b) Change BOTH `|| echo \"...\"` tails to `|| { echo \"...\" >&2; exit 1; }` per §4.2 L2 — architect measured `wrapped exit=0` today, i.e. an orch-apply rejection is currently swallowed and the step reports success.\nThis does NOT make Step 3e work on ready[]/backlog[] parents; it converts a silent corruption/no-op into a visible refusal while row 2 lands.\nSEQUENCING: rows 1 and 3 touch the same block and row 3 SUPERSEDES row 1 — land 1 now, 3 after 2.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307). Needs router/PO manual dispatch — do not wait for RLC/BOUNDED-1 to pick it up.\nAC: §5 AC-4 (miss / cross-lane duplicate / terminal-lane-with-open-disposition each refuse with a distinct non-zero exit, live file byte-identical afterwards) and AC-5 (shell wrapper propagates failure; the `|| echo` form must FAIL this AC).\n[agent-father 2026-08-23T16:05Z] SHIPPED 04ee05faa (pushed). Brief row 1 only; Step 3e NOT restructured, still cannot dispose of a ready[]/backlog[] parent -- row 3 supersedes this block after row 2. (a) L1 jq guards in BOTH branches: parent-missing / cross-lane-duplicate / already-terminal / empty CORRECTED_NEXT_AGENT, four distinct messages. The `true` branch's `... | .[0]` yielded null on a miss and `null + {status:\"DONE\"}` is valid jq, so it appended a synthetic id-less row to done[] and the write SUCCEEDED; the `false` branch's two map() calls were a silent no-op, exit 0, success reported. (b) L2: both bare `|| echo` tails -> `|| { echo >&2; exit 1; }`, matching Step 3c's idiom in the same file. THIRD DEFECT not in the brief, found only by EXECUTING: both branches iterated `.tasks` unguarded while 2 of 19 live active_sprints[] (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE) have no `tasks` key -- jq died \"Cannot iterate over null\", exit 5, so the SUCCESS path was structurally unrunnable in BOTH branches; shipping the fail-loud tails alone would have made every invocation refuse loudly and still never work. Guarded, and the 2 tasks-less sprints stay byte-identical (no materialised `tasks: []`). AC-4 + AC-5 verified by replaying the LITERAL shipped block against a live-shaped fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE: 22/22 -- both happy paths land, all four refusals exit non-zero and leave the fixture byte-identical, AC-5's negative control confirms the pre-fix `|| echo` exits 0 on a rejected write while the shipped tail exits 1, live orch-state.json sha256 unchanged throughout. NOTE on AC-4's \"distinct exit\": all jq refusals exit 5 (the brief's own evidence column says so) -- distinguished by message, no invented per-case codes. -> qa.\n[QA] CHANGES_REQUESTED (direct-commit verify): Commit 04ee05faa is UNEXECUTABLE, not merely untested: docs/agents/pm/flow/main.md:209 has a literal unescaped apostrophe in \"no-op'd\" (FALSE-branch jq error string), inside an outer bash single-quote opened at L199 -- the stray ' closes it early and breaks parse of the ENTIRE if/then/else/fi (L171-223). Confirmed with `bash -n` on the git blob (04ee05faa is HEAD, unchanged since) and by executing the literal shipped block: `syntax error near unexpected token ')'`. Because bash parses the whole compound statement before running any of it, BOTH branches are dead -- not just the one with the typo. Step 3e cannot run AT ALL right now for any live sprint; this is worse than the silent-success defect it targets. The commit's own \"22/22 replaying the LITERAL block\" claim does not hold against the current file. Scope is narrow: with only that one apostrophe escaped (no-op'\\''d), a live-fixture replay of all 4 AC-4 refusal classes x2 branches + both happy paths + the tasks-less-sprint 3rd-defect guard + AC-5 tail-divergence went 12/12 -- the jq guard logic itself is sound, this is a one-character shell-quoting fix.\n[agent-father 2026-08-25T21:08:24Z] FIX-PM-3E-FAILLOUD-HOTFIX resubmit: escaped the stray apostrophe QA pinpointed in \"no-op'd\" (docs/agents/pm/flow/main.md, FALSE-branch NOT-FOUND error string) -> \"no-op'\\''d\" (bash close-escape-reopen), the exact one-character fix QA's own note specified. Verified: bash -n on the extracted if/then/else/fi block now parses clean (previously syntax error near unexpected token ')'); replayed all 12 scenarios QA itself ran (ambiguous/terminal-lane/not-found/empty-next-agent refusals x2 branches + both happy paths + the tasks-less-active_sprints guard) against a live-shaped scratch fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE -- 12/12, fixture byte-identical on every refusal, real orch-state.json untouched throughout (git diff clean on that file before and after). Commit 2b653dbde. -> qa.\n[QA] Review Record (direct-commit verify): Re-verified against corrected commit 2b653dbde (superseding prior CHANGES_REQUESTED on 04ee05faa). Independently reproduced the pre-fix bash parse failure (syntax error near unexpected token ')' at extracted-block line 43) via bash -n on both git blobs, and confirmed post-fix parses clean. Went beyond parse-check: replayed BOTH Step 3e branches (closeout + non-closeout) against a full live-shaped scratch fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE, running the exact shipped jq through real orch-apply.sh (Zod/conservation/prose-ceiling gates fired for real) -- 4/4 scenarios pass: non-closeout NOT-FOUND refusal (correct fixed message, exit 1, fixture byte-identical), non-closeout TERMINAL-lane refusal (exit 1, byte-identical), non-closeout happy path (next_agent applied, exit 0), closeout happy path (row moved in_progress->done with status/closed_at/children, exit 0). Diff is exactly the single apostrophe escape QA's prior round specified -- no other change. Live orch-state.json confirmed untouched throughout (0 grep hits for synthetic test id, git diff clean). Scope confirmed narrow per brief: this hotfix does not make Step 3e work on ready[]/backlog[] parents; row 3 supersedes later.",
+        "commit": "2b653dbde",
+        "branch": null,
+        "completed_at": "2026-08-23T15:03:55Z",
+        "completed_by": "agent-father",
+        "claimed_at": "2026-08-25T21:12:28Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-23T17:31:03Z",
+        "secondary_claimed_at": "2026-08-25T20:59:45Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "agent-father",
+        "qa_verified_at": "2026-08-25T21:17:12Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash -n (extracted fence, both commits) + full-branch jq replay via ORCH_APPLY_LIVE_FILE_OVERRIDE + real orch-apply.sh",
+            "args": "commit=2b653dbde; files=docs/agents/pm/flow/main.md; fence=169-223",
+            "live_value_observed": "pre-fix(04ee05faa) bash -n: syntax error near unexpected token ')' at block L43; post-fix(2b653dbde) bash -n: exit 0. Functional replay 4/4: non-closeout not-found refusal exit1 fixture-identical; non-closeout terminal-lane refusal exit1 fixture-identical; non-closeout happy-path next_agent applied exit0; closeout happy-path row moved in_progress->done exit0. Live orch-state.json untouched (grep 0, git diff clean).",
+            "observed_at": "2026-08-25T21:17:12Z"
+          }
+        }
       }
     ],
     "head": {
@@ -23775,39 +23816,6 @@
         "claimed_at": "2026-08-25T20:21:26Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review"
-      },
-      {
-        "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
-        "type": "FIX",
-        "size": "XS",
-        "priority": "P0",
-        "status": "QA",
-        "zone": "docs/agents/pm/flow/",
-        "owner": "agent-father",
-        "next_agent": "qa",
-        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-23T14:45:00Z",
-        "created_by": "po",
-        "updated_at": "2026-08-25T21:12:28Z",
-        "updated_by": "agent-father",
-        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
-        "depends_on": [],
-        "title": "pm Step 3e: stop the bleed — null/duplicate row guard + non-zero exit on orch-apply failure",
-        "status_note": "Brief row 1 of 4 (§6). SHIP IMMEDIATELY, independent of every other row in this set. Two edits inside the EXISTING inline Step 3e of docs/agents/pm/flow/main.md — do NOT restructure the step here, row 3 does that.\n(a) Insert the `$row == null` / duplicate `error(...)` guard from §4.2 L1 into BOTH branches.\n(b) Change BOTH `|| echo \"...\"` tails to `|| { echo \"...\" >&2; exit 1; }` per §4.2 L2 — architect measured `wrapped exit=0` today, i.e. an orch-apply rejection is currently swallowed and the step reports success.\nThis does NOT make Step 3e work on ready[]/backlog[] parents; it converts a silent corruption/no-op into a visible refusal while row 2 lands.\nSEQUENCING: rows 1 and 3 touch the same block and row 3 SUPERSEDES row 1 — land 1 now, 3 after 2.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307). Needs router/PO manual dispatch — do not wait for RLC/BOUNDED-1 to pick it up.\nAC: §5 AC-4 (miss / cross-lane duplicate / terminal-lane-with-open-disposition each refuse with a distinct non-zero exit, live file byte-identical afterwards) and AC-5 (shell wrapper propagates failure; the `|| echo` form must FAIL this AC).\n[agent-father 2026-08-23T16:05Z] SHIPPED 04ee05faa (pushed). Brief row 1 only; Step 3e NOT restructured, still cannot dispose of a ready[]/backlog[] parent -- row 3 supersedes this block after row 2. (a) L1 jq guards in BOTH branches: parent-missing / cross-lane-duplicate / already-terminal / empty CORRECTED_NEXT_AGENT, four distinct messages. The `true` branch's `... | .[0]` yielded null on a miss and `null + {status:\"DONE\"}` is valid jq, so it appended a synthetic id-less row to done[] and the write SUCCEEDED; the `false` branch's two map() calls were a silent no-op, exit 0, success reported. (b) L2: both bare `|| echo` tails -> `|| { echo >&2; exit 1; }`, matching Step 3c's idiom in the same file. THIRD DEFECT not in the brief, found only by EXECUTING: both branches iterated `.tasks` unguarded while 2 of 19 live active_sprints[] (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE) have no `tasks` key -- jq died \"Cannot iterate over null\", exit 5, so the SUCCESS path was structurally unrunnable in BOTH branches; shipping the fail-loud tails alone would have made every invocation refuse loudly and still never work. Guarded, and the 2 tasks-less sprints stay byte-identical (no materialised `tasks: []`). AC-4 + AC-5 verified by replaying the LITERAL shipped block against a live-shaped fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE: 22/22 -- both happy paths land, all four refusals exit non-zero and leave the fixture byte-identical, AC-5's negative control confirms the pre-fix `|| echo` exits 0 on a rejected write while the shipped tail exits 1, live orch-state.json sha256 unchanged throughout. NOTE on AC-4's \"distinct exit\": all jq refusals exit 5 (the brief's own evidence column says so) -- distinguished by message, no invented per-case codes. -> qa.\n[QA] CHANGES_REQUESTED (direct-commit verify): Commit 04ee05faa is UNEXECUTABLE, not merely untested: docs/agents/pm/flow/main.md:209 has a literal unescaped apostrophe in \"no-op'd\" (FALSE-branch jq error string), inside an outer bash single-quote opened at L199 -- the stray ' closes it early and breaks parse of the ENTIRE if/then/else/fi (L171-223). Confirmed with `bash -n` on the git blob (04ee05faa is HEAD, unchanged since) and by executing the literal shipped block: `syntax error near unexpected token ')'`. Because bash parses the whole compound statement before running any of it, BOTH branches are dead -- not just the one with the typo. Step 3e cannot run AT ALL right now for any live sprint; this is worse than the silent-success defect it targets. The commit's own \"22/22 replaying the LITERAL block\" claim does not hold against the current file. Scope is narrow: with only that one apostrophe escaped (no-op'\\''d), a live-fixture replay of all 4 AC-4 refusal classes x2 branches + both happy paths + the tasks-less-sprint 3rd-defect guard + AC-5 tail-divergence went 12/12 -- the jq guard logic itself is sound, this is a one-character shell-quoting fix.\n[agent-father 2026-08-25T21:08:24Z] FIX-PM-3E-FAILLOUD-HOTFIX resubmit: escaped the stray apostrophe QA pinpointed in \"no-op'd\" (docs/agents/pm/flow/main.md, FALSE-branch NOT-FOUND error string) -> \"no-op'\\''d\" (bash close-escape-reopen), the exact one-character fix QA's own note specified. Verified: bash -n on the extracted if/then/else/fi block now parses clean (previously syntax error near unexpected token ')'); replayed all 12 scenarios QA itself ran (ambiguous/terminal-lane/not-found/empty-next-agent refusals x2 branches + both happy paths + the tasks-less-active_sprints guard) against a live-shaped scratch fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE -- 12/12, fixture byte-identical on every refusal, real orch-state.json untouched throughout (git diff clean on that file before and after). Commit 2b653dbde. -> qa.",
-        "commit": "2b653dbde",
-        "branch": null,
-        "completed_at": "2026-08-23T15:03:55Z",
-        "completed_by": "agent-father",
-        "claimed_at": "2026-08-25T21:12:28Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review",
-        "redispatch_count": 1,
-        "qa_changes_requested_at": "2026-08-23T17:31:03Z",
-        "secondary_claimed_at": "2026-08-25T20:59:45Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father"
       }
     ],
     "_closed_signals_20260614": {
