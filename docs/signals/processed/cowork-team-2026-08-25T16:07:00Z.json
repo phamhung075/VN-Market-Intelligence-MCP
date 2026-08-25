@@ -59,5 +59,11 @@
     "note": "3-slot fan-out, MAX_PARALLEL=4 (headroom 3974>=1500, load1m 7.20 <= 2x12) so single batch. due_reasons/cadence_minutes are the matcher output verbatim and carry a 4th key market-watcher-offhours, which the declared supersedes pair (market-watcher-eod.supersedes) resolved out of MATCHES in-script before Step 4b — 3 slots matched, not 4. Step 5.3 off-flow detector DEFERRED per BGFAN-1 timing contract: all 3 spawns backgrounded, return text not available at Step 5b; de-stamp reconciliation gated on last_fired still equalling 2026-08-25T16:06:19Z. Step 6.0 emitted last_regime=unknown because cycle-snapshot-latest.json is stale since 2026-08-23T00:09Z (cycle_snapshot_promoted:false, 19th consecutive) — this tick s own fresh snapshot carries macro_snapshot.data.signals.carry.regime=NEUTRAL, so the promotion gap actively degraded a real value to unknown."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T16:07:00Z"
+  "createdAt": "2026-08-25T16:07:00Z",
+  "_processed": {
+    "fingerprint": "2ea9fd5fa4e556c796bfe8595ca9c4adc0b096ce55ea62287a0ec4360cba98f9",
+    "processedAt": "2026-08-25T16:10:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

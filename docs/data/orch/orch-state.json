@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T15:44:26Z",
+    "_updated_at": "2026-08-25T16:11:37Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -803,7 +803,7 @@
         "type": "signal_feedback",
         "summary": "Review-Lane QA-Drain SKIP branch STRANDS the row it skips. Both invocation sites say: `if not outer_claim.claimed: log SKIP -- held by peer session; continue`. But the claim script (scripts/devteam-review-claim-qa-drain.jq) has ALREADY moved that row review[] -> qa[] and stamped claimed_at/claimed_by in the committed orch-apply write BEFORE the per-row outer_claim is attempted. A skipped row therefore sits in qa[] with status=QA and no qa agent ever dispatched, and no later tick re-picks it: both QA-Drain sites select from review[], never qa[]. Hit live this tick on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. SECOND finding, same incident: task_claim is NOT re-entrant on task: keys -- it returned claimed:false with current_holder.owner_client_session EQUAL TO the requesting session (a stale RLC lock from that row own earlier completed dispatch). So the SKIP branch prose -- held by peer session -- is wrong twice over: the holder can be YOURSELF. Router resolved it by releasing its own stale lock and re-claiming rather than stranding a P0; the flow gives no sanctioned path for that. Same class as FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED lane-narrower-than-claim-script family.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-observed",
         "audit_cycle_tag": "cron:dev-team:2026-08-25T15:37Z",
@@ -23306,7 +23306,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T16:10:57Z",
+    "_updated_at": "2026-08-25T16:11:37Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23789,6 +23789,18 @@
         "createdAt": "2026-08-25T15:52:43Z",
         "drained_at": "2026-08-25T16:10:57Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "54ce11da3780894cd53187333e7d65a68806a265188edbfe6618bb493086f617",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "Review-Lane QA-Drain SKIP branch STRANDS the row it skips. Both invocation sites say: `if not outer_claim.claimed: log SKIP -- held by peer session; continue`. But the claim script (scripts/devteam-review-claim-qa-drain.jq) has ALREADY moved that row review[] -> qa[] and stamped claimed_at/claimed_by in the committed orch-apply write BEFORE the per-row outer_claim is attempted. A skipped row therefore sits in qa[] with status=QA and no qa agent ever dispatched, and no later tick re-picks it: both QA-Drain sites select from review[], never qa[]. Hit live this tick on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. SECOND finding, same incident: task_claim is NOT re-entrant on task: keys -- it returned claimed:false with current_holder.owner_client_session EQUAL TO the requesting session (a stale RLC lock from that row own earlier completed dispatch). So the SKIP branch prose -- held by peer session -- is wrong twice over: the holder can be YOURSELF. Router resolved it by releasing its own stale lock and re-claiming rather than stranding a P0; the flow gives no sanctioned path for that. Same class as FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED lane-narrower-than-claim-script family.",
+        "createdAt": "2026-08-25T15:44:26Z",
+        "drained_at": "2026-08-25T16:11:37Z",
+        "routed_to": "po"
       }
     ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",

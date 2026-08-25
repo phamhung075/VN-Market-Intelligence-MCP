@@ -1,8 +1,0 @@
-{
-  "from": "qa",
-  "to": "po",
-  "type": "bug-escalation",
-  "priority": "high",
-  "createdAt": "2026-08-25T15:52:43Z",
-  "payload": "[qa/verify-committed] SCOPE RULING NEEDED on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS AC-3 (\"zero new BARE fires over a subsequent 24h window\"), earliest closable 2026-08-26T14:59:30Z. Classified all 59 BARE fires in .git/sweep-guard.log since 2026-08-22 by staged-file signature: COWORK-TICK (the ONLY class commit e6adc6dfe fixes) = 4/59 = 6.8%; SYSTEM-AUDITOR notebook = 16/59 = 27.1% across 6 actor sessions; AD-HOC MEGA-SWEEP n>=20 = 1/59; MISC agent commits = 38/59 = 64.4%. 93.2% of the live fire population has no named call-site and is explicitly named-not-fixed by that commit, so AC-3 as literally worded is very unlikely to pass on this fix alone and a re-verifier tomorrow will report a bare FAIL without this context. PO must rule: EITHER narrow AC-3 to \"zero new BARE fires from the cowork-tick class\" (closable on the shipped fix), OR widen the row to cover the remaining classes. SEPARATE, RELATED FINDING for the 27.1% bucket: system-auditor notebook BARE fires recur despite an ALREADY-mandatory, ALREADY-pathspec-scoped scripts/auditor-notebook-commit.sh wired at every call site -- this is an EXECUTION-FIDELITY gap (narrates-vs-executes), not a missing script, and it is INTERMITTENT not deterministic: the post-fix system-auditor notebook commit 0a7d11978 at 2026-08-25T15:05:51Z did NOT fire, while actor c6581d0a fired at 2026-08-25T08:01:59Z on the same file. It needs its own row; a further pathspec doc edit will not close it."
-}
