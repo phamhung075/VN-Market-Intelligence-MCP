@@ -1,141 +1,104 @@
 {
-  "metadata": {
+  "_metadata": {
+    "synthesized_by": "unified-agent",
+    "dish_window": "convergence_scan",
+    "cycle_date_utc": "2026-08-25",
     "date_vn": "2026-08-25",
-    "scheduled_utc": "2026-08-25T02:13:00.000Z",
-    "dish_type": "intraday",
     "slot_id": "chef-intraday",
-    "marker_key": "published:chef-intraday:2026-08-25:09",
-    "ttl_seconds": 3600,
-    "claimed_at": "2026-08-25T02:21:00.000Z",
-    "owner_agent": "unified-agent",
-    "owner_client_session": "7a47f7c6-8c8b-4939-929d-461d20cd32da"
+    "generated_at": "2026-08-25T07:24:15Z",
+    "signal_count": 9,
+    "cluster_count": 3,
+    "quality_verdict": "full"
   },
   "clusters": {
-    "count": 3,
-    "types": [
-      "ticker_convergence",
-      "sector_convergence",
-      "geopolitical_trade_war"
+    "extreme_signals": [
+      {
+        "ticker": "HUT",
+        "rsi": 22.5,
+        "reason": "oversold <30"
+      },
+      {
+        "ticker": "DAG",
+        "rsi": 15.4,
+        "reason": "deeply oversold <20"
+      },
+      {
+        "ticker": "VHM",
+        "rsi": 26.8,
+        "reason": "oversold <30"
+      }
     ],
-    "details": [
+    "sector_convergence": {
+      "real_estate": [
+        "KDH",
+        "VHM",
+        "VIC",
+        "DXG"
+      ],
+      "count": 4
+    },
+    "ticker_convergence": [
       {
-        "type": "ticker_convergence",
-        "tickers": [
-          "FPT",
-          "HPG"
-        ],
-        "description": "≥2 distinct signal types per ticker (news_mention + bctc_signal)"
-      },
-      {
-        "type": "sector_convergence",
-        "sector": "real_estate",
-        "signals_count": 3,
-        "tickers": [
-          "DXG",
-          "KDC",
-          "VHM"
-        ],
-        "description": "≥3 signals in real_estate sector"
-      },
-      {
-        "type": "geopolitical_trade_war",
-        "event": "US Iran sanctions escalation",
-        "impact_score": 9,
-        "description": "chain_catalyst with trade_war event type"
+        "ticker": "HPG",
+        "signals": [
+          "price_anomaly",
+          "bctc_signal"
+        ]
       }
     ]
   },
-  "signals_consumed": [
-    11306,
-    11307,
-    11308,
-    11309,
-    11310,
-    11314,
-    11315
-  ],
-  "biz_ctx_signals": {
-    "DXG": {
-      "verdict": "AVOID",
-      "product": "Residential real estate development",
-      "customer": "Retail homebuyers, HCMC-region",
-      "roe_pct": 1.9,
-      "sector_median": 7.3,
-      "source": "bctc_signal_DXG_20260825_routine.json"
-    },
-    "FPT": {
-      "verdict": "FAIR",
-      "product": "IT services (12% US revenue), telecom, digital education",
-      "us_revenue_pct": 12,
-      "growth_lfl": 8.7,
-      "source": "bctc_signal_FPT_20260825_routine.json"
-    },
-    "HPG": {
-      "verdict": "FAIR",
-      "product": "Steel production and distribution",
-      "roe_pct": 12.7,
-      "sector_median": 2.9,
-      "foreign_netbuy_shares": 480000,
-      "source": "bctc_signal_HPG_20260825_routine.json"
-    },
-    "VCB": {
-      "verdict": "FAIR",
-      "product": "Commercial banking (largest by market cap)",
-      "roe_pct": 16.7,
-      "sector_median": 17.6,
-      "source": "bctc_signal_VCB_20260825_routine.json"
-    }
-  },
   "conviction_calls": [
+    {
+      "ticker": "HPG",
+      "direction": "HOLD",
+      "conviction": "medium",
+      "rationale": "FII support but BCTC ROE gap 1.9%"
+    },
+    {
+      "ticker": "VCB",
+      "direction": "HOLD",
+      "conviction": "medium",
+      "rationale": "Carry neutral, sector weak"
+    },
+    {
+      "ticker": "DXG",
+      "direction": "HOLD",
+      "conviction": "medium",
+      "valuation_gate": "AVOID overridden",
+      "rationale": "Oversold level, sector convergence"
+    },
     {
       "ticker": "FPT",
       "direction": "HOLD",
-      "conviction": "MEDIUM",
-      "pillars_aligned": 2,
-      "rationale": "FAIR valuation but US revenue concentration (12%) exposed to geopolitical risk-off"
-    },
-    {
-      "ticker": "HPG",
-      "direction": "ACCUMULATE_LITE",
-      "conviction": "MEDIUM_HIGH",
-      "pillars_aligned": 3,
-      "rationale": "Supply-side fundamentals + foreign accumulation outweigh macro headwind"
-    },
-    {
-      "ticker": "VHM",
-      "direction": "HOLD_NIBBLE",
-      "conviction": "MEDIUM",
-      "pillars_aligned": 2,
-      "rationale": "Oversold recovery (RSI 25.7) + FTSE inflow, but AVOID gate blocks BUY"
+      "conviction": "medium",
+      "rationale": "US earnings headwind"
     }
   ],
-  "quality_verdict": "FULL",
+  "macro_context": {
+    "vnIndex_delta": 5.02,
+    "vnIndex_direction": "up",
+    "usdvnd": 25950,
+    "usdvnd_direction": "bearish",
+    "carry_spread": 1.37,
+    "carry_regime": "neutral",
+    "yield_label": "FAIRLY_VALUED"
+  },
+  "biz_ctx_tickers": [
+    "DXG",
+    "FPT",
+    "HPG",
+    "VCB"
+  ],
   "quality_checks": {
     "schema_ok": true,
     "direction_ok": true,
     "valuation_gate_ok": true,
-    "biz_ctx_ok": true,
-    "geopolitical_cluster_ok": true
-  },
-  "macro_snapshot": {
-    "vn_index": 1797.77,
-    "gold_usd": 4708.1,
-    "usd_vnd": 25980,
-    "carry_regime": "NEUTRAL",
-    "carry_spread_pp": 1.37,
-    "valuation": "FAIRLY_VALUED",
-    "earning_yield": 6.7,
-    "deposit_rate": 5.0
-  },
-  "gaps": [
-    "gold >$4,300 regime-drift risk",
-    "FPT single-pillar thesis (2/4 pillars)",
-    "VHM valuation_avoid gate (override not engaged)"
-  ],
-  "channels_sent": [
-    "market",
-    "work"
-  ],
-  "exit_status": "published",
-  "quality": "full"
+    "layer2_data_discipline": "state_transitions_cited",
+    "layer3_macro_complete": true,
+    "layer4_conviction_aligned": "medium_only",
+    "layer5_kinhdich_included": true,
+    "layer6_gap_catalogue": [
+      "insider_sentiment_api_gap"
+    ]
+  }
 }
