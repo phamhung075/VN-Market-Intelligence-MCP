@@ -19,31 +19,6 @@
      also split to docs/agent-memory/notebooks/archive/agent-father-archive-20260823.md
      on 2026-08-23, second prune of the same day (198L against the 200L cap). Nothing deleted. -->
 
-## FIX 2026-08-23T15:10Z — FIX-CHEF-MARKER-KEY-ANCHOR-2/-3/-4 (3 P0 rows, one chain)
-
-- ANCHOR-1 (developer, DONE_VERIFIED) produced `scheduled_utc_time`; all three consumers live under
-  `docs/agents/` so the whole tail was mine. Shipped as one commit: match-slots.md documents the field
-  on `slots[]`, spawn-fanout.md Step 5.2 appends `scheduled_utc=<ISO8601>` to BOTH ENTRY_PROMPT
-  branches, chef.md Step 0.5 + digest-predict daily gate derive their window date from it.
-- **Verified the producer myself before documenting it** rather than copying ANCHOR-1's review_note:
-  called the exported `annotateScheduledUtc()` against the real schedule at 2026-08-23T13:50:00Z →
-  `digest-sunday` / `47 13 * * 0` → `2026-08-23T13:47:00.000Z`. That is also how I found the thing the
-  prose does not say: live `slots[]` get `scheduled_utc_time` ONLY, while `catchup_raw[]` also carry
-  `scheduled_key_part` + `expected_publish_task_id`. A consumer expecting `scheduled_key_part` on a live
-  slot gets undefined. Documented the asymmetry explicitly.
-- **Lesson:** the degradation contract is the load-bearing half of a propagated field. `scheduled_utc_time`
-  is null on malformed cron / missing predicate module / no fire in the 8-day lookback. Emitting
-  `scheduled_utc=null` into a prompt would hand every worker a present-but-garbage value; OMITTING the
-  token keeps each worker's pre-existing `date -u` fallback alive untouched. Chose omission and said so
-  at all three sites, because a future editor will otherwise "helpfully" emit the null.
-- **Refused a tempting over-reach:** digest-predict's SUNDAY gate also drifts across a week boundary, but
-  it keys on server-side `get_week_period().periodKey` and its own block says never compute the week
-  locally. Swapping in agent-side arithmetic from `scheduled_utc` would trade a server SSOT for exactly
-  the class of local derivation this whole chain exists to remove. Left it, documented the residual
-  (needs `get_week_period` to accept an `as_of` — a server change).
-- Housekeeping: de-referenced 4 `chef.md:135` line citations in chef-dish.md → `chef.md Step 0.5`. My own
-  ANCHOR-4 edit moved that line to 167, so those citations were stale the moment I wrote them.
-
 ## FIX 2026-08-23T15:25Z — TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (P1, unblocks a P0)
 
 - A "the 12 RemoteTriggers provide persistence" sentence outlived that mechanism's retirement by two
@@ -136,3 +111,26 @@ full `auditor-tier1-probe.test.sh` re-run: 264/264 GREEN, incl. the exact worked
   router-owned, not an agent-father commit target outside the one signal-queue DONE-mark carve-out) —
   same split as the sibling half's own `d490fef11 chore(orch): ...backlog[]->review[]` commit, done
   separately from its `fix(scripts/agents-flow)` commit.
+
+## FIX 2026-08-25T03:05Z — FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (P0, dispatcher: dev-team RLC)
+
+Wired § Incident-Lane Consumer (ILC) — Head-Decoupled Invocation into `docs/agents/dev-team/flow/main.md`
+at the Session-Gate→Step-1 anchor (FIRST of ILC→SECONDARY-Drain→QA-Drain→Step1), calling the
+already-shipped `scripts/devteam-backlog-claim-incident-lane-consumer.jq` verbatim, per architect brief
+`docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md` §4d (sibling scripts row
+`FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS` DONE_VERIFIED, commit `cd0039432`). Also updated
+SECONDARY-Drain's own intro sentence (no longer physically first), one new Reusable Scripts bullet, one
+Invariants clause naming all 3 concurrency budgets, size-justification header (+88L, 1279→1367).
+Committed `94716bfe6` (main.md), pushed nowhere (standing push-disarm).
+**LESSON — dispatcher live-caught 2 defects in the neighbour SECONDARY-Drain section MINUTES before
+dispatching this row, and explicitly warned not to copy them:** (1) that section's readback queries
+`.task_board.review[]` only, but its own claim script's stated candidate set is `review[] UNION done[]`
+— a `done[]`-origin claim silently vanishes from a lane-named readback. (2) that section's spawn text
+hardcodes a false `"status=REVIEW, branch:null"` premise. Neither is copied here: this section's own
+readback is a generic all-`.task_board`-lane scan (`.task_board | to_entries[] | select(.value|type==
+"array") | ...`), and its spawn text derives status/lane/claimed_by from the actually-picked row. Both
+defects flagged in RETURN as a follow-up row against SECONDARY-Drain itself — not retrofitted here
+(out of this row's own zone/scope). This task's own terminal-shape orch-state.json write (in_progress[]
+-> review[], next_agent=qa, `.head` idle-reset) WAS committed directly (`c677e3ac9`) — the dispatching
+tick's own instructions named this the allowed "ONE signal-queue DONE-mark per task dispatch" carve-out
+in `FU-AGENT-FATHER-ORCH-SCOPE`, unlike the UNCOMMITTED precedent noted just above.
