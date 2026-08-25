@@ -1,0 +1,61 @@
+{
+  "from": "dev-team",
+  "to": "ops",
+  "type": "bug-escalation",
+  "priority": "P0",
+  "createdAt": "2026-08-25T05:43:06Z",
+  "dedup_key": "mcp-server:container-wedge-20260825T0516Z|event-loop-blocked-after-write-invisibility",
+  "summary": "mcp-server-1 is process-wedged since 2026-08-25T05:16:16Z — 27+ minutes with ZERO log output. All call_tool(server=vn-market) hang; docker exec into the container also hangs. NOT OOM, NOT restart-looping, CPU ~0 — a blocked event loop. Last line logged before total silence was an ASYNC write-invisibility ERROR (107 prices written, 0 visible). Every gateway-dependent fleet gate (SF-1, fire-election, task_claim/release) is unreachable; the 05:37Z dev-team tick could not proceed. frontend-1 went unhealthy alongside it but has since RECOVERED and is now flapping with slow 2s responses — probably a secondary effect of proxying to the wedged upstream, not a second independent wedge.",
+  "payload": {
+    "observed_live_at": "2026-08-25T05:43:49Z",
+    "incident_start": "2026-08-25T05:16:16Z",
+    "silence_duration_min_at_filing": 25,
+    "blast_radius": {
+      "wedged": [
+        "vn-market-intelligence-mcp-mcp-server-1"
+      ],
+      "flapping_secondary": [
+        "vn-market-intelligence-mcp-frontend-1 — unhealthy 05:21Z-~05:41Z (streak peaked 9), recovered to Health=healthy, :3001/ now 200 in 2.03s but healthchecks still intermittently timing out (exit=0 at 05:41:45Z, exit=-1 at 05:42:23Z and 05:43:03Z). Slow-but-alive, likely downstream of the wedged mcp-server rather than independently broken."
+      ],
+      "healthy": [
+        "mcp-gateway (200 in 2ms)",
+        "docker daemon v29.5.2 responsive",
+        "all other containers healthy"
+      ],
+      "conclusion": "single isolated container wedge (mcp-server) with a flapping dependent (frontend) — NOT a hypervisor or daemon-level event"
+    },
+    "evidence": {
+      "health_failing_streak_mcp_server": "39 and climbing at 05:43Z",
+      "health_failing_streak_frontend": "peaked 9 while unhealthy; recovered, streak=2, Health=healthy at 05:43Z",
+      "healthcheck_output": "Health check exceeded timeout (10s), exit=-1, continuous",
+      "direct_probe_3000": "http=000 at 6s and 8s timeouts, repeated across 05:27Z-05:39Z",
+      "direct_probe_3001": "http=200 in 2.026s at 05:43Z (RECOVERED — was http=000 at 05:27Z-05:39Z)",
+      "memory": "mcp-server 508.4MiB/3GiB (16.55%), frontend 40.41MiB/512MiB (7.89%) - NOT memory pressure",
+      "oom_killed": false,
+      "restart_count": 0,
+      "cpu": "mcp-server 0.18%, frontend 0.00% - blocked, not spinning",
+      "docker_exec": "hangs indefinitely (>110s, had to be killed) - wedged at process level, not merely HTTP",
+      "last_log_line_before_silence": "level=error message='[push-prices] ASYNC: market_prices invisibility confirmed' count=107 visible_now=0 @ 2026-08-25T05:16:16.453Z",
+      "mcp_server_log_silence": "docker logs --since 05:17:00Z returns 0 lines — 27 minutes of total silence, last line 2026-08-25T05:16:16.453Z"
+    },
+    "suspected_root_cause": "A write-visibility failure (107 rows written, 0 visible) immediately preceding total process silence is the signature of a SQLite write wedge taking the event loop with it - see memory project_mcp_server_write_wedge and feedback_same_db_tools_diverge_rowcount. UNCONFIRMED: docker exec hangs, so DB handle state could not be inspected from inside the container.",
+    "fleet_impact": {
+      "dev_team_tick_05_37Z": "preflight verdict=ERROR - SF-1 claim returned JSON-RPC code:0 message: method tools/call is invalid during session initialization (MCP handshake never completes because downstream is wedged). Lock state undefined. Tick did NOT dispatch.",
+      "why_not_dispatched": "SF-1 and P3-FIRE-ELECTION are both hard gates in preflight-fallback.md and both are structurally unreachable. gateway-call-contract section 6 Degraded Mode does NOT authorize this path - its trigger is mcp__gateway__* being categorically ABSENT from the tool binding (a client-side session-transport gap); here the binding is present and the downstream server is wedged. No sanctioned path dispatches without SF-1, and doing so risks the concurrent-dispatch harm those gates exist to prevent.",
+      "unreleased_lock": "task:TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY still held by router session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb - task_release timed out 3x. TTL 3600s bounds it and the row is terminal (DONE_VERIFIED), so it self-expires harmlessly.",
+      "auditor_t1": "The 05:30Z Tier-1 probe had NOT fired at filing time (last_trigger still 05:15:44Z) - session-scoped crons only fire when the REPL is idle. The 05:15:44Z ALL_GREEN was NOT a false green: healthcheck failures began ~05:17Z, ~90s after that probe ran. Verified the probe's own 6s curl now fails, so whenever it next fires it will correctly score health_3000=FAIL + health_3001=FAIL."
+    },
+    "asks": [
+      "Diagnose the wedge BEFORE restarting - a restart discards the evidence and this has a plausible write-wedge root cause that will recur. Capture process/DB state first if any path into the container exists.",
+      "Confirm or refute the SQLite write-wedge hypothesis against the market_prices invisibility error at 05:16:16.216Z.",
+      "A-32 (mcp-server running stale code, remedy = container rebuild) is still open and may interact with this - a rebuild would address both, but decide deliberately rather than as an incident reflex.",
+      "Restart/rebuild is ops scope. Router did not restart anything: docker down && up has destroyed peer containers before (memory feedback_rebuild_recreate_destroys_peers)."
+    ],
+    "router_actions_taken": [
+      "Verified qa return for TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY against artifacts - all claims held; lane-move landed and board committed (f086451f9).",
+      "cron-detect-loop self-arm: local CronList classify found all 4 crons present-and-correct -> no-op. Cross-session marker guard (Steps 1a-1c) could not run (gateway), but is moot when no CronCreate fires.",
+      "Did NOT dispatch the 05:37Z tick. Did NOT restart any container. Did NOT re-arm com.vn-market.fleet-push."
+    ],
+    "correction_note": "An earlier draft of this signal described frontend-1 as wedged alongside mcp-server. That was true at 05:27Z-05:39Z but had ceased to be true by 05:43Z; corrected before filing. Only mcp-server is wedged."
+  }
+}
