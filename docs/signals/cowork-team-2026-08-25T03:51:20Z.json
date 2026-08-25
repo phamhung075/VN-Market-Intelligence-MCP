@@ -1,0 +1,76 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "status": "NEW",
+  "priority": "P2",
+  "ts": "2026-08-25T03:51:20Z",
+  "dedup_key": "cowork-tick-2026-08-25T03:45Z",
+  "payload": {
+    "nominal_tick": "03:45",
+    "classification": "FIRE",
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "new_signals": 0,
+    "signal_backlog": 34,
+    "devq": 109,
+    "dev_head": "in_progress (FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED, claimed 03:48:37Z by dev-team incident-lane consumer)",
+    "fanout_gate": "NORMAL",
+    "headroom_mb": 2484,
+    "load_1min": 2.39,
+    "cores": 12,
+    "max_parallel": 4,
+    "last_fired_prewrite": "2026-08-25T03:35:09Z",
+    "last_fired_timestamp": "2026-08-25T03:50:41Z",
+    "cycle_snapshot_promoted": false,
+    "snapshot_write_utc": "2026-08-25T03:49:40Z",
+    "snapshot_file": "cycle-snapshot-03:49.json",
+    "margin_to_minute_roll_seconds": 20,
+    "predicted_consumer_resolution": "03:50",
+    "prediction": "MISS — recorded BEFORE the spawn returned, 2nd advance prediction on this defect"
+  },
+  "finding": {
+    "title": "cycle-snapshot nominal-tick promotion is STRUCTURALLY UNSATISFIABLE — 0 of 46 live files carry a quarter-minute name",
+    "severity": "P2",
+    "evidence": {
+      "corpus_size": 46,
+      "files_named_at_nominal_quarter_tick": 0,
+      "distinct_minute_values_observed": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "52"
+      ],
+      "note": "FILE_TICK=$(date -u +%H:%M) in tick-snapshot.md names by WALL CLOCK AT WRITE. Cron drift + preflight + 2 MCP fetches put every write 1-7 min past the nominal :00/:15/:30/:45. No write in the corpus has EVER landed on a quarter minute.",
+      "promotion_target_frozen": {
+        "file": "cycle-snapshot-latest.json",
+        "tick": "00:00",
+        "created_at": "2026-08-23T00:07:50Z",
+        "regime_served": "UNKNOWN",
+        "live_regime": "NEUTRAL"
+      },
+      "consecutive_promoted_false": 11
+    },
+    "upgrade": "Prior 3 samples showed the CONSUMER race (name-equality miss on a file it locates and staleness-checks). This census proves the PROMOTION half is not a race at all — it is unsatisfiable by construction. A retry, a jitter change, or a faster tick cannot fix it; only renaming can."
+  },
+  "escalation_decay_warning": "Push backlog escalations are thinning as the backlog grows (176->189->193->196). Falling escalation counts here are NOT improvement — agents are correctly de-duplicating a standing condition, which silences the alarm precisely as it worsens.",
+  "routed_to": "PO Step 0-SIG"
+}
