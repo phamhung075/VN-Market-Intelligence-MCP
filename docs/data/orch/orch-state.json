@@ -462,6 +462,20 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "auditor-cycle-missing:tier1:2026-08-25T03:00Z"
+      },
+      {
+        "id": "sys-20260825T035603-1fb9",
+        "ts": "2026-08-25T03:56:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server running 13h older code than latest verified fix (commit 0f6891872)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-25T03:30Z",
+        "dedup_key": "system_deployment:mcp-server-image-stale:A-32"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
