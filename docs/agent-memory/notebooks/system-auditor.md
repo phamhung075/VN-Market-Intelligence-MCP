@@ -1,3 +1,78 @@
+## c4 · 2026-08-25T13:38Z
+### Audit Run Tier-1 (13:24–13:38 UTC 2026-08-25)
+- Tier: 1 | Services: 12 checked (host_runtime_set) | Sources: 0 | DB checks: 0
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped
+- Status: DEGRADED (all 12 fleet containers Up+healthy and all health endpoints 200; A-30 pdf-extractor sits at an UNACKED 88–90.6% of its 2.5 GiB cap — verdict FOLD per the documented predicate, condition owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM in review[]; 1 new detector-defect finding filed)
+- Fire-election: WON, task_id=cron:auditor-t1:2026-08-25T13:00Z (claimed=true)
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-25T13:30:24Z ===
+--- docker ps -a ---
+auto-sentinel-test                                Up 5 minutes (unhealthy)   vn-market-intelligence-mcp-pdf-extractor
+vn-market-intelligence-mcp-mcp-server-1           Up 13 minutes (healthy)
+vn-market-intelligence-mcp-frontend-1             Up 7 hours (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1        Up 7 hours (healthy)
+vn-market-intelligence-mcp-alert-engine-1         Up 7 hours (healthy)
+vn-market-intelligence-mcp-rag-service-1          Up 7 hours (healthy)
+vn-market-intelligence-mcp-news-fetch-1           Up 7 hours (healthy)
+vn-market-intelligence-mcp-api-gateway-1          Up 7 hours (healthy)
+vn-market-intelligence-mcp-stock-price-1          Up 7 hours (healthy)
+vn-market-intelligence-mcp-macro-indicators-1     Up 7 hours (healthy)
+mcp-gateway                                       Up 7 hours (healthy)
+vn-market-intelligence-mcp-flaresolverr-1         Up 7 hours (healthy)
+vn-market-intelligence-mcp-technical-analysis-1   Up 7 hours (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 7 hours (healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — auto-sentinel-test baseline 59.50% < 85% investigate-gate
+[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 88.09% >= 85% investigate-gate — ENGAGE deep-probe
+(all 11 other containers SKIP, baselines 1.68%–42.86%)
+A-30 deep-probe JSON: container=pdf-extractor-1 mem_limit_kb=2621440 (2.5 GiB)
+  samples pct=[87.90, 88.05, 87.66, 87.99, 87.84, 88.06]
+  min=87.66 max=88.06 median=87.94 reclamation_dips=0 discontinuities=0
+  oom_killed_before/after=false restart_count=0 state_changed_during_window=false
+  vmhwm_kb before=after=2139608 advancing=false pinned_at_cap=false
+  verdict=FOLD reason="benign GC sawtooth or below tripwire"
+
+--- disk df -h / ---
+/dev/disk1s4s1   233Gi  13Gi  24Gi  37%  /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+=== PROBE DONE ===
+```
+
+### Findings
+- **A-01..A-11 containers = PASS** [RAW-PROBE docker ps -a]: all 12 `host_runtime_set.services[]` entries present and `Up`. `not_deployed_by_design[]` is empty, so no INFO/grey skips applied.
+- **A-12..A-20 health = PASS** [RAW-PROBE health endpoints]: 5/5 HTTP 200. A-20 override PASS, `pass_count=3/3` in-container.
+- **A-21 restarts = PASS** [RAW-PROBE restart count]: mcp-server RestartCount=0.
+- **A-30 memory = FOLD** [RAW-PROBE A-30 JSON]: pdf-extractor-1 min 87.66 / median 87.94, 0 dips, 0 discontinuities, VmHWM flat and not pinned, OOMKilled=false. None of the documented escalation triggers (>93% sustained min, median >97%, >40pp discontinuity, state change, OOMKilled, VmHWM advancing+pinned) are met, so FOLD is the correct verdict. Cap re-verified LIVE at 2 621 440 KB = 2.5 GiB from the container's own cgroup, and independently as `HostConfig.Memory=2684354560` — NOT 8 GB. NOT acked: `auditor-launchd-ack.json .acked_memory[]` holds a rag-service entry only, so this is a genuine unacknowledged WARN_PCT breach, already owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (review[]) — no new row filed.
+- **A-32 disk = PASS** [RAW-PROBE df]: 37% < 85%.
+- **NEW (WARN) — A-30 mem_creep pre-gate has no ephemeral/non-fleet discriminator.** `_check_mem_creep()` in `scripts/agents-flow/auditor-tier1-probe.sh` scopes from `docker ps -q` (every capped running container), while its sibling `_check_docker_ps()` in the SAME file scopes from `host_runtime_set.services[]`. So an ephemeral `docker compose run --rm` harness flips the whole fleet verdict to FAILURE. This tick's trigger, `paddle-sentinel-test(99.95%)`, was a PaddleOCR-vs-Tesseract comparison that completed 46/46 pages, logged SENTINEL_TEST_DONE and exited 0 (self-removed via `--rm`) — a non-incident that had already terminated before this agent was spawned. Because the debounce signature is keyed on CONTAINER NAME, ephemeral names have unbounded cardinality and every one is a first-sighting (spawn_count=1 → SPAWN guaranteed): the debounce is structurally unable to absorb this class. Observed 3 distinct names in ~13 min — paddle-sentinel-test (13:22:14Z), auto-sentinel-test (created 13:24:31Z, 46.77%→59.50%), tess-sentinel-test (live 13:35:13Z) — all same image, same `/app/paddle_sentinel_test.py` entrypoint, same 2.5 GiB cap. Signal `sys-20260825T133632-2f9d` → `signal_queue.rows[31]`.
+
+### Deliberately NOT filed
+- **paddle-sentinel-test termination** — NOT an OOM/crash. Clean exit 0 + `--rm` self-removal fully explains its absence from `docker ps -a`; no die/destroy/oom event for it in the daemon buffer either. Filing it would have been a false positive.
+- **mcp-server-1 "Up 13 minutes" vs peers' 7 hours** — benign RECREATION, not a restart loop: RestartCount=0 with a fresh StartedAt (13:17:22Z), ExitCode=0, OOMKilled=false; consistent with a live developer rebuilding mcp-server.
+- **"pdf-extractor documented cap is a dead 8 GB" — COULD NOT REPRODUCE, so no doc-staleness row.** The authoritative brief `docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md:303` already states the correct value: "pdf-extractor RSS must stay under 2.5 GiB during extraction. Fleet total under 8 GiB." AC-PEK-2b/4c (`docs/REQ_PEK-INTEGRATE.md:97,152`) defer to "the value specified in the architect brief" rather than hardcoding anything. Every 8 GiB figure found repo-wide is the FLEET/Docker-VM ceiling (~7.75 GiB actual), not a per-container cap. The live cap and the docs agree at 2.5 GiB.
+- **spawn-debounce ledger GC** — ledger now holds 5 entries, 4 past `window_expires_at`, nothing GCs them. Recorded as a CONSTRAINT inside the emitted signal, not implemented: resetting `spawn_count`/`first_seen_at` would regress QA-verified AC-4, test-locked at `auditor-tier1-probe.test.sh` T-DEBOUNCE-3.
+
+### Summary
+Fleet runtime is healthy on every container/health/restart/disk dimension. The single new finding is a DETECTOR defect, not an infrastructure fault: the Tier-1 mem_creep pre-gate cannot tell a deliberate short-lived test harness from a fleet service, so it burns a fleet FAILURE + an auditor spawn on correctly-working ephemeral workloads, and its name-keyed debounce can never suppress that class. OUTPUT-CONTRACT verdict=DIVERGENCE is CORRECT here by design (AUD-CP-1): the pre-gate's mem_creep=FAILURE named an entity that no longer existed by the time this cycle measured. No container was stopped, killed, restarted, removed or rebuilt.
+
 ## c3 · 2026-08-25T12:16:46Z
 ### Audit Run Tier-2 (Tier-2 Freshness Sweep)
 - Tier: 2 | Data sources checked: 20+ | VPS routes: 8 | BCTC status checked
@@ -67,33 +142,3 @@
 - financial_reports low-confidence: 52 rows (extraction_confidence < 0.2) — BY-DESIGN, expected PDF OCR noise
 
 **History append:** history_len_before=200, history_len_after=200 (at cap), signals_written=[] (all BY-DESIGN/already-tracked)
-
-## c2 · 2026-08-25T08:00Z
-### Audit Run Tier-DATA (05:00–16:59 UTC 2026-08-25)
-- Tier: DATA | Tables checked: 17 | DB Data-Anomaly Sweep
-- Anomalies: 0 new (no findings outside already-open tasks)
-- Status: HEALTHY (all tracked issues remain stable)
-
-#### Raw Counts (db-integrity-counts.sh)
-- scan_ts: 2026-08-25T07:59:48Z
-- ohlc_violations_count: 336 (20 distinct dates, 0 fresh in last 2 days)
-- scale_gt100x_count: 0
-- vnindex_cache_rows_count: 1
-- low_confidence_reports_count: 52
-
-#### Findings Summary
-**No new anomalies detected.** All observations match existing open task tracking:
-
-1. **deep_fetch_stats** (0 rows, class a/may_stay_critical): Already-open signal tracked under FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
-
-2. **daily_ohlcv OHLC violations** (336 rows across 20 distinct dates): Stable residue; 0 fresh violations in last 2 days. Already-open under LINT-OHLCV-WRITE-BYPASS.
-
-3. **Other tables** (macro_indicators, sbv_rates, price_alerts, alert_engine_records, cron_job_runs): All classified as by-design (class b/c) or already tracked.
-
-**Database state:** Stable. Deep fetch pipeline remains stalled (consistent with prior cycle). No new root causes identified.
-
-**Entry appended to:** `docs/data/db-integrity-history.json` (length: 200, capped)
-
-**Dedup status:** 1 finding (deep_fetch_stats) matched to existing open task FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD. No new signals written.
-
-**Exit code:** 0 (RECORD OK)
