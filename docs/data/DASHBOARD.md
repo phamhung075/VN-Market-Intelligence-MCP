@@ -2410,3 +2410,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · cron fire-gap: priceUpdateWatchdog
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server cron priceUpdateWatchdog
+**Details:** last run 2026-08-25 08:50:01, overdue 13.8h vs 0.3h threshold (STALE), known since 2026-08-24
+**Impact:** price update watchdog blind
+**Root cause:** job scheduling/execution gap, part of the 08:45-08:55Z cluster
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:04Z (signal sys-20260825T223706-3912, system-auditor -> po, dedup_key=auditor-a29-fire-gap:priceUpdateWatchdog, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
