@@ -1,8 +1,0 @@
-{
-  "from": "commit-sweep-guard",
-  "to": "po",
-  "type": "bug-escalation",
-  "priority": "high",
-  "createdAt": "2026-08-25T00:08:22Z",
-  "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/data/cowork-schedule.json docs/signals/cowork-team-2026-08-25T00:07:51Z.json. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>."
-}

@@ -1,0 +1,47 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "ey_spread_pct": 2.09,
+  "valuation_verdict": "FAIR",
+  "roe_pct": 16.7,
+  "kinhdich": {
+    "que": "Tuy (45)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 63
+  },
+  "esc_gate": {
+    "esc1": "UNEVALUABLE_SCOPE_REDUCED",
+    "esc2": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "esc3": {
+      "result": false,
+      "quarters_returned": 4,
+      "divergence_ratio": 0.368
+    },
+    "esc4": {
+      "result": "N/A",
+      "reason": "bank — net-interest-income model, non-operating-share formula not applicable"
+    },
+    "esc5": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
+  },
+  "product": "State-owned commercial banking — corporate/trade-finance lending, retail lending, deposit-taking, bancassurance",
+  "customer": "Large corporates, SME and retail borrowers/depositors nationwide; largest bank by market cap on HOSE",
+  "ops": "Operating margin 80.9% (net-interest-income model); ROE 16.7% below banking-sector median (17.6%); OCF/NI ratio 1.37x, no coverage-gap flag (4/4 quarters)",
+  "mgmt": "PE/PB premium to sector (+57%/+45%) despite below-median ROE — market pricing in quality/scale premium; balance sheet passes ESC-2 check (0.37% imbalance, within tolerance)",
+  "_processed": {
+    "fingerprint": "edcf7e8c8bb06e06383fe5a48706c841923dde560a4ac24506e16f3fbf20a487",
+    "processedAt": "2026-08-25T00:10:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
