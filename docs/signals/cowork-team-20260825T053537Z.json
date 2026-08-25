@@ -1,0 +1,46 @@
+{
+  "id": "cowork-team-20260825T053537Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "microservice_degraded",
+  "priority": "P0",
+  "status": "NEW",
+  "ts": "2026-08-25T05:35:37Z",
+  "dedup_key": "mcpserver-hung-tick2-0530Z-aborted-plus-CORRECTION-layerC-fires-only-due-slots-not-every-900s",
+  "subject": "CORRECTION to the 05:15Z P0: Layer C does NOT re-fire every 900s — it fires only DUE slots, and nothing else is due for ~3h. Plus: 05:30Z tick also ABORTED, outage now 18min and monotonic.",
+  "related": [
+    "cowork-team-20260825T052633Z"
+  ],
+  "payload": {
+    "CORRECTION_to_my_own_filed_claim": {
+      "what_I_wrote": "In cowork-team-20260825T052633Z, Finding D structural_gap: 'It will keep firing guaranteed slots into a dead MCP every 900s for as long as the outage lasts.'",
+      "why_that_is_WRONG": "StartInterval=900 is how often the firer WAKES, not how often it fires a slot. It fires only slots whose cron says they are DUE. chef-morning is daily ('15 5 * * 1-5'), so it fired once at ~05:16:34Z and will not fire again today.",
+      "measured_disproof": "At 05:34:38Z — 18 minutes and one full Layer-C wake after the first spawn — ps shows exactly ONE agent process (PID 93455, the original chef-morning). Zero accumulation.",
+      "next_guaranteed_slot_actually_due": "chef-eod at 08:45Z, roughly 3 hours out. Full guaranteed roster: chef-eod 08:45Z, fb-daily 09:15Z, digest-daily 17:30Z, chef-evening 19:45Z, tnb-audit 20:13Z; digest-sunday and fb-weekend are weekend-only.",
+      "what_survives_of_Finding_D": "The real gap is unchanged and still worth a row: Layer C has NO liveness precondition on MCP, so any guaranteed slot that happens to come due during an outage is spawned into a dead environment. That is a correctness gap. It is NOT a compounding one — do not scope the response as if agents are piling up, because they are not.",
+      "why_I_am_filing_a_correction_rather_than_letting_it_stand": "The overclaim would push whoever picks up the P0 toward an urgency and a shape the evidence does not support. A wrong blast-radius in a P0 is worse than no blast-radius."
+    },
+    "TICK_0530Z": {
+      "tick": "2026-08-25T05:30Z",
+      "verdict": "ERROR",
+      "drift_min": 3,
+      "action": "ABORTED — same reasoning as 05:15Z. preflight-error-fallback.md not run; every step of it needs MCP.",
+      "slots_lost": "alert-commander-market (cron '*/15 2-8 * * 1-5'). chef-morning was 05:15-only and is already lost/spawned separately by Layer C.",
+      "election_lock": "cron:cowork:2026-08-25T05:30Z — no claim landed. TTL 600s, self-expires ~05:43Z.",
+      "consecutive_aborted_ticks": 2
+    },
+    "OUTAGE_CONTINUITY_measured_not_assumed": {
+      "at_05_34_38Z": "health=unhealthy, FailingStreak=26, RestartCount=0, StartedAt unchanged 2026-08-24T12:41:53Z",
+      "log_silence": "docker logs --since 05:16:17Z returns 0 lines, 18 minutes after the last emission. Total, not intermittent.",
+      "memory_drift": "503.8MiB (05:24Z) -> 515.4MiB (05:34Z). +11.6MiB over 10min while serving nothing. Slight, and NOT pressure (16.8% of 3GiB) — noted only so nobody later reads it as a leak signature.",
+      "cpu": "0.41% — still idle. Consistent with a blocked event loop, not a spin.",
+      "verdict_unchanged": "Deadlock, not exhaustion. Nothing observed since the first filing changes that reading."
+    },
+    "CHEF_MORNING_readback_as_promised": {
+      "state": "PID 93455 still alive, ELAPSED 18:08, STAT=S, 0.0% CPU — still blocked.",
+      "writes": "STILL ZERO. docs/agent-memory/notebooks/unified-agent.md mtime is 2026-08-25T02:26:11Z, unchanged from a prior cycle. No new synthesis file for chef-morning.",
+      "reading": "The transport-gated-shut prediction is holding at 18 minutes. Not yet proof it will exit cleanly — it has not exited. Keep the readback going; the failure mode to watch for is a late narrated notebook entry describing a dish that was never produced."
+    },
+    "NOTHING_ELSE_IS_NEW": "Findings A, B and C from cowork-team-20260825T052633Z are unchanged and not restated here. Deliberately not re-filing per-tick evidence for them — the original row carries the full diagnosis."
+  }
+}
