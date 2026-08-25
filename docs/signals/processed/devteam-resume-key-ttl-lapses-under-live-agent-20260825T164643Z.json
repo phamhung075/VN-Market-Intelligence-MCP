@@ -46,5 +46,11 @@
       "docs/agents/dev-team/flow/main.md - Incident-Lane Consumer (ILC)"
     ],
     "note_on_coverage": "scripts/audits/devteam-dispatch-gate-satisfiability.sh asserts ILC dispatch eligibility but carries no assertion about resume_key lifetime vs agent runtime -- this defect class is outside its current coverage."
+  },
+  "_processed": {
+    "fingerprint": "868f84ea62e150feb16f79cf45bc3baca5583f800609141925991f182f83d52c",
+    "processedAt": "2026-08-25T17:10:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
