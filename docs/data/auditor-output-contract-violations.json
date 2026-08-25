@@ -490,5 +490,35 @@
     "cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
     "from": "system-auditor",
     "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
+  },
+  {
+    "ts": "2026-08-25T13:37:50Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-25T13:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=FOLD"
+  },
+  {
+    "ts": "2026-08-25T13:38:02Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-25T13:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=FOLD"
+  },
+  {
+    "ts": "2026-08-25T15:06:10Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-25T14:30Z",
+    "from": "system-auditor",
+    "detail": "V4 RETURN headline anomalies=0 but signals_posted=1"
+  },
+  {
+    "ts": "2026-08-25T15:06:10Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-25T14:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-25T22:48:07Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-25T20:00Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=18 independent=16"
   }
 ]

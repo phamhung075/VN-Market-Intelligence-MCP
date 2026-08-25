@@ -194,5 +194,73 @@
   "detector_defect:auditor-tier1-probe:mem_creep_debounce_window_vs_persistent_fold_baseline:pdf-extractor": {
     "ts": "2026-08-25T17:08:05Z",
     "sev": 2
+  },
+  "a30_gate_ephemeral_scope_exclusion": {
+    "ts": "2026-08-25T18:39:33Z",
+    "sev": 2
+  },
+  "data_stale:ssc-iboard:B-02": {
+    "ts": "2026-08-25T18:50:15Z",
+    "sev": 2
+  },
+  "data_stale:yahoo-finance:B-02": {
+    "ts": "2026-08-25T18:50:18Z",
+    "sev": 2
+  },
+  "data_stale:foreign-flow:B-05": {
+    "ts": "2026-08-25T18:50:21Z",
+    "sev": 3
+  },
+  "data_stale:polymarket:B-03": {
+    "ts": "2026-08-25T18:50:25Z",
+    "sev": 3
+  },
+  "audit_coverage_gap:b_freshness_12_no_instrument": {
+    "ts": "2026-08-25T18:50:38Z",
+    "sev": 2
+  },
+  "auditor-cycle-missing:tier2:2026-08-25T20:00Z": {
+    "ts": "2026-08-25T22:35:09Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:bctcReparseJob": {
+    "ts": "2026-08-25T22:36:53Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:vpsProxyWatchdog": {
+    "ts": "2026-08-25T22:36:56Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:alertScanParallel": {
+    "ts": "2026-08-25T22:37:00Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:taAlertNotifier": {
+    "ts": "2026-08-25T22:37:03Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:vnIndexRefresh": {
+    "ts": "2026-08-25T22:37:08Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:commodityTrackerRefresh": {
+    "ts": "2026-08-25T22:37:13Z",
+    "sev": 2
+  },
+  "data_stale:B-DATA-COVERAGE:instrument-gap": {
+    "ts": "2026-08-25T22:40:44Z",
+    "sev": 2
+  },
+  "vps_route_no_coverage:muasamcong:B-06": {
+    "ts": "2026-08-25T22:41:08Z",
+    "sev": 2
+  },
+  "vps_route_no_coverage:vietstock-agm-plan:B-07": {
+    "ts": "2026-08-25T22:41:11Z",
+    "sev": 2
+  },
+  "data_stale:bctc-vps-queue-255870:B-13": {
+    "ts": "2026-08-25T22:41:40Z",
+    "sev": 2
   }
 }
