@@ -1,0 +1,11 @@
+{
+  "from": "qa",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "medium",
+  "payload": "FOLLOW-UP TO FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE (commit 8d361eee9, DONE_VERIFIED). During AC-2/AC-3 QA verification I invalidated + re-extracted the two exemplar filenames the dev row itself measured (DBC_2024_Q4.pdf + DBC_2025_Q4.pdf pages 12/15; VIC_2026_Q1.pdf 19 rotated pages) -- all confirmed recovering correct Vietnamese text via direct read (not confidence field). While resolving the real filenames I independently spot-checked adjacent report files NOT in this row's named scope and found the SAME pre-fix rotation garble still live and un-remediated in market.db pdf_extracted_text: VIC_2025_Q4.pdf (pages 10, 65 confirmed garbled) and VIC_2026_Q2.pdf (pages 10, 60, 65 confirmed garbled). I did not re-extract these -- out of scope for the QA row I was dispatched to close, and a full corpus sweep (every DBC/VIC/other-ticker filename x every page) was not attempted given time budget. RECOMMEND: a small follow-up FIX/maintenance row to (1) sweep ALL filenames in pdf_extracted_text for the same signature (very short OR reversed-looking text_content on pages whose neighbours are normal Vietnamese) and (2) run scripts/migrations/reextract-pdf-ocr-orientation.ts --apply per affected filename (script already proven correct+reusable, ~5-10s/page). Full raw evidence in the FIX row's own status_note dated 2026-08-25T23:4x (this QA cycle).",
+  "related": [
+    "FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE"
+  ],
+  "createdAt": "2026-08-25T23:42:50Z"
+}
