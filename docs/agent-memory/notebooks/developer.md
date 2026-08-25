@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-25T07:55:00Z | **Cycle:** FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE (session 036ceaf1, dev-team incident-lane consumer dispatch)
+**Last updated:** 2026-08-25T13:55:00Z | **Cycle:** FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (session 036ceaf1, dev-team incident-lane consumer dispatch)
+
+## Session 2026-08-25T13:55:00Z — FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (cross-service/, developer, P0 M, session 036ceaf1, dev-team incident-lane consumer dispatch, po_expedited_at)
+
+**AC-1 first, and it inverted the fix: the "forged writer id" premise is REFUTED.** The ntg-* rows carrying the frozen ts `2026-08-24T00:00:00Z` came from the REAL production writer, driven by `apps/mcp-server/src/__tests__/CCATO-MCP-T5-USECASE.test.ts` — 5 of its cases reach a FAIL verdict overriding NEITHER `writeSignalsFn` NOR `orchStatePath`, so `runNarrativeTruthGate` falls through to `DEFAULT_ORCH_STATE_PATH` (the LIVE orch-state.json) with the suite's injected clock. Every `bun test` run appended exactly 6 rows to production. Arithmetic is decisive: those 5 cases yield `returned_value` {60, 61, 61, 62.1, 62.1, "not found in database"} = 1/2/2/1; PO measured 12/24/24/12 over 12 batches. Claim text, `agent_id:"chef"` and the ts are verbatim T5 constants. So "NEITHER sanctioned engine can have produced them" is FALSE, and the "7 inverted verdicts" are T5's deliberate missing-`tool_null_markers` case.
+
+**LESSON — a frozen/impossible timestamp in production data points at a TEST RUNNER before it points at a forger.** Injected clocks are the only thing here that legitimately emit a second-identical ts across hours of wall clock. Grep the test tree for the literal timestamp FIRST: `grep -rn "<frozen ts>" apps scripts` found it in seconds, in the same file that held the claim text and the agent id.
+
+**LESSON — replaying a clock-skew guard needs a PER-ROW emission clock.** My first replay applied one wall clock to rows emitted 10h apart and produced 2 false quarantines against genuine live rows — it read exactly like an over-broad gate. Reconstruct each candidate's own emission time from git before scoring it.
+
+**Did NOT ship AC-2 (producer auth in `orch-apply.sh`) or AC-8 (collapse live rows), both premise-refuted; reported as not-done, not narrated as done.** `_updated_by:"narrative-truth-gate"` was never forged — the TS writer is a second sanctioned producer that legitimately stamps it, so that check would reject genuine rows and still miss the leak (which never touches `orch-apply.sh`). Only 2 ntg-* rows remain, both real distinct clock reads.
+
+**Shipped:** T5 `baseDeps()` stubs `writeSignalsFn`; new `narrativeContradictionGuards.ts` screens at the write boundary with a distinct greppable marker per class, quarantine never silent drop; `dedup_key` on BOTH engines, honoured on append so repeats bump `.occurrences`; summary quotes the probe evidence (python/TS byte-identical). CAUSAL REPRO: removing only the stub re-fires exactly 6 `NTG-GUARD-REFUSED-TEST-HARNESS-LIVE-WRITE` lines, live sha byte-identical. Replay of all 8 real rows at per-row clocks: 6 BLOCKED, 2 genuine ACCEPTED, negative controls 2 accepted + 1 collapsed to `occurrences=2`. 13/13 new, `tsc` clean, 307/307 across all 19 adjacent test files. `in_progress[]` -> `review[]`, next_agent=qa.
 
 ## Session 2026-08-25T07:55:00Z — FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE (scripts/lib/, developer, P0 S, session 036ceaf1, dev-team incident-lane consumer dispatch, po_expedited_at)
 
@@ -30,14 +42,3 @@
 
 ---
 
-## Session 2026-08-25T04:00:00Z — FIX-AUDITOR-TIER1-PROBE-TEST-INVERTED-ASSERTION-L1422-FALSE-GREEN (scripts/agents-flow/, developer, P1 S, session 036ceaf1, dev-team incident-lane dispatch)
-
-**Verified the inversion empirically before touching the file, per the task's own instruction not to trust the row's prose.** L1422's `T-DEBOUNCE-1 ledger last_seen_at advanced` check built its condition as `[ A != B ] || echo true` instead of the file's own `&& echo true || echo false` idiom used by all 263 siblings. A bare `||` short-circuits: it echoes nothing (empty string != "true" -> FAIL) when the timestamps genuinely differ (healthy), and echoes "true" (-> PASS) when they're identical. Confirmed with 6 raw runs of the UNTOUCHED suite: results alternated `264 passed, 0 failed` / `263 passed, 1 failed` depending only on whether tick1/tick2 happened to land in the same wall-clock second (probe's `_now_iso()` is second-granularity) — a debug copy with an injected `echo` of the actual timestamps confirmed PASS correlates with IDENTICAL timestamps and FAIL with DIFFERING ones, exactly backwards from the label.
-
-**Fixed all 5 ACs, not just the 1-character inversion (AC-1).** (1) corrected the idiom; (2) added `sleep 1` between tick1/tick2 to force clock separation — un-inverting alone would leave a same-second flake, since the underlying ledger-write path is correct and always advances `last_seen_at`; (3) ran the corrected suite 6x consecutively, all `265 passed, 0 failed` identical (AC-3); (4) added `T-LINT-1`, an opt-in regression guard (never opt-out) that rejoins the file's 21 backslash-continued `check` calls before scanning, then asserts every one of the file's own 265 `check` calls uses the conforming idiom (AC-4); (5) re-verified `FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT`'s DONE_VERIFIED approval against the corrected suite — the debounce ledger genuinely does advance `last_seen_at` on a debounced tick, so no follow-up row was needed against `auditor-tier1-probe.sh` (AC-5).
-
-**Stayed in scope — did not touch the probe script itself.** `scripts/agents-flow/auditor-tier1-probe.sh` has live uncommitted WIP from the parallel sibling row (`FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED`); confirmed via `git status` before and after that it was never staged/touched by this task's commit (explicit pathspec on both `git add` and `git commit -- <path>`, per commit-convention.md).
-
-**Verification:** `bash scripts/agents-flow/auditor-tier1-probe.test.sh` — 6 consecutive runs, all `265 passed, 0 failed`; both the un-inverted T-DEBOUNCE-1 check and the new T-LINT-1 check PASS every run. `bash -n` clean. Commit `3fa945522`, single file (`scripts/agents-flow/auditor-tier1-probe.test.sh`). Board row moves `in_progress[]` → `review[]` (status REVIEW, `next_agent`=qa) per developer flow's standard terminal.
-
----
