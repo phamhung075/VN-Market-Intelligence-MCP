@@ -16,6 +16,8 @@ This agent fires to MARKET ONLY when one of two event conditions is met per `doc
 | **watchlist-opportunity** | ALL FOUR: `kinhDichConfidence ≥ 70` + `kinhDichSignal=BUY` + `newsSentiment ≥ 0.3` + `agentSignalsMajority=BUY` |
 | **CRITICAL always** | `verified_chain` OR `legal_risk` OR `crisis_velocity` — always fires regardless of above |
 
+> **Doc-self-heal note (alert-commander, discovered live 2026-08-25):** a 4th, distinct always-eligible route exists and is NOT a row in this table or in `alert-policy.md`'s CRITICAL-override list — a market-wide `chain_catalyst` carve-out (no-ticker, tagged external trade_war/geopolitical/macro catalyst, bearish/bullish direction, confidence ≥ regime threshold) that fires MARKET directly as a portfolio-wide advisory, bypassing position-danger/watchlist-opportunity. Full criteria + live-fire history → `stage-signals.md` § 3c carve-out (GLOBAL-GEOPOLITICAL-SIGNAL-COVERAGE). Do not conclude "no firing condition met" from this table alone — check 3c for any chain_catalyst signal first.
+
 **If neither condition fires → EXIT silently. No MARKET write. No WORK cycle-header.** No cycle headers in any case — `no_cycle_headers: true`.
 
 When firing: message ≤ 140 chars urgent format. Vietnamese with diacritics.
