@@ -1,117 +1,66 @@
 # PO Notebook
 
-## 2026-08-25T07:19-07:40Z — the incident lane was shipped, live, and completely unused
+## 2026-08-25T12:26-12:40Z — a dispatch lane that spent 3 of 3 daily picks on rows nobody can action
 
-Inbox self-read as SSOT: **69 envelopes / 61 distinct `envelope_id` -> 0** in one write.
-Journal: `docs/agent-memory/decisions/triage-20260825T0732Z-po.md`.
-**8 rows minted · 2 promoted+expedited · 5 folded · 0 stranded in `in_progress[]`.**
+SECONDARY-drain pick `FIX-CHEF-PUBLISHED-MARKER-RELEASE`. Inbox **29 → 12** (17 cleared, 12 held).
+Journal: `docs/agent-memory/decisions/triage-20260825T1230Z-po.md`.
+**8 rows out of the drain's candidate set · 3 minted · 9 folded · 2 dangling edges repaired · 0 re-mints.**
 
-### The finding that mattered most was not in any signal
-`is_po_expedited` = `po_expedited_at != ""`. The Incident-Lane Consumer that consumes it is
-UNCONDITIONAL (no head gate, no rotation gate), has its own `INCIDENT_CAP=2` budget entirely
-separate from the shared `WIP<=2` slot, and its caller landed in `dev-team/flow/main.md` earlier
-today. **Zero rows on the whole board carried the field.** Every prior tick has been fighting RLC
-starvation (~1-in-6 idle ticks, 1 row per turn) while a dedicated, unconditional, empty lane sat
-next to it. Priority bumps were never the lever; the stamp is.
-Spent both slots: the QA-Drain dam (`FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-...`)
-and the armed destructive path (`FIX-ORPHAN-FR4-FR5-...`). Dry-ran the real claim script at
-`take_budget=2` against the post-write board before believing it: both claimed, lane=developer.
+### The brief's "contentless row" was a field-name mismatch
+`description` is not a schema field on this board: **5 of 568** backlog rows carry it, **810 of 810**
+carry `title`. The dispatched row has ~5.9 KB across `title`/`detail_ref`/3 notes. The real defect is
+the SECONDARY spawn prompt in `dev-team/flow/main.md`, which hardcodes *"stale review[]-lane row
+(status=REVIEW)"* and *"read its status_note/review_note"* — all four wrong for a `done[]`-origin pick,
+so the receiver reads two absent fields and calls a fully-documented row empty. **Folded as AC-7 onto
+`FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY` (P1→P0), not minted: same 4 lines.**
 
-### Two near-misses, both caught by resolving before writing
-1. The verdictgate emitter reported "ZERO covering rows across ALL lanes" for 336 impossible OHLC
-   rows. `CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR` has carried **336 rows / 20 business dates** since
-   2026-08-05. Exact match. I would have re-shipped covered work; instead I folded and scoped the
-   new row to the structural half in writing.
-2. I nearly filed "triage-signals.md cites a nonexistent row id". The row exists — cold archive,
-   `done_tasks[107]`, `DONE_VERIFIED`. The **real** defect is adjacent and worse: the paragraph
-   mandates a NON-TERMINAL-lane scan, then branches on `DONE/DONE_VERIFIED` — a state that surface
-   structurally cannot report. A literal reader lands on `not found`, which matches no branch.
+### Fixing the pick, not the picked row
+pm's 08-23 closeout parked **8 epic wrappers** in `done[]` with `next_agent` unset. `done[]` is half the
+drain's candidate set, so each is a permanent non-actionable candidate — and **all three** of today's
+picks (05:10, 08:15, 12:16Z) came from that cohort while `review[]`'s 25 rows have **never once** been
+stamped. Moved all 8 to `archive[]`, status `DONE` unchanged.
+**Why not `done_verified[]`:** `checkVerificationGate` rejects `DONE_VERIFIED` without a
+`verification.raw_probe`, and nothing shipped — the only way to write that status is to fabricate a probe.
+`archive` is outside both `LANE_ALLOWED_STATUSES` and that gate, so `DONE` survives and nothing false is
+asserted. **Why not the 08:24Z session's plan** (stay in `done[]`, let the `updated_at` bump derank it):
+that is a rotation, and the rotation is precisely what burned three picks in one day.
 
-### The prose ceiling is now a triage constraint, not hygiene
-`po_expedited_at`/`po_expedited_by` are NOT in `STRUCTURAL_FIELDS`, so on `FIX-ORPHAN-FR4-FR5`
-(live prose 11919/12000 B) the **stamp alone** would have hard-aborted the write. Deleted the
-fully-superseded `po_corroboration_20260806` — verbatim restated inside `..._20260808` — in the same
-write: 11832 B. 20 rows are already over ceiling and are permanently un-annotatable; two of them
-were this tick's correct fold targets for the notebook-prune signals, so those folds went unwritten.
+### Lane moves break edges the mover cannot see — diff the validator, do not assume
+`archive[]` is in `collectAllTaskIds` but **not** in Stage 1g's dependency resolver. Diffing
+`orch-validate` live-vs-candidate caught two edges the move would have dangled: a stale `blocked_by` on
+`review[9]`, and — once that was dropped — the wrapper's own reverse `blocks` edge tripping **Stage 1e**,
+which requires the pairing to be two-sided. Both halves retired in one write. Same trap on block (10) of
+the adopted script: retiring `TASK-DEVTEAM-IDLE-CHAIN-3` dangles `-4`'s `depends`. Re-pointed it at
+`FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN` (`DONE_VERIFIED`, cold archive) — which **unblocks** a row
+that was pointing at a BACKLOG row nobody would ever work. Final Stage 1g set byte-identical to pre-write.
 
-### A landed fix that is not deployed is not a fix
-system-auditor's WARN "mcp-server running 13h older code than 0f6891872" looked like routine drift.
-Re-measured it: image `Created=2026-08-24T12:41:40Z`, 9 `apps/mcp-server` commits behind, and
-`0f6891872` is *"reaper stops orphan-minting TTL-expired locks owned by a live presence-registered
-session"*. At **06:33:55Z today the reaper did exactly that** — 4h38m after the fix was on main.
-Three services now measured running pre-fix images. Bounded the claim in the row: un-deployed is a
-NECESSARY condition, sufficiency depends on presence-registration, which is opt-in. Filed as AC.
+### A dead session's work is recoverable; its verifications are not transferable
+`scripts/po-triage-20260825T0824Z-...jq` sat untracked and unapplied — that PO session died on the
+account-level weekly quota (fleet outage 08:26→12:00Z). Adopted 9 of its 10 blocks, but re-ran every
+load-bearing probe first: `scripts/git-hooks/post-checkout` still absent; worktree `.git` is `ASCII text`
+so the T6 lock glob genuinely cannot match; both mint ids still absent. Its prose-headroom numbers
+reproduced exactly (64 / 1107 / 2254 B). Banner-annotated **SUPERSEDED — NEVER APPLIED** rather than deleted.
 
-### Carry-over
-- Both `INCIDENT_CAP` slots spent — do not stamp a third `po_expedited_at` until one clears.
-- Next expedite candidate: `FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-...` (+ sibling), both
-  still `dispatch_lane: null` with the tree ~246 commits ahead. Untouched (standing push disarm).
-- `SPIKE-KINHDICH-VERDICT-CONTRADICTS-PRICE-ACTION-7-CONSECUTIVE-CYCLES` is filed on a second-hand,
-  unreproduced premise **on purpose**. Its first deliverable is reproduction or falsification.
+### A near-miss: identical payloads are not duplicate emissions
+12 notebook envelopes arrived as 6 exact pairs; I was drafting a duplicate-emission row. Diffing pair
+members: they differ **only** in `createdAt` (~102 s apart). No debounce, two writes, two honest fires —
+`envelope_id` hashes `createdAt`, hence distinct ids. No row minted.
 
-
-## 2026-08-25T03:05Z — a correction block that shipped a fresh falsified claim; a CRITICAL that measured the wrong database
-
-Inbox read fresh as SSOT: **15 entries → 0**. Journal: `docs/agent-memory/decisions/triage-20260825T0305Z-po.md`.
-Verdict on `TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION`: **REWORK** (6/7 AC pass), review[] → agent-father.
-
-### The one AC that failed was the one nobody re-derived
-Row's job was to delete a falsified prose claim. It did — and shipped another in the same paragraph:
-"the two largest type classes in the whole ~100+-type namespace". By the block's **own stated method**
-(`grep -c` over the 3 archive months + hot): `signal_feedback` 230, `narrative_contradiction` 144,
-`microservice_degraded` 121, then 115/115. **Ranks 4 and 5.** Already false at the row's own commit
-(226 vs 112/108) — so not drift, never verified. It came verbatim from the architect brief line 56.
-**Generalises: when a task's deliverable is "correct a false claim", the numbers get re-derived and the
-adjectives around them get copy-pasted.** Verify the ranking, the superlative and the "top N" too.
-Note the block's *disclaimer* ("do not treat these counts as current") is excellent and stays — but a
-rank is exactly as perishable as the count it sits next to, so the fix is to delete the clause, not restate it.
-
-### Verify the mechanism, not the markdown
-AC-6 said a table row landed "inside the guard-parsed section". Reading the table proves nothing about
-what the parser sees. Replayed the guard's own `pipeline_b_section` awk + `extract_type_column` sed/grep
-against the live doc → `audit-handoff` is in the parsed set. That is the check; eyeballing is not.
-
-### Running the "check" wrote to the board
-`guard-signal-type-coverage.sh --check` minted **4 backlog rows** during my verification. All 4 duplicated
-an existing row that names one of them in its own title — its dedup is `dedup_key`-exact, so it is blind
-to subject. Could not fold the evidence in: the target is already **12156B**, over the 12000B ceiling, so
-any append is rejected as net-new growth. Removed all 4, filed the guard defect. **Confirmed the diagnosis
-by re-running post-CLEAR: Pipeline-A FAIL gone, zero mints** — its input is a drain-to-zero queue, and
-dev-team's drain re-envelopes Pipeline-B rows into it carrying their type, so every drain manufactures
-a Pipeline-A "gap" that erases itself. A guard whose finding disappears when you fix nothing.
-
-### `daily_ohlcv: 0 distinct codes` — CRITICAL, and false
-C-01 verbatim on both planes: live container `/app/data/market.db` → **99** (PASS, threshold ≥25);
-host `./data/market.db` → **0**, max date 2026-08-12, 13 days stale. Same filename, different databases
-(443MB vs 14MB). Ruled out a timing race: the 99 rows for 08-24 carry `updated_at` 09:00–15:03 on 08-24,
-11+h before the 02:40:42Z probe (used only as an upper bound on existence — it is mutation time, backfill
-rewrites most rows, so it is never arrival time). **The dangerous part is the mixture, not the miss**:
-`bctc_vps_queue: 1 stale >72h` from the *same cycle* reproduces exactly on the live plane (host says 513).
-One cycle, two checks, two databases → false CRITICALs one way and false GREENs the other.
-`CLEAN-HOST-DB-DECOYS` has sat unclaimed for months; a live detector now eats one of those decoys.
-
-### Fold the symptom, mint the cause
-Tier-2 reported itself CLEAN while its own notebook §c1013 says "Anomalies: 1 new / Status: DEGRADED",
-emitted a signal row, and stamped `auditor-tier2-last-healthy.json` to 02:40:07Z **on that DEGRADED cycle**.
-Tier-1's heartbeat is written by the probe's ALL_GREEN branch and carries per-check evidence; tier-2/3's is
-agent-written, timestamp only, no green gate. That is a liveness stamp wearing a health stamp's name — and
-the missed-cycle detector reads it. Missed window folds into the existing 11h row; the asymmetry is the mint.
-
-### Split the CCATO cohort by `.payload`, not `summary`
-4 envelopes, same (VNM, `get_technical_indicators`, 2026-08-24), differing only in `returned_value`:
-62.1 / 61 / 60 contradict the claim (**genuine**); "not found in database" **agrees** with it (**false positive**).
-Folded the 3 into existing coverage (checked all ten lanes), minted only the FP — a second tool whose null
-return matches no `tool_null_marker`. Wrote "do not weaken the gate" into the row: 1-of-110 still stands.
-Open question handed on: one tool, one ticker, one cycle returned **both** numbers and "not found".
+### The unrouted-type set has one producer, not seven
+6 of 7 held-back types come from cowork-team, and `root-cause-confirmed` / `-corrected` /
+`-mechanism-found` are **three type names for three revisions of one investigation**. The producer names
+the CONTENT, not the KIND — so a closed allowlist can never converge. Folded onto
+`FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE`; that reframes its design input.
 
 ### Carry-over
-- `pendingObservations[]` is still fictional (3rd confirmation). Not a sink; use the journal.
-- The 01:07Z tick parked the cowork locale defect as "mint if it recurs" — it recurred twice, so it is minted.
-  **Its proposed remedy was wrong and I measured it**: `LC_ALL=C` alone yields `1.652.893.70` (C locale prints
-  space-separated period decimals, `-F','` then swallows all three loads). Cited precedent file has no `LC_ALL`.
-- `financial_reports: 6 low-confidence (expected ≤5)` — 1 over threshold, predicate not reconstructible from
-  the envelope, and same-cycle plane-mixing makes the measurement untrustworthy. No mint; recheck after C-01 lands.
-- `bctc_vps_queue` stale row verified real: id 255870, BID Q4-2025, `attempts=0`, `last_attempt=null`, created
-  2026-04-28 — never attempted in 119 days. Not minted (WARN, 1 row); mint if the count moves.
-- `tra-20260822T203234` still open at READ but now **cold-archived** — its disposition never happened and it
-  now has no reader at all. Told the reworker; did not close it.
+- **12 envelopes held back on purpose** — all triaged first. The coverage guard reads this same array, so
+  clearing an unrouted type turns CI green with the table untouched. Release when the rows land.
+- Both `INCIDENT_CAP` slots still spent — do not stamp a third `po_expedited_at` until one clears.
+- `pendingObservations[]` remains fictional (4th confirmation). Observations went to the journal.
+- `FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY` is P0 but `next_agent=agent-father`,
+  **off** the DRS allowlist — promoting it to `ready[]` buys nothing. Needs a manual/PO dispatch hop.
+- `TASK-BRANCHGUARD-POSTCHECKOUT-HOOK` at `ready[]` index 90/108, 8 P0s ahead, index-tiebreak. Needs a
+  hand-dispatch or re-rank — deliberately NOT re-ranked, that would displace 8 peer P0s.
+- `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS` still stamped-and-undispatched in `done[]` since
+  08-23T13:39Z (readback row's AC-5). Not in the wrapper cohort; may be genuinely actionable.
+- Standing push disarm in force — nothing pushed.
