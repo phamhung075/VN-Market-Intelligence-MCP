@@ -755,6 +755,52 @@ actor="${CLAUDE_CODE_SESSION_ID:-$(git config user.name 2>/dev/null || echo unkn
 staged_oneline="$(printf '%s' "$staged" | tr '\n' ' ')"
 mode_effective="${GIT_SWEEP_GUARD_MODE:-warn}"
 
+# --- AC-4 (FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS):
+# best-effort CALL-SITE forensic capture. `actor` ($CLAUDE_CODE_SESSION_ID) names
+# WHICH coordination session committed, never WHAT CODE PATH ran the commit — 32
+# tracked occurrences across 4+ distinct actor sessions and an operator still could
+# not locate the offending call-site without a repo-wide hunt (this row's own
+# binding blocker). A static repo-wide grep for a bare `git commit -m` line was run
+# as part of this fix and found every currently-documented call site already
+# pathspec-scoped — the remaining offenders are LLM-improvised commits with no
+# governing doc line at all (a missing-instruction gap, e.g. the entire
+# docs/agents/cowork-team/flow/ tree names no commit step for cowork-schedule.json
+# despite committing it every ~15min tick) or a documented mandate being bypassed
+# in a given run — neither is discoverable by grepping tracked files alone.
+#
+# What IS available, only at fire time (parent processes exit after — this cannot
+# be reconstructed after the fact, so it must be captured HERE, not re-derived from
+# the signal later): this hook's own OS process ancestry. Walk up from this hook's
+# parent (the `git commit` process itself) a bounded number of levels, capturing
+# each PID's live command line. This surfaces the actual invoking script path
+# (e.g. "bash scripts/agents-flow/some-script.sh") when the commit came from a
+# script, or the raw inline command text (e.g. "bash -c 'git add ... && git commit
+# -m ...'") when improvised ad hoc by an LLM agent's Bash tool call, plus — if
+# present in the chain — the top-level "claude ... -n <family>" invocation that
+# identifies which cron family/session tree launched the whole run (e.g. `-n
+# detect-loop` vs `-n cowork-team`), which is strictly more actionable than the
+# actor session id alone. Read-only diagnostic, never gates the commit decision —
+# same fail-open-but-loud posture as the rest of this hook; any failure here
+# yields "unknown", never blocks or alters `mode`/`escalated`/`outcome`.
+_sweepguard_caller_chain() {
+  local pid="$1" depth=0 max_depth=6 out="" cmd ppid
+  while [ -n "$pid" ] && [ "$pid" -gt 1 ] 2>/dev/null && [ "$depth" -lt "$max_depth" ]; do
+    cmd="$(ps -o command= -p "$pid" 2>/dev/null | tr '\n' ' ' | cut -c1-160)"
+    [ -z "$cmd" ] && break
+    out="${out}<-[pid${pid}:${cmd}]"
+    case "$cmd" in
+      *"claude "*|*claude) break ;;  # top of the agent-invocation tree — stop climbing
+    esac
+    ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
+    [ -z "$ppid" ] || [ "$ppid" = "$pid" ] && break   # defensive: never loop on a bad/self-referential ppid
+    pid="$ppid"
+    depth=$((depth + 1))
+  done
+  printf '%s' "$out"
+}
+caller_chain="$(_sweepguard_caller_chain "$PPID" 2>/dev/null || true)"
+[ -z "$caller_chain" ] && caller_chain="unknown"
+
 # --- AC-2: same-SESSION escalation (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-
 # MISADJUDICATION, corrected by FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-
 # SESSION-SCOPED-ACTOR) — converts repeated BARE commits from the SAME
@@ -871,13 +917,14 @@ outcome="proceeded"
   echo "[sweep-guard] Fix: git commit -m \"<msg>\" -- <only-your-own-files>  (exact"
   echo "[sweep-guard] file paths only — never a directory or '.', those sweep too)."
   echo "[sweep-guard] mode=${mode_effective} actor=${actor}"
+  echo "[sweep-guard] caller_chain=${caller_chain}"
   echo "=============================================================================="
 } >&2
 
-log_line="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true) mode=${mode_effective} actor=${actor} n=${n} staged=[${staged_oneline}]"
+log_line="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true) mode=${mode_effective} actor=${actor} n=${n} staged=[${staged_oneline}] caller_chain=${caller_chain}"
 printf '%s\n' "$log_line" >> "$LOG_FILE" 2>/dev/null || true
 
-signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective} escalated=${escalated} prior_warns=${prior_warns} threshold=${escalate_threshold} outcome=${outcome}. Fix: git commit -m \"<msg>\" -- <own-files-only>."
+signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective} escalated=${escalated} prior_warns=${prior_warns} threshold=${escalate_threshold} outcome=${outcome}. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=${caller_chain}"
 write_signal "$signal_msg"
 
 if [ "$escalate_effective" = "reject" ]; then

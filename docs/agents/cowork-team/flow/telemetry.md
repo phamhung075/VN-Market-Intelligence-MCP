@@ -1,4 +1,4 @@
-<!-- size-justification: 163L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write (atomic temp+validate+rename, CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR step 1) + Error Guard (same atomic pattern). Child of main.md. FR-A4 (TASK_2008c, UC-CDC-P1, 2026-08-15): deleted circular calendar_status arg from Step 6.0's emit_pressure_state call — server now computes it server-side (TASK_2008a), closing the self-recycling loop this arg fed. -->
+<!-- size-justification: 163L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write (atomic temp+validate+rename, CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR step 1) + Error Guard (same atomic pattern). Child of main.md. FR-A4 (TASK_2008c, UC-CDC-P1, 2026-08-15): deleted circular calendar_status arg from Step 6.0's emit_pressure_state call — server now computes it server-side (TASK_2008a), closing the self-recycling loop this arg fed. FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (2026-08-25, +~20L): new Step 6.2 — RAW-verified (grepped every file under docs/agents/cowork-team/flow/ for "git ") that NO commit step existed anywhere in this dispatcher's whole flow tree for `docs/data/cowork-schedule.json` (Step 5b's own write, `last-fired.md`) or this step's own signal file, despite `git log -- docs/data/cowork-schedule.json` proving this dispatcher commits both every ~15min tick ("chore(cowork): HH:MMZ tick ..."). A missing instruction, not a buggy line — every tick's commit was improvised ad hoc with no governing pathspec mandate, the root cause the sweep-guard hook's `caller_chain` forensic field (same task) was added to help surface for exactly this class of gap. Fixed the same way every other committer in the fleet already is (commit-mutex/SKILL.md, explicit trailing pathspec). -->
 
 ## Step 6 — Write telemetry signal + emit pressure state
 
@@ -90,6 +90,33 @@ else
   echo "[cowork-team] WARN telemetry write failed validation (empty or invalid JSON) — tick ${ISO} produced NO signal file at ${FINAL}; bad artifact retained at ${TMP} for forensic review (auto-swept after 60min)" >&2
 fi
 ```
+
+### Step 6.2 — Commit tick artifacts (mutex-guarded)
+
+**CANONICAL, closes FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS.**
+This dispatcher commits `docs/data/cowork-schedule.json` (Step 5b's `last_fired` write,
+`last-fired.md`) and this tick's own signal file (Step 6.1 above, `$FINAL` — only if it exists;
+Step 6.1 is conditional/SILENT-skippable) every ~15min tick. Run this step unconditionally after
+Step 6.1, even on the SILENT/skip branch — `docs/data/cowork-schedule.json` may still carry a
+Step 5b `last_fired` update with no signal file this tick, and `git add` on an unmodified-but-
+existing path is a harmless no-op (same convention as `docs/agents/po/flow/main.md`'s commit
+step). NEVER a bare commit, NEVER `git add -A`/`.`/a directory — trailing pathspec matches the
+`git add` line exactly, per `.claude/skills/commit-mutex/SKILL.md` Step 2c:
+
+```bash
+OWN_PATHS=(docs/data/cowork-schedule.json)
+[ -f "$FINAL" ] && OWN_PATHS+=("$FINAL")   # Step 6.1's own signal file, only if this tick wrote one
+```
+```
+→ skill: .claude/skills/commit-mutex/SKILL.md
+  own_paths: ["${OWN_PATHS[@]}"]
+  intent:    "chore(cowork): ${TICK} tick"
+```
+Mutex contract: `commit-mutex:main` (TTL=90s), same canonical id every other `orch-state.json`/
+shared-artifact writer in this repo uses. Commit failure is non-fatal (same posture as every
+other write in this file, and as commit-mutex's own C-2/C-2b fail-closed paths) — log
+`[cowork-team] WARN commit failed — tick artifacts left uncommitted, retry next tick` and
+continue to the P3 release below; the on-disk writes (Step 5b/6.1) already happened either way.
 
 ---
 
