@@ -1,0 +1,53 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-25T06:39:34Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-25T06:38:21Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 138,
+    "signal_backlog": 37,
+    "note": "FIRST SUCCESSFUL TICK AFTER A 6-TICK FLEET OUTAGE (05:15Z-06:15Z all ERROR/ABORT, whole Docker VM down since 05:47:38Z engine self-shutdown on `service fs failed: injecting event blocked for 60s`). Stack verified genuinely recovered before dispatch: 13/13 containers healthy, and the data plane checked through the RUNTIME not host CLI — get_market_snapshot returned live fresh values (VN-Index 1798.81 +0.56%, breadth dated 2026-08-25, HPG/VNM/VIC/DBC all plausible with real volumes), clearing the 05:16:16Z mid-write death that logged `market_prices invisibility confirmed count:107 visible_now:0`. Finding G's predicted trap (respawn loop restores gateway ALONE, health reads green over 13 dead services) did NOT materialise — the operator brought up the full stack.",
+    "drain_deviation_signal_queue": "2 cowork-addressed NEW rows, both to=po (mdjg-20260825T053308, mdjg-20260825T055425, from market-db-journal-guard). HELD AT NEW, deliberately NOT marked READ — work-tick.md Step 0a's 'route to matching agent slot at Step 5 or log for PO' branch is structurally unreachable for po (re-verified this tick: 0 po slots in cowork-schedule.json), so the only reachable outcome is mark-READ-without-delivery, and READ is terminal for 24h cold-eviction. The dev-team/dashboard drain has a pending_triage_inbox re-envelope step that delivers these; the cowork drain still does not. Same decision as 2026-08-24T00:45Z / 20:45Z. Verify delivery by source+drained_at cluster, NEVER by row id (the re-envelope discards the original id).",
+    "NEW_DEFECT_step51_load_parse_is_linux_only": "spawn-fanout.md Step 5.1's LOAD_1MIN parse is `uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'`. The second awk splits on COMMA, which is Linux `uptime` format ('load average: 1.0, 2.0, 3.0'). macOS emits 'load averages: 3.73 3.42 2.63' — SPACE separated, no commas — so $1 is the whole field and the gsub concatenates all three into a single garbage token. Measured live this tick: LOAD_1MIN='4.653.562.66' then '3.733.422.63' against a true 1-min load of 4.65/3.73 on 12 cores. Consequence: the `LOAD_1MIN > load_per_core_factor * CORES` half of the DEGRADED predicate compares a non-numeric string and is DEAD on this host — it can never fire. Masked because PRESSURE_MODE=legacy already nulls HEADROOM_MB and forces DEGRADED=true on its own, so the broken half never changes an outcome and never surfaces. CORRECTION TO PRIOR RECORD: this was previously carried as 'pin LC_ALL=C on Step 5.1's load parse'. LC_ALL=C is NOT the fix and does not help — the fault is the field separator, not decimal-comma locale. Fix direction: split on whitespace after `-F'load averages?:'` and take the first numeric field.",
+    "RECONFIRMED_cycle_snapshot_never_promoted": "Step 4.7 wrote docs/data/cycle-snapshot-06:36.json (16647 B) — named from `date -u +%H:%M` WALL CLOCK, while the nominal tick is 06:30. Step 6.0's emit_pressure_state then returned cycle_snapshot_promoted:false, and docs/data/cycle-snapshot-latest.json still carries tick '00:00' created_at 2026-08-23T00:07:50Z — TWO DAYS STALE. Live end-to-end confirmation of the known writer-side naming defect: the only ticks that ever promote are those where wall-clock minute happens to equal the nominal tick (00:00). Every consumer reading cycle-snapshot-latest.json has been served 2-day-old market context. One-line writer-side fix in tick-snapshot.md (FILE_TICK -> nominal tick), zero server change.",
+    "outage_losses_final": "6 ticks lost (05:15Z, 05:30Z, 05:45Z, 06:00Z, 06:15Z aborted; 06:30Z is this one, recovered). alert-commander-market missed 5 consecutive fires. chef-morning for 2026-08-25 (guaranteed daily, 15 5 * * 1-5) was never produced and is unrecoverable — Layer C coalesces missed intervals, it does not replay them. Next guaranteed slot chef-eod 08:45Z should fire normally now."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-25T06:39:34Z"
+}
