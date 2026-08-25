@@ -2158,3 +2158,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · mem_creep pre-gate ephemeral-container discriminator gap recurred (ocr-bench-paddleocr-run2)
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** auditor-tier1-probe.sh (pre-gate) / pdf-extractor bench family
+**Details:** Pre-gate FAILURE 14:53:57Z named ocr-bench-paddleocr-run2(97.64%), an ephemeral docker compose run --rm bench container (task-family OCR-PADDLE-VI-LANG-FIX-AND-REBENCH, dev-pdf-extractor). Already gone from docker ps -a by this Tier-1 probe (14:58:04Z); successor ocr-bench-auto-run3 running at 41.90%, below the 85% gate. All 13 running containers SKIP A-30 this cycle (max baseline 63.84%).
+**Impact:** Same root cause as sys-20260825T133632-2f9d: pre-gate scopes docker ps -q (all running containers) vs docker_ps check's host_runtime_set.services[] scope, so any short-lived non-fleet workload can flip the cycle FAILURE and burn a spawn.
+**Root cause:** auditor-tier1-probe.sh _check_mem_creep() has no ephemeral/non-fleet discriminator; unbounded-cardinality container names defeat the name-keyed spawn debounce.
+**Zone owner:** developer
+**Last reported:** 2026-08-25T15:01:26Z (signal sys-20260825T150107-0332, system-auditor -> po, dedup_key=detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope)
+**Mitigation:** No immediate action beyond signal routing; fix owned by same detector-defect finding as sys-20260825T133632-2f9d.
+
+---
