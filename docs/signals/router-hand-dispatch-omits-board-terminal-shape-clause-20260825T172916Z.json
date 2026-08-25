@@ -1,0 +1,28 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "priority": "medium",
+  "subject": "Router hand-dispatch spawn prompts omit the BOARD terminal-shape clause that templated dispatch carries — 'Terminal shape' in the prompt defined only the REPORT format",
+  "payload": {
+    "observed_live": "2026-08-25T17:17Z the router hand-dispatched `ops` onto OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION. ops did the work correctly and returned VERDICT: DEPLOYED with sound CODE_PROOF, but wrote ONLY `.head` (status->done_verified, next_agent->po) and left the row in `task_board.in_progress[]` with status IN_PROGRESS / next_agent=ops. Commit 21bf66b93 changed 5 lines of .head and nothing else. Router caught it on artifact readback and repaired lane+head in one orch-apply write (commit a976faab0); in_progress 1->0, done_verified 47->48, head reset to idle.",
+    "mechanism": "The spawn prompt DID contain a section headed 'Terminal shape — end your run with exactly this', but its body was the REPORT contract (VERDICT/CONTAINER/CODE_PROOF/OCR_TEXT_BACKEND/MEM/COMMIT/ROW/NEXT), not the BOARD contract. Keyword census of that 6667-char prompt: in_progress=0 hits, done_verified=0 hits, orch-apply=0 hits. The single `ROW:` report line said 'lane/status/next_agent you wrote back, read back from the committed file' — which presupposes a lane write without ever specifying WHICH lane or that the row must LEAVE in_progress[]. An agent reading that reasonably satisfies it by reporting the lane it observed.",
+    "contrast": "The router's qa-dispatch prompts in the same session DO carry the board clause verbatim: 'TERMINAL SHAPE — required: the row must NOT be left in .task_board.qa[] with status=QA. Lane-move it in the SAME orch-apply write ... then COMMIT the board write.' The clause exists and is well-drafted; it is simply not applied uniformly across agent types. The heading collision ('Terminal shape' meaning two different contracts) is what let the omission pass a self-review.",
+    "why_it_matters": "Rows stranded in in_progress[] have deadlocked all four WIP pickers on four separate prior occasions. This instance also left `.head` non-idle while pinned to a row sitting in a WIP lane — a shape in which the head-idle dispatch chain (BOUNDED-1 -> SLS -> RLC -> DRS -> QA-Drain) is unreachable AND the row stays re-pickable. The 2026-08-23 fix for the stranded-in_progress defect was an explicit terminal-shape line in the SPAWN PROMPT, so its coverage is exactly as good as the router's per-dispatch prompt drafting. That makes it a discipline, not a guard — no code enforces it and nothing detects its absence.",
+    "class_note": "Second confirmed instance of the same class: router hand-dispatch silently skips a guarantee the templated dispatch path provides. The first was hand-dispatch running no deps_satisfied() check (2026-08-23, five P0 rows rooted in three nonexistent prerequisites). Hand-dispatch is not a thin wrapper over templated dispatch; it is a separate path with its own, smaller, undocumented set of guarantees.",
+    "candidate_directions": [
+      "Extract the board terminal-shape clause into ONE reusable snippet under .claude/skills/dispatch/ and require every spawn prompt to paste it, so it cannot be forgotten per-dispatch. Rename the report-format section so the two contracts stop sharing the word 'terminal shape'.",
+      "Add a post-return router check (cheap, deterministic): after any agent returns, assert no row remains in in_progress[] whose next_agent equals the agent that just returned, and that .head.active_task_id is not pinned to a row sitting in a WIP lane. This detects the omission regardless of prompt drafting.",
+      "Make it a real guard rather than a discipline: have the dispatch-claim path record the dispatched row id + agent, and have the dev-team tick refuse to advance while a returned agent's row is still in in_progress[] — turning a silent strand into a loud one."
+    ],
+    "not_duplicate_of": [
+      "FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog.585 — that is about claim-key scoping, not terminal shape)",
+      "the 2026-08-23 stranded-in_progress row (that fix landed and was live-tested; this is the coverage hole the fix's chosen mechanism leaves open, not a regression of it)"
+    ],
+    "evidence": {
+      "ops_commit": "21bf66b93 (5 insertions / 5 deletions, .head only)",
+      "router_repair_commit": "a976faab0",
+      "prompt_keyword_census": "in_progress=0, TERMINAL=0, done_verified=0, orch-apply=0, lane=2 over 6667 chars"
+    }
+  }
+}
