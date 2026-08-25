@@ -327,6 +327,34 @@ the text inside already-detected cells only.
 
 `confidence == 0.0` → upstream skips insert; `< 0.2` → inserts with `low_confidence` flag; `>= 0.2` → normal insert (matches `reference_low_confidence_handling`).
 
+**AMENDED 2026-08-25 — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS.**
+The 0.0 / 0.2 bands above are unchanged. What changed is what the number *means*.
+
+Both `TesseractVieBackend` and `PaddleOcrBackend` now report
+`confidence = min(precision, recall)`:
+
+| term | definition |
+|---|---|
+| precision | mean per-word engine score over the spans that WERE recognised (the old score, in full) |
+| recall | `_ink_coverage` — fraction of the crop's Otsu foreground pixels lying inside a box the engine emitted text for |
+
+Previously the score was precision only, so its denominator was the rows the
+engine managed to read. A region it almost entirely MISSED therefore
+self-reported high confidence, and `auto` mode's per-region PaddleOCR rescue
+could never fire — measured byte-identical to `tesseract-vie` on 30/30 FPT Q4
+2025 units. Recall was invisible to the score by construction.
+
+Band-crossing impact, measured on all 51 table regions of FPT Q4 2025:
+the lowest new score among the 29 legitimate table units is **0.674**, so no
+unit is newly pushed under the 0.2 `low_confidence` band or the 0.0 skip band.
+The one unit that does fall (page 9, 0.708 → 0.174) is a genuine near-total
+miss, and under `auto` it is rescued and stored at PaddleOCR's 0.644 instead.
+`confidence == 0.0` still occurs only when no text was recognised at all.
+
+Note this makes the cell score dimensionally consistent with `row_density` in
+the LF-OVERLAY row-bands contract, which `generic_md_table/page_zoning.py` has
+always computed as a dark-pixel ratio.
+
 ---
 
 ## REQ-PEK-11 — Market-Hours Isolation (Hard Constraint — APPENDED 2026-05-26)

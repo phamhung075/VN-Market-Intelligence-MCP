@@ -649,3 +649,230 @@ class TestToPilAndFailLoud:
 
         with pytest.raises(RuntimeError, match="unsupported input type"):
             _to_pil([1, 2, 3])
+
+
+# ---------------------------------------------------------------------------
+# 16–27: RECALL-AWARE CONFIDENCE
+# FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
+#
+# Defect: confidence was mean(conf) over ONLY the rows Tesseract managed to
+# recognise, so a region it almost entirely MISSED self-reported high
+# confidence and `auto` mode's rescue never fired.
+#
+# These are REGRESSION anchors only. They deliberately do NOT stand in for the
+# task's AC-2 positive control, which is a live FPT Q4 2025 page-9 extraction —
+# a unit test on synthetic input cannot establish that the rescue recovers real
+# financial figures.
+# ---------------------------------------------------------------------------
+
+
+def _striped_image(n_bars: int = 10, bar_h: int = 6, w: int = 200, gap: int = 14,
+                   invert: bool = False):
+    """
+    Synthetic 'text page': n_bars horizontal ink bars on a plain background.
+    Each bar stands in for one text line. Returns (PIL.Image, [bar boxes]).
+    """
+    import numpy as np
+    from PIL import Image
+
+    h = n_bars * gap + gap
+    bg, fg = (255, 0) if not invert else (0, 255)
+    arr = np.full((h, w, 3), bg, dtype="uint8")
+    boxes = []
+    for i in range(n_bars):
+        top = gap // 2 + i * gap
+        arr[top:top + bar_h, 10:w - 10] = fg
+        boxes.append((10, top, w - 20, bar_h))
+    return Image.fromarray(arr), boxes
+
+
+def _fake_tesseract_df(boxes, conf: float = 92.0, text: str = "word"):
+    """Build an image_to_data-shaped DataFrame covering exactly `boxes`."""
+    import pandas as pd
+
+    n = len(boxes)
+    return pd.DataFrame({
+        "level": [5] * n,
+        "left": [b[0] for b in boxes],
+        "top": [b[1] for b in boxes],
+        "width": [b[2] for b in boxes],
+        "height": [b[3] for b in boxes],
+        "conf": [conf] * n,
+        "text": [text] * n,
+    })
+
+
+class TestRecallAwareConfidence:
+    """The confidence score must account for ink that was NOT recognised."""
+
+    def test_threshold_constant_is_still_one_half(self):
+        """
+        AC-1 guard: the fix must NOT be "lower the 0.5 threshold". The constant
+        is unchanged; what changed is what gets MEASURED against it.
+        """
+        import importlib
+
+        import infrastructure.ocr_backends as ob
+
+        importlib.reload(ob)
+        assert ob.AUTO_FALLBACK_CONFIDENCE_THRESHOLD == 0.5
+
+    def test_ink_coverage_full_read_is_one(self):
+        from infrastructure.ocr_backends import _ink_coverage
+
+        img, boxes = _striped_image()
+        assert _ink_coverage(img, boxes) == pytest.approx(1.0, abs=1e-6)
+
+    def test_ink_coverage_partial_read_matches_fraction_of_ink(self):
+        """3 of 10 identical bars recognised → coverage ≈ 0.3."""
+        from infrastructure.ocr_backends import _ink_coverage
+
+        img, boxes = _striped_image(n_bars=10)
+        assert _ink_coverage(img, boxes[:3]) == pytest.approx(0.3, abs=0.02)
+
+    def test_ink_coverage_no_boxes_is_zero(self):
+        from infrastructure.ocr_backends import _ink_coverage
+
+        img, _ = _striped_image()
+        assert _ink_coverage(img, []) == 0.0
+
+    def test_ink_coverage_blank_crop_is_one_not_zero(self):
+        """
+        A crop with no foreground ink has nothing that COULD have been missed.
+        Coverage must be 1.0, not 0.0 — otherwise every blank region would
+        trigger a pointless PaddleOCR rescue.
+        """
+        from PIL import Image
+
+        from infrastructure.ocr_backends import _ink_coverage
+
+        blank = Image.new("RGB", (200, 60), color=(255, 255, 255))
+        assert _ink_coverage(blank, [(0, 0, 10, 10)]) == 1.0
+
+    def test_ink_coverage_handles_inverted_crop(self):
+        """
+        White-on-black scan: the MINORITY class is the ink. Without the polarity
+        guard, Otsu's foreground would be the background and coverage would
+        collapse to ~0 on a perfectly-read region.
+        """
+        from infrastructure.ocr_backends import _ink_coverage
+
+        img, boxes = _striped_image(invert=True)
+        assert _ink_coverage(img, boxes) == pytest.approx(1.0, abs=1e-6)
+
+    def test_recall_adjusted_confidence_is_the_weaker_dimension(self):
+        """
+        min(precision, recall) — chosen over product/harmonic-mean precisely so
+        that a high precision CANNOT compensate for a collapsed recall.
+        """
+        from infrastructure.ocr_backends import _recall_adjusted_confidence
+
+        assert _recall_adjusted_confidence(0.99, 0.30) == pytest.approx(0.30)
+        assert _recall_adjusted_confidence(0.20, 1.00) == pytest.approx(0.20)
+        assert _recall_adjusted_confidence(0.92, 0.95) == pytest.approx(0.92)
+        assert _recall_adjusted_confidence(1.5, 2.0) == 1.0
+        assert _recall_adjusted_confidence(-1.0, 0.5) == 0.0
+
+    def test_high_precision_cannot_mask_a_near_total_miss(self):
+        """
+        THE DEFECT, reproduced: Tesseract reads 1 of 10 lines, at conf 0.92.
+        Old behaviour returned 0.92 (>= 0.5, no rescue). Must now fall below
+        the unchanged 0.5 threshold.
+        """
+        from infrastructure import ocr_gateway
+        from infrastructure.ocr_backends import (
+            AUTO_FALLBACK_CONFIDENCE_THRESHOLD,
+            TesseractVieBackend,
+        )
+
+        img, boxes = _striped_image(n_bars=10)
+        df = _fake_tesseract_df(boxes[:1], conf=92.0)
+
+        with patch.object(ocr_gateway, "run_image_sync", return_value=df):
+            _, conf = TesseractVieBackend().recognize_text(img)
+
+        assert conf < AUTO_FALLBACK_CONFIDENCE_THRESHOLD
+        assert conf == pytest.approx(0.1, abs=0.02)
+
+    def test_full_read_keeps_the_mean_confidence(self):
+        """Negative control: everything recognised → score is the precision."""
+        from infrastructure import ocr_gateway
+        from infrastructure.ocr_backends import (
+            AUTO_FALLBACK_CONFIDENCE_THRESHOLD,
+            TesseractVieBackend,
+        )
+
+        img, boxes = _striped_image(n_bars=10)
+        df = _fake_tesseract_df(boxes, conf=92.0)
+
+        with patch.object(ocr_gateway, "run_image_sync", return_value=df):
+            _, conf = TesseractVieBackend().recognize_text(img)
+
+        assert conf > AUTO_FALLBACK_CONFIDENCE_THRESHOLD
+        assert conf == pytest.approx(0.92, abs=0.01)
+
+    def test_measured_fpt_page9_shape_now_triggers_rescue(self):
+        """
+        Live-measured regression anchor. FPT Q4 2025 page 9, table region
+        1989x187: mean(conf) over recognised rows = 0.7084 while only 17.4% of
+        the region's ink sat inside a recognised word box. The old score (0.708)
+        cleared the 0.5 gate; the new score must not.
+
+        The neighbouring legitimate regions measured on the SAME document —
+        pg34 mean(conf)=0.7122 / ink 0.933, pg27 0.7395 / 0.838, pg28 0.7472 /
+        0.773 — are why lowering the threshold cannot work: they sit BELOW or
+        beside page 9 on mean(conf) alone.
+        """
+        from infrastructure.ocr_backends import (
+            AUTO_FALLBACK_CONFIDENCE_THRESHOLD as THR,
+        )
+        from infrastructure.ocr_backends import _recall_adjusted_confidence as f
+
+        assert f(0.7084, 0.1740) < THR          # page 9  — rescue MUST fire
+        assert f(0.7122, 0.9334) >= THR         # page 34 — must NOT fire
+        assert f(0.7395, 0.8378) >= THR         # page 27 — must NOT fire
+        assert f(0.7472, 0.7730) >= THR         # page 28 — must NOT fire
+        assert f(0.9566, 0.6739) >= THR         # lowest-coverage good region
+
+    def test_auto_backend_rescues_at_the_measured_page9_score(self):
+        """End-to-end: at page 9's measured score the PaddleOCR rescue fires."""
+        from infrastructure.ocr_backends import AutoFallbackOcrBackend
+
+        tess = _FakeTesseractBackend(text="Chỉ tiêu ... 178%", conf=0.174)
+        paddle = _FakePaddleBackend(text="Doanh thu thuần 20.225.450", conf=0.9523)
+        backend = AutoFallbackOcrBackend(tesseract_backend=tess, paddle_backend=paddle)
+
+        text, conf = backend.recognize_text(object())
+
+        assert paddle.call_count == 1
+        assert "Doanh thu thuần" in text
+        assert conf == pytest.approx(0.9523)
+
+    def test_paddle_confidence_is_recall_aware_too(self):
+        """
+        AutoFallbackOcrBackend picks the winner with `paddle_conf >= tess_conf`.
+        That comparison is only meaningful if BOTH sides measure the same thing,
+        so PaddleOcrBackend's score is recall-adjusted on the same ink basis.
+        """
+        import numpy as np
+
+        from infrastructure.ocr_backends import PaddleOcrBackend
+
+        img, boxes = _striped_image(n_bars=10)
+        arr = np.asarray(img)
+
+        def _poly(b):
+            x, y, w, h = b
+            return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+
+        mock_all = MagicMock()
+        mock_all.ocr.return_value = [[[_poly(b), ("word", 0.95)] for b in boxes]]
+        _, conf_all = PaddleOcrBackend(paddle_table=mock_all).recognize_text(arr)
+
+        mock_one = MagicMock()
+        mock_one.ocr.return_value = [[[_poly(boxes[0]), ("word", 0.95)]]]
+        _, conf_one = PaddleOcrBackend(paddle_table=mock_one).recognize_text(arr)
+
+        assert conf_all == pytest.approx(0.95, abs=0.01)
+        assert conf_one < 0.5
+        assert conf_one == pytest.approx(0.1, abs=0.02)

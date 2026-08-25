@@ -25,6 +25,14 @@ AutoFallbackOcrBackend:
     Policy: run TesseractVieBackend first. If confidence < threshold, retry with
     PaddleOcrBackend. Keep the result with the higher confidence score.
 
+Confidence semantics (BOTH backends):
+    confidence = min(precision, recall)
+      precision = mean per-word engine score over what WAS recognised
+      recall    = `_ink_coverage` — fraction of the crop's foreground pixels
+                  that fall inside a box the engine emitted text for.
+    Precision alone is blind to a near-total page miss; see the "Recall-aware
+    confidence" block below for the measured rejection of the alternatives.
+
 Hard constraints (non-negotiable):
     - ONLY the cell/line TEXT step is implemented here.
     - NEVER performs layout detection or table-grid detection.
@@ -103,6 +111,186 @@ def _to_pil(image_or_region):
 
 
 # ---------------------------------------------------------------------------
+# Recall-aware confidence
+# (FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS)
+#
+# THE DEFECT — confidence used to be mean(conf) over ONLY the rows the engine
+# managed to recognise. The denominator was the successfully-read rows, not the
+# rows that SHOULD have been read, so recall was invisible to the score by
+# construction. A region where Tesseract picked up a header band and lost every
+# data row therefore self-reported ~0.7-0.9 and `auto` mode's rescue never
+# fired: measured byte-identical output to tesseract-vie on 30/30 FPT Q4 2025
+# units, page 9 included.
+#
+# THE FIX — measure what was NOT recognised, on the only basis that is present
+# in the crop itself: its INK. `_ink_coverage` is the fraction of the region's
+# foreground pixels that fall inside a box the engine actually emitted text for.
+# Confidence then becomes `min(precision, recall)` (`_recall_adjusted_confidence`).
+#
+# WHY ink coverage and not the three obvious alternatives. All four were
+# measured side by side on the real 51 table regions of FPT Q4 2025 with
+# scripts/audits/ocr-confidence-probe.sh (page 9 = the known catastrophic miss):
+#
+#   metric                       page 9    lowest legitimate region    separable?
+#   mean(conf)  [old]            0.7084    0.7122  (pg34)              NO  (0.5% apart)
+#   char-weighted mean(conf)     0.7121    0.6876  (pg34)              NO  (INVERTED)
+#   recognised-area / crop-area  0.1183    0.0896  (pg16)              NO  (INVERTED)
+#   recognised lines / detected  1.0000    1.0000  (all)               NO  (inert)
+#   INK COVERAGE                 0.1740    0.6739  (pg40)              YES (3.9x gap)
+#
+# - char-weighted mean and raw-area coverage rank a GOOD region below page 9,
+#   so no threshold on either can satisfy both the positive and the negative
+#   control. Raw-area coverage is confounded by whitespace density; a sparse
+#   but perfectly-read region looks identical to a dense but unread one.
+# - "recognised rows vs rows the layout pass found" is structurally inert here:
+#   Tesseract emits a level-4 line box only where it already found words, so the
+#   ratio is 1.0 on every region including page 9 (4 of 4). It cannot see rows
+#   that were never segmented.
+# - Lowering AUTO_FALLBACK_CONFIDENCE_THRESHOLD is not a fix and is explicitly
+#   rejected by the owning row: any value that catches page 9 (> 0.7084) also
+#   catches pages 34/27/28, which are legitimate full reads (ink coverage 0.93 /
+#   0.84 / 0.77). The constant stays 0.5 — what changed is what is measured.
+#
+# NOTE on the 0.674 floor: the ink a good region leaves uncovered is dominated
+# by NON-TEXT ink — table rule lines, borders, stamps, signatures — which no
+# text engine emits a word box for. 0.674 is therefore "all text read, plus
+# heavy ruling", not "33% of the text missed". The discriminating gap is the
+# 3.9x drop to page 9, not the absolute level.
+# ---------------------------------------------------------------------------
+
+# Below this many foreground pixels a coverage RATIO is numerically meaningless
+# (a single 200-DPI glyph is already ~10x this). Degenerate-input guard only —
+# NOT a tuning knob. The smallest real region measured on FPT Q4 2025 carried
+# 2136 ink pixels, ~8x this floor.
+_INK_COVERAGE_MIN_INK_PIXELS: int = 256
+
+
+def _otsu_threshold(gray: Any) -> int:
+    """
+    Otsu's method on a uint8 grayscale array. Pure numpy — no cv2, no scipy.
+
+    Data-derived, so it introduces no new hand-tuned constant: the ink/paper
+    split is read off the crop's own intensity histogram.
+    """
+    import numpy as np  # type: ignore
+
+    hist = np.bincount(gray.ravel(), minlength=256).astype(np.float64)
+    total = gray.size
+    if total == 0:
+        return 128
+    omega = np.cumsum(hist) / total
+    mu = np.cumsum(hist * np.arange(256)) / total
+    mu_t = mu[-1]
+    denom = omega * (1.0 - omega)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sigma_b = np.where(denom > 0, (mu_t * omega - mu) ** 2 / denom, 0.0)
+    return int(np.argmax(sigma_b))
+
+
+def _ink_coverage(image_or_region: Any, boxes: Any) -> float:
+    """
+    Fraction of the region's foreground (ink) pixels that fall inside `boxes`.
+
+    Args:
+        image_or_region: the SAME crop that was handed to the OCR engine
+                         (numpy ndarray or PIL.Image).
+        boxes: iterable of (left, top, width, height) in crop pixel coordinates
+               — one per text span the engine actually emitted.
+
+    Returns:
+        0.0 .. 1.0. Returns 1.0 when the crop carries no measurable ink: there
+        is then nothing that COULD have been missed, and reporting 0.0 would
+        make every blank region trigger a pointless rescue.
+
+    Polarity guard: if the Otsu foreground is the MAJORITY of the crop, the crop
+    is inverted (white text on black) and the mask is flipped — otherwise a
+    perfectly-read inverted scan would score ~0 and be rescued every time.
+    """
+    import numpy as np  # type: ignore
+
+    pil_image = _to_pil(image_or_region)
+    if pil_image is None:
+        return 1.0
+
+    gray = np.asarray(pil_image.convert("L"))
+    if gray.ndim != 2 or gray.size == 0:
+        return 1.0
+    h, w = gray.shape
+
+    ink = gray <= _otsu_threshold(gray)
+    if ink.mean() > 0.5:
+        ink = ~ink
+
+    ink_total = int(ink.sum())
+    if ink_total < _INK_COVERAGE_MIN_INK_PIXELS:
+        return 1.0
+
+    covered = np.zeros((h, w), dtype=bool)
+    for box in boxes:
+        left, top, width, height = (int(v) for v in box)
+        x0, y0 = max(0, left), max(0, top)
+        x1, y1 = min(w, left + width), min(h, top + height)
+        if x1 > x0 and y1 > y0:
+            covered[y0:y1, x0:x1] = True
+
+    return float(int((ink & covered).sum()) / ink_total)
+
+
+def _polygon_to_box(points: Any) -> Optional[Tuple[int, int, int, int]]:
+    """
+    Axis-aligned (left, top, width, height) for a PaddleOCR detection polygon.
+
+    PaddleOCR returns 4 corner points per text line, in CROP coordinates (the
+    x0/y0 page offsets are re-added by the caller, not here). Returns None for
+    any shape that is not a usable polygon — an unmeasurable box is dropped from
+    the recall basis rather than silently counted as covering nothing.
+    """
+    try:
+        xs = [float(p[0]) for p in points]
+        ys = [float(p[1]) for p in points]
+    except (TypeError, ValueError, IndexError):
+        return None
+    if not xs or not ys:
+        return None
+    left, top = int(min(xs)), int(min(ys))
+    return (left, top, int(max(xs)) - left, int(max(ys)) - top)
+
+
+_TESSERACT_GEOMETRY_COLUMNS = ("left", "top", "width", "height")
+
+
+def _has_geometry_columns(frame: Any) -> bool:
+    """
+    True when an image_to_data frame carries the per-word box geometry the
+    recall term needs.
+
+    Real pytesseract always emits these four columns. A frame without them can
+    only come from a stub or a future pytesseract shape change, and there the
+    honest answer is "recall is unmeasurable here" — degrade to precision-only
+    (i.e. pre-fix behaviour) rather than abort a whole table region over a
+    column name.
+    """
+    try:
+        return all(c in frame.columns for c in _TESSERACT_GEOMETRY_COLUMNS)
+    except Exception:  # noqa: BLE001 — not a DataFrame at all
+        return False
+
+
+def _recall_adjusted_confidence(precision: float, coverage: float) -> float:
+    """
+    Combine precision (mean conf over what WAS read) with recall (`_ink_coverage`).
+
+    min(), deliberately — not the product and not the harmonic mean. Both of
+    those let a high precision partially compensate for a collapsed recall,
+    which is the exact failure this function exists to prevent: under an F1 a
+    region read perfectly but only 34% covered still scores 0.507 and escapes a
+    0.5 gate. Under min() it scores 0.34 and is rescued. A read is only as
+    trustworthy as its weaker dimension.
+    """
+    return max(0.0, min(1.0, min(float(precision), float(coverage))))
+
+
+# ---------------------------------------------------------------------------
 # TesseractVieBackend — default backend for Vietnamese BCTC
 # ---------------------------------------------------------------------------
 
@@ -125,8 +313,15 @@ class TesseractVieBackend:
         Run Tesseract vie+eng --psm 6 on a single image region.
 
         Returns:
-            (text, confidence) — confidence estimated from character-level scores
-            via pytesseract.image_to_data(). Returns ("", 0.0) on None input only.
+            (text, confidence) — confidence is
+            min(mean per-word conf over the recognised rows,
+                `_ink_coverage` of those rows' boxes over the whole crop).
+            Returns ("", 0.0) on None input only.
+
+            FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS:
+            the mean alone is precision-only and cannot fall on a region that was
+            almost entirely missed, because its denominator is the rows that WERE
+            read. The ink term supplies the missing recall dimension.
 
         Raises:
             RuntimeError if pytesseract/pandas are not installed (infra
@@ -182,7 +377,35 @@ class TesseractVieBackend:
         text = " ".join(t for t in texts if t)
         mean_conf = float(valid_rows["conf"].mean()) / 100.0  # Tesseract: 0-100 → 0-1
 
-        return (text.strip(), max(0.0, min(1.0, mean_conf)))
+        # FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
+        # mean_conf above is PRECISION ONLY — it is averaged over the rows
+        # Tesseract managed to read, so a region it almost entirely MISSED still
+        # scores high. Pair it with the recall term before reporting. See the
+        # "Recall-aware confidence" block at the top of this module for the
+        # measured rejection of the alternatives.
+        coverage = _ink_coverage(
+            pil_image,
+            zip(
+                valid_rows["left"].astype(int),
+                valid_rows["top"].astype(int),
+                valid_rows["width"].astype(int),
+                valid_rows["height"].astype(int),
+            ),
+        ) if _has_geometry_columns(valid_rows) else 1.0
+
+        confidence = _recall_adjusted_confidence(mean_conf, coverage)
+        if confidence < mean_conf:
+            logger.debug(
+                "TesseractVieBackend: recall-adjusted confidence %.3f "
+                "(precision %.3f, ink coverage %.3f) — %.0f%% of this region's "
+                "ink sits outside every recognised word box",
+                confidence,
+                mean_conf,
+                coverage,
+                (1.0 - coverage) * 100.0,
+            )
+
+        return (text.strip(), confidence)
 
 
 # ---------------------------------------------------------------------------
@@ -235,7 +458,8 @@ class PaddleOcrBackend:
 
         Returns:
             (text, confidence) from PaddleOCR output.
-            confidence = mean of per-word scores from ocr_result[0].
+            confidence = min(mean of per-word scores from ocr_result[0],
+                             `_ink_coverage` of the detection polygons).
             Returns ("", 0.0) on failure or if paddle_table is None.
         """
         if image_or_region is None or self._paddle_table is None:
@@ -267,6 +491,7 @@ class PaddleOcrBackend:
 
             texts: list[str] = []
             scores: list[float] = []
+            boxes: list[Tuple[int, int, int, int]] = []
 
             if ocr_result and ocr_result[0]:
                 for item in ocr_result[0]:
@@ -278,13 +503,25 @@ class PaddleOcrBackend:
                             if word_text.strip():
                                 texts.append(word_text.strip())
                                 scores.append(word_score)
+                                box = _polygon_to_box(item[0])
+                                if box is not None:
+                                    boxes.append(box)
 
             if not texts:
                 return ("", 0.0)
 
             combined_text = " ".join(texts)
             mean_confidence = sum(scores) / len(scores) if scores else 0.0
-            return (combined_text.strip(), max(0.0, min(1.0, mean_confidence)))
+
+            # FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
+            # Same precision-only defect, same fix. This backend is the RESCUE
+            # arm of AutoFallbackOcrBackend, which picks a winner with
+            # `paddle_conf >= tesseract_conf` — a comparison that is only
+            # meaningful if both sides measure the same quantity on the same
+            # crop. Leaving PaddleOCR on a precision-only score would let a
+            # rescue that read even less than Tesseract win on paper.
+            coverage = _ink_coverage(image_arr, boxes) if boxes else 1.0
+            return (combined_text.strip(), _recall_adjusted_confidence(mean_confidence, coverage))
 
         except Exception:
             # PEK-OCR-ROOTCAUSE: RAISE instead of returning empty.
@@ -351,32 +588,35 @@ class AutoFallbackOcrBackend:
             # Tesseract has sufficient confidence — no need to run PaddleOCR
             return (tesseract_text, tesseract_conf)
 
-        # Low Tesseract confidence — retry with PaddleOCR
-        logger.debug(
-            "AutoFallbackOcrBackend: Tesseract confidence %.3f < threshold %.3f — "
-            "retrying with PaddleOCR",
+        # Low Tesseract confidence — retry with PaddleOCR.
+        #
+        # INFO, not DEBUG, and deliberately: PaddleOCR is a per-region RESCUE,
+        # not a co-default. It carries a real Vietnamese-diacritic penalty
+        # (paddleocr==2.10.0 buckets "vi" into a generic 30-language "latin" rec
+        # model), so it must stay RARE — measured 1 fire in 51 table regions on
+        # FPT Q4 2025. A silent rescue is one nobody can audit; this line is how
+        # an operator sees the fire rate without a harness. The no-rescue path
+        # stays silent so the signal-to-noise stays useful.
+        paddle_text, paddle_conf = self._paddle.recognize_text(image_or_region)
+        winner = "paddleocr" if paddle_conf >= tesseract_conf else "tesseract"
+        logger.info(
+            "AutoFallbackOcrBackend: RESCUE FIRED — Tesseract confidence %.3f < "
+            "threshold %.3f; PaddleOCR returned %.3f (%d chars vs %d); "
+            "keeping %s result",
             tesseract_conf,
             self._threshold,
+            paddle_conf,
+            len(paddle_text),
+            len(tesseract_text),
+            winner,
         )
-        paddle_text, paddle_conf = self._paddle.recognize_text(image_or_region)
 
-        # Keep the result with the higher confidence score
+        # Keep the result with the higher confidence score. Both sides are
+        # recall-adjusted on the same ink basis, so this comparison is between
+        # like quantities — see the module's "Recall-aware confidence" block.
         if paddle_conf >= tesseract_conf:
-            logger.debug(
-                "AutoFallbackOcrBackend: PaddleOCR (%.3f) >= Tesseract (%.3f) — "
-                "using PaddleOCR result",
-                paddle_conf,
-                tesseract_conf,
-            )
             return (paddle_text, paddle_conf)
-        else:
-            logger.debug(
-                "AutoFallbackOcrBackend: Tesseract (%.3f) > PaddleOCR (%.3f) — "
-                "keeping Tesseract result",
-                tesseract_conf,
-                paddle_conf,
-            )
-            return (tesseract_text, tesseract_conf)
+        return (tesseract_text, tesseract_conf)
 
 
 # ---------------------------------------------------------------------------

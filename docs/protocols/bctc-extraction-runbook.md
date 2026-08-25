@@ -123,6 +123,55 @@ console.log(JSON.stringify(r));
 
 **Non-regression:** text-native PDFs (FPT, VNM avg >>50 chars/page) → `detect_low_text_density()` returns False → standard Tesseract-only path unchanged.
 
+---
+
+## PEK table-OCR text backend — `OCR_TEXT_BACKEND` and the per-region rescue
+
+Distinct from the scanned-PDF fallback above: this governs the *table* path
+(`PekEngineAdapter._run_table_extraction` → `OcrBackendPort.recognize_text`),
+one call per detected table region.
+
+`OCR_TEXT_BACKEND` ∈ `tesseract-vie` (default, and what production runs —
+the var is unset in compose) | `paddleocr` | `auto`.
+
+**Do not swap the default to `paddleocr`.** Ruled closed 2026-08-25 on a valid
+`lang="vi"` benchmark: 2.4x tesseract's latency, cgroup peak pinned at
+`memory.max` with 1444 hard-limit hits, and diacritics still garbled because
+`paddleocr==2.10.0` maps `"vi"` into a generic 30-language `"latin"` rec bucket
+with no dedicated Vietnamese model.
+
+`auto` = tesseract-vie by default, PaddleOCR as a **per-region rescue** when the
+tesseract confidence for that region falls below `OCR_FALLBACK_THRESHOLD`
+(default 0.5). The rescue must stay rare — PaddleOCR carries the diacritic
+penalty above, so a rescue that fires everywhere is a fleet-wide regression.
+
+**Reading the fire rate in production:** every fire logs at INFO from
+`infrastructure.ocr_backends`:
+
+```
+AutoFallbackOcrBackend: RESCUE FIRED — Tesseract confidence 0.174 < threshold 0.500;
+PaddleOCR returned 0.644 (433 chars vs 79); keeping paddleocr result
+```
+
+The non-firing path is deliberately silent. Measured on FPT Q4 2025
+(`e71f845d-ffa5-48f9-8f09-30ac2cd09c65`): **1 fire in 51 table regions / 30
+table units**, and 29 of 30 units byte-identical to a `tesseract-vie` run. If
+you see a fire rate materially above that, treat the confidence discriminator as
+regressed — do not raise the threshold to silence it.
+
+**Confidence is `min(precision, recall)`,** not mean-conf. See
+`docs/REQ_PEK-INTEGRATE.md` § "Confidence-scoring contract" for the definition
+and the measured rejection of the alternatives, and the "Recall-aware
+confidence" block in `infrastructure/ocr_backends.py` for the per-metric
+separation table.
+
+**Re-measuring:** `bash scripts/audits/ocr-backend-bench.sh [tesseract-vie|paddleocr|auto]`
+(ephemeral `docker compose run --rm`, emits table-phase wall, cgroup
+peak/events, per-unit markdown digests, and the rescue-fire list).
+`bash scripts/audits/ocr-confidence-probe.sh` dumps every candidate
+discriminator per table region for a document. Never run either during VN market
+hours (02:00-08:59 UTC weekdays).
+
 **FAIL-LOUD preserved:** if OCR rasterization still yields 0 rows, existing `enrich_failed` gate (989654f2) keeps it visible — status `enrich_failed`, NOT `done`.
 
 **Trigger:** Rebuild `pdf-extractor` container (force-recreate ONLY — never `docker compose down`). Then re-trigger `runBctcReparseJob` for VCB/CTG.
