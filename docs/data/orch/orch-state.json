@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T16:22:00Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-25T18:50:04Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -852,11 +852,81 @@
         "type": "detector_defect",
         "summary": "A-30 mem_creep gate should exclude ephemeral containers",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
         "dedup_key": "a30_gate_ephemeral_scope_exclusion"
+      },
+      {
+        "id": "sys-20260825T185015-4f55",
+        "ts": "2026-08-25T18:50:15Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "ssc-iboard (vnstock) stale 0.6h (check B-02)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
+        "dedup_key": "data_stale:ssc-iboard:B-02"
+      },
+      {
+        "id": "sys-20260825T185018-7a73",
+        "ts": "2026-08-25T18:50:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "yahoo-finance stale 0.6h (check B-02)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
+        "dedup_key": "data_stale:yahoo-finance:B-02"
+      },
+      {
+        "id": "sys-20260825T185022-08f4",
+        "ts": "2026-08-25T18:50:22Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "foreign-flow stale 18.8h (check B-05)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
+        "dedup_key": "data_stale:foreign-flow:B-05"
+      },
+      {
+        "id": "sys-20260825T185025-057b",
+        "ts": "2026-08-25T18:50:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "polymarket stale 1340.8h (check B-03)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
+        "dedup_key": "data_stale:polymarket:B-03"
+      },
+      {
+        "id": "sys-20260825T185039-1c4a",
+        "ts": "2026-08-25T18:50:39Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "audit_finding",
+        "summary": "12 data sources lack queryable last_fetch_ts (B-01..B-13 incomplete)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
+        "dedup_key": "audit_coverage_gap:b_freshness_12_no_instrument"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -23688,9 +23758,145 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T18:22:32Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-25T18:51:04Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "bb174b681d6f413dbf541e12f67781077621c87109e32cac88f2fd7bfeacd73d",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "detector_defect",
+        "priority": "WARN",
+        "payload": "A-30 mem_creep gate should exclude ephemeral containers",
+        "createdAt": "2026-08-25T18:39:33Z",
+        "drained_at": "2026-08-25T18:50:04Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dd7183a7c8d9d443f9f7f04f3550a027f8fd9a01ef5ffe00ae07916ea8158bec",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "N/A",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real-estate development (residential projects, southern VN focus)",
+          "customer": "Homebuyers/investors in DXG-developed residential projects",
+          "ops": "get_bctc_full returns \"Chua co du lieu\" — 42nd+ consecutive cycle with no extracted BCTC data despite DXG_2026_Q2.pdf on file since 2026-08-01. Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median).",
+          "mgmt": "No BCTC-derived management track-record data available this cycle (extraction gap).",
+          "cycle_id": "20260825-1800",
+          "slot": "bctc-analyst-slot-2",
+          "valuation": {
+            "pe": 66.5,
+            "pb": 1.2,
+            "earning_yield_pct": 1.5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID",
+            "sector": "Bat dong san",
+            "sector_pe_median": 16.1
+          },
+          "kinhdich": {
+            "que": "Tuy (45)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "THAN TRONG",
+            "do_tin_cay_pct": 75,
+            "note": "diverges from AVOID valuation verdict — flagged, not reconciled (recurring pattern)"
+          },
+          "esc_gate": {
+            "ESC-1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "ESC-2": "N/A (no BCTC data — Chua co du lieu)",
+            "ESC-3": "N/A (no BCTC data)",
+            "ESC-4": "N/A (no BCTC data)",
+            "ESC-5": "N/A (no report_id resolvable — no BCTC data)"
+          },
+          "escalation_status": "N/A",
+          "insider_signal": "no significant activity",
+          "legal_risk": "none",
+          "overdue": true,
+          "data_quality_flag": "Chua co du lieu — 42nd+ cycle, cash-flow-anomaly (c162) still pending dev-team pickup",
+          "evidence_fragment_ids": [
+            1541,
+            1542,
+            1543
+          ],
+          "regime": "NEUTRAL (fallback)",
+          "carry_regime": "NEUTRAL",
+          "generated_at": "2026-08-25T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T18:51:04Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fd9eeff47f54767d58355205fd6bdfe590829853927d0e469b69ad02136be57a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid49767:git commit -m chore(memory/system-auditor): notebook 2026-08-25 tier-2 c7 — freshness sweep, cron fire gaps check, data endpoints missing ]<-[pid49764:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
+        "createdAt": "2026-08-25T18:35:02Z",
+        "drained_at": "2026-08-25T18:51:04Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d1d37a2d4e0f77861f303bea9b16916654a66a59d5e55346223c7aa7717ee08a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c7 · 2026-08-25T18:33Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-25T18:40:10Z",
+        "drained_at": "2026-08-25T18:51:04Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4b39d3fcb1a4a56d501ceeb70c2a99b10543495ba1748670d82d2b721e856e9d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-pdf-extractor.md",
+          "tied_sections": "9:20260825000000000:## Cycle 2026-08-25 — OCR-PADDLE-VI-LANG-FIX-AND-REBENCH\n87:20260825000000000:## Cycle 2026-08-25 — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS\n171:20260825000000000:## Cycle 2026-08-25 (2) — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS (dispatch #2, measurement-only)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-25T18:39:35Z",
+        "drained_at": "2026-08-25T18:51:04Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d9329766be56c43d158afd86ae03535e64e0b640f6e78a4aea38eb025b3678cf",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-pdf-extractor.md",
+          "line": 171,
+          "heading": "## Cycle 2026-08-25 (2) — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS (dispatch #2, measurement-only)",
+          "section_count": 3,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-25T18:39:35Z",
+        "drained_at": "2026-08-25T18:51:04Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
