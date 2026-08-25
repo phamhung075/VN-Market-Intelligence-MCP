@@ -2146,3 +2146,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-13 · BCTC stale pending (2 rows >72h)
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** bctc-pipeline
+**Details:** 2 BCTC queue rows stuck in pending state for >72 hours
+**Impact:** Stale extraction tasks blocking new work
+**Root cause:** PDF extraction or enrichment failure, likely
+**Zone owner:** dev-team
+**Last reported:** 2026-08-25T14:39:16Z (signal sys-20260825T143903-6238, system-auditor -> po, dedup_key=data_stale:bctc-discover:B-13, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
