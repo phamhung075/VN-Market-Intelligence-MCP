@@ -11,10 +11,10 @@
     {
       "signature": "launchd_agents:com.vn-market.fleet-push",
       "first_seen_at": "2026-08-24T16:40:57Z",
-      "last_seen_at": "2026-08-25T01:52:39Z",
-      "last_spawn_at": "2026-08-25T01:21:47Z",
-      "spawn_count": 8,
-      "window_expires_at": "2026-08-25T02:21:47Z"
+      "last_seen_at": "2026-08-25T02:28:08Z",
+      "last_spawn_at": "2026-08-25T02:26:52Z",
+      "spawn_count": 9,
+      "window_expires_at": "2026-08-25T03:26:52Z"
     }
   ]
 }

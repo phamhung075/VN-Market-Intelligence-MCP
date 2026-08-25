@@ -436,5 +436,23 @@
     "cycle_tag": "cron:auditor-t1:2026-08-25T01:00Z",
     "from": "system-auditor",
     "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-25T02:31:12Z",
+    "cycle_tag": "cron:auditor-tdata:2026-08-25T02:31:12Z",
+    "from": "system-auditor",
+    "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
+  },
+  {
+    "ts": "2026-08-25T02:31:12Z",
+    "cycle_tag": "cron:auditor-tdata:2026-08-25T02:31:12Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-25T02:31:26Z",
+    "cycle_tag": "cron:auditor-tdata:2026-08-25T02:31:04Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
   }
 ]
