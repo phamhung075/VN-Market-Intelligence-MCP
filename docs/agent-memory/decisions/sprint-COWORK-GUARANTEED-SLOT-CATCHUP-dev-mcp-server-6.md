@@ -170,3 +170,12 @@
 - Explicit `owner_client_session IS NULL` short-circuit vs relying on SQLite's NULL=NULL-is-UNKNOWN semantics alone — CHOSE explicit clause for readability/testability even though the bare NOT EXISTS would already be NULL-safe by SQL semantics (belt-and-suspenders, AC-3 is explicitly called out as load-bearing).
 **why-decision:** one correlated subquery inside the existing Phase-1 SELECT is the cheapest correct fix — same transaction, zero new I/O, zero schema change, and the polarity is structurally impossible to invert by accident since suppression requires an actual EXISTS match, never an absence.
 **why-change:** none — implementation follows the dispatch brief's design constraint verbatim.
+
+### STEP dev-mcp-server-S94 · dev-mcp-server · 2026-08-25T02:50:00Z
+**task-id:** FACTORY-APP-split-pollNews
+**what-done:** Continued QA's stage-2/stage-3 ladder in one dispatch cycle: extracted the dedup/insert loop (ingestEntries.ts+ragEmbed.ts+deepFetchEnqueue.ts, own commit) then cascade/alert-gen/mention-velocity (prefetchCascadeContext.ts+buildSignalsForEntry.ts+cascadeImpactSignals.ts+tradeRelationshipSignals.ts+mentionVelocityAggregator.ts+defaultRagInsertFn.ts, own commit). pollNews.ts 670L->269L.
+**what-considered:**
+- stop after stage 2 only (literal "one-extraction-per-commit" reading) — REJECTED: P0, redispatch_count=2 already, per-stage gates stayed green so continuing was low-risk.
+- return per-entry signal arrays from buildSignalsForEntry instead of mutating a shared array/map by reference — REJECTED: original code accumulates BOTH across the WHOLE newEntries batch (trade-relationship's alreadyCovered check reads cross-entry state); a return-based split would silently change that semantic.
+**why-decision:** gate evidence (tsc, targeted 144/144 pollNews bundle, server boot, tool/cron count unchanged, size-lint 1 pre-existing offender, mock-guard PASS) stayed green after each stage; preserving the shared-by-reference idiom was the only way to keep this pure code motion, zero behavior change.
+**why-change:** stage 3 wasn't strictly required this pass (QA named it as the NEXT continuation, not mandatory same-cycle) but pursued anyway given P0 + prior redispatches; all 5 extraction targets named in the row's own `approach` field are now done. Full DoD (<=120L) still not met — 269L, disclosed honestly, same as stage 1/2.
