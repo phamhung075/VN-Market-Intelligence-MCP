@@ -2254,3 +2254,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: D-CYCLE-2 · tier-2 audit cycle missing / heartbeat stale
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** docs/data/auditor-tier2-last-healthy.json
+**Details:** no fresh tier-2 completion evidence within cadence; last heartbeat 2026-08-25T12:17:07Z, ~10h20m stale vs 4h cadence
+**Impact:** tier-1 pre-gate sees a stale-green trigger and spawns a redundant tier-2 audit
+**Root cause:** prior tier-2 cycle (c7, 18:33-18:42Z) never executed the Tier-2/3 Heartbeat Write step — confirmed via git log: no commit to auditor-tier2-last-healthy.json since 12:17:07Z despite c7's 3 commits
+**Zone owner:** system-auditor
+**Last reported:** 2026-08-25T22:43:54Z (signal sys-20260825T223510-16b2, system-auditor -> po, dedup_key=auditor-cycle-missing:tier2:2026-08-25T20:00Z, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
