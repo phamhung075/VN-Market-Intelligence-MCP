@@ -1,0 +1,42 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-08-25T01:14:59Z",
+  "payload": {
+    "module": "server-reaper orphan-signal minting (liveness oracle)",
+    "summary": "CORRECTION to the root cause filed in the immediately-prior envelope. The reaper mints orphan-signals keyed ONLY on the sprint-task lock TTL expiry. It never consults session-presence. Evidence this tick: it orphaned a lock whose owner_client_session is a session that is presence-REGISTERED and LIVE at mint time and still live now. The prior envelope attributed this to the S2 convention leaving locks unreleased on success; that is a real contributing factor but NOT the generator. Even a genuinely long-running, correctly-behaving task gets falsely orphaned mid-flight once its TTL lapses, because liveness is never checked.",
+    "corrects_envelope_id": "d89d8226b2fe011d379ffddea1a2c0d646a1c4b4779400d00d70c78dfdad3711",
+    "why_it_matters": "A fix designed against the S2-convention premise (release the lock on the success path) would leave the defect intact for any task that legitimately outlives its TTL. The reaper needs a session-presence cross-check before minting, mirroring the oracle .claude/skills/cron-detect-loop/SKILL.md Step 1b.1 already uses for the cron-registration marker.",
+    "evidence": {
+      "orphan_signal_id": "orphan-signal:task:FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+      "orphan_minted_at": "2026-08-24T23:59:49Z",
+      "orphan_owner_session": "server-reaper",
+      "orphan_owner_client_session": null,
+      "orphaned_lock_belonged_to": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
+      "presence_row": "session-presence:036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
+      "presence_state_at_observation": "LIVE, heartbeat_at 2026-08-25T01:09:58Z, expires 2026-08-25T01:39:58Z, ttl 1800s, started_at 2026-08-24T21:09:38Z",
+      "session_continuously_running_since": "2026-08-24T21:09:38Z (executed ticks 00:37Z, 00:54Z tier-1, 01:07Z)",
+      "note_on_direction": "This is the INVERSE of backlog.437 SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS. There the roster misses live sessions; here the roster HAS the session and the reaper does not look."
+    },
+    "unreleasable_property": "owner_client_session is null, so task_release keys on nothing and returns released:0. Re-confirmed this tick. The false orphan therefore re-trips every dev-team tick until its own TTL (2026-08-25T01:59:49Z). Observed re-trips: 00:37Z, 01:07Z.",
+    "existing_coverage_checked": {
+      "adopter_side_only": [
+        "task_board.backlog.217 (P0, BLOCKED)",
+        "task_board.ready.21 (P1)",
+        "task_board.backlog.543 (P0)"
+      ],
+      "reaper_side": "NONE — searched hot board + docs/data/orch/archive/2026-08.json by subject (reaper|orphan|presence). No row covers the minting-side liveness check.",
+      "nearest_but_different": "task_board.backlog.437 (P2, next=dev-mcp-server) — roster undercount, opposite direction."
+    },
+    "observed_tick": "2026-08-25T01:07Z",
+    "observed_by_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb"
+  },
+  "_processed": {
+    "fingerprint": "4a5a8e12ac09207cb62509fdb7bd56eb0d103990dbf9f221eedfc91a92e3eee4",
+    "processedAt": "2026-08-25T01:14:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
