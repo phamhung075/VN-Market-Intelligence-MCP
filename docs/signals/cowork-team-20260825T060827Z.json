@@ -1,0 +1,78 @@
+{
+  "id": "cowork-team-20260825T060827Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "microservice_degraded",
+  "priority": "P0",
+  "status": "NEW",
+  "ts": "2026-08-25T06:08:27Z",
+  "dedup_key": "docker-engine-stalled-after-AUTOMATIC-relaunch-0600Z-undocumented-layerD-respawn-covers-1of14-services",
+  "subject": "06:00Z ABORTED (4th). The 06:00:41Z Docker relaunch was AUTOMATIC, not human — an undocumented out-of-repo respawn supervisor. The engine then STALLED before starting. That supervisor covers 1 of 14 services, so unattended recovery will restore the gateway ALONE and look green while every vn-market call still fails.",
+  "related": [
+    "docker-engine-selfshutdown-0547Z-service-fs-injecting-event-blocked-60s-whole-vm-down-user-action",
+    "mcpserver-container-hung-0516Z-fleetwide-mcp-outage-plus-mcpcall-failover-is-gateway-not-vnmarket"
+  ],
+  "payload": {
+    "TICK": {
+      "verdict": "ERROR",
+      "tick": "2026-08-25T06:00Z",
+      "drift_min": 3,
+      "action": "ABORTED",
+      "consecutive_aborts": 4,
+      "ticks_lost": [
+        "05:15Z",
+        "05:30Z",
+        "05:45Z",
+        "06:00Z"
+      ]
+    },
+    "FINDING_E_THE_RELAUNCH_WAS_AUTOMATIC_NOT_HUMAN": {
+      "claim": "Docker Desktop relaunched at 2026-08-25T06:00:41Z with NO human intervention. I initially read the relaunch as possible operator recovery; it is not. Nobody has touched this host.",
+      "mechanism": "PID 5892 `/usr/local/bin/docker-compose up` started 06:00:40Z. Its parent PID 67718 is `/bin/bash '/Users/admin/Documents/Claude/Projects/mcp server gatway/start-gateway-respawn.sh'`, alive since 2026-07-15T19:58:14. That script is a 12-line `while true; do docker-compose up; sleep 5; done` loop. On macOS the docker CLI auto-starts Docker Desktop, so the compose invocation is what relaunched the app one second later.",
+      "why_it_matters": "Any report that says 'the operator restarted Docker' is false, and waiting for a human who has not been asked wastes the outage. The error-dialog process (PID 2974) disappearing is explained by this relaunch, not by someone dismissing it."
+    },
+    "FINDING_F_THE_ENGINE_STALLED_RELAUNCH_DID_NOT_RECOVER": {
+      "claim": "The relaunch did NOT restore the daemon. Six minutes in, the engine has not started at all.",
+      "evidence": [
+        "com.docker.backend.log was ROTATED at 06:00:41Z (old file kept as com.docker.backend.log.20260825-080041.412). Fresh log reached `unholding Engines, they will start now` at 06:00:41.463Z and `onApplicationDidFinishLaunching` at 06:00:41.507Z.",
+        "supervisor.log's last entry is 06:00:41.273Z `sysctl sysctl.proc_translated kern.hv_support`. No `starting hypervisor`, no engine state transition, ever.",
+        "Between 06:05:38Z and 06:06:03Z the backend log grew 17 -> 19 lines; both new lines were `analytics.marlin` batches. The backend process is ALIVE but is not booting a VM.",
+        "`docker ps` returned `Cannot connect to the Docker daemon` at 06:03Z, 06:04:37Z, 06:05:17Z, 06:06:03Z, 06:06:13Z, 06:06:52Z."
+      ],
+      "still_not_the_2026_07_15_class": "hypervisor.error.json still does NOT exist and docker.sock still exists — the two discriminators that ruled out the July hypervisor incident last tick are unchanged. Do not import that incident's 'CLI recovery exhausted' conclusion.",
+      "backend_pids_alive": [
+        5809,
+        5827,
+        5828
+      ]
+    },
+    "FINDING_G_LAYER_D_EXISTS_AND_COVERS_1_OF_14_SERVICES": {
+      "claim": "There is a session-independent, host-level auto-restart layer for the gateway that the fleet's own durability inventory says does not exist — and its coverage is one service.",
+      "the_layer": "`/Users/admin/Documents/Claude/Projects/mcp server gatway/start-gateway-respawn.sh` — out-of-repo, so no repo-scoped audit or size-lint or script-persistence check has ever seen it. Not launchd-managed; a bare bash loop running since 2026-07-15.",
+      "contradicts": ".claude/skills/cron-cowork-team/SKILL.md's durability-layer inventory enumerates Layers A (retired), B (session-scoped CronCreate), C (launchd guaranteed-slot firer, awake-scoped) and states 'There is no layer that survives a sleeping host.' This one survives session exit AND self-restarts. The inventory is incomplete, not merely stale.",
+      "THE_TRAP": "That compose project declares exactly ONE service, `gateway`. This repo's docker-compose.yml declares 14. So when the daemon does come back, this loop restores the gateway ALONE. The gateway answers gateway-local meta-calls (list_servers, list_server_tools, search_tools) from its own cache, so a probe will look healthy, while EVERY mcp__gateway__call_tool(server='vn-market', ...) still fails — the same misleading shape as the failover finding filed at 05:26Z. Whoever recovers this MUST run the repo's own compose for the other 13 services and MUST verify with a real vn-market tool call, never with list_servers."
+    },
+    "ERROR_CLASS_CHANGED_BUT_IT_IS_NOT_A_RECOVERY_SIGNAL": {
+      "observed": "preflight detail moved from `curl exit=28 Operation timed out` (05:45Z) to `curl exit=52 Empty reply from server` (06:00Z).",
+      "reading": "The socat TLS bridge (launchd com.vn-market.socat-tls-bridge, PID 65862, a HOST process that never went down) still LISTENs on *:443 and forwards to 127.0.0.1:4040. /etc/hosts maps zenmidi.com -> 127.0.0.1. So the TLS accept still succeeds and the upstream to the dead gateway container fails. The class change is bridge-local.",
+      "LIMIT": "I did NOT establish the precise reason the class moved 28 -> 52 rather than staying 28. Treat the class change as uninformative, not as evidence of partial recovery. Do not build a remedy on it."
+    },
+    "DELIVERABLES_LOST_THIS_TICK": {
+      "due_at_0600Z": "alert-commander-market (*/15 2-8 * * 1-5) — last_fired 2026-08-25T05:05:19Z, now its 4th consecutive miss (05:15/05:30/05:45/06:00).",
+      "nothing_else_due": "The `0 */4` slots (news-scout-offhours, market-watcher-offhours, alert-commander-critical) fire at 04:00/08:00Z; hour 06 does not match. Next guaranteed slot is chef-eod at 08:45Z.",
+      "still_lost_from_earlier": "chef-morning for 2026-08-25 (guaranteed daily) was never produced and cannot be backfilled by any layer — Layer C coalesces missed intervals, it does not replay them."
+    },
+    "WHAT_I_DID_NOT_DO": {
+      "no_error_fallback_run": "The cron prompt mandates docs/agents/cowork-team/flow/preflight-error-fallback.md on verdict=ERROR. I did not run it, for the 4th time and for the same reason: every one of its steps (0a drain, 0b.1 presence, 0b.2 fire-election, 0b.3 one-shots, 0c blind-guard, 1-4b slot match, 4.2-4.8 pressure, 5 spawn, 5b last-fired, 6 telemetry) requires MCP. Running it against a dead transport manufactures half-written locks and undefined state instead of a dispatch.",
+      "no_refile": "Findings A/B/C (mcp-server hang, failover-URL-is-the-gateway, error-masking in mcp_call) are already filed and unchanged. Not re-emitted.",
+      "no_host_action": "I did not kill, restart, or reconfigure Docker, the respawn loop, or the socat bridge. Host recovery is the operator's call and I hold router scope.",
+      "no_election_lock": "No cron:cowork:<tick> claim was made on any of the 4 aborted ticks — the transport was down before the claim. Nothing to release; the 600s TTL is moot because no lock exists."
+    },
+    "RECOVERY_GUIDANCE_UNCHANGED_TRAP_RESTATED": {
+      "likely_sufficient": "Fully quit Docker Desktop (the backend PIDs 5809/5827/5828 survive an app quit and may need `pkill -f com.docker.backend` after) and relaunch. The engine is stopped, not faulted.",
+      "THE_TRAP": "Do NOT rebuild the VM by removing ~/Library/Containers/com.docker.docker/Data/vms. On Docker Desktop for Mac, named volumes live INSIDE the VM disk image — that destroys market_data and bctc-page-images. It happened 2026-07-15 and required restoring a 361MB backup. Host bind-mounts (./docs/data, ./data/pdfs) survive; named volumes do not.",
+      "after_recovery": "Verify market.db row counts and MAX(date) BEFORE trusting green health — the mcp-server died mid-write at 05:16:16Z with `market_prices invisibility confirmed count:107 visible_now:0`. And per Finding G, verify with a real vn-market tool call, not list_servers.",
+      "not_a_disk_problem": "28Gi free on /. Docker.raw is 20G actual against a 233G sparse apparent size."
+    }
+  }
+}
