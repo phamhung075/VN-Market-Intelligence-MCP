@@ -1,3 +1,23 @@
+## c2 · 2026-08-25 22:35 UTC
+### Audit Run Tier-DATA
+- Tier: DATA | DB Checks: 17 tables
+- Anomalies: 2 found (H high) | Already tracked: 2 (no new signals)
+- Status: DEGRADED
+
+#### Key Findings
+**deep_fetch_stats** (0 rows, class-a critical): stats collection non-functional  
+**deep_fetch_queue** (30 pending rows >24h stuck): pipeline may be blocked  
+
+#### Detailed Results
+- Deterministic counts: ohlc_violations=336/20-dates, scale_anomalies=0, vnindex_cache=1, low_confidence=52
+- Zero-row tables: deep_fetch_stats (class-a, HIGH), price_alerts (class-c, INFO), alert_engine_records (class-b, expected)
+- Staleness: sbv_rates 0h, macro_indicators 10h (normal), deep_fetch_queue stuck 30+ rows
+- Cron health: no recent failures (24h)
+- Locks: no active scheduler locks
+
+#### Signal Dedup
+Both findings already open in signal_queue. History record appended (entry 200/200 cap).
+
 ## c7 · 2026-08-25T18:33Z
 ### Audit Run Tier-2 (18:33–18:42 UTC 2026-08-25) — Complete freshness sweep of all 28 data sources
 - Tier: 2 | Services: 0 checked | Sources: **28/28 attempted** | DB checks: 0
@@ -85,4 +105,3 @@ NONE — all 6 new findings are legitimate, 4 from live data staleness checks, 1
 ✓ A-30 trigger verdict: confirmed ephemeral scope issue
 ✓ VPS routes: confirmed all 8 healthy (not re-run)
 ✓ Constraints honored: observation-only, no destructive ops
-
