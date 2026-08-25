@@ -1,0 +1,18 @@
+# durability sample series — docs/standards/oom-durability-verification-bar.md D3/D5
+# container=vn-market-intelligence-mcp-rag-service-1
+# container_id=16c59b5e929fcd2fe22889f072edbc2b669318059bde0a2aa93b41cf776bfa08
+# started_at=2026-08-25T06:33:04.025783939Z   restart_count=0   (D2 identity at OPEN)
+# mem_limit_bytes=2147483648   image=sha256:24a8e2949611b9c5f4aeb0c1da3343fca99f289e0d7ae8c27122fd49c14a8f14   (read live, never from prose)
+# opened_at=2026-08-25T13:18:55Z  interval_s=60  duration_s=97200
+timestamp,used_percent,used_bytes,container_status
+2026-08-25T13:18:55Z,42.98,880.1MiB,running
+2026-08-25T13:19:57Z,42.58,872MiB,running
+2026-08-25T13:20:59Z,44.09,903MiB,running
+2026-08-25T13:22:00Z,41.73,854.7MiB,running
+2026-08-25T13:23:01Z,43.24,885.6MiB,running
+2026-08-25T13:24:03Z,42.76,875.7MiB,running
+2026-08-25T13:25:05Z,42.97,880MiB,running
+2026-08-25T13:26:06Z,42.76,875.7MiB,running
+2026-08-25T13:27:08Z,43.04,881.4MiB,running
+2026-08-25T13:28:10Z,43.08,882.3MiB,running
+2026-08-25T13:29:11Z,42.80,876.6MiB,running
