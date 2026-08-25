@@ -15428,52 +15428,120 @@
         "discovered_by": "dev-team recurring-bug signal envelope 622c03db (2026-08-24T22:52:13Z), triaged by po at 2026-08-24T23:50Z"
       },
       {
-        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auditor-cycle-missing",
-        "type": "routing-gap",
+        "id": "FIX-AUDITOR-C01-DAILY-OHLCV-MEASURES-STALE-HOST-DB-DECOY-FALSE-CRITICAL",
+        "type": "FIX",
         "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
         "owner": "po",
-        "zone": "docs/agents/po/flow/",
-        "title": "Unrouted signal type 'auditor_cycle_missing' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
-        "dedup_key": "signal-type-registry-gap:auditor_cycle_missing",
-        "created_at": "2026-08-25T02:52:22Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=auditor_cycle_missing routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-25T02:52:22Z"
+        "next_agent": "developer",
+        "zone": "docs/agents/system-auditor/flow/",
+        "dedup_key": "auditor_check_plane:C-01:daily_ohlcv",
+        "created_at": "2026-08-25T03:03:54Z",
+        "created_by": "po",
+        "title": "Tier-3 C-01 emitted CRITICAL 'daily_ohlcv: 0 distinct codes (expected >=25)' — PO reproduced 99 on the LIVE container DB; the 0 comes from the stale host decoy data/market.db (13 days behind)",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "status_note": "PO INDEPENDENT VERIFICATION 2026-08-25T02:5xZ of signal envelope 7a9d0d5c (system-auditor, db_integrity_breach, CRITICAL, ts 2026-08-25T02:40:42Z). The breach DOES NOT REPRODUCE on the live data plane. Executed, both planes, same C-01 query verbatim from docs/agents/system-auditor/flow/main.md:947 (SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now','-1 day'), threshold >=25):\n  LIVE  (docker exec vn-market-intelligence-mcp-mcp-server-1, /app/data/market.db, 443,535,360 B): 99  -> PASS\n  HOST  (./data/market.db, 14,045,184 B):                                                          0   -> the reported CRITICAL\nThe two files share a name and are different databases. Live max(date)=2026-08-25 (789,923 rows); host max(date)=2026-08-12 with 32 codes — 13 days stale.\n\nTIMING RACE RULED OUT, do not re-explain this as late-arriving data: the 99 rows for date=2026-08-24 carry updated_at between 2026-08-24 09:00:00 and 2026-08-24 15:03:01, i.e. 11+ hours BEFORE the 02:40:42Z probe. A live-plane query at probe time would already have returned 99. (updated_at on daily_ohlcv is MUTATION time and backfill rewrites most rows, so it is not usable as arrival time in general — here it is used only as an upper bound on when the rows first existed, which is sound in this direction.)\n\nSCOPE — the sweep is MIXED-PLANE, not uniformly wrong, and that is the dangerous part. From the SAME Tier-3 cycle: 'bctc_vps_queue: 1 stale pending >72h' reproduces EXACTLY (=1) on the live container DB and is 513 on the host copy — so that check did read the live plane. One cycle, two checks, two different databases. A detector that silently mixes planes yields false CRITICALs (this row) and, more dangerously, false GREENs in the other direction.\n\nAC: (1) name the ONE canonical DB handle every Tier-3/DATA check must use and pin it in main.md's check table; (2) make a resolution miss FAIL LOUD instead of coercing to 0 — a 0-shaped result is indistinguishable from a genuine empty table today, which is exactly how this became a CRITICAL; (3) negative control from docs/agents/system-auditor/flow/data-writer-provenance.md must still hold — daily_ohlcv is a class (a) table and MUST still fire CRITICAL when genuinely empty; (4) re-run C-01 and confirm 99 (or current live value) rather than 0.\n\nRELATED, not duplicate: CLEAN-HOST-DB-DECOYS (backlog) proposes deleting the host decoys and documenting the live volume location — it never landed, and a live detector is now consuming one of those decoys, which promotes it from cleanup to a correctness dependency. FIX-AUDITOR-A33-HOOKLIVENESS-SETTINGS-PATH-MISRESOLVE-FALSE-DEAD-HOOK is the same defect class (path misresolve -> false finding) on a different check.\nDISPOSITION OF THE SIGNAL: the CRITICAL is a FALSE POSITIVE. Do not open incident work on daily_ohlcv itself.",
+        "updated_at": "2026-08-25T03:03:55Z"
       },
       {
-        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-db-integrity-breach",
-        "type": "routing-gap",
+        "id": "FIX-AUDITOR-TIER23-LAST-HEALTHY-STAMPED-ON-DEGRADED-CYCLE-NO-GREEN-GATE",
+        "type": "FIX",
         "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
         "owner": "po",
-        "zone": "docs/agents/po/flow/",
-        "title": "Unrouted signal type 'db_integrity_breach' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
-        "dedup_key": "signal-type-registry-gap:db_integrity_breach",
-        "created_at": "2026-08-25T02:52:23Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=db_integrity_breach routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-25T02:52:24Z"
+        "next_agent": "agent-father",
+        "zone": "docs/agents/system-auditor/flow/",
+        "dedup_key": "auditor_heartbeat_green_gate:tier2_tier3",
+        "created_at": "2026-08-25T03:03:54Z",
+        "created_by": "po",
+        "title": "Tier-2/Tier-3 last-healthy heartbeats are agent-written with NO green gate — tier-2 stamped last_healthy_at on a cycle its own notebook records as DEGRADED, so 'cycle missing' detection sits on a heartbeat that cannot be trusted",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "docs/data/auditor-tier2-last-healthy.json",
+          "docs/data/auditor-tier3-last-healthy.json"
+        ],
+        "status_note": "ROOT CAUSE behind signal envelope 6c7d4f0b (auditor_cycle_missing, tier-2, WARN, sys-20260825T023823-10cf). The missed window is the symptom; this asymmetry is the cause. PO verified every item below by reading the live artifacts 2026-08-25T02:5xZ:\n\n(1) The SAME Tier-2 run reported '0 anomalies, verdict=CLEAN, notebook append skipped' while its own notebook section docs/agent-memory/notebooks/system-auditor.md § c1013 (2026-08-25T02:39Z) records verbatim 'Anomalies: 1 new' and 'Status: DEGRADED', and it DID write signal row sys-20260825T023823-10cf (confirmed present in .signal_queue.rows[], status READ, dedup_key auditor-cycle-missing:tier2:2026-08-25T00:00Z). The run's self-reported verdict contradicts its own three durable artifacts.\n(2) It then stamped docs/data/auditor-tier2-last-healthy.json to 2026-08-25T02:40:07Z — on the cycle it had just recorded DEGRADED.\n(3) THE ASYMMETRY, verified by file shape: tier-1's heartbeat carries per-check evidence — {\"last_healthy_at\":\"2026-08-24T16:25:27Z\",\"checks\":{docker_ps:PASS,health_3000:PASS,health_3001:PASS,disk:PASS,mem_creep:PASS,launchd_agents:PASS}} — because it is written by the probe's ALL_GREEN branch. Tier-2 and Tier-3 carry ONLY {\"last_healthy_at\": ...} with no checks object, because the AGENT writes them with no green gate at all.\n'last_healthy_at' is supposed to mean 'the last time every check was green'. On tiers 2 and 3 it currently means 'the last time the agent finished', which is a liveness stamp wearing a health stamp's name. Any consumer that treats it as health — including the cycle-missing detector that produced this very signal — is reading a value that cannot go stale while the agent keeps running, no matter how red the cycle is.\n\nAC: (1) tier-2/tier-3 last_healthy_at is written ONLY on an all-green cycle, by the same gate discipline tier-1 uses; (2) it carries a per-check evidence object like tier-1's, so the claim is auditable after the fact rather than self-asserted; (3) a DEGRADED cycle leaves the previous last_healthy_at UNCHANGED — replay the 2026-08-25T02:39Z c1013 cycle as the regression fixture and assert the file does NOT move to 02:40:07Z; (4) if a liveness stamp is genuinely wanted, give it its own key (last_run_at) rather than overloading this one.\n\nRELATED, not duplicate: FIX-AUDITOR-TIER2-CYCLE-MISSING-NO-COMPLETION-EVIDENCE-IN-11H (backlog, dedup_key auditor-tier2-cycle-missing-11h) owns the SYMPTOM and the 6c7d4f0b/8h envelope folds into it per triage-signals' auditor_cycle_missing same-tier fold rule — this row is the cause, keep both. FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX is tier-1 hand-writing (who writes it), a different axis from whether a green gate exists at all. FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE (BLOCKED) is the notebook artifact, not the heartbeat.",
+        "updated_at": "2026-08-25T03:03:55Z"
       },
       {
-        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-narrative-contradiction",
-        "type": "routing-gap",
+        "id": "FIX-AUDITOR-TIER1-PROBE-INVOCATION-MUTATING-DOUBLE-RUN-SILENTLY-SUPPRESSES-SPAWN",
+        "type": "FIX",
         "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
         "owner": "po",
-        "zone": "docs/agents/po/flow/",
-        "title": "Unrouted signal type 'narrative_contradiction' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
-        "dedup_key": "signal-type-registry-gap:narrative_contradiction",
-        "created_at": "2026-08-25T02:52:24Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=narrative_contradiction routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-25T02:52:25Z"
+        "next_agent": "developer",
+        "zone": "cross-service/",
+        "dedup_key": "probe_entrypoint_idempotency:auditor-tier1-probe",
+        "created_at": "2026-08-25T03:03:54Z",
+        "created_by": "po",
+        "title": "scripts/agents-flow/auditor-tier1-probe.sh mutates its spawn-debounce ledger on EVERY invocation — a second run in the same tick silently downgrades SPAWN to DEBOUNCED and suppresses a legitimate audit",
+        "files": [
+          "scripts/agents-flow/auditor-tier1-probe.sh"
+        ],
+        "status_note": "Filed from inbox envelope 7926f1f5 (from dev-team router, type recurring-bug, priority high, observed 2026-08-25T01:26:00Z). Self-observed by the reporter, with a live in-tick reproduction, and the reporter ran its own subject dedup before filing. PO re-ran the dedup across all TEN lanes and confirms no covering row.\n\nDEFECT: _spawn_debounce_decision() (approx :910) performs a read-modify-write of docs/data/auditor-tier1-spawn-debounce.json on every call (ledger mutation approx :931-940 — last_spawn_at, spawn_count+1, window_expires_at), and is invoked unconditionally at approx :1084. The entrypoint is therefore not idempotent. LIVE REPRO, 2026-08-25T01:00Z tick, same signature launchd_agents:com.vn-market.fleet-push: run 1 at 01:21:47Z -> SPAWN, ledger stamped last_spawn_at=01:21:47Z spawn_count=8 window_expires_at=02:21:47Z; run 2 at 01:23:02Z, same tick, same signature -> DEBOUNCED. Downgrade is one-directional (SPAWN->DEBOUNCED, never the reverse) so a careless re-run can only ever SUPPRESS a real audit, never cause a spurious one. Both runs emit well-formed JSON; nothing marks the second as a re-derivation. That is the severity: the decision is not missing, it is silently WRONG, and the cron prompt's deliberate fail-open clause for a missing/unparseable spawn_decision does not fire because nothing is missing.\n\nCONTRIBUTING FACTOR: one entrypoint conflates emitting a health verdict (idempotent, safe to call for debugging/shape-checking/piping to jq) with consuming a rate-limit token (single-shot). Anyone treating it as the former corrupts the latter. Today the only thing standing between a re-run and a suppressed audit is prose in a cron prompt.\n\nREMEDY, in the reporter's order of preference: (a) --decide flag so the ledger write happens only under --decide, making the bare invocation a pure read; (b) callers READ docs/data/auditor-tier1-last-trigger.json, which the probe already writes with the full verdict, instead of re-invoking; (c) key the ledger entry on (signature, fire_tick) so a same-tick second run is a no-op rather than a downgrade. (c) is most robust — it fixes the hazard for callers who never read the docs. Prefer (c), optionally with (a).\n\nHARD CONSTRAINT carried from the reporter, do not violate: this row is about the probe entrypoint contract ONLY. Do NOT address it by re-arming com.vn-market.fleet-push and do NOT add or retarget an ack-ledger entry for it — both are explicitly FORBIDDEN by ready[] row FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED. That row owns the fleet-push FALSE POSITIVE that merely generated the signature; different defect, same script, and it is currently dispatch_lane=null so it is unpickable. FIX-AUDITOR-TIER1-SIDECAR-FILES-HAVE-NO-COMMITTER-AT-ALL owns the fact that this exact ledger file is perpetually uncommitted (same file, different defect). FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT (DONE_VERIFIED) is the row that put the 'read spawn_decision, do not re-derive' instruction into the cron prompt — this finding is precisely that the prose instruction is not enforcement.\n\nSELF-DISCLOSURE from the reporter, preserved: the router itself caused the double-invocation, by re-running the probe for clean JSON after a tail filter truncated the first output. That tick was NOT suppressed — run 1's SPAWN was correctly treated as authoritative and system-auditor was spawned. Filed so the next caller is not so lucky.",
+        "updated_at": "2026-08-25T03:03:55Z"
       },
       {
-        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-recurring-bug",
-        "type": "routing-gap",
+        "id": "FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-MODE-MUTATES-BOARD-AND-DEDUPS-BY-KEY-NOT-SUBJECT",
+        "type": "FIX",
         "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
         "owner": "po",
-        "zone": "docs/agents/po/flow/",
-        "title": "Unrouted signal type 'recurring-bug' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
-        "dedup_key": "signal-type-registry-gap:recurring-bug",
-        "created_at": "2026-08-25T02:52:25Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=recurring-bug routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-25T02:52:26Z"
+        "next_agent": "developer",
+        "zone": "cross-service/",
+        "dedup_key": "guard_self_filing:signal-type-coverage",
+        "created_at": "2026-08-25T03:03:54Z",
+        "created_by": "po",
+        "title": "scripts/audits/guard-signal-type-coverage.sh --check is not read-only: it mints backlog rows into the live orch-state.json, and its dedup is dedup_key-exact so it duplicates subject-equivalent rows — 4 duplicates minted and removed in one PO tick",
+        "files": [
+          "scripts/audits/guard-signal-type-coverage.sh"
+        ],
+        "status_note": "SELF-OBSERVED BY PO 2026-08-25T02:52Z while independently re-running the guard to verify TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION (I ran --check expecting a read-only verdict; it wrote to the hot board four times).\n\n(1) --check MUTATES. mint_routing_gap_row() pipes through scripts/orch-apply.sh on every unrouted type. A flag named --check, documented as 'Exit: 0 = pass, 1 = fail', is invoked by reviewers and CI alike as a read-only oracle; nothing warns that it writes. Minimum fix: gate minting behind an explicit --file-gaps (or make --check pure and let CI pass the writing flag).\n\n(2) DEDUP IS KEY-EXACT, NOT SUBJECT. already_tracked matches only .dedup_key == \"signal-type-registry-gap:<type>\". The pre-existing backlog row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS already owns exactly this subject (same CI job, same file, same defect) under dedup_key ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md. Because the keys differ, the guard minted FIX-SIGNAL-TYPE-ROUTING-GAP-{auditor-cycle-missing,db-integrity-breach,narrative-contradiction,recurring-bug} at 02:52:22-25Z as four separate rows. recurring-bug is named verbatim in the existing row's own title. PO removed all four in this tick's WRITE 2.\n\n(3) THE PIPELINE-A INPUT IS A TRANSIENT QUEUE, WHICH MAKES (1)+(2) SELF-AMPLIFYING. UNROUTED_A reads .dev_team_idle_chain.pending_triage_inbox[], a drain-to-zero queue that PO clears every triage tick. dev-team's drain re-envelopes Pipeline-B signal_queue rows INTO that inbox carrying their original .type, so a type that is correctly routed on Pipeline B lands unrouted on Pipeline A by construction. Every drain of a B-typed row therefore guarantees a Pipeline-A FAIL plus a mint for a condition that disappears the moment PO clears the inbox. Confirmed live this tick: all 4 minted types (auditor_cycle_missing, db_integrity_breach, narrative_contradiction, recurring-bug) have real Pipeline-B routing rows in triage-signals.md; only Pipeline A lacks them. Post-CLEAR the inbox is empty and UNROUTED_A is [] — the same run that minted them makes them unreproducible.\n\nAC: (1) --check performs zero writes; (2) before minting, dedup by SUBJECT (type literal appearing anywhere in an open row's title/status_note/dedup_key), not by exact dedup_key; (3) decide and document whether a transient queue is a legitimate coverage source at all — either check Pipeline A against a durable type inventory, or have the drain map B-types to their Pipeline-A equivalents, or exempt drain-originated envelopes; (4) regression: a run against an inbox holding a type already named in an open row mints nothing.\n\nNOTE: Pipeline B currently still FAILS on container_capacity_pressure, memory_loop_breach, memory_pressure_transient, system_issue. All four already have tracking rows (2026-08-23T23:43Z and later) and the guard correctly minted nothing for them. That CI red is pre-existing and owned elsewhere; it is not this row.",
+        "updated_at": "2026-08-25T03:03:55Z"
+      },
+      {
+        "id": "FIX-SPAWNFANOUT-LOAD-PARSE-COMMA-DECIMAL-TRUNCATION-AND-BAD-LC-ALL-REMEDY",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
+        "owner": "po",
+        "next_agent": "developer",
+        "zone": "docs/agents/cowork-team/flow/",
+        "dedup_key": "locale_load_parse:spawn-fanout-step-5.1",
+        "created_at": "2026-08-25T03:03:54Z",
+        "created_by": "po",
+        "title": "spawn-fanout.md:191 load-average parse truncates to the integer part under a comma-decimal locale (2.48 -> 2), and the remedy the reporter proposes (LC_ALL=C) produces a WORSE malformed value — PO reproduced both",
+        "files": [
+          "docs/agents/cowork-team/flow/spawn-fanout.md"
+        ],
+        "status_note": "Reported by the cowork-team dispatcher in two consecutive fire envelopes (01ba03d4 01:36:50Z, d9e0fe31 02:07:40Z) with no board row, so it keeps being re-reported. PO reproduced it live on this host 2026-08-25T02:5xZ and ALSO falsified the proposed remedy — do not apply the reporter's fix as written.\n\nDOC LITERAL, docs/agents/cowork-team/flow/spawn-fanout.md:191 (Step 5.1 DEGRADED gate):\n  uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'\n\nMEASURED, same shell, back to back:\n  as written                  -> 1        (真 load 1.65; splits on this host's comma DECIMAL separator and keeps the integer part)\n  with LC_ALL=C prefix        -> 1.652.893.70   (MALFORMED)\nWhy the proposed fix is worse: under LC_ALL=C uptime prints '1.65 2.89 3.70' — period decimals, SPACE separated. -F',' then finds no comma, $1 becomes the whole three-number string, and gsub strips the spaces, concatenating all three load averages into one garbage token. The reporter's own framing (harmless at load 2.48 vs threshold 24, latent at 24.9 -> 24 passing <=24) is right about the DEFECT and wrong about the REMEDY: it converts a conservative under-read into a value that will not compare numerically at all.\n\nALSO CORRECT THE CITED PRECEDENT: the envelopes cite 'scripts/verify-a30-mcp-memory-reclamation.sh already carries the LC_ALL=C pin'. That path does not exist (the script is scripts/audits/verify-a30-mcp-memory-reclamation.sh) and grep -rl LC_ALL scripts/ does not list it either — LC_ALL appears in scripts/agents-flow/cron-marker-liveness-probe.sh, scripts/agents-flow/auditor-tier1-probe.sh, scripts/audits/mock-guard.sh and scripts/audits/commit-convention-audit.sh. Whoever takes this must not copy a pin from a file that has none.\n\nAC: pin the locale AND fix the field split together so the extractor returns a well-formed float under both locales — e.g. LC_ALL=C uptime | sed -E 's/.*load average[s]?: //' | awk '{print $1}' — and add a two-case regression (comma-decimal locale, period-decimal locale) asserting a numeric result and a correct >24 DEGRADED trip at 24.9. Fix the doc literal at :191; any script copying it must be fixed in the same pass.",
+        "updated_at": "2026-08-25T03:03:55Z"
+      },
+      {
+        "id": "FIX-CCATO-NULLMARKER-SET-INCOMPLETE-2ND-TOOL-GETTECHNICALINDICATORS-NOTFOUND-SCORED-AS-CONTRADICTION",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "dedup_key": "ntg_probe_null_marker_gap:get_technical_indicators_not_found",
+        "created_at": "2026-08-25T03:05:30Z",
+        "created_by": "po",
+        "title": "CCATO scored an ACCURATE chef absence-claim as a narrative_contradiction because get_technical_indicators' 'not found in database' return matches no tool_null_marker — 2nd tool with the same gap, and the same VNM/cycle also returned real RSI values",
+        "files": [
+          "apps/mcp-server/src"
+        ],
+        "status_note": "PO triage 2026-08-25T03:0xZ of the 4 chef/narrative_contradiction envelopes in pending_triage_inbox (8 inbox entries = 4 distinct envelope_ids, each appended twice by the drain). All four share (ticker=VNM, tool=get_technical_indicators, cycle=2026-08-24, claim='VNM khong co du lieu ky thuat phien nay.') and differ ONLY in payload.returned_value. That split is the whole finding — read from .payload, not from the summary string.\n\nMEASURED SPLIT (jq over the live inbox payloads):\n  cf1fe96f  returned_value = 62.1                    -> CONTRADICTS the claim  -> GENUINE\n  1031b7c8  returned_value = 61                      -> CONTRADICTS the claim  -> GENUINE\n  7f836c14  returned_value = 60                      -> CONTRADICTS the claim  -> GENUINE\n  627c3b9b  returned_value = 'not found in database' -> AGREES with the claim  -> FALSE POSITIVE\nThe cowork-team dispatcher independently observed the same inversion on the raw signal_queue cohort (6 rows, spread {not found in database, 62.1, 62.1, 61, 61, 60}) in envelope d9e0fe31.\n\nDEFECT THIS ROW OWNS: 627c3b9b. The gate took a tool response that CONFIRMS an absence-claim and filed it as a fabrication against the agent. This is the same mechanism as backlog row FIX-NTGPROBE-FOREIGNFLOW-INSUFFICIENT-MSG-MATCHES-NO-NULL-MARKER-FALSE-CONTRADICTION (an honest NULL whose message matches none of the 10 tool_null_markers, so classifyVerdict grades it NON_NULL) — but that row is scoped to the foreign-flow probe. 'not found in database' from get_technical_indicators is a SECOND tool with the same gap, which makes the marker set incomplete as a design, not as a one-off omission.\nAC: (1) 'not found in database' (and the sibling phrasings get_technical_indicators can emit) are recognised as NULL markers; (2) the marker set stops being a hand-maintained per-tool literal list — derive it, or give each tool a structured null discriminator the gate reads instead of prose matching; (3) regression: replay envelope 627c3b9b and assert NO narrative_contradiction is emitted; (4) negative control — replay cf1fe96f/1031b7c8/7f836c14 and assert the contradiction IS still emitted. Do NOT satisfy (1) by widening the matcher until the genuine cases stop firing.\n\nDO NOT DISABLE OR WEAKEN THE GATE. Standing measurement: CCATO probe-substitution was 1 of 110 rows, i.e. the emitter is overwhelmingly correct and this is a minority false-positive subset. Three of these four envelopes are real.\n\nSECOND FINDING, NOT THIS ROW'S AC BUT MUST BE ANSWERED BY WHOEVER TAKES IT: within ONE cycle, for ONE ticker, get_technical_indicators returned BOTH numeric values (62.1 / 61 / 60) AND 'not found in database'. Either the tool is non-deterministic for VNM, or the gate is probing different underlying calls and labelling them identically. Discriminate before fixing the marker set: replay get_technical_indicators('VNM') N times against the live mcp-server container and record the return distribution. If it is genuinely non-deterministic, the marker-set fix is cosmetic and the real defect is upstream in the data layer — file that separately rather than folding it here.\n\nEXISTING COVERAGE CHECKED (all ten lanes, via scripts/po-board-dedup-search.sh --all-lanes): SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (active_sprints, ACTIVE P0), FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (ready, P0), FIX-NTGPROBE-FOREIGNFLOW-... (backlog), VERIFY-CCATO-MCP-TRUTHGATE-REALDATA (backlog), SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT (backlog). The three GENUINE envelopes fold into that existing coverage and were NOT minted. None of those rows covers an incomplete null-marker set on get_technical_indicators, which is why this one exists.",
+        "updated_at": "2026-08-25T03:05:30Z"
       }
     ],
     "closed_sprints": [
@@ -22336,8 +22404,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-25T01:44:34Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-25T03:05:40Z",
+    "last_triaged_by": "po",
     "in_progress": []
   },
   "_meta": {
@@ -22347,7 +22415,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-25T03:00:57Z",
+  "_updated_at": "2026-08-25T03:05:40Z",
   "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
@@ -22372,404 +22440,7 @@
     },
     "_updated_at": "2026-08-25T02:53:07Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "01ba03d4c602d0f42ebacd323f796f8258a3f777074c906fc44144c140de6b96",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-25T01:36:50Z",
-          "matched_slots": [
-            "news-scout-sentiment"
-          ],
-          "won_slots": [
-            "news-scout-sentiment"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/news-scout/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "news-scout-sentiment": "cadence"
-          },
-          "cadence_minutes": {
-            "news-scout-sentiment": "30"
-          },
-          "last_fired_timestamp": "2026-08-25T01:35:58Z",
-          "last_fired_slots": [
-            "news-scout-sentiment"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "01:30",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 111,
-          "signal_backlog": 35,
-          "note": "1 slot, 1 batch (MAX_PARALLEL=4 from live _fanout SSOT; headroom 2995MB >= 1500 floor, load1m 2.48 <= 24 = 2x12 cores -> not degraded). Drain no-op (0 NEW signal_queue rows), no one-shots, no Step 4b collision. Consistency + existence checks PASS. Slot token claimed ttl=180 and released after spawn. SERVER-COMPUTED FIELDS MEASURED, NOT FABRICATED: dev_head from canonical top-level .head (idle, updated 00:29:46Z by ba) NOT the deprecated .task_board.head stub; devq = ready[] length; signal_backlog = docs/signals/*.json file count excluding cowork-team-*. DEFECT 1 (3rd consecutive tick, both halves observed again): emit_pressure_state returned cycle_snapshot_promoted=false -- Step 4.7 named its file by WALL CLOCK (cycle-snapshot-01:34.json) while the tool looks it up by NOMINAL tick (01:30); cycle-snapshot-latest.json is consequently still frozen at 2026-08-23T02:09 with .market_context typed string, so last_regime fell back to macro_snapshot.data.signals.carry.regime=UNKNOWN and last_volatility_level to unknown (no volatility key exists in that file at all). DEFECT 2 (remedy now confirmed): spawn-fanout.md Step 5.1's load parse uses awk -F',' which splits on this host's comma decimal separator -- measured side by side this tick, LC_ALL=C uptime gives 2.48 while the doc-literal parse gives 2, i.e. silent truncation to the integer part. Harmless at a threshold of 24, latent at the boundary (24.9 -> 24 passes <=24). Fix is the same LC_ALL=C pin verify-a30-mcp-memory-reclamation.sh already carries. Step 5.3 off-flow check is DEFERRED per the BGFAN-1 timing contract; PRE-WRITE last_fired for a possible de-stamp: news-scout-sentiment=2026-08-24T01:33:50Z (de-stamp only if last_fired still equals 2026-08-25T01:35:58Z at detection time)."
-        },
-        "createdAt": "2026-08-25T01:36:50Z",
-        "drained_at": "2026-08-25T01:41:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7926f1f5697cf2d53bdfa274f0bf5681b979780f08a2826da6ffcf5a406692d0",
-        "source": "file",
-        "from": "dev-team",
-        "to": "po",
-        "type": "recurring-bug",
-        "priority": "high",
-        "payload": {
-          "title": "auditor-tier1-probe.sh is invocation-mutating: any double-run within a tick silently downgrades SPAWN to DEBOUNCED",
-          "observed_at": "2026-08-25T01:26:00Z",
-          "fire_tick": "2026-08-25T01:00Z",
-          "severity": "high",
-          "summary": "scripts/agents-flow/auditor-tier1-probe.sh performs a read-modify-write of docs/data/auditor-tier1-spawn-debounce.json inside _spawn_debounce_decision() on EVERY invocation. The script is therefore not idempotent: calling it twice in one cron tick consumes the spawn slot on run 1 and returns DEBOUNCED on run 2. The downgrade is one-directional (SPAWN to DEBOUNCED, never the reverse), so a careless re-run can only ever SUPPRESS a legitimate audit, never cause a spurious one. Failure is silent - both runs emit well-formed JSON and nothing marks the second as a re-derivation.",
-          "evidence": {
-            "script": "scripts/agents-flow/auditor-tier1-probe.sh",
-            "write_path": "_spawn_debounce_decision() at :910, ledger mutation at :931-940 (last_spawn_at, spawn_count+1, window_expires_at)",
-            "called_from": ":1084 spawn_decision=$(_spawn_debounce_decision <signature>)",
-            "live_reproduction": "2026-08-25T01:00Z tick. Run 1 at 01:21:47Z gave spawn_decision=SPAWN and stamped the ledger last_spawn_at=2026-08-25T01:21:47Z spawn_count=8 window_expires_at=2026-08-25T02:21:47Z. Run 2 at 01:23:02Z, same tick, same signature, gave spawn_decision=DEBOUNCED. Only last_seen_at moved; the ledger itself stayed correct.",
-            "signature": "launchd_agents:com.vn-market.fleet-push"
-          },
-          "why_it_matters": "The tier-1 cron prompt explicitly instructs the caller to read spawn_decision from THIS tick own JSON directly and NOT to re-derive it. That instruction is currently the ONLY thing standing between a re-run and a suppressed audit - the safety lives in prose in a cron prompt, not in the script. The same prompt carries a deliberate fail-open clause for a missing or unparseable spawn_decision, which shows the design intent is that a read fault must never silently suppress. An invocation-mutating probe defeats that intent through a different door: the decision is not missing, it is silently WRONG.",
-          "contributing_factor": "The probe conflates two jobs in one entrypoint - emitting a health verdict (naturally idempotent, safe to call for any reason: debugging, shape-checking, piping to jq) and consuming a rate-limit token (inherently single-shot). Anyone who treats it as the former corrupts the latter.",
-          "proposed_remedy": "Split the two jobs. Options in order of preference: (a) add a --decide flag so the ledger write happens only under --decide, making the bare invocation a pure read; (b) have callers READ docs/data/auditor-tier1-last-trigger.json, which the probe already writes with the full verdict, rather than re-invoking; (c) make the ledger write idempotent per fire_tick by keying the entry on (signature, fire_tick) so a second run in the same tick is a no-op rather than a downgrade. Option (c) is the most robust because it fixes the hazard even for callers who never read the docs.",
-          "do_not": "Do NOT address this by re-arming com.vn-market.fleet-push or by adding or retargeting an ack-ledger entry for it - both are explicitly FORBIDDEN by task_board.ready.106 status_note. This row is about the probe entrypoint contract only, NOT about the fleet-push signature that happened to expose it.",
-          "related_rows": {
-            "ready.106": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED owns the fleet-push FALSE POSITIVE that generated the signature. Different defect, same script. Currently dispatch_lane=null so it is unpickable.",
-            "backlog.506": "FIX-AUDITOR-TIER1-SIDECAR-FILES-HAVE-NO-COMMITTER-AT-ALL owns the fact that this exact ledger file is perpetually uncommitted. Same file, different defect."
-          },
-          "dedup_note": "Matched by SUBJECT against the hot board and docs/data/orch/archive/2026-08.json before filing. ready.106 and backlog.506 both touch this script or its ledger but neither is about the entrypoint idempotency contract. No existing row covers this.",
-          "reported_by": "router (dev-team dispatcher), self-observed while probing",
-          "self_disclosure": "The router itself caused the double-invocation, by re-running the probe to get clean JSON after a tail filter truncated the first output. The tick was NOT suppressed - run 1 SPAWN was correctly treated as authoritative per the cron prompt, and the system-auditor was spawned. Filed so the next caller is not so lucky."
-        },
-        "createdAt": "2026-08-25T01:26:00Z",
-        "drained_at": "2026-08-25T01:41:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:12:16Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:12:16Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:12:16Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:12:16Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d9e0fe31a49cf0a5c1fd1e3c6de72befdaf404b10c5bb4adc870f53524873e90",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-25T02:07:40Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-25T02:06:20Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "02:00",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 111,
-          "signal_backlog": 34,
-          "note": "Step 5.3 off-flow check DEFERRED (BGFAN-1) — alert-commander spawned run_in_background; pre-write last_fired was 2026-08-24T08:53:30Z, revert target if >=2 distinct OFFFLOW_MARKERS appear in its final assistant text turn AND last_fired still equals 2026-08-25T02:06:20Z. DRAIN DEVIATION: 6 NEW signal_queue rows, all to=po, from=chef, type=narrative_contradiction (CCATO cohort, ts 2026-08-24T00:00:00Z, no dedup_key) — HELD AT NEW, not marked READ: po has 0 slots in cowork-schedule.json so Step 0a's route-to-slot branch is unreachable, and the cowork drain has no pending_triage_inbox re-envelope step, so READ here would be mark-without-delivery; with ts already >24h old, READ would also make them immediately cold-evict-eligible (READ is terminal). A peer dev-team drain delivers these. Board coverage confirmed by SUBJECT: SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (ACTIVE P0), FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (READY P0), FIX-NTGPROBE-FOREIGNFLOW-INSUFFICIENT-MSG-MATCHES-NO-NULL-MARKER-FALSE-CONTRADICTION (P1) — no mint. Inversion observed again: of the 6 near-duplicate rows for one VNM claim, returned_value spread is {not found in database, 62.1, 62.1, 61, 61, 60} — the first CONFIRMS chef's no-data claim yet was filed as a contradiction. DEFECT (4th consecutive tick, both halves in-tick): Step 4.7 named the snapshot by WALL CLOCK cycle-snapshot-02:05.json while emit_pressure_state looks up NOMINAL 02:00 -> cycle_snapshot_promoted:false; cycle-snapshot-latest.json still frozen at 2026-08-23 02:09 (4468B), its .market_context is type string not object, regime_status ABSENT, zero volatility key anywhere -> last_regime/last_volatility_level sent as unknown rather than fabricated. DEFECT (locale, re-measured): spawn-fanout Step 5.1's doc-literal awk -F',' load parse returns 2 where LC_ALL=C uptime returns 2.29 — splits on this host's decimal comma and keeps the integer part; harmless at load 2.29 vs threshold 24, but a real 24.9 would read 24 and pass <=24 instead of tripping DEGRADED. Remedy is the LC_ALL=C pin verify-a30-mcp-memory-reclamation.sh already carries."
-        },
-        "createdAt": "2026-08-25T02:07:40Z",
-        "drained_at": "2026-08-25T02:12:55Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "627c3b9bf92a59c28d2565745b047d7ad8de198143e294e64e42197eadb03da5",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "not found in database",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "ntg-20260824T000000Z-technical_indicators-VNM-36d074",
-          "ntg-20260824T000000Z-technical_indicators-VNM-a01eef",
-          "ntg-20260824T000000Z-technical_indicators-VNM-c610ae"
-        ]
-      },
-      {
-        "envelope_id": "cf1fe96f4b15cb02a59a5f48cfa6a18f501658831e90a4df985782acaa809f60",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "62.1",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "ntg-20260824T000000Z-technical_indicators-VNM-0059ae",
-          "ntg-20260824T000000Z-technical_indicators-VNM-c75b2d",
-          "ntg-20260824T000000Z-technical_indicators-VNM-46ee55",
-          "ntg-20260824T000000Z-technical_indicators-VNM-5c8e7c",
-          "ntg-20260824T000000Z-technical_indicators-VNM-ec9b00",
-          "ntg-20260824T000000Z-technical_indicators-VNM-0141e9"
-        ]
-      },
-      {
-        "envelope_id": "1031b7c8d14b93c1d447880c46add8c2c4b534bebbbd99f2772648cceecbd04f",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "61",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "ntg-20260824T000000Z-technical_indicators-VNM-898c9a",
-          "ntg-20260824T000000Z-technical_indicators-VNM-e98142",
-          "ntg-20260824T000000Z-technical_indicators-VNM-258d58",
-          "ntg-20260824T000000Z-technical_indicators-VNM-bd6086",
-          "ntg-20260824T000000Z-technical_indicators-VNM-7a6882",
-          "ntg-20260824T000000Z-technical_indicators-VNM-6133ab"
-        ]
-      },
-      {
-        "envelope_id": "7f836c145da962b99ac14d888431c556083f03e5f6850946d2623676b9c309ba",
-        "source": "dashboard",
-        "from": "chef",
-        "to": "po",
-        "type": "narrative_contradiction",
-        "priority": "MED",
-        "payload": {
-          "agent_id": "chef",
-          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
-          "tool": "get_technical_indicators",
-          "ticker": "VNM",
-          "probe_ticker": "VNM",
-          "returned_value": "60",
-          "cycle": "2026-08-24",
-          "gate_version": "1"
-        },
-        "createdAt": "2026-08-24T00:00:00Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "ntg-20260824T000000Z-technical_indicators-VNM-22f0c2",
-          "ntg-20260824T000000Z-technical_indicators-VNM-b9275a",
-          "ntg-20260824T000000Z-technical_indicators-VNM-3d4916"
-        ]
-      },
-      {
-        "envelope_id": "6c7d4f0bebcb8a6afe87513cfeabaf55c8ecba728ce707a2336a59a9adf91e34",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "auditor_cycle_missing",
-        "priority": "WARN",
-        "payload": "auditor tier-2 cycle possibly missing — no completion evidence in 8h (cadence 4h)",
-        "createdAt": "2026-08-25T02:38:23Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "sys-20260825T023823-10cf"
-        ]
-      },
-      {
-        "envelope_id": "7a9d0d5c25819655ed321f794e5005f4b4f445469893656b2dff20114e256d45",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "priority": "CRITICAL",
-        "payload": "daily_ohlcv: 0 distinct codes (expected ≥25)",
-        "createdAt": "2026-08-25T02:40:42Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "sys-20260825T024042-6445"
-        ]
-      },
-      {
-        "envelope_id": "7c7f79361c13cb89e141ef07726e1b8e373f916f2868f1217d637f6d7555d68a",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "priority": "WARN",
-        "payload": "financial_reports: 6 low-confidence (expected ≤5)",
-        "createdAt": "2026-08-25T02:40:52Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "sys-20260825T024052-601e"
-        ]
-      },
-      {
-        "envelope_id": "42cda8cf3eccf4d600737bca635072e7464815fa0f8d37892c2e37232d7ce930",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "priority": "WARN",
-        "payload": "bctc_vps_queue: 1 stale pending >72h (expected 0)",
-        "createdAt": "2026-08-25T02:40:54Z",
-        "drained_at": "2026-08-25T02:47:03Z",
-        "routed_to": "PO Step 0-SIG",
-        "collapsed_row_ids": [
-          "sys-20260825T024054-360e"
-        ]
-      }
-    ],
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,
