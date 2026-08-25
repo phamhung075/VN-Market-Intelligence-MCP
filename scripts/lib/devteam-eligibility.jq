@@ -324,27 +324,79 @@ def deps_satisfied($detail_items; $status_map):
   | ($deps | length) == 0
     or ( [ $deps[] | ($status_map[.] // "MISSING") ] | all(. == "DONE_VERIFIED") );
 
+# ---- best-effort ISO8601 -> epoch parse (FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-
+# NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE, 2026-08-25) ----
+# Used ONLY by effective_owner/effective_next_agent's recency-compare below.
+# Absent/non-string/empty/unparseable all resolve to `null` (never a bogus
+# epoch-0 instant) so a compare against a missing stamp falls through to the
+# tie-break branch instead of producing a false always-wins/always-loses
+# asymmetry. `fromdateiso8601` (jq 1.8.1, confirmed empirically 2026-08-25)
+# parses this repo's uniform `YYYY-MM-DDTHH:MM:SSZ` `updated_at` format.
+def parse_ts($s):
+  if ($s == null) or (($s | type) != "string") or ($s == "") then null
+  else ($s | try fromdateiso8601 catch null)
+  end;
+
 # ---- effective owner (FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE,
-# 2026-07-13) ----
-# Detail-FIRST / board-FALLBACK (reverse of depends_on's inline-first order —
-# detail is authoritative for owner when it exists).
+# 2026-07-13; RECENCY-COMPARE added FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-
+# NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE, 2026-08-25) ----
+# Detail-FIRST / board-FALLBACK is retained ONLY as the tie-break / one-side-
+# absent rule — preserving the 2026-07-16 FIX-DEVTEAM-BOUNDED1-EFFECTIVE-
+# DISPOSITION-BOARD-FALLBACK-GATE intent this def and its next_agent twin
+# share. When BOTH sides carry a non-empty value AND both carry a parseable
+# `updated_at`, the value belonging to the STRICTLY more recent stamp wins —
+# a hot-row reroute (board `.updated_at` bumped) now actually overrides a
+# stale archived backlog-detail.json copy instead of being silently
+# reverted. Any other combination (one side absent, either/both timestamps
+# missing/unparseable, or a tie) falls back to detail-first unchanged — same
+# behavior as before this fix. LIVE INCIDENT this closes: hot review[] row
+# FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE was rerouted qa->ops on
+# the hot board at 13:50Z while backlog-detail.json still read qa stamped
+# 12:51:27Z (~1h stale) — the prior unconditional detail-first read always
+# returned the stale qa.
 def effective_owner($detail_items):
-  (if (.id != null) then $detail_items[.id].owner else null end) as $detail_owner
-  | if ($detail_owner != null) and (($detail_owner | type) == "string") and ($detail_owner != "") then
-      $detail_owner
-    else
-      (.owner // "")
+  (if (.id != null) then $detail_items[.id] else null end) as $detail_row
+  | ($detail_row.owner) as $raw_detail_owner
+  | (($raw_detail_owner != null) and (($raw_detail_owner | type) == "string") and ($raw_detail_owner != "")) as $detail_present
+  | (.owner // "") as $board_owner
+  | (($board_owner | type) == "string" and $board_owner != "") as $board_present
+  | if ($detail_present and $board_present) then
+      (parse_ts(.updated_at)) as $board_ts
+      | (parse_ts($detail_row.updated_at)) as $detail_ts
+      | if ($board_ts != null) and ($detail_ts != null) and ($board_ts > $detail_ts) then
+          $board_owner
+        else
+          $raw_detail_owner
+        end
+    elif $detail_present then $raw_detail_owner
+    elif $board_present then $board_owner
+    else ""
     end;
 
 # ---- effective next_agent (FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-
-# BOARD-FALLBACK-GATE, 2026-07-16) ----
-# Detail-FIRST / board-FALLBACK, mirrors effective_owner exactly.
+# BOARD-FALLBACK-GATE, 2026-07-16; RECENCY-COMPARE added FIX-DEVTEAM-
+# ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE, 2026-08-25)
+# ----
+# Mirrors effective_owner exactly — same recency-compare, same detail-first
+# tie-break/one-side-absent fallback. See effective_owner's comment above for
+# the full rationale and the live incident this closes.
 def effective_next_agent($detail_items):
-  (if (.id != null) then $detail_items[.id].next_agent else null end) as $detail_na
-  | if ($detail_na != null) and (($detail_na | type) == "string") and ($detail_na != "") then
-      $detail_na
-    else
-      (.next_agent // "")
+  (if (.id != null) then $detail_items[.id] else null end) as $detail_row
+  | ($detail_row.next_agent) as $raw_detail_na
+  | (($raw_detail_na != null) and (($raw_detail_na | type) == "string") and ($raw_detail_na != "")) as $detail_present
+  | (.next_agent // "") as $board_na
+  | (($board_na | type) == "string" and $board_na != "") as $board_present
+  | if ($detail_present and $board_present) then
+      (parse_ts(.updated_at)) as $board_ts
+      | (parse_ts($detail_row.updated_at)) as $detail_ts
+      | if ($board_ts != null) and ($detail_ts != null) and ($board_ts > $detail_ts) then
+          $board_na
+        else
+          $raw_detail_na
+        end
+    elif $detail_present then $raw_detail_na
+    elif $board_present then $board_na
+    else ""
     end;
 
 def is_dev_role($s):
