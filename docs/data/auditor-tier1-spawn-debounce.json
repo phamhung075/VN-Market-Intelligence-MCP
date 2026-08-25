@@ -15,6 +15,22 @@
       "last_spawn_at": "2026-08-25T03:52:36Z",
       "spawn_count": 10,
       "window_expires_at": "2026-08-25T04:52:36Z"
+    },
+    {
+      "signature": "health_3000|mem_creep:vn-market-intelligence-mcp-alert-engine-1,vn-market-intelligence-mcp-api-gateway-1,vn-market-intelligence-mcp-flaresolverr-1,vn-market-intelligence-mcp-kinh-dich-service-1,vn-market-intelligence-mcp-macro-indicators-1,vn-market-intelligence-mcp-mcp-server-1,vn-market-intelligence-mcp-news-fetch-1,vn-market-intelligence-mcp-rag-service-1,vn-market-intelligence-mcp-stock-price-1,vn-market-intelligence-mcp-technical-analysis-1",
+      "first_seen_at": "2026-08-25T05:47:51Z",
+      "last_seen_at": "2026-08-25T05:47:51Z",
+      "last_spawn_at": "2026-08-25T05:47:51Z",
+      "spawn_count": 1,
+      "window_expires_at": "2026-08-25T06:47:51Z"
+    },
+    {
+      "signature": "docker_ps|health_3000|health_3001|mem_creep",
+      "first_seen_at": "2026-08-25T06:13:21Z",
+      "last_seen_at": "2026-08-25T06:13:21Z",
+      "last_spawn_at": "2026-08-25T06:13:21Z",
+      "spawn_count": 1,
+      "window_expires_at": "2026-08-25T07:13:21Z"
     }
   ]
 }
