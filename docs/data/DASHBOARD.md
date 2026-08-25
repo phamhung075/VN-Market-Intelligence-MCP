@@ -2182,3 +2182,15 @@
 **Mitigation:** Detect-only. Candidate directions (not implemented): action the existing cap-increase recommendation, or lengthen debounce for signatures with N consecutive FOLD verdicts.
 
 ---
+
+## Anomaly: A-30-GATE · A-30 mem_creep gate should exclude ephemeral containers
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** system-auditor/probe
+**Details:** Detector fires on ephemeral benchmark containers (paddle-sentinel, ocr-bench, ocr-ac0-sweep series) that are intentional test harnesses, not services
+**Impact:** False positives waste auditor Tier-1 subagent cycles (3 false spawns in 72h)
+**Root cause:** A-30 gate has no name-pattern exclusion for ephemeral/benchmark containers
+**Zone owner:** system-auditor
+**Last reported:** 2026-08-25T18:39:41Z (signal sys-20260825T183933-7adf, system-auditor -> po, dedup_key=a30_gate_ephemeral_scope_exclusion, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
