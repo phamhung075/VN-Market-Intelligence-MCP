@@ -1,20 +1,20 @@
 {
-  "checked_at": "2026-08-25T02:56:05Z",
+  "checked_at": "2026-08-25T03:26:05Z",
   "tables": {
     "daily_ohlcv": {
-      "rowcount": 789923
+      "rowcount": 789924
     },
     "market_prices": {
       "rowcount": 116
     },
     "market_prices_history": {
-      "rowcount": 38443
+      "rowcount": 38302
     },
     "vn_index_cache": {
       "rowcount": 1
     },
     "alerts": {
-      "rowcount": 538
+      "rowcount": 540
     },
     "price_alerts": {
       "rowcount": 0
@@ -23,7 +23,7 @@
       "rowcount": 0
     },
     "agent_signals": {
-      "rowcount": 139
+      "rowcount": 142
     },
     "signal_outcomes": {
       "rowcount": 105
@@ -41,13 +41,13 @@
       "rowcount": 8415
     },
     "deep_fetch_queue": {
-      "rowcount": 2537
+      "rowcount": 2539
     },
     "deep_fetch_stats": {
       "rowcount": 0
     },
     "cron_job_runs": {
-      "rowcount": 216957
+      "rowcount": 217050
     },
     "scheduler_locks": {
       "rowcount": 1
