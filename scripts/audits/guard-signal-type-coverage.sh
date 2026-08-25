@@ -246,8 +246,9 @@ mint_routing_gap_row() {
     --arg now "$now" \
     --arg note "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=${type} routed on Pipeline ${pipeline} (a matching table row exists in triage-signals.md's own Pipeline-${pipeline} section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md." \
     '.task_board.backlog = ((.task_board.backlog // []) + [{
-       id: $id, type: "routing-gap", status: "BACKLOG", owner: "po",
-       zone: "docs/agents/po/flow/", title: $title, dedup_key: $dedup_key,
+       id: $id, type: "routing-gap", status: "BACKLOG", priority: "P1",
+       owner: "agent-father", next_agent: "agent-father", zone: "cross-service/",
+       title: $title, dedup_key: $dedup_key,
        created_at: $now, status_note: $note
      }])' "$ORCH_STATE" 2>/dev/null) || {
     echo "[guard-signal-type-coverage] mint jq-transform FAILED for type=${type} — orch-state.json unreadable/malformed" >&2

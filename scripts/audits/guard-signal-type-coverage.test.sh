@@ -147,6 +147,15 @@ minted=$(jq -c '[.task_board.backlog[]? | select(.dedup_key=="signal-type-regist
 if [ "$(echo "$minted" | jq 'length')" -eq 1 ]; then pass "TEST2 mint — exactly 1 backlog row dedup-keyed on the unrouted type"; else fail "TEST2 mint — expected 1 matching backlog row, got: $minted"; fi
 if [ "$(echo "$minted" | jq -r '.[0].type')" = "routing-gap" ]; then pass "TEST2 mint — row uses the routing-gap type slot"; else fail "TEST2 mint — row.type wrong: $minted"; fi
 if [ "$(echo "$minted" | jq -r '.[0].status')" = "BACKLOG" ]; then pass "TEST2 mint — row status is BACKLOG (lane-coherent)"; else fail "TEST2 mint — row.status wrong: $minted"; fi
+# Dispatchability AC (PO scope amendment 20260823T1157Z): a minted row must be
+# actionable with ZERO manual patching — next_agent/priority/owner/zone all
+# populated, and zone must be one of dev-team Step 3's accepted values
+# ({apps/<service>/, multi, cross-service/} — docs/agents/po/flow/
+# zone-routing.md), never a bare docs/agents/... PATH.
+if [ "$(echo "$minted" | jq -r '.[0].next_agent // "null"')" != "null" ]; then pass "TEST2 mint — next_agent populated (dispatchable)"; else fail "TEST2 mint — next_agent unset: $minted"; fi
+if [ "$(echo "$minted" | jq -r '.[0].priority // "null"')" != "null" ]; then pass "TEST2 mint — priority populated"; else fail "TEST2 mint — priority unset: $minted"; fi
+if [ "$(echo "$minted" | jq -r '.[0].owner // "null"')" != "null" ]; then pass "TEST2 mint — owner populated"; else fail "TEST2 mint — owner unset: $minted"; fi
+if [ "$(echo "$minted" | jq -r '(.[0].zone // "null") as $z | ($z == "multi" or $z == "cross-service/" or ($z | test("^apps/")))')" = "true" ]; then pass "TEST2 mint — zone is in dev-team's accepted set"; else fail "TEST2 mint — zone not in accepted set {apps/<service>/, multi, cross-service/}: $minted"; fi
 
 echo ""
 echo "=== TEST 2b: SAME unrouted type re-detected on a second run -> dedup, no duplicate row minted ==="
@@ -205,6 +214,11 @@ if echo "$out" | grep -q "zz-synthetic-pipeline-a-unrouted"; then pass "TEST8 ou
 minted=$(jq -c '[.task_board.backlog[]? | select(.dedup_key=="signal-type-registry-gap:zz-synthetic-pipeline-a-unrouted")]' "$ORCH_FIXTURE")
 if [ "$(echo "$minted" | jq 'length')" -eq 1 ]; then pass "TEST8 mint — 1 backlog row minted for the Pipeline-A gap"; else fail "TEST8 mint — expected 1 matching row, got: $minted"; fi
 if echo "$minted" | jq -r '.[0].title' | grep -q "Pipeline A"; then pass "TEST8 mint — row title tags Pipeline A"; else fail "TEST8 mint — row not tagged Pipeline A: $minted"; fi
+# Dispatchability AC (PO scope amendment 20260823T1157Z) — Pipeline-A mint path too.
+if [ "$(echo "$minted" | jq -r '.[0].next_agent // "null"')" != "null" ]; then pass "TEST8 mint — next_agent populated (dispatchable)"; else fail "TEST8 mint — next_agent unset: $minted"; fi
+if [ "$(echo "$minted" | jq -r '.[0].priority // "null"')" != "null" ]; then pass "TEST8 mint — priority populated"; else fail "TEST8 mint — priority unset: $minted"; fi
+if [ "$(echo "$minted" | jq -r '.[0].owner // "null"')" != "null" ]; then pass "TEST8 mint — owner populated"; else fail "TEST8 mint — owner unset: $minted"; fi
+if [ "$(echo "$minted" | jq -r '(.[0].zone // "null") as $z | ($z == "multi" or $z == "cross-service/" or ($z | test("^apps/")))')" = "true" ]; then pass "TEST8 mint — zone is in dev-team's accepted set"; else fail "TEST8 mint — zone not in accepted set {apps/<service>/, multi, cross-service/}: $minted"; fi
 
 echo ""
 echo "=== TEST 9: Pipeline-A routed type must NOT satisfy Pipeline-B coverage (reverse of TEST3) ==="
