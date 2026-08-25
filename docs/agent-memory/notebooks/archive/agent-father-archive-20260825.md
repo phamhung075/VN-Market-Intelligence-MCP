@@ -99,3 +99,27 @@ full `auditor-tier1-probe.test.sh` re-run: 264/264 GREEN, incl. the exact worked
   router-owned, not an agent-father commit target outside the one signal-queue DONE-mark carve-out) —
   same split as the sibling half's own `d490fef11 chore(orch): ...backlog[]->review[]` commit, done
   separately from its `fix(scripts/agents-flow)` commit.
+
+
+## FIX 2026-08-25T03:05Z — FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (P0, dispatcher: dev-team RLC)
+
+Wired § Incident-Lane Consumer (ILC) — Head-Decoupled Invocation into `docs/agents/dev-team/flow/main.md`
+at the Session-Gate→Step-1 anchor (FIRST of ILC→SECONDARY-Drain→QA-Drain→Step1), calling the
+already-shipped `scripts/devteam-backlog-claim-incident-lane-consumer.jq` verbatim, per architect brief
+`docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md` §4d (sibling scripts row
+`FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS` DONE_VERIFIED, commit `cd0039432`). Also updated
+SECONDARY-Drain's own intro sentence (no longer physically first), one new Reusable Scripts bullet, one
+Invariants clause naming all 3 concurrency budgets, size-justification header (+88L, 1279→1367).
+Committed `94716bfe6` (main.md), pushed nowhere (standing push-disarm).
+**LESSON — dispatcher live-caught 2 defects in the neighbour SECONDARY-Drain section MINUTES before
+dispatching this row, and explicitly warned not to copy them:** (1) that section's readback queries
+`.task_board.review[]` only, but its own claim script's stated candidate set is `review[] UNION done[]`
+— a `done[]`-origin claim silently vanishes from a lane-named readback. (2) that section's spawn text
+hardcodes a false `"status=REVIEW, branch:null"` premise. Neither is copied here: this section's own
+readback is a generic all-`.task_board`-lane scan (`.task_board | to_entries[] | select(.value|type==
+"array") | ...`), and its spawn text derives status/lane/claimed_by from the actually-picked row. Both
+defects flagged in RETURN as a follow-up row against SECONDARY-Drain itself — not retrofitted here
+(out of this row's own zone/scope). This task's own terminal-shape orch-state.json write (in_progress[]
+-> review[], next_agent=qa, `.head` idle-reset) WAS committed directly (`c677e3ac9`) — the dispatching
+tick's own instructions named this the allowed "ONE signal-queue DONE-mark per task dispatch" carve-out
+in `FU-AGENT-FATHER-ORCH-SCOPE`, unlike the UNCOMMITTED precedent noted just above.

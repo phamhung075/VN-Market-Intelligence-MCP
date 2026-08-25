@@ -27,28 +27,12 @@
      write pushed the count to 6). Nothing deleted; full record in the archive file and git
      history. Same convention as the prior splits noted above. -->
 
-## FIX 2026-08-25T03:05Z — FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (P0, dispatcher: dev-team RLC)
-
-Wired § Incident-Lane Consumer (ILC) — Head-Decoupled Invocation into `docs/agents/dev-team/flow/main.md`
-at the Session-Gate→Step-1 anchor (FIRST of ILC→SECONDARY-Drain→QA-Drain→Step1), calling the
-already-shipped `scripts/devteam-backlog-claim-incident-lane-consumer.jq` verbatim, per architect brief
-`docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md` §4d (sibling scripts row
-`FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS` DONE_VERIFIED, commit `cd0039432`). Also updated
-SECONDARY-Drain's own intro sentence (no longer physically first), one new Reusable Scripts bullet, one
-Invariants clause naming all 3 concurrency budgets, size-justification header (+88L, 1279→1367).
-Committed `94716bfe6` (main.md), pushed nowhere (standing push-disarm).
-**LESSON — dispatcher live-caught 2 defects in the neighbour SECONDARY-Drain section MINUTES before
-dispatching this row, and explicitly warned not to copy them:** (1) that section's readback queries
-`.task_board.review[]` only, but its own claim script's stated candidate set is `review[] UNION done[]`
-— a `done[]`-origin claim silently vanishes from a lane-named readback. (2) that section's spawn text
-hardcodes a false `"status=REVIEW, branch:null"` premise. Neither is copied here: this section's own
-readback is a generic all-`.task_board`-lane scan (`.task_board | to_entries[] | select(.value|type==
-"array") | ...`), and its spawn text derives status/lane/claimed_by from the actually-picked row. Both
-defects flagged in RETURN as a follow-up row against SECONDARY-Drain itself — not retrofitted here
-(out of this row's own zone/scope). This task's own terminal-shape orch-state.json write (in_progress[]
--> review[], next_agent=qa, `.head` idle-reset) WAS committed directly (`c677e3ac9`) — the dispatching
-tick's own instructions named this the allowed "ONE signal-queue DONE-mark per task dispatch" carve-out
-in `FU-AGENT-FATHER-ORCH-SCOPE`, unlike the UNCOMMITTED precedent noted just above.
+<!-- Entry 2026-08-25T03:05Z (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW) split to
+     docs/agent-memory/notebooks/archive/agent-father-archive-20260825.md on 2026-08-25,
+     second prune of the same day: this cycle's own append put the file at 159L/12835B,
+     over the 12000B byte cap (200L * 60B, same derivation context-bloat-backstop.sh uses).
+     AC-2 retention (current cycle + 2 prior) preserved. Nothing deleted; full record in the
+     archive file and git history. -->
 
 ## FIX 2026-08-25T13:00Z — FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY (P0, dispatcher: router, task_board.backlog[485])
 
@@ -120,3 +104,40 @@ commit_zone; flagging as a fast-follow candidate, not silently assumed covered).
 - **Lesson:** none new — a clean, low-signal sweep confirms the fleet stayed guide-compliant
   across the 2-day cadence gap; the only drift found was ordinary version staleness on one agent,
   caught and fixed mechanically by the check that exists for exactly this.
+
+## FIX 2026-08-25T19:55Z — FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-undroppable-remainder-over-cap-breach (P1, router hand-dispatch, off DRS allowlist)
+
+Added ONE row to the Pipeline-A routing table in `docs/agents/po/flow/triage-signals.md` for
+`notebook_undroppable_remainder_over_cap_breach` (28 -> 29 types parsed by
+`scripts/audits/guard-signal-type-coverage.sh`). Disposition was pre-adjudicated by PO
+(`triage-20260825T1700Z`): dedup NON-TERMINAL LANES on `payload.file` -> FOLD, else mint a
+`backlog[]` CHORE `owner: claude-manager-helper`, `zone: docs/agent-memory/notebooks/`. Committed
+with the journal; no board write (orch-state.json outside commit_zone, FU-AGENT-FATHER-ORCH-SCOPE).
+
+**LESSON 1 — which SIDE of an open-vs-closed namespace defect you are on is a READ, not a guess.**
+This row's class has been redispatched 4x. Signal `type` is an OPEN namespace on the EMIT side
+(`SignalRowSchema.type: z.string().optional()`) and a CLOSED, table-derived allowlist on the
+CONSUME side. The 2026-08-23 architect brief already MEASURED and REJECTED constraining the emit
+side: `orch-apply.sh` Stage 1 validates the whole candidate document all-or-nothing, so a
+`z.enum()` on `type` upgrades "one signal misrouted" into "this entire write rejected", fleet-wide.
+So the only correct move on an auto-filed `FIX-SIGNAL-TYPE-ROUTING-GAP-*` row is a CONSUME-side
+table row. Say which side you are on before writing — the structural answer to the open namespace
+itself belongs to `FIX-SIGNALTYPE-OPEN-NAMESPACE-VS-CLOSED-ALLOWLIST-5TH-INSTANCE` (architect), not
+to these one-row rows, and promoting them one at a time is not the fix.
+
+**LESSON 2 — the AC named a script that MUTATES state; running it verbatim would have been the
+defect.** `guard-signal-type-coverage.sh --check` reads as a dry-run and is not one: `--check` is an
+explicitly-ignored no-op flag, and on any unrouted type the script mints `backlog[]` rows through
+`orch-apply.sh`. Proven, not assumed — the full-live-state run, redirected onto a COPY, minted 4 NEW
+rows (`audit_finding`, `data_stale`, `detector_defect`, `tooling_defect`) that dedup did not cover.
+Against the live file that would have been 4 unsanctioned board writes from an agent whose
+commit_zone excludes orch-state.json entirely. Use `ORCH_APPLY_LIVE_FILE_OVERRIDE` /
+`GUARD_SIGNAL_*_DOC_OVERRIDE` + a fixture path, and checksum the live file before and after.
+
+**LESSON 3 — a coverage-guard AC can go VACUOUS between filing and dispatch.** The guard derives its
+live-type set ONLY from `.dev_team_idle_chain.pending_triage_inbox[]`. PO's 18:15Z tick folded and
+CLEARED every envelope of this type, so by dispatch time the guard could not name the type either
+way — a bare re-run would have "passed" for the wrong reason. The honest proof is a paired control
+on the REAL script with only the doc varying: pre-fix doc -> `FAIL ["notebook_undroppable_remainder_
+over_cap_breach"]` exit 1; post-fix doc -> `PASS — Pipeline A: 1 live type(s) routed (29 known)`
+exit 0. When an AC's oracle reads live state, pin that state in a fixture or the AC proves nothing.
