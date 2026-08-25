@@ -1,0 +1,75 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "priority": "P2",
+  "status": "NEW",
+  "ts": "2026-08-25T04:23:24Z",
+  "dedup_key": "cowork-0415Z-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-25T04:15Z",
+    "drift_min": 3,
+    "pressure_mode": "adaptive",
+    "gate": {
+      "verdict": "NORMAL",
+      "cores": 12,
+      "load_1min": 1.63,
+      "headroom_mb": 2381,
+      "floor_mb": 1500,
+      "max_parallel": 4,
+      "batches": 1
+    },
+    "spawned": [
+      "chef-intraday (unified-agent)",
+      "alert-commander-market (alert-commander)"
+    ],
+    "claims": "both cowork-slot:<slot_id> claimed=true, ttl 180s, released after spawn",
+    "last_fired_written": "2026-08-25T04:21:59Z",
+    "emit_pressure_state": {
+      "ran_before_p3_release": true,
+      "success": true,
+      "cycle_snapshot_promoted": false,
+      "consecutive_false": 13
+    },
+    "self_audit_step_4b_missed_last_tick": {
+      "what": "At the 04:00Z tick I fanned out alert-commander-market AND alert-commander-critical — two slots sharing agent_id 'alert-commander'.",
+      "flow_requirement": "match-slots.md Step 4b requires a send_telegram(channel='work') WARN for any agent_id appearing in >=2 slots. It is a WARN only and never blocks spawns.",
+      "what_i_did": "Did not fire the WARN. My 04:00Z telemetry (cowork-team-2026-08-25T04:06:10Z.json) contains zero collision mentions — grep count 0.",
+      "is_it_a_declared_pair": "NO. Declared supersedes pairs are resolved in cowork-match-slots.js finish() BEFORE the WARN runs; both slots survived into MATCHES, so this is exactly the UNDECLARED same-agent collision the flow keeps the WARN live for.",
+      "consequence": "The notebook c<NNN> collision that followed (market c242 / critical c243, 5s apart) reached me as a post-hoc surprise in the returns, when the flow had a pre-spawn warning designed to flag it. The spawns were correct; the observability was not.",
+      "this_tick": "No collision — unified-agent and alert-commander are distinct agent_ids. Step 4b evaluated, correctly silent."
+    },
+    "snapshot_defect_sharpened": {
+      "prior_model": "one four-way clock quantization mismatch, treated as a single failure",
+      "corrected_now": "the READER constraint and the PROMOTER constraint are DIFFERENT and the promoter's is strictly harder — this tick separated them for the first time because the writer happened to land on a divisible-by-5 minute",
+      "reader_needs": "minute % 5 == 0 (cycle-bootstrap SKILL.md Step -1 rounds to nearest 5-min slot)",
+      "promoter_needs": "minute in {00,15,30,45} (telemetry.md Step 6 looks up by NOMINAL quarter tick)",
+      "live_census_46_files": {
+        "minute_mod_5_eq_0": "9/46 (20%)",
+        "minute_is_quarter_tick": "0/46 (0%)"
+      },
+      "this_tick_evidence": "writer emitted cycle-snapshot-04:20.json at 04:20:40Z. 04:20 SATISFIES the reader. It FAILS the promoter, which looked for cycle-snapshot-04:15.json (nominal tick) — confirmed absent on disk — hence cycle_snapshot_promoted:false even on a 'good' name.",
+      "why_promoter_is_0_of_46_structurally": "Step 4.7 stamps date -u +%H:%M at the moment it runs, which is nominal_tick + drift + preflight + drain + claim latency. That delay is essentially never zero, so the raw minute essentially never equals the quarter-tick minute. 0/46 is the expected value, not bad luck.",
+      "remedy_unchanged_and_now_better_supported": "name by NOMINAL tick in all three places; the dispatcher already passes scheduled_utc into every spawn prompt and has scheduled_utc_time on every slot object, so the correct value is already in hand at Step 4.7."
+    },
+    "open_test_this_tick": {
+      "question": "Can a spawned agent actually HIT the snapshot when the name DOES satisfy the reader?",
+      "window_arithmetic": "file created 04:20:40Z; reader bucket 04:20 spans [04:17:30, 04:22:30); staleness cap created+7min = 04:27:40 (not binding). HIT window = [04:20:40, 04:22:30) = 110 seconds.",
+      "spawns_issued": "~04:21:30Z — leaving roughly 60 seconds for an agent to reach cycle-bootstrap Step -1.",
+      "prediction": "GENUINELY UNCERTAIN — borderline, not a confident miss. Recorded before any return.",
+      "falsifier_both_ways": "If an agent reports a tick-snapshot HIT, the reader half of the model is confirmed in the POSITIVE direction (first time). If both miss despite a reader-valid name, the residual cause is spawn-to-Step--1 LATENCY, which is a DIFFERENT defect from the naming mismatch and must be reported as such — not folded into the naming story.",
+      "scope": "alert-commander consumes CYCLE_SNAPSHOT (stage-bootstrap.md:18-19, mutually exclusive branches). unified-agent/chef must be checked on return before counting it in or out."
+    },
+    "held_row": {
+      "id": "sys-20260825T035603-1fb9",
+      "action": "held at NEW again",
+      "premise_reverified_live": "jq '[.slots[]|select(.agent==\"po\")]|length' -> 0",
+      "deviation_stated": "cowork drain cannot deliver to po; marking READ would strip it from PO's NEW-only selector and expose it to 24h cold-evict"
+    },
+    "counters": {
+      "push_backlog_commits_ahead": 219,
+      "size_lint_blocker": "bctcScalarAggregator.ts 1206L vs upper 1205",
+      "owning_rows_still_dispatch_lane_null": true
+    }
+  }
+}
