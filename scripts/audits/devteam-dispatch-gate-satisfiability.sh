@@ -446,7 +446,7 @@ DRS_ALLOWLIST='["architect","ba","pm","po","agents-architect"]'
 
 cp "$WORK/fixture.json" "$WORK/t5.json"
 jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/t5.json" > "$WORK/t5b.json"
-jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/t5b.json" > "$WORK/t5c.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/t5b.json" > "$WORK/t5c.json"
 DRS_INPROG_AFTER=$(jq '.task_board.in_progress|length' "$WORK/t5c.json")
 DRS_FIRED=$([ "$DRS_INPROG_AFTER" -gt "$INPROG_N" ] && echo true || echo false)
 assert "DRS gate (in_progress<2, shared 4th writer) is SATISFIABLE at in_progress=$INPROG_N — DRS claims an allowlisted non-dev-next_agent row not already in SLS's supervised+plan_only territory" "$DRS_FIRED"
@@ -527,13 +527,155 @@ jq -n --arg now "$NOW" '
             next_agent: "developer", updated_at: $now, updated_by: "test" }
   }' > "$DRS_BUSY_HEAD_FIXTURE"
 HEAD_BEFORE=$(jq -c '.head' "$DRS_BUSY_HEAD_FIXTURE")
-jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$DRS_BUSY_HEAD_FIXTURE" > "$WORK/drs-busy-head-after.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$DRS_BUSY_HEAD_FIXTURE" > "$WORK/drs-busy-head-after.json"
 HEAD_AFTER=$(jq -c '.head' "$WORK/drs-busy-head-after.json")
 assert "AC-DRS-HEAD-GUARD: .head is byte-identical after DRS claim when a DIFFERENT task is genuinely busy in .head (never clobbers a live resume pointer)" \
   "$([ "$HEAD_BEFORE" = "$HEAD_AFTER" ] && echo true || echo false)"
 DRS_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-DRS-HEADGUARD")] | length' "$WORK/drs-busy-head-after.json")
 assert "AC-DRS-HEAD-GUARD (positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched (only .head is guarded, not the lane move)" \
   "$([ "$DRS_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+# =============================================================================
+# ---- FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT
+# (2026-08-26) ----
+# scripts/devteam-backlog-claim-design-router-sweep.jq and (scope-widened,
+# same commit — cross-ref
+# feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head)
+# scripts/devteam-backlog-claim-supervised-lane-sweep.jq's PRIMARY path used
+# to bind `($picked.dispatch_lane) as $lane` — a promote-time CACHE — with no
+# re-resolution and no null-guard. Isolated single-row fixtures (same
+# discipline as every other AC block in this file), proving:
+#   AC-1/AC-2 (claim-time resolve supersedes a stale cache): a row whose
+#     cached `dispatch_lane` predates a later `next_agent` change claims to
+#     the LATER (current) agent, not the stale cached one.
+#   AC-3 (null dispatch_lane never yields an unspawnable head): (a) a row
+#     with `dispatch_lane:null` but a resolvable `next_agent` still claims
+#     correctly (never refused unnecessarily); (b) a row with
+#     `dispatch_lane:null` AND no resolvable next_agent/owner at all is
+#     REFUSED — `.head.next_agent` is NEVER written as null.
+#   Ordering (second, separable defect, same commit): a freshly-stamped P0
+#     at a HIGHER array index outranks an older stamp at a LOWER array index.
+# =============================================================================
+echo ""
+echo "=== FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (DRS + SLS-PRIMARY) ==="
+
+# --- DRS: AC-1/AC-2, stale cache superseded ---
+DRS_STALECACHE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-DRS-STALECACHE", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "architect",
+        dispatch_lane: "ba", promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
+    } }')
+echo "$DRS_STALECACHE_FIXTURE" > "$WORK/drs-stalecache.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/drs-stalecache.json" > "$WORK/drs-stalecache-out.json"
+DRS_STALECACHE_HEAD_NA=$(jq -r '.head.next_agent // empty' "$WORK/drs-stalecache-out.json")
+assert "AC-DRS-CLAIMTIME-RESOLVE (AC-1/AC-2): dispatch_lane cache='ba' predates next_agent='architect' — claim resolves to the LATER agent 'architect', not the stale cache (got '${DRS_STALECACHE_HEAD_NA:-<none>}')" \
+  "$([ "$DRS_STALECACHE_HEAD_NA" = "architect" ] && echo true || echo false)"
+
+# --- DRS: AC-3(a), null dispatch_lane + resolvable next_agent still claims ---
+DRS_NULLLANE_RESOLVABLE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-DRS-NULLLANE-OK", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "architect",
+        dispatch_lane: null, promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
+    } }')
+echo "$DRS_NULLLANE_RESOLVABLE_FIXTURE" > "$WORK/drs-nulllane-ok.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/drs-nulllane-ok.json" > "$WORK/drs-nulllane-ok-out.json"
+DRS_NULLLANE_OK_HEAD_NA=$(jq -r '.head.next_agent // empty' "$WORK/drs-nulllane-ok-out.json")
+assert "AC-DRS-NULL-LANE-RESOLVABLE (AC-3, positive): dispatch_lane=null but next_agent='architect' resolvable — claims to 'architect' (got '${DRS_NULLLANE_OK_HEAD_NA:-<none>}')" \
+  "$([ "$DRS_NULLLANE_OK_HEAD_NA" = "architect" ] && echo true || echo false)"
+
+# --- DRS: AC-3(b), null dispatch_lane + unresolvable next_agent -> REFUSE, never write null head ---
+DRS_NULLLANE_UNRESOLVABLE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-DRS-NULLLANE-REFUSE", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "",
+        dispatch_lane: null, promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null, updated_at: $now, updated_by: "test" }
+  }')
+echo "$DRS_NULLLANE_UNRESOLVABLE_FIXTURE" > "$WORK/drs-nulllane-refuse.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/drs-nulllane-refuse.json" > "$WORK/drs-nulllane-refuse-out.json"
+DRS_NULLLANE_REFUSE_HEAD_STATUS=$(jq -r '.head.status' "$WORK/drs-nulllane-refuse-out.json")
+DRS_NULLLANE_REFUSE_INPROG_N=$(jq '.task_board.in_progress|length' "$WORK/drs-nulllane-refuse-out.json")
+assert "AC-DRS-NULL-LANE-REFUSE (AC-3, negative control): dispatch_lane=null AND next_agent unresolvable — script REFUSES (no claim, .head stays idle, NEVER next_agent=null written)" \
+  "$([ "$DRS_NULLLANE_REFUSE_HEAD_STATUS" = "idle" ] && [ "$DRS_NULLLANE_REFUSE_INPROG_N" -eq 0 ] && echo true || echo false)"
+
+# --- DRS: ordering, fresh P0 (higher idx) outranks stale P1 (lower idx) ---
+DRS_ORDER_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [
+        { id: "GATESAT-DRS-ORDER-STALE-P1", status: "READY", priority: "P1",
+          type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+          promoted_by: "dev-team (design-router sweep)", promoted_at: "2026-08-15T00:00:00Z" },
+        { id: "GATESAT-DRS-ORDER-FRESH-P0", status: "READY", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+          promoted_by: "dev-team (design-router sweep)", promoted_at: $now }
+      ]
+    } }')
+echo "$DRS_ORDER_FIXTURE" > "$WORK/drs-order.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/drs-order.json" > "$WORK/drs-order-out.json"
+DRS_ORDER_PICKED=$(jq -r '.task_board.in_progress[0].id // empty' "$WORK/drs-order-out.json")
+assert "AC-DRS-PRIORITY-ORDER (2nd, separable defect fixed same commit): the fresh P0 at the HIGHER array index is claimed, not the stale P1 at the LOWER index (got '${DRS_ORDER_PICKED:-<none>}')" \
+  "$([ "$DRS_ORDER_PICKED" = "GATESAT-DRS-ORDER-FRESH-P0" ] && echo true || echo false)"
+
+# --- SLS-PRIMARY: AC-1/AC-2, stale cache superseded (identical shape, sibling script) ---
+SLS_STALECACHE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-SLS-STALECACHE", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "architect", supervised: true, plan_only: true,
+        dispatch_lane: "ba", promoted_by: "dev-team (supervised-lane sweep)", promoted_at: $now } ]
+    } }')
+echo "$SLS_STALECACHE_FIXTURE" > "$WORK/sls-stalecache.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-stalecache.json" > "$WORK/sls-stalecache-out.json"
+SLS_STALECACHE_HEAD_NA=$(jq -r '.head.next_agent // empty' "$WORK/sls-stalecache-out.json")
+assert "AC-SLS-PRIMARY-CLAIMTIME-RESOLVE (scope-widened AC-1/AC-2): dispatch_lane cache='ba' predates next_agent='architect' — PRIMARY claim resolves to the LATER agent 'architect' (got '${SLS_STALECACHE_HEAD_NA:-<none>}')" \
+  "$([ "$SLS_STALECACHE_HEAD_NA" = "architect" ] && echo true || echo false)"
+
+# --- SLS-PRIMARY: AC-3, null dispatch_lane never yields an unspawnable head
+# (SLS's own resolved_dispatch_lane always terminates in "developer" — so
+# this proves the NEVER-NULL guarantee via the fallback chain rather than an
+# explicit refusal, which is the correct SLS-specific behavior; see this
+# script's own header note on why PRIMARY reuses resolved_dispatch_lane, not
+# bare effective_next_agent). ---
+SLS_NULLLANE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-SLS-NULLLANE", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "", supervised: true, plan_only: true,
+        dispatch_lane: null, promoted_by: "dev-team (supervised-lane sweep)", promoted_at: $now } ]
+    } }')
+echo "$SLS_NULLLANE_FIXTURE" > "$WORK/sls-nulllane.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-nulllane.json" > "$WORK/sls-nulllane-out.json"
+SLS_NULLLANE_HEAD_NA=$(jq -r '.head.next_agent // empty' "$WORK/sls-nulllane-out.json")
+assert "AC-SLS-PRIMARY-NULL-LANE-NEVER-NULL (AC-3): dispatch_lane=null AND next_agent empty — .head.next_agent is NEVER written as null/empty (resolved via resolved_dispatch_lane's own terminal fallback, got '${SLS_NULLLANE_HEAD_NA:-<none>}')" \
+  "$([ -n "$SLS_NULLLANE_HEAD_NA" ] && echo true || echo false)"
+
+# --- SLS-PRIMARY: ordering, fresh P0 (higher idx) outranks stale P1 (lower idx) ---
+SLS_ORDER_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [
+        { id: "GATESAT-SLS-ORDER-STALE-P1", status: "READY", priority: "P1",
+          type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+          supervised: true, plan_only: true,
+          promoted_by: "dev-team (supervised-lane sweep)", promoted_at: "2026-08-15T00:00:00Z" },
+        { id: "GATESAT-SLS-ORDER-FRESH-P0", status: "READY", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+          supervised: true, plan_only: true,
+          promoted_by: "dev-team (supervised-lane sweep)", promoted_at: $now }
+      ]
+    } }')
+echo "$SLS_ORDER_FIXTURE" > "$WORK/sls-order.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-order.json" > "$WORK/sls-order-out.json"
+SLS_ORDER_PICKED=$(jq -r '.task_board.in_progress[0].id // empty' "$WORK/sls-order-out.json")
+assert "AC-SLS-PRIMARY-PRIORITY-ORDER (scope-widened, same ordering fix applied to the sibling sweep): the fresh P0 at the HIGHER array index is claimed, not the stale P1 at the LOWER index (got '${SLS_ORDER_PICKED:-<none>}')" \
+  "$([ "$SLS_ORDER_PICKED" = "GATESAT-SLS-ORDER-FRESH-P0" ] && echo true || echo false)"
 
 # ---- AC-BOUNDED1-HEAD-GUARD / AC-SLS-HEAD-GUARD / AC-RLC-HEAD-GUARD ----
 # FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE (2026-07-30): same
@@ -776,7 +918,7 @@ assert "defense-in-depth: SLS claim script never claims more than ONE additional
 
 assert "at in_progress=$CAPPED_INPROG (== cap), main.md's own WIP4<2 pre-check would skip invoking the DRS promote+claim pair entirely this tick (2<2 is false)" "$([ "$CAPPED_INPROG" -ge 2 ] && echo true || echo false)"
 jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/capped.json" > "$WORK/capped-drs.json"
-jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/capped-drs.json" > "$WORK/capped-drs2.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/capped-drs.json" > "$WORK/capped-drs2.json"
 CAPPED_DRS_CLAIMED_AT_MOST_ONE=$([ "$(jq '.task_board.in_progress|length' "$WORK/capped-drs2.json")" -le "$((CAPPED_INPROG + 1))" ] && echo true || echo false)
 assert "defense-in-depth: DRS claim script never claims more than ONE additional row per invocation even if called at/above the shared WIP<=2 cap" "$CAPPED_DRS_CLAIMED_AT_MOST_ONE"
 
@@ -1371,7 +1513,7 @@ for GLOBAL_TICK in $(seq 1 12); do
     drs)
       ROW_ID="GATESAT-ROTATE-DRS-W${WINDOW}"
       jq --arg now "$TICK_STAMP" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-design-router-sweep.jq "$ROTATE_FIXTURE" > "$WORK/rot-b.json"
-      jq --arg now "$TICK_STAMP" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/rot-b.json" > "$WORK/rot-c.json"
+      jq --arg now "$TICK_STAMP" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/rot-b.json" > "$WORK/rot-c.json"
       FIRED=$([ "$(jq --arg id "$ROW_ID" '[.task_board.in_progress[]|select(.id==$id)]|length' "$WORK/rot-c.json")" -eq 1 ] && echo true || echo false)
       ;;
     qa_drain)

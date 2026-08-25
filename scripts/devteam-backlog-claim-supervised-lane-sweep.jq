@@ -9,12 +9,19 @@
 # REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER, 2026-07-30 — see below for why
 # a second set was added):
 #
-#   (a) PRIMARY (unchanged behavior) — whichever row in ready[] was stamped
-#       by the supervised-lane-sweep promote script (promoted_by ==
+#   (a) PRIMARY — whichever row in ready[] was stamped by the
+#       supervised-lane-sweep promote script (promoted_by ==
 #       "dev-team (supervised-lane sweep)"), never a pre-existing human/PO/
 #       router-placed ready[] row and never a BOUNDED-1- or DRS-auto-pickup
-#       row (disjoint marker strings). At most one such row exists per tick
-#       under the promote script's own one-row-per-invocation discipline.
+#       row (disjoint marker strings). Ordinarily at most one such row exists
+#       per tick under the promote script's own one-row-per-invocation
+#       discipline; if more than one is ever co-resident (a claim-side
+#       refuse/skip persisting a stamp across ticks), candidates are ranked
+#       by `[priority_rank, idx]` and only a candidate whose claim-time
+#       `effective_next_agent($detail_items)` resolves non-empty is eligible
+#       — see FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-
+#       AGENT (2026-08-26) below for why lane resolution is no longer a
+#       promote-time cache read.
 #
 #   (b) FALLBACK (NEW, reached only when (a) finds nothing this tick) — a
 #       ready[] row that is effective_supervised AND effective_plan_only
@@ -75,11 +82,14 @@
 # unconditionally so a single `include` + a single invocation serves both
 # paths.
 #
-# UNLIKE devteam-backlog-claim-bounded1.jq: sets head.next_agent to the
-# picked row's own `dispatch_lane` field DIRECTLY — never a generic
-# "developer" fallback-of-last-resort — because the real specialist was
-# already resolved (by the promote script for path (a), or by THIS script
-# for path (b)) before the row was ever claimed. This is deliberate: BOUNDED-1's
+# UNLIKE devteam-backlog-claim-bounded1.jq: sets head.next_agent to a
+# resolved specialist DIRECTLY — never a generic "developer"
+# fallback-of-last-resort — because the real specialist is resolvable (for
+# path (a), via `effective_next_agent($detail_items)` re-resolved fresh at
+# THIS claim's own invocation, per FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-
+# NOT-EFFECTIVE-NEXT-AGENT, 2026-08-26 — NOT a cached `.dispatch_lane` read;
+# for path (b), via THIS script's own `resolved_dispatch_lane($detail_items)`
+# call, likewise always fresh) before the row is claimed. This is deliberate: BOUNDED-1's
 # claimed rows still need Step 3's zone-detect skill to resolve the specialist
 # from zone/files (zone-detect has NO path to non-dev-* specialists — see the
 # "NON-CODE / DESIGN row next_agent gap" note in
@@ -122,9 +132,36 @@ include "scripts/lib/devteam-eligibility";
 
 (detail_items_from($detail)) as $detail_items
 | dep_status_map($archive) as $status_map
-| ( [ (.task_board.ready // [])[]
-      | select(.promoted_by == "dev-team (supervised-lane sweep)")
-    ]
+| ( [ (.task_board.ready // []) | to_entries[]
+      | select(.value.promoted_by == "dev-team (supervised-lane sweep)")
+      | { idx: .key, row: .value, rank: (.value | priority_rank),
+          lane: (.value | resolved_dispatch_lane($detail_items)) }
+    ] | sort_by([.rank, .idx])
+    | [ .[] | select((.lane | length) > 0) ]
+      # FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT
+      # (2026-08-26, scope-widened to this sibling sweep — cross-ref
+      # feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head):
+      # PRIMARY used to bind `($picked.dispatch_lane) as $lane` — the CACHED
+      # promote-time value — with no re-resolution and no null-guard, the
+      # IDENTICAL defect shape scripts/devteam-backlog-claim-design-router-
+      # sweep.jq carried. Now resolves `resolved_dispatch_lane($detail_items)`
+      # fresh at CLAIM time for every PRIMARY candidate (never reads
+      # `.dispatch_lane` for the routing decision) — the SAME resolver this
+      # sweep's own promote script and its own FALLBACK path (b) below
+      # already use (NOT bare `effective_next_agent` — unlike DRS, a
+      # PRIMARY candidate is not guaranteed a present `next_agent`; promote
+      # already falls back to `effective_owner`, else the literal
+      # `"developer"` string, so a fresh call must offer the identical
+      # fallback chain or it would wrongly reject a legitimately-resolved
+      # owner-fallback row). Sorted by `[priority_rank, idx]` (same ordering
+      # fix as the DRS sibling — a freshly-stamped P0 must not lose to an
+      # older stamp at a lower array index) and filtered to only candidates
+      # that actually resolve (AC-3: a null/empty resolution is SKIPPED,
+      # never written into `.head.next_agent` as null — falls through to the
+      # next PRIMARY candidate, then to FALLBACK, then no-op; in practice
+      # `resolved_dispatch_lane`'s own `"developer"` terminal fallback means
+      # this filter never actually trips for PRIMARY — kept as
+      # defense-in-depth, mirroring DRS's identical guard).
   ) as $primary
 | ( [ (.task_board.ready // []) | to_entries[]
       | select(.value.promoted_by != "dev-team (supervised-lane sweep)")
@@ -143,13 +180,16 @@ include "scripts/lib/devteam-eligibility";
    | ($hs == "idle" or $hs == "done" or $ha == null)) as $head_free
 | if ($primary | length) > 0 then
     ($primary[0]) as $picked
-    | ($picked.id) as $picked_id
-    | ($picked.dispatch_lane) as $lane
+    | ($picked.row.id) as $picked_id
+    | ($picked.lane) as $lane
     | .task_board.in_progress = ((.task_board.in_progress // []) + [
-        ($picked + {
+        ($picked.row + {
             status: "IN_PROGRESS",
             claimed_at: $now,
-            claimed_by: "dev-team (supervised-lane sweep)"
+            claimed_by: "dev-team (supervised-lane sweep)",
+            dispatch_lane: $lane
+              # claim-time effective_next_agent() resolution — never a
+              # copy-forward of the (possibly stale/null) promote-time cache.
           })
       ])
     | .task_board.ready = [ (.task_board.ready // [])[] | select(.id != $picked_id) ]
@@ -160,7 +200,7 @@ include "scripts/lib/devteam-eligibility";
             active_task_id: $picked_id,
             next_agent: $lane,
             next_action: ("Supervised-Lane Sweep claim of " + $picked_id
-              + " — spawn " + $lane + " DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear."),
+              + " — spawn " + $lane + " DIRECTLY (no zone-detect indirection; lane resolved at CLAIM time via effective_next_agent(), never a cached promote-time value). supervised/plan_only preserved — do not clear."),
             updated_at: $now,
             updated_by: "dev-team (supervised-lane sweep)"
           }
