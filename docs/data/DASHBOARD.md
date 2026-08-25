@@ -2422,3 +2422,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · cron fire-gap: monthlySignalQualityAudit
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server cron monthlySignalQualityAudit
+**Details:** last run 2026-06-01 00:00:00, overdue 2062.6h vs 1080.0h threshold (MISSED), known since 2026-08-24
+**Impact:** monthly signal quality audit not running
+**Root cause:** job scheduling/execution gap, longstanding
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:04Z (signal sys-20260825T223711-0f50, system-auditor -> po, dedup_key=auditor-a29-fire-gap:monthlySignalQualityAudit, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
