@@ -80,9 +80,25 @@
         "occurrence": "4th consecutive live confirmation",
         "summary": "Step 4.7 names the snapshot by wall clock, emit_pressure_state looks it up by nominal tick.",
         "this_tick": "wrote docs/data/cycle-snapshot-06:50.json against nominal tick 06:45 -> cycle_snapshot_promoted:false",
-        "downstream": "cycle-snapshot-latest.json remains tick 00:00 from 2026-08-23; last_regime and last_volatility_level therefore stay 'unknown', keeping 2 of 3 adaptive cadence inputs dead even now that pressure_mode is adaptive.",
+        "downstream": "cycle-snapshot-latest.json remains tick 00:00 from 2026-08-23. Promotion is genuinely broken, but it is NOT the reason last_regime/last_volatility_level are 'unknown' — see correction below.",
         "fix": "writer-side one-liner in docs/agents/cowork-team/flow/tick-snapshot.md — FILE_TICK must be the nominal tick, not date -u +%H:%M. No server change.",
-        "owner_hint": "agent-father"
+        "owner_hint": "agent-father",
+        "correction": {
+          "retracts": "The original downstream text said latest.json staleness is THEREFORE why last_regime/last_volatility_level stay unknown. That causal 'therefore' is false and I had already recorded the refutation on 2026-08-23 before restating the superseded framing here.",
+          "measured_2026_08_25": "telemetry.md:18-19 tells the emit call to read regime_status / volatility_level from cycle-snapshot-latest.json. Neither key exists at ANY path in ANY snapshot — fresh (06:50) or latest. Full key set of both is exactly [created_at, macro_snapshot, market_context, tick]. The only regime-bearing path is macro_snapshot.data.signals.carry.regime.",
+          "two_independent_blockers": "(1) wrong lookup key in telemetry.md — regime_status does not exist; (2) promotion never fires — wall-clock filename vs nominal-tick lookup. Fixing either ALONE leaves both fields 'unknown'.",
+          "live_value_being_missed": "macro_snapshot.data.signals.carry.regime = NEUTRAL, carrySpread 1.37pp, computedAt 2026-08-25T06:50:08Z, is_estimate:false, source_tier:2 — real and fresh."
+        }
+      },
+      {
+        "id": "REGIME-SCHEMA-DRIFT-CONVERGENCE-TWO-CONSUMERS-ONE-LIVE-FIELD",
+        "severity": "P2",
+        "summary": "Two independent consumers both fail to reach the same live carry.regime field, for two different reasons. Single upstream fix serves both.",
+        "consumer_a": "cowork telemetry.md Step 6.0 — looks up key 'regime_status', which has never existed in the snapshot schema.",
+        "consumer_b": "alert-commander via .claude/skills/regime-extraction/SKILL.md — parses macro_snapshot.text for a 'Global Liquidity: X' line. Confirmed absent: grep for that literal across all 42 on-disk snapshots returns zero files. Live .text is now '[Macro Snapshot]/Status: ok/Vn Index: ...'.",
+        "consumer_b_behaved_correctly": "The SKILL carries a documented 2026-07-03 schema-drift note instructing exactly this fallback (REGIME=NEUTRAL + log, read CARRY_REGIME from signals.carry.regime). alert-commander followed it. This is not an agent error — but the fallback has now been the standing behaviour for ~7 weeks and that note itself says 'flag to dev-team/architect if seen repeatedly'.",
+        "fix_direction": "Point both consumers at macro_snapshot.data.signals.carry.regime, or have the snapshot writer surface a top-level regime_status. Do NOT fix only the promotion path and call the adaptive inputs revived.",
+        "owner_hint": "architect (two-consumer schema decision, not a one-line doc edit)"
       }
     ],
     "signal_delivery_confirmation": {
