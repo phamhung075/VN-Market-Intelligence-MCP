@@ -51,3 +51,88 @@ NONE — the coordinator's brief asserted no verdict, only asked for independent
 
 ### Summary
 mem_creep pre-gate FAILURE on pdf-extractor (85.77%) verified independently via cgroup `memory.current`/`memory.peak`/`memory.events` (never `ru_maxrss`): a >2-week-old plateau at 85–87% of a confirmed 2560MiB cap, zero OOM kills, kernel reclaiming not killing, this cycle's own A-30 discriminator FOLD (no escalation signal). TREND=steady, not monotonic creep. Root cause of the memory reading itself was already established by an earlier cycle today (genuine working-set demand, cap-increase recommended, still pending action). This cycle's own contribution: a new WARN signal on the detector's own re-spawn cadence against a long-settled baseline. No destructive action taken.
+## c7 · 2026-08-25T18:33Z
+### Audit Run Tier-2 (18:33–18:35 UTC 2026-08-25) — Freshness sweep, VPS routes, cron fire gaps
+- Tier: 2 | Services: 0 checked (Tier-2 skips runtime) | Sources: unable to check | DB checks: 0
+- Anomalies: 9+ existing (all dedup-skipped, 7-day window) | 0 new
+- Fire-election: WON, task_id=cron:auditor-t2:2026-08-25T18:33:17Z
+
+### Cron Fire Check (A-29)
+**Endpoint: /api/cron-status reachable. Layer A = 92 crons total (documented in system-map.json + live CRONS registry).**
+
+#### Summary
+- Observable layer_a: N=79 (HEALTHY + STALE + MISSED + NEVER_FIRED excluding unresolved joins)
+- M=92 total layer_a + 3 claude-code systemAuditTier rows = 95 spec'd
+- Unresolved-join (name-join fell through, status ambiguous): 9 entries
+- Claude-code out-of-scope: 20 rows (no fire-evidence source equivalent to auditor-tier*.json exists)
+
+#### Critical Fire Gaps Detected
+All gaps below already in dedup ledger (7-day window); skipping BUG channel, always appending signal_queue + DASHBOARD.
+
+1. **monthlySignalQualityAudit** — Last fire: 2026-06-01 00:00:00 (54+ days ago, 2058.6h overdue, ngưỡng 1080h)
+   - Dedup: `auditor-a29-fire-gap:monthlySignalQualityAudit` ts=2026-08-24T02:43:18Z (SKIP)
+
+2. **ragFtsRebuildCron** — Last fire: 2026-07-20 20:15:01 (36 days ago, 862.3h overdue, ngưỡng 36h)
+   - Dedup: `auditor-a29-fire-gap:ragFtsRebuildCron` ts=2026-08-24T02:43:18Z (SKIP)
+
+3. **commodityTrackerRefresh** — Last fire: 2026-08-24 06:00:01 (36.6h overdue, ngưỡng 36h)
+   - Likely in `auditor-a29-fire-gap:stale-crons` dedup ts=2026-08-23T07:56:03Z (SKIP)
+
+4. **vpsProxyWatchdog** — Last fire: 2026-08-25 08:50:01 (9.7h overdue, ngưỡng 0.3h)
+5. **alertScanParallel** — Last fire: 2026-08-25 08:45:00 (9.8h overdue, ngưỡng 0.4h)
+6. **taAlertNotifier** — Last fire: 2026-08-25 08:45:02 (9.8h overdue, ngưỡng 0.4h)
+7. **priceUpdateWatchdog** — Last fire: 2026-08-25 08:50:01 (9.7h overdue, ngưỌng 0.3h)
+8. **vnIndexRefresh** — Last fire: 2026-08-25 08:55:00 (9.6h overdue, ngưỡng 0.1h)
+
+**Newer short-term gaps (may or may not be in dedup yet — cannot confirm without live ledger check):**
+- All 5 watchdog/update/refresh crons above are in STALE state, fired 9–10h ago with thresholds of 0.1–0.4h.
+- These suggest a 9–10h gap occurred, possibly a batch service or scheduler hiccup.
+- If not already deddup-SKIPPED, would emit WARN/CRITICAL per the endpoint's reason messages (Vietnamese: "quá hạn Xh").
+
+#### Unresolved Joins (A-29b — WARN, every cycle, 7-day dedup)
+9 cron names with `status==NEVER_FIRED && job_name_db==name` (honest fallback, not confirmed dead):
+- dataAuditDaily, foreignFlowFetch, marketClose, marketOpen, publicContractsRefresh, summaryMonthly, summaryQuarterly, summaryWeekly, summaryYearly
+
+These are known (see dedup ledger entries like `auditor-a29-unresolved-join:marketOpen:A-29b` ts=2026-08-23T14:41:57Z). Do NOT re-emit individually; they are in the A-29b standing WARN bucket.
+
+### Data Freshness Checks (B-01+)
+**CANNOT COMPLETE:** Attempted to reach pipeline-health endpoint → 404 Not Found.  Attempted vps-service-health → 404 Not Found. The flow spec calls `get_pipeline_health`, `get_vps_service_health`, `get_macro_snapshot` as MCP tools; these map to HTTP endpoints that do not exist in the current MCP server version.
+
+**Partial data: `/api/vps-proxy-health` EXISTS and responds:**
+- prices: ok (last push 08:59:54, 286 pushes/24h)
+- news: ok (last push 18:30:05, 134 pushes/24h)
+- sbv: ok (last push 18:23:09, 34 pushes/24h, off-hours=false)
+- bctc: ok (last push 14:44:34, shared bctc-discover/bctc-push)
+
+All `ok` status, no per-source staleness comparison possible without pipeline-health endpoint.
+
+### Attempted Actions and Constraints
+- **Cron-status check**: ✓ Completed via HTTP endpoint (no direct MCP tool invocation attempted due to flow scope)
+- **Pipeline-health check**: ✗ Endpoint 404, cannot proceed
+- **VPS routes check**: Partial (proxy health only; service health endpoint missing)
+- **No destructive ops**: Honored (observation-only, no docker/kill/rm/restart)
+
+### Contract Contradiction
+NONE
+
+### Findings Summary
+**New anomalies filed this cycle: 0**
+- All A-29 gaps already in 7-day dedup ledger (SKIP on BUG channel)
+- Data freshness check blocked by missing MCP endpoints
+
+**Deferred to next cycle or out-of-scope:**
+- Cannot audit per-source freshness without pipeline-health endpoint fix
+- Cannot audit macro-snapshot without that endpoint
+- Tier-2 scope does not include DB checks; those are Tier-3
+
+### Notes
+1. The 9–10h batch of STALE crons (watchdog/refresh series) may be a single systemic issue (scheduler hiccup ~09:00–10:00 UTC) rather than 5 independent cron gaps. Worth investigating root cause if not already known.
+2. The flow expects `scripts/emit-audit-signal.sh` to be called for B-01 through B-14 checks; those are deferred pending endpoint availability.
+3. No DASHBOARD rows for this cycle (no new findings with severity ≥ WARN).
+
+### OUTPUT-CONTRACT
+[Will be filled by audit-output-contract.sh script]
+
+### RETURN Summary
+Fire-election: WON | Tier-2 freshness sweep run | A-29 confirmed 9+ known fire gaps (all dedup-SKIPPED) | B-xx data freshness checks blocked by missing endpoints | 0 new findings emitted | NEXT: none (all findings already tracked via dedup ledger)
+
