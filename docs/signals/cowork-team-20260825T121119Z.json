@@ -1,0 +1,13 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "flow-wiring-gap-controlled",
+  "priority": "high",
+  "createdAt": "2026-08-25T12:11:19Z",
+  "dedup_key": "newsscout-offhours-notebook-commit-never-fires-controlled-ab-vs-marketwatcher",
+  "payload": {
+    "tick": "2026-08-25T12:00Z",
+    "owner_hint": "agent-father",
+    "finding": "SAME-TICK CONTROLLED CONTRAST — both agents dispatched by the 12:00Z cowork tick, both in offhours mode, both required to persist a cycle notebook, spawned within the same second.\n\n  market-watcher  -> Step 5 \"Mutex commit d41596771 (pathspec-scoped)\". VERIFIED REAL: commit exists, touches exactly docs/agent-memory/notebooks/market-watcher.md, 1 file. Working tree clean afterwards.\n  news-scout      -> return listed the notebook under \"Files Modified\" and reported \"Notebook c282 appended\", but made NO COMMIT. Working tree still shows `M docs/agent-memory/notebooks/news-scout.md`; the newest commit touching that file is c46bf951e, the 08:07Z cycle.\n\nThis upgrades the standing finding from a standalone observation to a controlled one: identical tick, identical mode, identical persistence obligation, opposite outcome. The variable is the flow wiring, not load, not timing, not the gateway.\n\nnews-scout DID complete real work — 30 articles, 4 signals shipped (11395 urgent_news VIC, 11396 urgent_news DBC, 11397 chain_catalyst FPT tech sell-off, 11398 chain_catalyst Brent) — so this is a persistence gap, not a no-op cycle. The cycle's own record of that work is what goes unpersisted.\n\nROUTER ACTION TAKEN, stated so it is not mistaken for the agent's own commit: the dispatcher committed the orphaned notebook itself. news-scout's notebook is single-writer and the agent had already exited, so the multi-writer read-to-commit hazard does not apply here. Rationale for not simply leaving it: an unscoped tree-hygiene revert has previously been observed going repo-wide when a task_zone is unresolvable, which would silently destroy this file's contents. The commit message attributes the work to news-scout.\n\nOwner hint: agent-father (agent flow-doc wiring). Compare market-watcher's Step 5 offhours mutex-commit block against news-scout's equivalent — market-watcher's is the working reference implementation.\n"
+  }
+}
