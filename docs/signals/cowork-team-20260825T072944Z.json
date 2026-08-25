@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "system-issue",
+  "dedup_key": "cyclesnapshot-writer-raw-wallclock-vs-reader-rounded-wallclock-cache-never-hits",
+  "payload": {
+    "reported_at": "2026-08-25T07:29:44Z",
+    "title": "ROOT CAUSE FOUND — the cycle-snapshot cache is structurally unhittable: writer keys the filename on RAW wall clock, reader is specified to key it on ROUNDED wall clock, sampled later",
+    "supersedes": "6 ticks of my own reporting that framed this as 'cycle_snapshot_promoted:false' / 'named by wall clock, looked up by nominal tick'. Both framings were incomplete and the second was wrong about the reader.",
+    "mechanism": {
+      "writer": "docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 — FILE_TICK=$(date -u +%H:%M), RAW dispatcher wall clock, no quantization. Also passes --arg tick \"$FILE_TICK\" so the in-file .tick field carries the same raw value.",
+      "reader": ".claude/skills/cycle-bootstrap/SKILL.md Step -1 — 'TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot)', i.e. QUANTIZED, and sampled at the AGENT's own clock which is later than the dispatcher's by the spawn+startup latency.",
+      "consequence": "The two sides use different quantization AND different sampling instants. They can only agree by coincidence."
+    },
+    "live_reproduction_this_tick": {
+      "dispatcher_wrote": "docs/data/cycle-snapshot-07:20.json at 07:20Z (nominal tick 07:15)",
+      "agent_looked_for": "docs/data/cycle-snapshot-07:22.json",
+      "agent_quote": "No exact tick-snapshot match for cycle-snapshot-07:22.json -> direct get_cycle_bootstrap + get_macro_snapshot + get_macro_calendar",
+      "gap": "2 minutes of spawn latency",
+      "note": "The file WAS on disk and WAS fresh (2 min old, inside the SKILL's 7-minute window). Had the agent applied the SKILL's own rounding, 07:22 -> 07:20 would have HIT. So this tick stacked TWO independent failures."
+    },
+    "two_independent_failures": [
+      {
+        "id": "W1-writer-does-not-quantize",
+        "severity": "structural",
+        "evidence": "Of 41 cycle-snapshot-*.json files currently on disk, only 13 sit on a 5-minute boundary and 28 do NOT (01:34, 03:19, 03:49, 04:04, 04:49, 06:36, 07:34, 07:46, 08:02, 08:36, 08:52, 09:01, 09:17, 09:32, 09:48, 10:01, 10:16, 10:32, 10:46, 12:03, 15:02, 16:02, 16:31, 17:33, 20:03, 20:18 ...).",
+        "implication": "Even a reader that follows the SKILL's rounding correctly can only ever hit the ~32% of files that happen to land on a boundary — and only if its rounded minute equals the writer's raw minute AND the file is <7 min old."
+      },
+      {
+        "id": "W2-this-reader-also-did-not-quantize",
+        "severity": "spec ambiguity, not obviously agent fault",
+        "evidence": "alert-commander used the raw 07:22. The SKILL's rounding rule is illustrated with the single example '02:05 -> \"02:05\"' — a no-op that does not exercise rounding at all, so the parenthetical is easy to read as decorative next to the primary 'formatted as HH:MM'.",
+        "implication": "Fix the example alongside any rounding fix, or the next reader repeats it."
+      }
+    ],
+    "why_this_went_unnoticed_for_6_ticks": {
+      "cause": ".claude/skills/cycle-bootstrap/SKILL.md still states: 'The snapshot writer (cowork-team dispatcher) is a future task. Until it lands, Step -1 will always miss and fall through to Step 0 — zero behavior regression.'",
+      "problem": "The writer HAS landed (Step 4.7 is live and ran on every non-silent tick today). That note tells every reading agent the miss is EXPECTED and harmless, so no agent has ever escalated it. The stale doc is what suppressed the signal.",
+      "note": "This stale line was already on my agent-father brief as a minor doc-hygiene item. It is not minor — it is the reason the defect is 6+ ticks old and unreported."
+    },
+    "measured_cost": "Step 4.7's stated purpose is 'Agents read this file instead of calling get_cycle_bootstrap independently.' Today it costs 2 MCP round trips + a ~16KB write per non-silent tick, and the agent then makes those same calls anyway. Waste on both sides, zero benefit. Confirmed this tick: alert-commander fell through to get_cycle_bootstrap + get_macro_snapshot + get_macro_calendar.",
+    "recommended_fix": {
+      "direction": "Delete BOTH wall clocks. Key the snapshot on the NOMINAL tick and have the reader derive the identical key from the scheduled_utc token the dispatcher already passes it.",
+      "why_this_shape": "spawn-fanout.md already appends 'scheduled_utc=<ISO8601>' to every spawn prompt, and it demonstrably arrives and is used — chef's marker this tick was published:chef-intraday:2026-08-25:14, whose date part came from scheduled_utc=2026-08-25T07:13:00.000Z, not from a date -u call.",
+      "precedent": "This is exactly the class FIX-CHEF-MARKER-KEY-ANCHOR-3 already solved: 'the worker never re-reads the wall clock to derive its own window key'. Same defect, different key. Apply the same remedy.",
+      "also_required": "Delete or correct the 'writer is a future task' note in cycle-bootstrap/SKILL.md, and replace the no-op rounding example.",
+      "caution": "A rename-only fix is NOT sufficient — the fence also writes the raw value into the in-file .tick field via --arg tick \"$FILE_TICK\", so any content-based lookup would still miss."
+    },
+    "owner_hint": "architect — this spans the dispatcher fence, a shared skill consumed by 8 agents, and the spawn-prompt contract. Not a single-file doc edit.",
+    "dispatcher_note": "Executed Step 4.7 verbatim again this tick rather than hand-substituting a nominal tick. Hand-correcting would be an unrecorded flow edit and would have destroyed the 28-of-41 off-boundary evidence that identified W1."
+  },
+  "priority": "high",
+  "createdAt": "2026-08-25T07:29:44Z"
+}
