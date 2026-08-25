@@ -2386,3 +2386,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-07 · vps_route_no_coverage: vietstock-agm-plan
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** VPS route vietstock-agm-plan
+**Details:** no mapping in get_vps_proxy_health or get_vps_service_health
+**Impact:** route health cannot be independently verified
+**Root cause:** structural coverage gap (standing)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:02Z (signal sys-20260825T224111-731a, system-auditor -> po, dedup_key=vps_route_no_coverage:vietstock-agm-plan:B-07, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
