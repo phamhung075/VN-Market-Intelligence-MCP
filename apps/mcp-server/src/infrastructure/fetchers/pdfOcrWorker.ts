@@ -89,8 +89,23 @@ export function isOcrAvailable(): boolean {
  * on dense Vietnamese number tables.
  *
  * Task 1290 / FR-1: Added optional dpi parameter for high-DPI retry on low-confidence extracts.
+ *
+ * FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE (2026-08-26):
+ * no `--psm` flag meant tesseract defaulted to psm 3 (layout analysis, NO
+ * orientation detection) — a BCTC page whose rasterized CONTENT is sideways
+ * (portrait /MediaBox, /Rotate=0 — no PDF metadata flags it; measured on
+ * VIC_2026_Q1.pdf: 19 of 71 pages, matching the pdf-extractor sibling fix
+ * 905e32be1) OCRs to reversed/mirrored garbage. `--psm 1` (auto page
+ * segmentation WITH OSD) runs the same OSD orientation probe tesseract
+ * already ships (`osd.traineddata`) and rotates internally before
+ * recognition — verified empirically here (not assumed): a 180/90/270-degree
+ * rotated fixture page OCRs to the same text as its upright twin, and an
+ * upright page is byte-identical to its psm-3 output (no regression on
+ * already-correct pages). Cost: ~+30MB cgroup memory.peak per page
+ * (measured via `docker run` against the live mcp-server image, real BCTC
+ * page — see task journal), well inside the 3GiB container cap.
  */
-async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Promise<string> {
+export async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Promise<string> {
   return new Promise((resolve) => {
     // Spawn pdftoppm at low priority (nice 19) — DPI configurable (default 200, Task 292 FR-2)
     const ppm = spawn("nice", [
@@ -98,9 +113,11 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
       "-f", String(page), "-l", String(page), "-r", String(dpi), tmpPdf,
     ]);
 
-    // Spawn tesseract at low priority
+    // Spawn tesseract at low priority.
+    // --psm 1: auto page segmentation WITH OSD (orientation + script detection) —
+    // see FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE above.
     const tess = spawn("nice", [
-      "-n", "19", "tesseract", "stdin", "stdout", "-l", "vie+eng",
+      "-n", "19", "tesseract", "stdin", "stdout", "-l", "vie+eng", "--psm", "1",
     ]);
 
     const ppmChunks: Buffer[] = [];

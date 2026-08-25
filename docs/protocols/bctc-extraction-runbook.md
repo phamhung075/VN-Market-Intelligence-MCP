@@ -192,19 +192,51 @@ Fixing the constructor recovers nothing that is already persisted.
 |---|---|---|---|
 | `/data/bctc-page-images/{report_id}/page_NNNN.png` | `get_bctc_page_image` | `POST /api/rasterize {"force": true}` (new field) | **WIRED** — `rasterize_page(..., force=True)` re-renders and corrects |
 | `bctc_layout_units.stitched_markdown` | `get_bctc_pending_refine` | re-run `/extract-md-tables` for the report_id (upsert on `(report_id, unit_id)`) | available |
-| `pdf_extracted_text` (market.db) | `get_bctc_page_text` (`source: sqlite_ocr`) | `DELETE FROM pdf_extracted_text WHERE filename = ?` then re-run `extractAndStorePdfPages` | **NOT WIRED — and deleting alone re-writes the same garble.** See gap below |
+| `pdf_extracted_text` (market.db) | `get_bctc_page_text` (`source: sqlite_ocr`) | `DELETE FROM pdf_extracted_text WHERE filename = ?` then re-run `extractAndStorePdfPages` | **CODE FIX LANDED, invalidation NOT YET RUN** — see below |
 
-> **GAP — a FOURTH OCR construction site, outside `apps/pdf-extractor/`.**
+> **FOURTH OCR construction site, outside `apps/pdf-extractor/` — CODE FIX LANDED
+> (FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE, 2026-08-26).**
 > `pdf_extracted_text` is written by
 > `apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts::ocrOnePage()`,
-> which shells out to `pdftoppm -r 200 | tesseract stdin stdout -l vie+eng`
-> with **no `--psm` and no orientation detection** (Tesseract then defaults to
-> psm 3, which does layout analysis but NOT orientation detection). It is
-> reached in production from `composition-root.ts` §4b on every mcp-server
-> start. That is the read that produced the garbled VIC page text. It is
-> mcp-server's zone; `dev-mcp-server` must fix it (e.g. `--psm 1`, or an
-> `image_to_osd` pre-pass) before any `pdf_extracted_text` invalidation is
-> worth triggering.
+> which shells out to `pdftoppm -r 200 | tesseract stdin stdout -l vie+eng`. It
+> previously carried **no `--psm` flag** (tesseract defaulted to psm 3 — layout
+> analysis, NOT orientation detection). It is reached in production from
+> `composition-root.ts` §4b on every mcp-server start. That is the read that
+> produced the garbled `VIC_2026_Q1.pdf` page text seen above.
+>
+> **Fix:** added `--psm 1` (auto page segmentation WITH OSD) to the tesseract
+> spawn — runs the same `osd.traineddata` probe the pdf-extractor fix above
+> uses, and rotates internally before recognition. Verified (not assumed):
+> - Fixture (`apps/mcp-server/src/__tests__/fixtures/ocr-orientation/`,
+>   synthetic, not a real BCTC page): a 180-rotated page OCRs to the same text
+>   as its upright twin; the OLD no-psm pipeline garbles it (regression proof
+>   in the same test file); an already-upright page is unaffected (no
+>   regression on already-correct pages).
+> - Real file: directly re-OCR'd (read-only, no DB write) all 19 OSD-detected
+>   rotated pages of the live `VIC_2026_Q1.pdf` (10,11,31,34,35,48,57,60-71) —
+>   all recover clean, correctly-ordered Vietnamese header/section text vs the
+>   mirrored/reversed garbage currently stored in `pdf_extracted_text`.
+> - Cost: cgroup `memory.peak` delta ≈ **+33 MB/page** (psm-3 baseline ≈101MB,
+>   psm-1 ≈134MB, mean of 5 runs each, real page, measured via `docker run`
+>   against the live mcp-server image) — well inside the 3 GiB container cap.
+>
+> **Invalidation (AC-2 order: fix must land first) NOT YET EXECUTED against the
+> live DB in this pass** — the running mcp-server container is still on the
+> pre-fix image (image rebuild owed separately, tracked as an ops task).
+> Reusable, deploy-state-independent script (hardcodes `--psm 1` itself, does
+> not import the possibly-stale image's code) ready for whoever runs the
+> rebuild:
+> ```bash
+> bun scripts/migrations/reextract-pdf-ocr-orientation.ts --filename VIC_2026_Q1.pdf --apply
+> ```
+> Of the 25 `FAILED` `bctc_refined_units` windows for report
+> `1f53ef33-8f50-489b-8505-689740692ab0`, 14 cover at least one OSD-confirmed
+> rotated page (plausibly addressable by this fix); the other 11 (pages
+> 1,2,20-30,38-47,56 — no rotation detected) fail for an unrelated reason.
+> Flipping `window_status` from `FAILED` to `DONE` additionally requires a
+> separate agentic re-refine pass (`get_bctc_pending_refine` →
+> `push_bctc_refined_unit` → `finalize_bctc_refine`, host-level fleet cron) —
+> out of this fix's scope.
 
 ---
 
