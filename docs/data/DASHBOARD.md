@@ -2110,3 +2110,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · Tier-1 mem_creep pre-gate scores ephemeral non-fleet containers, paging the auditor for non-incidents
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** scripts/agents-flow/auditor-tier1-probe.sh _check_mem_creep()
+**Details:** _check_mem_creep() scopes from docker ps -q (every capped running container) while its sibling _check_docker_ps() scopes from system-map host_runtime_set.services[]. Ephemeral 'docker compose run --rm' harnesses therefore flip the fleet verdict to FAILURE. 3 distinct names in 13 min: paddle-sentinel-test (99.95%, clean exit 0), auto-sentinel-test, tess-sentinel-test.
+**Impact:** Each new ephemeral name is a first-sighting for the name-keyed spawn debounce (spawn_count=1), so SPAWN is guaranteed and the debounce can never absorb this class; also grows auditor-tier1-spawn-debounce.json without bound (5 entries, 4 expired).
+**Root cause:** mem_creep gate has no ephemeral/non-fleet discriminator and does not consult host_runtime_set, contradicting flow/main.md Step 0c's INFO-grey rule for non-host_runtime_set services.
+**Zone owner:** developer
+**Last reported:** 2026-08-25T13:36:48Z (signal sys-20260825T133632-2f9d, system-auditor -> po, dedup_key=detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
