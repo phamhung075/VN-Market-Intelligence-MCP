@@ -1,0 +1,39 @@
+{
+  "createdAt": "2026-08-25T03:42:10Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_defect_confirmation",
+  "priority": "P2",
+  "payload": {
+    "subject": "cycle-snapshot wall-clock naming — race confirmed by advance prediction, 3 samples",
+    "defect": "FIX-COWORK-CYCLE-SNAPSHOT-WALLCLOCK-NAME-VS-NOMINAL-TICK",
+    "reproductions": 10,
+    "cycle_snapshot_promoted": false,
+    "samples": [
+      {
+        "tick": "03:00Z",
+        "write": "03:05:45Z",
+        "agent_read": "03:05",
+        "outcome": "HIT"
+      },
+      {
+        "tick": "03:15Z",
+        "write": "03:19:39Z",
+        "agent_read": "03:20",
+        "outcome": "MISS"
+      },
+      {
+        "tick": "03:30Z",
+        "write": "03:34:28Z",
+        "agent_read": "03:35",
+        "outcome": "MISS (predicted in advance)"
+      }
+    ],
+    "consumer_behavior": "locates nearest file and computes staleness, then discards on name equality alone",
+    "preferred_fix": "name by NOMINAL tick in dispatcher write + agent read + promotion lookup",
+    "observed_cost": "~2 redundant MCP bootstrap calls per missed tick; NOT stale data (agent fell back to live calls, not to frozen latest)",
+    "escalation_decay": "agents now suppress push-block escalations as known; alarm falls while backlog grows 176->196",
+    "unpushed_backlog": 196,
+    "note": "RACE TEST RESOLVED — PREDICTION CONFIRMED IN ADVANCE. Follow-up to the 03:30Z tick telemetry (drained to the PO inbox at 03:40:51Z before this outcome was known) and to the 03:15Z correction commit fca953ee4. The 03:30Z spawn returned verbatim: 'no exact tick-snapshot match for 03:35 (nearest was 03:34, 1 min stale) -> direct get_cycle_bootstrap + get_macro_snapshot + get_macro_calendar'. That is precisely the MISS called in advance in commit a638380d1: the dispatcher's Step 4.7 write landed at mtime 03:34:28Z with 32 seconds left in the minute, the agent's bootstrap ran past 03:35:00Z, resolved its own date -u +%H:%M to 03:35, and missed. THREE SAMPLES, and the mechanism is now confirmed rather than inferred because the third was called before the return arrived: (1) 03:00Z, write 03:05:45Z, 15s remaining, agent read 03:05, HIT; (2) 03:15Z, write 03:19:39Z, 21s remaining, agent read 03:20, MISS; (3) 03:30Z, write 03:34:28Z, 32s remaining, agent read 03:35, MISS-as-predicted. A HIT requires the spawned agent's bootstrap to land inside the same wall-clock minute as the dispatcher's write — a sub-minute race the dispatcher does not control and cannot make deterministic by retrying. NEW AND MATERIAL, from the agent's own phrasing, and it points the fix somewhere no prior report did: the consumer DOES locate the neighbouring file and DOES compute its staleness ('nearest was 03:34, 1 min stale'), then discards a correctly-formed, one-minute-old, fit-for-use snapshot on NAME EQUALITY ALONE. The data was present. This is a pure naming/lookup defect end to end — not data availability, not freshness, not the MCP layer — and it admits two independent remedies: (i) CANONICAL, name by the NOMINAL tick in all three places (dispatcher Step 4.7 write, agent bootstrap read, emit_pressure_state promotion lookup); the dispatcher already knows the nominal tick and already passes it into every spawn as scheduled_utc, so no new plumbing is required; or (ii) CHEAPER, give the consumer a tolerance window and accept the nearest snapshot within N minutes, which it is already computing and already throwing away. PREFER (i): it also repairs the promotion, which (ii) leaves permanently broken — cycle-snapshot-latest.json has never once been promoted and still reads tick 00:00 created_at 2026-08-23T00:07:50Z serving regime UNKNOWN against a live NEUTRAL. Ten consecutive server-confirmed cycle_snapshot_promoted=false. BLAST RADIUS, measured not inferred, and smaller than eight earlier reports implied: on both observed misses the agent fell back to live get_cycle_bootstrap and get_macro_snapshot calls, NOT to the frozen latest file, so the observed cost is redundant MCP calls (tokens and latency, roughly 2 extra calls per missed tick) rather than wrong data. Do not generalize that to every agent's fallback chain without checking each one — alert-commander's chain was the only one observed. ESCALATION DECAY — a second-order risk that will hide the push blocker rather than surface it. The 03:30Z agent explicitly declined to send a bug escalation for its blocked push, reasoning it is 'an already-known, standing systemic condition, not a novel finding'. That de-duplication is individually correct and collectively dangerous: the three prior agents this session DID escalate, so alarm volume is decaying precisely as the condition worsens — unpushed backlog 176 at 02:52Z, 189 at 03:22Z, 193 at 03:35Z, 196 at 03:41Z. Falling escalation counts must NOT be read as improvement; by the time escalations stop entirely the backlog will be at its worst and its loudest evidence gone. UNOWNED MODEL/PRICE DIVERGENCE, recorded because no agent's gate covers it: get_kinhdich_reading returned DBC=BAN at 100% confidence (a full-confidence sell) on the same cycle DBC's price broke out +5.42% with a Bollinger-band breakout. The alert-commander correctly ruled it non-actionable under its own firing gate, which is the right call for that agent and leaves the question unowned. Either the model leads price or the model is wrong; nothing in the fleet currently checks which, so this will not be revisited unless it is filed as a task. STEP 5.3 for the 03:30Z spawn: 0 of 6 off-flow markers, no IDENTITY_PREAMBLE echo, length under the 20000 cap -> NO de-stamp; last_fired verified still 2026-08-25T03:35:09Z, unchanged from what that tick wrote."
+  }
+}
