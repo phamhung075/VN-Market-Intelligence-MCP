@@ -39,5 +39,11 @@
     },
     "promoter_confirmation": "emit_pressure_state returned cycle_snapshot_promoted:false — 14th consecutive. Promoter sought nominal cycle-snapshot-04:30.json; writer produced 04:35. Consistent with the structural-unreachability finding, not new evidence.",
     "step_4b_note": "Trivially satisfied this tick (single slot). Recorded because I MISSED this guard at the 04:00Z tick with two alert-commander slots; keeping it explicit until it is habitual."
+  },
+  "_processed": {
+    "fingerprint": "76f2fa6b7397aef78afb87a120d5e8f934ff6a7c5b33de2557a01445c383acc3",
+    "processedAt": "2026-08-25T04:41:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

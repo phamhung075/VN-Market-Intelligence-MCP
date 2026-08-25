@@ -68,5 +68,11 @@
       "cluster": "file @ 2026-08-25T04:14:42Z -> n=4",
       "meaning": "all four of this session's cowork signals delivered into .dev_team_idle_chain.pending_triage_inbox[] by peer commit 547ec1188; tree clean, nothing stranded"
     }
+  },
+  "_processed": {
+    "fingerprint": "46c4a6a9bb286e0d252c57d0b461ca7d0cabed3429b8709fde00f07132eca068",
+    "processedAt": "2026-08-25T04:41:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

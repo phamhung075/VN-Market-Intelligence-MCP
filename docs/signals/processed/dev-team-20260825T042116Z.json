@@ -35,5 +35,11 @@
       "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED needs its cold next_agent corrected to qa, or it will not reach QA on any future tick."
     ],
     "router_note": "Router does not author task rows. Filed as a signal for architect triage."
+  },
+  "_processed": {
+    "fingerprint": "8b329d117b130c654e49bf71f05d95d54f819ef41ed389b272446e72cb24e576",
+    "processedAt": "2026-08-25T04:41:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

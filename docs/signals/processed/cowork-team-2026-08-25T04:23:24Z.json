@@ -71,5 +71,11 @@
       "size_lint_blocker": "bctcScalarAggregator.ts 1206L vs upper 1205",
       "owning_rows_still_dispatch_lane_null": true
     }
+  },
+  "_processed": {
+    "fingerprint": "dc8901322cf7fa45f65238d692c56edd70d1ffeaf5757ca6aa8dbfaf415190a8",
+    "processedAt": "2026-08-25T04:41:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

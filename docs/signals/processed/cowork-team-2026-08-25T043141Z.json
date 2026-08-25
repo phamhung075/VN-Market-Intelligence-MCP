@@ -62,5 +62,11 @@
       "stranded_commits": "229 unpushed (was 219 at the 04:15Z tick, 117 in the owning row's title). Size-lint gate FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L. alert-commander independently hit and correctly attributed it this cycle.",
       "kinhdich_divergence_unfiled_again": "DBC=BAN 100% against +6.93%; VIC=GIU 81% against +4.66%. alert-commander flagged the model/price divergence in prose (c240-c244 consistent) but no gate covers it, so it produced nothing actionable for the 5th consecutive cycle."
     }
+  },
+  "_processed": {
+    "fingerprint": "e673b61696a280b12b7d11fd1686078a425df1f1bea860bb9566429353af3ebb",
+    "processedAt": "2026-08-25T04:41:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
