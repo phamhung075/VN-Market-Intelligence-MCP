@@ -80,4 +80,8 @@ of the open-namespace finding I had just filed.
   hand-dispatch or re-rank — deliberately NOT re-ranked, that would displace 8 peer P0s.
 - `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS` still stamped-and-undispatched in `done[]` since
   08-23T13:39Z (readback row's AC-5). Not in the wrapper cohort; may be genuinely actionable.
+- **AC-3 must verify HEAD's CONTENT, not path-presence in one's own commit.** Observed both directions
+  in one session ~10 min apart: a peer's inbox append landed in my commit `471081fcc`, and peer commit
+  `01d170930` swept my Write-D board mutation in under *its* message so the path dropped out of mine.
+  Nothing lost — all board work is in HEAD, spread across 3 commits, 2 of them not mine.
 - Standing push disarm in force — nothing pushed.
