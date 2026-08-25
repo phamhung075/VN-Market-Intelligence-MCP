@@ -1,0 +1,29 @@
+{
+  "id": "cowork-20260825T045124Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "priority": "MEDIUM",
+  "ts": "2026-08-25T04:51:24Z",
+  "dedup_key": "cowork-0445Z-snapshot-name-census-78pct-unreachable-under-rounding-spec",
+  "status": "NEW",
+  "payload": {
+    "tick": "2026-08-25T04:45Z",
+    "dispatch": "1 slot (alert-commander-market), gate NORMAL (headroom 2883 >= 1500, load 1.39 < 24, CORES 12, max_parallel 4). Step 4.2 adaptive (age 12min < 20). Step 4.3 no-op, calendar_status=open in-domain. Step 0a: new_signals=0, nothing to drain. Step 4b: single slot, no agent_id in >=2 slots, correctly silent. Step 5.2 consistency PASS. Token claimed and released, election lock released, emit_pressure_state ran BEFORE the P3 release.",
+    "NEW_EVIDENCE_census_beats_both_my_tests": {
+      "finding": "36 of 46 live cycle-snapshot files (78%) carry a name that is NOT on a 5-minute boundary, so cycle-bootstrap/SKILL.md:58's round-to-nearest-5 rule can NEVER emit their key. Only 10 of 46 are reachable by the spec at all — and those only if the reader also lands inside the 7-minute freshness window.",
+      "why_this_is_stronger": "This is a CENSUS of the live directory, not an inference from agent notebook prose. My 04:15Z and 04:30Z tests each rested on what one agent wrote about a key it computed; this rests on filenames on disk. It settles the writer half independently of anything a reader reports.",
+      "this_tick_is_itself_an_instance": "Nominal tick 04:45; tick-snapshot.md's FILE_TICK=$(date -u +%H:%M) wrote cycle-snapshot-04:49.json. 04:49 is off-boundary, so no rounding reader can ever ask for it, and a raw-minute reader could only hit it by running inside that one 60-second window. The spawn went out at 04:50:37Z — one minute too late.",
+      "NOT_a_test": "I am explicitly NOT scoring this tick as test #3. 04:49 misses under BOTH candidate reader rules (rounding -> 04:50 absent; raw-minute -> 04:50/04:51 absent), so it cannot discriminate between them. Recording it as an instance of the writer defect, not as evidence about the reader.",
+      "four_stage_model_now_evidenced_at_every_stage": "writer raw-minute = the 78% census above (direct, on-disk) | reader SPEC round-to-5 = SKILL.md:58 read from source | reader ACTUAL raw-minute = c244's named 04:22 key, which no rounding rule can emit (proof) + c245 corroboration | promoter nominal-quarter = cycle_snapshot_promoted:false, now 15 consecutive.",
+      "single_remedy_unchanged": "Key every stage off the NOMINAL tick. scheduled_utc_time is already present on every slot at Step 4.7, so the writer fix is a one-line substitution for FILE_TICK. Rounding exists only to paper over wall-clock naming and should go with it."
+    },
+    "promoter_15th_consecutive": "emit_pressure_state returned cycle_snapshot_promoted:false again — promoter looked for nominal 04:45, writer produced 04:49. Consistent with the known structural gap; not new evidence.",
+    "carried_open_items": {
+      "stranded_push": "239 commits ahead of origin/main. FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L-STRANDS-117-COMMITS (P1, dev-mcp-server) and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, developer) both still dispatch_lane:null -> unpickable by DRS.",
+      "stale_doc_still_blocking": "cycle-bootstrap/SKILL.md:72 still declares the snapshot writer 'a future task ... Step -1 will always miss ... zero behavior regression'. The writer landed. That note tells any reader the miss is expected, which is exactly why this went uninvestigated.",
+      "frozen_latest": "cycle-snapshot-latest.json still frozen at tick 00:00 / 2026-08-23T00:09:29Z, serving stale context to anything that reads it instead of a per-tick file.",
+      "chef_offspec_writes": "docs/agent-memory/notebooks/chef-intraday.md + docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json still untracked. Deliberately NOT committed — tracking them would enshrine an off-surface path. Needs a canonical-path ruling first."
+    }
+  }
+}
