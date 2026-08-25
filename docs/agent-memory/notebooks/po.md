@@ -154,3 +154,52 @@ just minted.
 - Still open on me: `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` (review[], BLOCKED, next_agent=po).
 - User's BCTC goal: **first ready path in days** — orientation is verified, bounded and recoverable.
 
+
+## 2026-08-25T23:23-23:36Z — 29 envelopes, 12 real subjects, and a detector that cannot tell "closed for the night" from "dead"
+
+Triage of 29 envelopes. Journal: `docs/agent-memory/decisions/triage-20260825T2329Z-po.md`.
+**1 minted · 9 rows folded onto · 1 deferred · 0 lane moves · inbox 29→0 read back off disk.**
+(Appended at the FILE END, not the top — this file is newest-at-top, but the tick spec mandated
+`printf >>` and I would not full-overwrite a notebook to fix ordering. Heading carries a real
+timestamp so the pruner can still rank it.)
+
+### The auditor cannot read a crontab
+Five `cron_fire_gap` STALE signals, "overdue 13.8h" against thresholds of 0.1-0.4h. All five are
+`*/N 2-8 * * 1-5` in `cronConfig.ts` — VN market hours, weekdays. Their last runs at 08:45-08:55Z
+are the last **scheduled** fire of the day. Not one was overdue by a second. A-29 computes overdue
+as `now - last_run`, which is only meaningful for a continuous schedule; every windowed cron on the
+fleet goes false-CRITICAL the moment its window closes, nightly, forever. That is a different bug
+from the host-suspension one `FIX-A29-CRON-GAP-NO-OUTAGE-WINDOW-DISCRIMINATOR` was minted for, so I
+widened that row to two discriminator axes rather than mint a third.
+
+### Reading the schedule is also what stopped me over-refuting
+The 6th cron signal in the same batch, `commodityTrackerRefresh`, looked identical. It is
+`0 6 * * *` — continuous daily. `now - last_run` IS sound there and it genuinely missed one fire.
+Same evidence source, opposite verdict. The discriminator is the cron expression, never the
+"overdue" number, and never the batch it arrived in.
+
+### The row I could not append to is itself the finding
+`FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL` owns exactly the schedule-blindness axis and
+was the natural fold target. It sits at 15580 prose bytes against a 12000 ceiling — grandfathered,
+so it survives, but ANY append hard-aborts the whole orch-apply write. Second tick running that a
+correct fold has been blocked by prose weight. I pre-measured all 10 touched rows before piping;
+that is the only reason this batch landed on the first attempt instead of aborting.
+
+### Routed, did not decide
+The `effective_next_agent` envelope: `parse_ts` returns null by design for a missing stamp, so
+`($board_ts != null) and ($detail_ts != null) and ...` is unsatisfiable when the detail item has no
+`updated_at` — the board branch is structurally unreachable and the stale archived value always
+wins. The signal blamed "a board edit without an updated_at bump"; that is falsified, all 10
+divergent rows have good board timestamps. I could not reproduce its 11/73-of-105 either: I measure
+**10 live divergences and 72 of 104** routable detail items. Reported mine. Three directions go to
+architect unranked — picking one is a fleet-wide routing-semantics call, not mine.
+
+### Carry-over
+- `backlog[588]` FIX-EFFNEXTAGENT-NULL-DETAIL-TS → **architect, needs hand-dispatch**. It is
+  DRS-eligible but has 63 P0/P1 allowlist rows ahead of it at ~1 dispatch/tick.
+- `ready[33]` CLEAN-NB-... still unreachable by any picker (`dispatch_lane: null` + off-allowlist
+  `next_agent`). 4 notebooks; `tran-ngoc-bau.md` is now only 860B over and is the cheap win.
+- DEFERRED, not triaged: `bctc_vps_queue` id=255870 BID Q4-2025, 0 attempts since 2026-04-28. WARN,
+  no board coverage found. Flow rule says re-verify next tick before minting. Do that.
+- `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL` and `FIX-A29-CRON-GAP-...` now overlap by
+  construction. Merge or close one before either is worked.
