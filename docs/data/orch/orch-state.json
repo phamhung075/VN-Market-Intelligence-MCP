@@ -630,6 +630,17 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md#qa-S207"
+      },
+      {
+        "id": "cj-20260825T120801",
+        "ts": "2026-08-25T12:08:01Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-25.json"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -19003,6 +19014,32 @@
             "observed_at": "2026-08-25T08:23:52Z"
           }
         }
+      },
+      {
+        "id": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+        "title": "_check_launchd_agents cannot tell 'deliberately disabled by the user' from 'dead', so a policy decision has to be laundered through the ack ledger — which then cannot self-expire",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "status": "DONE_VERIFIED",
+        "commit": "0e3128e1f",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+        "updated_at": "2026-08-25T08:26:10Z",
+        "updated_by": "developer",
+        "claimed_at": "2026-08-25T08:17:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-25T08:26:08Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + git show (diff read) + bash scripts/agents-flow/auditor-tier1-probe.sh (live, 3x) + plutil -p + launchctl list + launchctl print-disabled + jq + bash -n + mock-guard.sh",
+            "args": "commit=0e3128e1f; files=scripts/agents-flow/auditor-tier1-probe.sh,docs/data/auditor-launchd-ack.json",
+            "live_value_observed": "ancestor=yes; stat touches 2/2 claimed files; live probe verdict=ALL_GREEN, launchd_agents=PASS, detail=expected-disabled...com.vn-market.fleet-push(disabled-by-plist); forced print-disabled-only path returned disabled-by-launchctl; acked[] has 0 fleet-push entries; spawn-debounce.json md5 unchanged across 3 runs; mock-guard PASS (no production source in scope)",
+            "observed_at": "2026-08-25T08:26:08Z"
+          }
+        },
+        "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify APPROVED. Commit 0e3128e1f confirmed main-ancestor, git show --stat touches exactly the 2 claimed files (auditor-tier1-probe.sh, auditor-launchd-ack.json). Read the diff at source (not the review_note prose): _launchd_label_expected_disabled() checked BEFORE the ack lookup, in the not-loaded branch only; reads LAUNCHD_INSTALLED_DIR plist via plutil -p (never grep -i disabled) for Disabled=>1 (AC-2), OR launchctl print-disabled membership (AC-3); result named in detail string distinct from acknowledged-degraded (AC-4); never writes bad/acked/spawn-debounce side-channel; loaded-but-bad-exit-status branch untouched. Live-ran the mutating probe myself (bash -n clean, jq valid): verdict=ALL_GREEN, launchd_agents among the 6 PASSED checks, detail names com.vn-market.fleet-push(disabled-by-plist) under expected-disabled (AC-6). Independently forced the print-disabled-only branch via LAUNCHD_INSTALLED_DIR_PATH=/nonexistent-qa-check-dir: correctly fell through and returned disabled-by-launchctl (AC-3 proven live in isolation, not just shadowed by the plist check -- fleet-push is now present in BOTH plutil -p Disabled=>1 AND launchctl print-disabled gui/$(id -u), state drift since the 08-24T16:48Z po_ruling text which recorded it absent from print-disabled -- immaterial to the fix, both mechanisms independently confirmed working). auditor-launchd-ack.json acked[] has zero fleet-push entries before or after every run (AC-5); docker-events untouched acked[] entry unaffected (AC-7, separate loaded-but-exit-0 label today, orthogonal fluctuation, not caused by this diff). auditor-tier1-spawn-debounce.json md5 byte-identical across 3 separate probe invocations -- no new/refreshed fleet-push entry (AC-8). Self-check: every command I ran was read-only (plutil -p, launchctl list, launchctl print-disabled, bash -n, jq, git show/log) -- no launchctl enable/load/bootstrap, no plist edit anywhere (AC-9). mock-guard.sh: no production source in scan scope, PASS. OUT-OF-SCOPE FINDING, flagged not fixed: docs/data/auditor-tier1-spawn-debounce.json has zero garbage-collection -- all 4 live entries (incl. the fleet-push spawn_count=10 entry) have already-expired window_expires_at with nothing pruning them; none of this row's AC-1..AC-9 cover debounce-ledger GC, so this is NOT absorbed here -- recommend po mint a separate row."
       }
     ],
     "head": {
@@ -22670,23 +22707,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "dispatch_lane": "developer",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
-        "drain_source_lane": "review"
-      },
-      {
-        "id": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
-        "title": "_check_launchd_agents cannot tell 'deliberately disabled by the user' from 'dead', so a policy decision has to be laundered through the ack ledger — which then cannot self-expire",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "status": "QA",
-        "next_agent": "qa",
-        "commit": "0e3128e1f",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
-        "updated_at": "2026-08-25T08:17:32Z",
-        "updated_by": "developer",
-        "claimed_at": "2026-08-25T08:17:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review"
       }
     ],
