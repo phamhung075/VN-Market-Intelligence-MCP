@@ -23852,7 +23852,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T20:55:58Z",
+    "_updated_at": "2026-08-25T21:10:51Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24224,6 +24224,59 @@
         "createdAt": "2026-08-25T20:35:33Z",
         "drained_at": "2026-08-25T20:52:56Z",
         "routed_to": "PO Step 0-TNB"
+      },
+      {
+        "envelope_id": "f1369478a6dae8a89ebda33fcbb30f2dc3ea41d46152d7010edfb1bcc9e6c605",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T21:07:21Z",
+          "matched_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-3": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-3": null
+          },
+          "last_fired_timestamp": "2026-08-25T21:06:25Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "21:00",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "1) DRAIN: zero NEW rows this tick. tra-20260825T203533Z (tran-ngoc-bau->po audit-handoff, \"Overall: CRITICAL\"), which the 20:45Z tick deliberately HELD at NEW, was flipped NEW->READ at 20:52:56Z by the dev-team drain (commit d210db5cb) and DELIVERED into .dev_team_idle_chain.pending_triage_inbox with routed_to=\"PO Step 0-TNB\". Verified by source+drained_at, never by id (the drain re-envelopes and discards the row id). Legitimate hand-off, NOT the silent-loss path.\n2) CORRECTION to the 20:45Z tick's recorded observation: rtr-20260825T1952-preflightreentrantrun was flagged there as suspicious for carrying status=READ with BOTH drained_at and read_at null. That shape is the NORM for this queue, not a phantom-write signature — 49 of 52 READ rows have both fields null. The single-observation note is dissolved; no defect, nothing to file.\n3) cycle_snapshot_promoted=false, 31st consecutive. cycle-snapshot-latest.json is stale at 2026-08-23T00:07:50Z (2.9d) and reports regime=UNKNOWN. last_regime was therefore sourced from THIS tick's live snapshot (NEUTRAL, docs/data/cycle-snapshot-21:05.json) rather than telemetry.md Step 6.0's literal cycle-snapshot-latest.json instruction, to avoid emitting a stale UNKNOWN. Deviation recorded, not silent.\n4) Tick snapshot named by wall-clock 21:05 against nominal tick 21:00 — known producer/consumer naming defect (producer writes raw `date -u +%H:%M`; consumer cycle-bootstrap/SKILL.md:58 rounds to nearest 5-min slot). Routed to architect at 0d77460a3, NOT landed. Within the consumer's window this tick. Do NOT \"fix\" by rounding the producer.\n5) last_volatility_level emitted \"unknown\": 0 paths matching /volatil/i in the live tick snapshot. Reconfirmed no producer exists. Still unfiled.\n6) signal_backlog 39 -> 31 across this tick, consumed by the dev-team 20:52Z drain (e05c31666, 9 signals to po durable inbox).\n7) Step 5.3 off-flow router-latch detector DEFERRED per BGFAN-1 — spawn is background, no return text existed at Step 5 time. De-stamp target if it later flags off-flow: 2026-08-24T21:06:38Z (the PRIOR value, never null), applied only if last_fired still equals the 2026-08-25T21:06:25Z this tick wrote."
+        },
+        "createdAt": "2026-08-25T21:07:21Z",
+        "drained_at": "2026-08-25T21:10:51Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
