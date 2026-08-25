@@ -483,6 +483,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:market-db-journal-guard:2026-08-25T05:33:08Z",
         "dedup_key": "system_probe:market-db-journal-guard:probe-query-failed-empty"
+      },
+      {
+        "id": "mdjg-20260825T055425",
+        "ts": "2026-08-25T05:54:25Z",
+        "from": "market-db-journal-guard",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "FLEET DOWN — Docker Desktop is not running: `docker ps` returns \"Docker Desktop is unable to start\", and Docker Desktop UI / com.docker.backend / vpnkit are ALL at zero processes. Only a stale /Users/admin/.docker/run/docker.sock (dated 15 jul) remains. Every container is therefore down, which supersedes the 05:16Z mcp-server event-loop wedge (docs/signals/dev-team-20260825T054306Z.json) — that container no longer exists to be wedged. DISCRIMINATED against the 2026-07-15 hypervisor-crash class: hypervisor.error.json is ABSENT and the socket file is present, so this is NOT the user-only recovery ladder; it is a plain not-started daemon. Do NOT rebuild the VM and do NOT remove ~/Library/Containers/com.docker.docker/Data/vms — that destroys every named volume incl. market_data (see feedback_vm_rebuild_destroys_named_volumes_restore_then_launch). Detected by the journal guard, whose own verdict said reason=container_not_found — MISDIAGNOSIS worth fixing: the script conflates a down daemon with a missing container.",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:market-db-journal-guard:2026-08-25T05:54:25Z",
+        "dedup_key": "system_probe:market-db-journal-guard:docker-daemon-not-running"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
