@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "done_verified",
-    "active_task_id": "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION",
-    "next_agent": "po",
-    "next_action": "PO unblocks PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN (G2) and DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO (G3 satisfied, waiting on G1 QA-green and G2 second-document margin pass). Redeploy landed: new container f02640c5c2fa (created 2026-08-25T17:18:31Z) verified to contain both fixes (d584d4db2 lang=vi + e9144ea75 recall-aware confidence). Memory within bounds (current 55MiB, peak 58.7MiB of 2560MiB cap). All cgroup.events counters at zero.",
-    "updated_at": "2026-08-25T17:20:19Z",
-    "updated_by": "ops (OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION closed DONE_VERIFIED (commit 21bf66b93, container f02640c5c2fa), router-verified by artifact. G3 of 4 satisfied on DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO. Remaining: G1 = QA-green on FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS (qa live now); G2 = PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN (backlog.586 — depends_on now satisfied, but dispatch_lane is null so it is an unspawnable head until a lane is set); G4 = market-hours guard. Head reset to idle so the head-idle dispatch chain is reachable at the next dev-team tick.",
+    "updated_at": "2026-08-25T17:26:49Z",
+    "updated_by": "router (dev-team ops closeout 2026-08-25T17:26:48Z)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19767,6 +19767,60 @@
           }
         },
         "po_secondary_drain_disposition_20260825T1303Z": "SECONDARY-Drain re-picked this row (secondary_claimed_at 2026-08-25T12:48:40Z) after an 08-23T13:39Z stamp went undispatched. Read the row itself, not the spawn text's lane premise: done[]-origin pick, status DONE, no status_note/review_note, next_agent unset - which is why the target resolver defaulted to po. Nothing was awaiting a decision: po_signoff_verdict APPROVED was written 2026-07-21T19:29:49Z. The row's ONLY real defect was stopping at DONE instead of DONE_VERIFIED, and that is NOT cosmetic: scripts/lib/devteam-eligibility.jq deps_satisfied requires EVERY dep to be DONE_VERIFIED ('plain DONE is NOT sufficient', its own comment), so backlog[] row FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT - which depends on BOTH this row and its already-DONE_VERIFIED sibling FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK - measured deps_satisfied=false live this tick and has been undispatchable for 5 weeks for that single reason. DONE_VERIFIED here is backed by a real re-probe run this tick (verification.raw_probe), not a backfilled assertion, and it clears that block. Also removes the row from the SECONDARY-Drain candidate set (review[] UNION done[]) so it cannot burn a fourth pick."
+      },
+      {
+        "id": "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION",
+        "type": "OPS",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "apps/pdf-extractor/",
+        "owner": "ops",
+        "next_agent": "po",
+        "created_at": "2026-08-25T15:24:03Z",
+        "created_by": "po/triage-20260825T1524Z",
+        "updated_at": "2026-08-25T17:26:49Z",
+        "updated_by": "router (terminal-shape repair — ops wrote .head only, row stranded in in_progress[])",
+        "dedup_key": "pdfx-ops:redeploy-debt-lang-vi-d584d4db2",
+        "title": "d584d4db2 (PaddleOCR text-path lang=en -> vi) is committed on main but INERT in production — vn-market-intelligence-mcp-pdf-extractor-1 was never rebuilt; only ephemeral benchmark containers ran the fixed image",
+        "detail": "Deployment debt only; nothing is broken today. The default text backend is tesseract-vie (OCR_TEXT_BACKEND unset) and the paddleocr path is not the default, so the running pre-fix image serves identical output. The debt is that the running image now lags main on apps/pdf-extractor/ and the divergence compounds silently — exactly the accumulation failure documented on FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (alert-engine: four behaviourally-null commits hid a fifth REAL behaviour change that never executed in production).",
+        "sequencing": "HARD-BLOCKED on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT and this is NOT a formality. That row's own non_goals forbid rebuilding or restarting pdf-extractor because its AC-7 passive longitudinal sampler needs >=12h of cgroup counters, and every memory.* counter resets on container recreation. Rebuilding before AC-7/AC-8 close would destroy that measurement window. Do the sampler first, close the sibling, THEN redeploy.",
+        "market_hours_guard": "pdf-extractor must never be rebuilt or exercised during VN market open, 02:00-08:59 UTC on weekdays.",
+        "acceptance": "AC-1 rebuild pdf-extractor from main HEAD, SINGLE service only, and verify by IMAGE ID that d584d4db2 is an ancestor of the deployed git_sha. AC-2 confirm OCR_TEXT_BACKEND is still unset in the deployed environment, i.e. the default text backend remains tesseract-vie and this redeploy changes no default behaviour. AC-3 no peer container restarted (compare every peer's StartedAt before/after).",
+        "dedup_checked": "po 2026-08-25T15:20Z across all task_board lanes for (pdfx|pdf-extractor) AND (deploy|rebuild|redeploy). Existing rows read and rejected as different subjects: UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT (malloc_trim AC-3 deploy, already DISCHARGED, now MEASURE-ONLY and explicitly forbids a rebuild — recorded as this row's blocker, not its duplicate); FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH (label key bug, not a deploy); FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (the systemic gate defect this is an INSTANCE of — cross-linked only; that row is at 14,205 prose bytes, already over the 12,000 ceiling, so appending an occurrence there would hard-reject at Stage 2.5).",
+        "related": [
+          "DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO",
+          "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER",
+          "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
+          "OCR-PADDLE-VI-LANG-FIX-AND-REBENCH",
+          "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
+        ],
+        "dispatch_lane": null,
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "promoted_at": "2026-08-25T17:00:00Z",
+        "promoted_by": "po (triage-20260825T1700Z)",
+        "po_expedited_at": "2026-08-25T17:00:00Z",
+        "po_expedited_by": "po (triage-20260825T1700Z)",
+        "po_block_released_20260825T1700Z": "HARD BLOCK RELEASED. depends_on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT is REMOVED and this row is re-prioritised P3 -> P1. The block rested on one premise: 'that row's AC-7 passive longitudinal sampler needs >=12h of cgroup counters, and every memory.* counter resets on container recreation, so rebuilding first would destroy the measurement window.' BOTH HALVES OF THAT PREMISE ARE NOW FALSE, measured live by PO this tick, not relayed. (a) THERE IS NO WINDOW TO DESTROY: AC-7 has never run. Its own AC requires the series be appended to a CSV under docs/incidents/data/; that directory holds exactly three files, all rag-durability-*, and zero pdfx files. (b) THE COUNTERS ARE ALREADY GONE, TWICE OVER: the container the sequencing was written to protect is 2edf0c9c9905, StartedAt 2026-08-23T15:44:17Z. `docker inspect` this tick returns container e2801b67406cf5e28f198b14477e7704dd74859d14d9e9a0e9670d0ceec6f845, Created 2026-08-24T13:35:05Z, StartedAt 2026-08-25T06:33:03Z, RestartCount 0. So pdf-extractor was recreated ~26h ago and restarted again ~10h ago (every peer container also reads 'Up 10 hours', i.e. a host resume, not a service fault). ORDERING IS THEREFORE INVERTED, deliberately: rebuild FIRST, then start AC-7 against the image you actually intend to keep. Sampling a container you are about to replace measures nothing. THIRD FINDING, fold into AC-1: the deployed image carries label vn.market.git_sha=\"unknown\" (docker inspect .Config.Labels), so 'verify by IMAGE ID that <sha> is an ancestor of the deployed git_sha' is currently unverifiable by construction on this service. Fixing that label is part of AC-1, not a separate row — FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH already owns the key-name defect; this is the same wound and the ops action must leave the label populated. SCOPE WIDENED: the rebuild must now also carry e9144ea75 (recall-aware OCR confidence, 2026-08-25T16:4xZ), which the live image cannot contain — it was built before that commit existed.",
+        "po_ac_correction_20260825T1700Z": "AC-2 AMENDED AND KEPT: OCR_TEXT_BACKEND stays UNSET in this redeploy, i.e. the default text backend remains tesseract-vie and this redeploy changes NO default behaviour. That is deliberate and is not softened. The flip to `auto` is a SEPARATE, GATED decision that PO ruled on this tick and parked on DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO, which depends_on this row. Keeping the two apart is the point: if quality or memory regresses after the flip, the rollback is one env var and does not require re-litigating the redeploy. market_hours_guard is unchanged and still binding: never rebuild or exercise pdf-extractor during VN market open, 02:00-08:59 UTC on weekdays.",
+        "po_placement_20260825T1700Z": "Prepended to ready[0] AND marked po_expedited_at. A `+=` append would rank this row LAST inside a ~90-row P1 band under the Ready-Lane Consumer's [priority_rank, array-index] tiebreak. The Incident-Lane Consumer was measured EMPTY this tick (0 of 106 ready rows carried po_expedited_at, INCIDENT_CAP=2), so this row and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-undroppable-remainder-over-cap-breach are candidates 1 and 2 of 2. This is the only row on the board standing between a measured, ratified OCR quality fix and the user's standing directive actually running in production.",
+        "claimed_at": "2026-08-25T17:17:38Z",
+        "claimed_by": "router (hand-dispatch to ops)",
+        "completed_at": "2026-08-25T17:26:48Z",
+        "commit_sha": "21bf66b93",
+        "verified_at": "2026-08-25T17:26:48Z",
+        "verified_by": "router (independent artifact re-verification, not ops narration)",
+        "verification": {
+          "raw_probe": {
+            "tool": "docker ps / docker exec sed+grep against the RUNNING container / docker inspect / cgroup v2 reads / git merge-base --is-ancestor",
+            "args": "docker exec vn-market-intelligence-mcp-pdf-extractor-1 sed -n on /app/infrastructure/{ocr_adapter.py,ocr_worker.py,ocr_backends.py}; grep -n \"confidence *=\" ocr_backends.py; grep -rn lang=\"en\" /app --include=*.py excluding site-packages; env | grep -c OCR_TEXT_BACKEND; cat /sys/fs/cgroup/{memory.max,memory.current,memory.peak,memory.events}; git merge-base --is-ancestor 21bf66b93 HEAD",
+            "live_value_observed": "Container f02640c5c2fa created 2026-08-25T17:18:31Z, Up healthy, restart_count=0. ocr_adapter.py and ocr_worker.py both construct PaddleOCR(lang=\"vi\"). ocr_backends.py calls _recall_adjusted_confidence at BOTH real call sites — l.396 (TesseractVieBackend) and l.524 (PaddleOcrBackend) — so min(precision,recall) is executable code, not only the l.29 docstring. Residual-lang=\"en\" grep exit=1 (zero matches). OCR_TEXT_BACKEND env grep -c = 0 (unset, single-variable-deploy constraint held). memory.max=2684354560 (2560 MiB, UNCHANGED); memory.current=57729024 (55.1 MiB); memory.peak=61513728 (58.7 MiB); memory.events max=0 oom=0 oom_kill=0 oom_group_kill=0. 21bf66b93 confirmed ancestor of HEAD.",
+            "observed_at": "2026-08-25T17:26:48Z"
+          }
+        },
+        "router_terminal_shape_repair_20260825T1726Z": "ops wrote .head only and left this row in in_progress[] with status IN_PROGRESS / next_agent=ops — the recurring stranded-in_progress defect. Router moved the lane and reset .head in this single orch-apply write."
       }
     ],
     "head": {
@@ -23564,49 +23618,7 @@
     },
     "last_triaged_at": "2026-08-25T16:18:00Z",
     "last_triaged_by": "po",
-    "in_progress": [
-      {
-        "id": "OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION",
-        "type": "OPS",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "zone": "apps/pdf-extractor/",
-        "owner": "ops",
-        "next_agent": "ops",
-        "created_at": "2026-08-25T15:24:03Z",
-        "created_by": "po/triage-20260825T1524Z",
-        "updated_at": "2026-08-25T17:17:39Z",
-        "updated_by": "po (triage-20260825T1700Z)",
-        "dedup_key": "pdfx-ops:redeploy-debt-lang-vi-d584d4db2",
-        "title": "d584d4db2 (PaddleOCR text-path lang=en -> vi) is committed on main but INERT in production — vn-market-intelligence-mcp-pdf-extractor-1 was never rebuilt; only ephemeral benchmark containers ran the fixed image",
-        "detail": "Deployment debt only; nothing is broken today. The default text backend is tesseract-vie (OCR_TEXT_BACKEND unset) and the paddleocr path is not the default, so the running pre-fix image serves identical output. The debt is that the running image now lags main on apps/pdf-extractor/ and the divergence compounds silently — exactly the accumulation failure documented on FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (alert-engine: four behaviourally-null commits hid a fifth REAL behaviour change that never executed in production).",
-        "sequencing": "HARD-BLOCKED on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT and this is NOT a formality. That row's own non_goals forbid rebuilding or restarting pdf-extractor because its AC-7 passive longitudinal sampler needs >=12h of cgroup counters, and every memory.* counter resets on container recreation. Rebuilding before AC-7/AC-8 close would destroy that measurement window. Do the sampler first, close the sibling, THEN redeploy.",
-        "market_hours_guard": "pdf-extractor must never be rebuilt or exercised during VN market open, 02:00-08:59 UTC on weekdays.",
-        "acceptance": "AC-1 rebuild pdf-extractor from main HEAD, SINGLE service only, and verify by IMAGE ID that d584d4db2 is an ancestor of the deployed git_sha. AC-2 confirm OCR_TEXT_BACKEND is still unset in the deployed environment, i.e. the default text backend remains tesseract-vie and this redeploy changes no default behaviour. AC-3 no peer container restarted (compare every peer's StartedAt before/after).",
-        "dedup_checked": "po 2026-08-25T15:20Z across all task_board lanes for (pdfx|pdf-extractor) AND (deploy|rebuild|redeploy). Existing rows read and rejected as different subjects: UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT (malloc_trim AC-3 deploy, already DISCHARGED, now MEASURE-ONLY and explicitly forbids a rebuild — recorded as this row's blocker, not its duplicate); FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH (label key bug, not a deploy); FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (the systemic gate defect this is an INSTANCE of — cross-linked only; that row is at 14,205 prose bytes, already over the 12,000 ceiling, so appending an occurrence there would hard-reject at Stage 2.5).",
-        "related": [
-          "DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO",
-          "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER",
-          "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
-          "OCR-PADDLE-VI-LANG-FIX-AND-REBENCH",
-          "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
-        ],
-        "dispatch_lane": "ops",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "promoted_at": "2026-08-25T17:00:00Z",
-        "promoted_by": "po (triage-20260825T1700Z)",
-        "po_expedited_at": "2026-08-25T17:00:00Z",
-        "po_expedited_by": "po (triage-20260825T1700Z)",
-        "po_block_released_20260825T1700Z": "HARD BLOCK RELEASED. depends_on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT is REMOVED and this row is re-prioritised P3 -> P1. The block rested on one premise: 'that row's AC-7 passive longitudinal sampler needs >=12h of cgroup counters, and every memory.* counter resets on container recreation, so rebuilding first would destroy the measurement window.' BOTH HALVES OF THAT PREMISE ARE NOW FALSE, measured live by PO this tick, not relayed. (a) THERE IS NO WINDOW TO DESTROY: AC-7 has never run. Its own AC requires the series be appended to a CSV under docs/incidents/data/; that directory holds exactly three files, all rag-durability-*, and zero pdfx files. (b) THE COUNTERS ARE ALREADY GONE, TWICE OVER: the container the sequencing was written to protect is 2edf0c9c9905, StartedAt 2026-08-23T15:44:17Z. `docker inspect` this tick returns container e2801b67406cf5e28f198b14477e7704dd74859d14d9e9a0e9670d0ceec6f845, Created 2026-08-24T13:35:05Z, StartedAt 2026-08-25T06:33:03Z, RestartCount 0. So pdf-extractor was recreated ~26h ago and restarted again ~10h ago (every peer container also reads 'Up 10 hours', i.e. a host resume, not a service fault). ORDERING IS THEREFORE INVERTED, deliberately: rebuild FIRST, then start AC-7 against the image you actually intend to keep. Sampling a container you are about to replace measures nothing. THIRD FINDING, fold into AC-1: the deployed image carries label vn.market.git_sha=\"unknown\" (docker inspect .Config.Labels), so 'verify by IMAGE ID that <sha> is an ancestor of the deployed git_sha' is currently unverifiable by construction on this service. Fixing that label is part of AC-1, not a separate row — FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH already owns the key-name defect; this is the same wound and the ops action must leave the label populated. SCOPE WIDENED: the rebuild must now also carry e9144ea75 (recall-aware OCR confidence, 2026-08-25T16:4xZ), which the live image cannot contain — it was built before that commit existed.",
-        "po_ac_correction_20260825T1700Z": "AC-2 AMENDED AND KEPT: OCR_TEXT_BACKEND stays UNSET in this redeploy, i.e. the default text backend remains tesseract-vie and this redeploy changes NO default behaviour. That is deliberate and is not softened. The flip to `auto` is a SEPARATE, GATED decision that PO ruled on this tick and parked on DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO, which depends_on this row. Keeping the two apart is the point: if quality or memory regresses after the flip, the rollback is one env var and does not require re-litigating the redeploy. market_hours_guard is unchanged and still binding: never rebuild or exercise pdf-extractor during VN market open, 02:00-08:59 UTC on weekdays.",
-        "po_placement_20260825T1700Z": "Prepended to ready[0] AND marked po_expedited_at. A `+=` append would rank this row LAST inside a ~90-row P1 band under the Ready-Lane Consumer's [priority_rank, array-index] tiebreak. The Incident-Lane Consumer was measured EMPTY this tick (0 of 106 ready rows carried po_expedited_at, INCIDENT_CAP=2), so this row and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-undroppable-remainder-over-cap-breach are candidates 1 and 2 of 2. This is the only row on the board standing between a measured, ratified OCR quality fix and the user's standing directive actually running in production.",
-        "claimed_at": "2026-08-25T17:17:38Z",
-        "claimed_by": "router (hand-dispatch to ops)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
