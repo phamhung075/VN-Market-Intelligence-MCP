@@ -2290,3 +2290,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · cron fire-gap: alertScanParallel
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** mcp-server cron alertScanParallel
+**Details:** last run 2026-08-25 08:45:00, overdue 13.8h vs 0.4h threshold (STALE)
+**Impact:** alert scanning stalled
+**Root cause:** job scheduling/execution gap, part of the same 08:45-08:55Z cluster
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:43:56Z (signal sys-20260825T223700-431d, system-auditor -> po, dedup_key=auditor-a29-fire-gap:alertScanParallel, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
