@@ -18322,6 +18322,130 @@
           "observed_at": "2026-08-25T05:19:49Z"
         }
       }
+    },
+    {
+      "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
+      "priority": "P0",
+      "zone": "mcp-server-application",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APP-split-assembleBriefing",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
+      "promoted_at": "2026-07-28T19:17:29Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+      "updated_at": "2026-08-23T14:27:56Z",
+      "claimed_at": "2026-08-23T13:39:01Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "updated_by": "dev-mcp-server",
+      "entered_review_at": "2026-07-28T19:59:55Z",
+      "review_note": "dev-mcp-server COMPLETE: split _assembleBriefingImpl (1327L file, ~620L inline-SQL orchestration in one function) into usecases/briefing/ -- 24 single-owner modules (types.ts + 22 step/helper files) covering all 19 numbered steps + persist + freshness-gate. Sequencer now 72L. Per-step error isolation moved from centralized sequencer try/catch to inside each owning step module (same catch scope/log-ctx/fallback default). Public exports (DailyBriefing, AssembleBriefingOptions, defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, TaSignal, GlobalSnapshot, BctcDeadlineRow, VnIndexSnapshot, BriefingAlert, TopStory, NewReport, WatchlistEntry) re-exported verbatim -- zero call-site edits across 27 dependent test files + 5 consumer modules. Dropped dead computeRSILocal (zero call sites, verified via repo-wide grep before removal). Verification: tsc clean; targeted 27-file briefing/TA suite 251 pass/1 fail before AND after (same pre-existing unrelated cron-expr test, zero net-new); full bun test 14844 pass/40 skip/57 fail/1 error across 1233 files, grepped all 57 fail lines to 17 unique files (none touching briefing/watchlist/TA/conviction/foreignFlow/insiderRecent), re-ran all 17 in isolation = 55/55 pass confirming standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent flakiness (dev-standards.md:590), not a regression; gen-project-stats toolCount=184/cronJobCount=88 unchanged; live server startup (PORT=3099, did not disturb the running :3000 production container) healthy, /health toolCount=184, scheduler 90 cron keys registered; /api/bctc-inspect + /dashboards/news-fetch/ both returned HTML (dashboard circular-dep check clean). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S14. Commit 4744b0792 (code) + 09ae11440 (memory). Ready for qa. NOTE: a concurrent shared-index write (unrelated po session content: signal-queue dispositions + a duplicate BACKLOG-row removal for this same task) landed bundled into the memory commit 09ae11440 due to a bare git-commit-after-git-add TOCTOU race -- content independently orch-validate.mjs-verified clean/non-destructive, no history rewrite performed per standing incident-handling precedent; flagging for awareness only. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits 4744b0792 (code, 26 files: 24 briefing/ modules + types.ts + sequencer + usecases.md doc) + 09ae11440 (memory) + 7bb2a6784 (board flip) all on main ancestry. Independently re-ran: bun tsc --noEmit 0 errors; broader-than-claimed targeted suite (38 files matching assembleBriefing|briefing/, superset of devs claimed 27+5) = 366 pass/0 fail; mock-guard.sh PASS (26 files); DDD/security grep scans clean; gen-project-stats toolCount=184/cronJobCount=88 exact match; live health probe alt-port 3098 healthy (toolCount=184, dashboard 200), port freed after. Verified every non-types.ts module <=120L (max 107L), _assembleBriefingImpl body exactly 72L (lines 216-287), computeRSILocal zero live references (dead-code claim confirmed), all 5 consumer modules import assembleBriefing.js AND were untouched by the split commit (zero call-site churn independently confirmed via git show --name-only). Repo-wide full bun test attempted, killed at ~23% (284/1233 files) after ~8min under host load, non-blocking per pinned CANONICAL dev-standards.md:591 (targeted/merge-gate suite governs, repo-wide 0-fail permanently unsatisfiable per standing FIX-MCP-SUITE-HEALTH-BASELINE). 09ae11440 TOCTOU incident not re-litigated per dispatch note (already tracked: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD + -LAYER2). DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S4. head untouched (owned by unrelated in_progress task TASK-COWORK-CATCHUP-2).",
+      "qa_verified_at": "2026-08-23T14:27:55Z",
+      "qa_verified_by": "qa",
+      "drain_source_lane": "done",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --name-only + bun test + bun x tsc --noEmit + mock-guard.sh",
+          "args": "commit=4744b0792,09ae11440,7bb2a6784; tests=38 files matching assembleBriefing|briefing/ under apps/mcp-server/src/__tests__/",
+          "live_value_observed": "ancestor=yes 3/3; 4744b0792 stat touches 27 files incl 25 briefing/ modules; bun test 366 pass 0 fail 862 expect exit 0; tsc 0 errors; mock-guard PASS",
+          "observed_at": "2026-08-23T14:27:55Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): RE-VERIFIED 2026-08-23 after done[]->qa[] drain (drain_source_lane=done). Independently re-ran, not trusted from the 2026-07-28 record: 4744b0792/09ae11440/7bb2a6784 all on main ancestry; 4744b0792 touches 27 files (25 briefing/ modules + sequencer + usecases.md doc); bun x tsc --noEmit 0 errors; targeted briefing suite 38 files 366 pass/0 fail/862 expect (exact match to the 2026-07-28 figure); mock-guard PASS (26 .ts); DDD clean (domain/ has ZERO infrastructure imports; the briefing/ hits are application->infrastructure logger, the permitted direction); no process.env, no secrets; max non-types module 107L, sequencer _assembleBriefingImpl at line 216. Original qa_verified_at was 2026-07-28T20:17:55Z -- the row was APPROVED then but stranded at status DONE in done[] for 26d because nothing produced the DONE_VERIFIED token, starving FACTORY-APP-split-assembleEveningSummary. This flip is also the live end-to-end demonstration leg of FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION's verification_gate."
+    },
+    {
+      "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
+      "priority": "P1",
+      "zone": "mcp-server-application",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APP-split-assembleEveningSummary",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary",
+      "promoted_at": "2026-08-25T06:54:19Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "updated_at": "2026-08-25T08:23:34Z",
+      "claimed_at": "2026-08-25T08:17:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "dispatch_lane": "dev-mcp-server",
+      "updated_by": "dev-mcp-server",
+      "evidence": "commit ad0ff8268 (13 new usecases/eveningSummary/ step modules + thin sequencer, doc update); notebook + decision-journal S95 in commit a9ae069b1",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-25T08:23:33Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh + grep DDD/security + git diff vs parent for hangSeng guard",
+          "args": "commit=ad0ff8268; files=14 eveningSummary/ modules + assembleEveningSummary.ts + usecases.md",
+          "live_value_observed": "ancestor=yes; stat touches all 14 claimed files; bun test 35 pass 0 fail (5-file targeted evening bundle); tsc 0 errors; mock-guard PASS; DDD grep clean; security grep clean; hangSeng guard byte-identical vs pre-split (queryGlobalSnapshotStep.ts vs assembleEveningSummary.ts@ad0ff8268^ line 679) confirming deliberate behavior-preservation, not new regression",
+          "observed_at": "2026-08-25T08:23:33Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify PASS. Refactor sound: bun test 35/35 (targeted evening-summary bundle), tsc 0 errors, mock-guard PASS (14 files), DDD/security clean, no domain/ touched. PRIMARY ADJUDICATION (dispatch brief): hangSeng omission in queryGlobalSnapshotStep.ts (checks vix/dxy/sp500!==0, never hang_seng) is CONFIRMED present and DELIBERATE — byte-identical to pre-split guard (diffed vs ad0ff8268^), disclosed in commit msg + in-file comment + dev-mcp-server journal as pre-existing, refactor-only-scope, left unfixed. NO board row tracks the underlying hangSeng defect (grepped orch-state.json/backlog-detail.json/archive/ — zero hits) -- surfaced separately via signal_queue row to po (type preserved_bug_no_tracking_row), not folded into this sign-off."
+    },
+    {
+      "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
+      "type": "FIX",
+      "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
+      "status": "DONE_VERIFIED",
+      "priority": "P0",
+      "size": "S",
+      "zone": "cross-service/",
+      "owner": "po",
+      "supervised": false,
+      "baseline_pass": true,
+      "created_at": "2026-08-23T15:06:54Z",
+      "created_by": "po/triage-20260823T1500Z",
+      "dedup_key": "devteam-eligibility:effective-nextagent-detail-first-no-recency",
+      "files": [
+        "scripts/lib/devteam-eligibility.jq"
+      ],
+      "status_note": "CONFIRMED IN CODE. scripts/lib/devteam-eligibility.jq def effective_next_agent($detail_items) (~line 342) and its twin def effective_owner (~line 331) both resolve detail-FIRST: if the backlog-detail.json copy has a non-empty string they return it and never look at the board row. Neither compares the two updated_at stamps, even though BOTH planes carry one. Comment cites FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16) as the origin of detail-first. LIVE INSTANCE (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE): hot review[] row was rerouted qa->ops at 13:50Z; docs/data/orch/archive/backlog-detail.json still said qa, stamped 12:51:27Z (~1h older). The resolver returned the stale qa, QA-Drain re-claimed, a third qa pass re-derived the same HELD verdict, redispatch_count=1. As of 2026-08-23T15:0xZ both planes read next_agent=qa again (hot updated 14:53:08Z, cold 12:51:27Z) so this specific row has converged, but the resolver defect is structural and re-fires on every hot-row reroute. SCOPE NOTE: this is NOT FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (BACKLOG, developer) — that row is about the CLAIM script reading a cached dispatch_lane. The claim script is correct as written; the defect is in the resolver. AC-1: when both planes carry updated_at, the more recent wins; detail-first is retained ONLY as the tie-break/when-one-side-is-absent rule, preserving the 2026-07-16 intent. AC-2: fixture replay of the PEK divergence (hot=ops@13:50Z, cold=qa@12:51Z) resolves to ops BEFORE the fix and qa AFTER on the reversed fixture. AC-3: effective_owner gets the identical treatment in the same change — same defect shape, same file. AC-4: no regression in scripts/audits/bounded1-supervised-lane-report.sh output on the live board.\n[QA] Review Record (direct-commit verify): commit 6b94d0832 verified -- ancestor-confirmed, sole claimed file scripts/lib/devteam-eligibility.jq touched. AC-1/AC-2/AC-3 confirmed via direct jq-fixture execution against effective_next_agent/effective_owner (board-newer wins, detail-newer wins, tie->detail unchanged, board-only/detail-only/legacy-no-ts/unparseable-ts all fall back to detail-first unchanged) -- matches spec exactly, including the explicitly-requested tie case. AC-4: devteam-dispatch-gate-satisfiability.sh now shows 113 PASS/2 FAIL (not the row's claimed 114/1) -- A/B'd via pre-fix jq extracted from git show 6b94d0832~1 (no git stash) against the SAME frozen live board snapshot: both old and new code resolve zero review[] rows to next_agent==qa right now, proving the 2nd failure is the audit script's own <20 review[] padding-threshold coupling to live board content (the one masking row already drained to qa[] this tick), not a regression from this commit. bounded1-supervised-lane-report.sh exit 0. mock-guard PASS (no production-source surface for .jq). No TS/tsc surface touched. Not OOM-class.",
+      "updated_at": "2026-08-25T08:24:19Z",
+      "promoted_at": "2026-08-25T07:32:38Z",
+      "promoted_by": "po/triage-20260825T073238Z",
+      "updated_by": "developer",
+      "po_expedited_at": "2026-08-25T07:32:38Z",
+      "po_expedited_by": "po",
+      "po_escalation_20260825T0727Z": "P1 -> P0 AND promoted backlog[]->ready[] with a po_expedited_at incident stamp. TRIGGER: dev-team escalation 2026-08-25T04:46:23Z upgraded its own 04:21Z P1 filing after a full census showed the LANE-LEVEL consequence, not just two mis-resolved rows. Census: review_total=27, status_REVIEW=17, rows_with_hot_next_agent_qa=1, rows_with_cold_next_agent_qa=0, rows_with_effective_next_agent_qa=0, qa_drain_picked_this_tick=0, qa_wip=3, qa_cap=10, take_budget_available=7. QA-Drain resolved ZERO eligible rows while holding 7 free budget: the review lane is DAMMED, not merely lossy. MASKING ROW: FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED is the ONLY review[] row routed to qa on the hot board (hot next_agent=qa, cold next_agent=developer); effective_next_agent() prefers the cold backlog-detail.json value, resolves it to developer, and QA-Drain never sees it. ONE stale cold entry is sufficient to zero the entire lane. 12 further hot/cold divergent rows were enumerated in the same census. This row is the resolver fix and therefore the dam. po_expedited_at routes it through the Incident-Lane Consumer's own INCIDENT_CAP=2 budget (dev-team/flow/main.md, UNCONDITIONAL head-decoupled site) instead of the shared WIP<=2 slot, so it does not have to win the RLC starvation lottery. LIVE MEASUREMENT (po, this tick): zero rows in the whole board carried po_expedited_at before this write — the incident lane has been live and completely unused.",
+      "implementation_note": "[developer 2026-08-25T07:55:25Z] FIXED + committed 6b94d0832. scripts/lib/devteam-eligibility.jq: effective_owner()/effective_next_agent() now recency-compare via new parse_ts() (ISO8601->epoch, null-safe) instead of blind detail-first — when BOTH board and detail carry a non-empty value AND both carry a parseable updated_at, the STRICTLY more recent stamp's value wins; detail-first retained UNCHANGED as tie-break/one-side-absent fallback (AC-1). Verified with ad-hoc jq fixtures (not committed, scratchpad-only): PEK-shaped divergence (board newer) resolves to board's value, reversed fixture (detail newer) resolves to detail's value, and every pre-existing fallback shape (board-only, detail-only, no-updated_at legacy rows, tied stamps) is byte-identical to pre-fix behavior (AC-2). effective_owner() got the identical treatment in the same commit (AC-3). scripts/audits/devteam-dispatch-gate-satisfiability.sh: 114/116 PASS both BEFORE and AFTER this change (confirmed via git-stash A/B on the live board) — the one failing assertion (SLS gate at in_progress=1 saturated shape) is byte-identical pre/post-fix, a pre-existing live-board-shape condition unrelated to this resolver change, NOT a regression (AC-4). scripts/audits/bounded1-supervised-lane-report.sh: identical output before/after, exit 0 both. tsc/bun test not applicable — pure jq library, no TS surface touched.",
+      "claimed_at": "2026-08-25T08:17:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-25T08:23:52Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + ad-hoc jq fixture execution against effective_next_agent/effective_owner + devteam-dispatch-gate-satisfiability.sh + bounded1-supervised-lane-report.sh + mock-guard.sh",
+          "args": "commit=6b94d0832; files=scripts/lib/devteam-eligibility.jq",
+          "live_value_observed": "ancestor=yes; stat touches 1/1 claimed file; 8 direct jq fixtures (board-newer/detail-newer/tie/board-only/detail-only/legacy-no-ts/board-ts-unparseable/detail-ts-unparseable) all match spec on BOTH effective_next_agent and effective_owner; devteam-dispatch-gate-satisfiability.sh 113 pass/2 fail (both pre-existing board-content-coupled, confirmed via A/B replay of pre-fix vs post-fix jq on frozen live snapshot -- zero delta); bounded1-supervised-lane-report.sh exit 0; mock-guard.sh PASS",
+          "observed_at": "2026-08-25T08:23:52Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+      "title": "_check_launchd_agents cannot tell 'deliberately disabled by the user' from 'dead', so a policy decision has to be laundered through the ack ledger — which then cannot self-expire",
+      "type": "FIX",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "status": "DONE_VERIFIED",
+      "commit": "0e3128e1f",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED",
+      "updated_at": "2026-08-25T08:26:10Z",
+      "updated_by": "developer",
+      "claimed_at": "2026-08-25T08:17:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-25T08:26:08Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + git show (diff read) + bash scripts/agents-flow/auditor-tier1-probe.sh (live, 3x) + plutil -p + launchctl list + launchctl print-disabled + jq + bash -n + mock-guard.sh",
+          "args": "commit=0e3128e1f; files=scripts/agents-flow/auditor-tier1-probe.sh,docs/data/auditor-launchd-ack.json",
+          "live_value_observed": "ancestor=yes; stat touches 2/2 claimed files; live probe verdict=ALL_GREEN, launchd_agents=PASS, detail=expected-disabled...com.vn-market.fleet-push(disabled-by-plist); forced print-disabled-only path returned disabled-by-launchctl; acked[] has 0 fleet-push entries; spawn-debounce.json md5 unchanged across 3 runs; mock-guard PASS (no production source in scope)",
+          "observed_at": "2026-08-25T08:26:08Z"
+        }
+      },
+      "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify APPROVED. Commit 0e3128e1f confirmed main-ancestor, git show --stat touches exactly the 2 claimed files (auditor-tier1-probe.sh, auditor-launchd-ack.json). Read the diff at source (not the review_note prose): _launchd_label_expected_disabled() checked BEFORE the ack lookup, in the not-loaded branch only; reads LAUNCHD_INSTALLED_DIR plist via plutil -p (never grep -i disabled) for Disabled=>1 (AC-2), OR launchctl print-disabled membership (AC-3); result named in detail string distinct from acknowledged-degraded (AC-4); never writes bad/acked/spawn-debounce side-channel; loaded-but-bad-exit-status branch untouched. Live-ran the mutating probe myself (bash -n clean, jq valid): verdict=ALL_GREEN, launchd_agents among the 6 PASSED checks, detail names com.vn-market.fleet-push(disabled-by-plist) under expected-disabled (AC-6). Independently forced the print-disabled-only branch via LAUNCHD_INSTALLED_DIR_PATH=/nonexistent-qa-check-dir: correctly fell through and returned disabled-by-launchctl (AC-3 proven live in isolation, not just shadowed by the plist check -- fleet-push is now present in BOTH plutil -p Disabled=>1 AND launchctl print-disabled gui/$(id -u), state drift since the 08-24T16:48Z po_ruling text which recorded it absent from print-disabled -- immaterial to the fix, both mechanisms independently confirmed working). auditor-launchd-ack.json acked[] has zero fleet-push entries before or after every run (AC-5); docker-events untouched acked[] entry unaffected (AC-7, separate loaded-but-exit-0 label today, orthogonal fluctuation, not caused by this diff). auditor-tier1-spawn-debounce.json md5 byte-identical across 3 separate probe invocations -- no new/refreshed fleet-push entry (AC-8). Self-check: every command I ran was read-only (plutil -p, launchctl list, launchctl print-disabled, bash -n, jq, git show/log) -- no launchctl enable/load/bootstrap, no plist edit anywhere (AC-9). mock-guard.sh: no production source in scan scope, PASS. OUT-OF-SCOPE FINDING, flagged not fixed: docs/data/auditor-tier1-spawn-debounce.json has zero garbage-collection -- all 4 live entries (incl. the fleet-push spawn_count=10 entry) have already-expired window_expires_at with nothing pruning them; none of this row's AC-1..AC-9 cover debounce-ledger GC, so this is NOT absorbed here -- recommend po mint a separate row."
     }
   ],
   "closed_sprints": [
@@ -29965,6 +30089,28 @@
       "triaged_by": "po (ruling-20260824T0716Z)",
       "triaged_at": "2026-08-24T07:16:00Z",
       "disposition": "ACCEPTED-WITH-CORRECTIONS. Measurement and routing correct; two payload claims are not. (i) payload.issue.root_cause says pdf-extractor's absence from .acked_memory is the 'sole cause of breach' -- it is the sole cause of the FAILURE VERDICT, not of the breach; the breach is real (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM shipped and idles at 85-87% against its own AC-4 bar of <=80% of cap). (ii) payload.issue.evidence says 'no backlog row' -- FALSE: FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK has tracked exactly this loop since 2026-08-24T04:01:33Z, and FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE tracks the headroom-plane defect. payload.action_required ('ack the entry or raise the cap') offers only the two options PO refused at 04:00Z and refuses again here -- see po_ruling_20260824T0716Z on the FOLD-VERDICT row for the full reasoning. Resolution: no ack, no cap change; the FOLD-VERDICT row is expedited to P0 and `.head` unpinned in this same write so it can finally be dispatched. _updated_by null on this row is the known signal_queue producer-auth gap, not a defect of this row."
+    },
+    {
+      "id": "bctc-imgdeg-1f53ef33-20260824T090414Z",
+      "ts": "2026-08-24T09:04:14Z",
+      "from": "mcp-server",
+      "to": "po",
+      "type": "bctc_image_fetch_degraded",
+      "summary": "BCTC report 1f53ef33: 2 refined units capped <=0.6 confidence (image_unavailable) — investigate get_bctc_page_image/p...",
+      "severity": "HIGH",
+      "status": "triaged",
+      "payload_ref": null,
+      "payload": {
+        "report_id": "1f53ef33-8f50-489b-8505-689740692ab0",
+        "affected_unit_ids": [
+          "unit-0004",
+          "unit-0005"
+        ]
+      },
+      "dedup_key": "bctc_image_fetch_degraded:1f53ef33-8f50-489b-8505-689740692ab0",
+      "triaged_at": "2026-08-24T10:56:41Z",
+      "triaged_by": "po (triage-20260824T1050Z, router hand-dispatch)",
+      "disposition": "FOLD onto FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP (2nd occurrence, 2nd distinct report in 2 days) + MINTED FIX-BCTC-IMGDEG-SIGNAL-SUMMARY-CONTRADICTS-ITS-OWN-LIVE-CONFIDENCES. THIS SIGNAL IS FALSE ABOUT ITS OWN SUBJECT ON TWO AXES - re-measured at source this tick via get_bctc_refined(report_id=1f53ef33-8f50-489b-8505-689740692ab0) through the gateway wrapper, not taken from the dispatch. (i) COUNT: THREE units carry an image_unavailable flag, not the 2 named in payload.affected_unit_ids - unit-0004 conf 0.75 flags [continuation_marker_missing:page7, image_unavailable:pages6-8]; unit-0005 conf 0.65 flags [image_unavailable, garbled_ocr_layout]; unit-0006 conf 0.70 flags [image_unavailable, ocr_row_alignment_uncertain]. (ii) THRESHOLD: NONE of the three is at or below the <=0.6 the summary asserts; the true range is 0.65-0.75. MECHANISM PINNED in apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts: (a) shouldSignalImageFetchDegradation() fires on strict equality occurrenceCount===threshold(2) - a rising edge that by its own header 'never re-fires on the 3rd, 4th ... occurrence' - and nothing ever amends the emitted row, so affected_unit_ids is a point-in-time snapshot presented as the report's final extent. unit-0006 was refined at 09:04:24, 10s AFTER this row's own ts 09:04:14, which is exactly why it is missing. (b) buildBctcImageFetchDegradedRow() templates the literal 'capped <=0.6 confidence' unconditionally and never reads a confidence value at all - byte-for-byte the same hardcoded-summary-contradicts-payload defect as CCATO defect (C) at scripts/narrative-truth-gate.sh:421-423, in a second, independent emitter. (c) The row carries NO dedup_key (yesterday's sibling bctc-imgdeg-69fcd047 only has one because PO stamped it by hand at triage) - same missing-dedup_key defect as CCATO defect (B). UNDERLYING AND WORSE THAN THE SUMMARY BUG: the <=0.6 cap that the writer's own file header calls 'BY DESIGN' is a prose instruction to the refine_bctc_md subagent (table-page.md / continuation-stitch.md) with no server-side clamp at the push_bctc_refined_unit boundary. Live data refutes it 3/3, so any downstream consumer filtering on confidence<=0.6 to find image-degraded units silently returns ZERO for this report. Not closed as noise: the fetch-plane degradation itself is real and now recurring, and the emitter's own falsity is the newly minted row."
     }
   ],
   "backlog_detail": [],
