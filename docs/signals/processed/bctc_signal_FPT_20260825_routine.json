@@ -4,55 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "ey_spread_pct": 2.25,
-  "valuation_verdict": "FAIR",
-  "roe_pct": 28.3,
-  "kinhdich": {
-    "que": "Tuy (17)",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
-  },
-  "esc_gate": {
-    "esc1": "UNEVALUABLE_SCOPE_REDUCED",
-    "esc2": {
+  "product": "IT services & software exports (offshore dev for Japan/US/APAC), telecom (FPT Telecom, equity-method since 2026), education (FPT Edu), digital transformation consulting",
+  "customer": "Enterprise IT buyers globally (offshore outsourcing clients), domestic broadband/telecom subscribers, students across FPT's education network",
+  "ops": "Q1-2026 net revenue 12,480 tỷ VND (-22.3% YoY headline due to FTEL deconsolidation to equity method; +8.7% YoY on comparable basis); gross margin 34.0%; operating margin 22.0%; net profit 2,477 tỷ VND (+13.8% YoY comparable). ROE 28.3% (sector-annualized) vs sector median 10.6% — well above peers.",
+  "mgmt": "EY_SPREAD +2.25pp → FAIR (PE 13.8 vs sector median 17.3, -20% discount; PB 3.6 vs 1.5, +136% premium). KinhDich: Que Tieu Qua (62), TRUNG TINH/GIU, 37% confidence. ESC-5 TRUE (7/15 refine units <0.50 confidence, min=0.45) — Opus deep-dive GUARD-HELD (session-owned, expires ~2026-08-25T21:23Z).",
+  "supporting": {
+    "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+    "esc_2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "esc3": {
+    "esc_3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
-      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-      "coverage_guard_held": true
+      "quarters_required": 4
     },
-    "esc4": {
+    "esc_4": {
       "result": false,
       "non_operating_share_pct": 2
     },
-    "esc5": {
+    "esc_5": {
       "result": true,
       "min_confidence": 0.45,
-      "low_confidence_unit_ids": [
-        "unit-0008",
-        "unit-0009",
-        "unit-0010",
-        "unit-0011",
-        "unit-0012",
-        "unit-0013",
-        "unit-0014"
-      ],
-      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d"
+      "low_confidence_unit_count": 7,
+      "escalation_status": "GUARD-HELD"
     },
-    "escalation_status": "GUARD-HELD",
-    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+    "confidence_pct": 81,
+    "refine_status": "DONE",
+    "insider_signal": "none material",
+    "legal_risk": "none",
+    "overdue": "Q2-2026 report overdue since 2026-07-30 (Q1-2026 latest extracted)"
   },
-  "product": "IT services (software outsourcing/export), telecom (FPT Telecom), digital education (FPT Edu, university + K-12 network)",
-  "customer": "Enterprise IT buyers in Japan/US/EU export markets plus domestic telecom subscribers and students; no single customer >10% of receivables",
-  "ops": "Gross margin 34.0%, operating margin 22.0%; Q1-2026 revenue -22.3% YoY on FTEL deconsolidation to equity-method (like-for-like +8.7% revenue, +13.8% net profit)",
-  "mgmt": "Reported profit growth like-for-like despite consolidation-method change; OCF/NI ratio negative this quarter (-1.15x) on working-capital build, flagged as DATA-COVERAGE-LIMITED pending more quarters",
+  "generated_at": "2026-08-25T15:20:00Z",
   "_processed": {
-    "fingerprint": "90f45168574b169eeb88f32fceaa713abb0459bf35955a8d7f7acc50812723a9",
-    "processedAt": "2026-08-25T00:10:25Z",
+    "fingerprint": "0b84f06598931b0b01bfaa8774def7ee1bc29675e4465f5d54ca86714be378a6",
+    "processedAt": "2026-08-25T15:30:58Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

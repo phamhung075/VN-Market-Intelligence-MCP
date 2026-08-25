@@ -4,44 +4,39 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "ey_spread_pct": 2.04,
-  "valuation_verdict": "FAIR",
-  "roe_pct": 12.7,
-  "kinhdich": {
-    "que": "Tiem (53)",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
-  },
-  "esc_gate": {
-    "esc1": "UNEVALUABLE_SCOPE_REDUCED",
-    "esc2": {
+  "product": "Steel production (long steel, HRC, billets) and construction materials",
+  "customer": "Construction/infrastructure contractors, steel distributors, export markets",
+  "ops": "Q1-2026 net revenue 52,901 tỷ VND; gross margin 15.8%; net profit 9,056 tỷ VND. Operating Profit line reported as 0 tỷ VND — DATA QUALITY ISSUE, corrupt/unextracted field, 37th+ consecutive cycle unresolved. Validation warning: net profit exceeds gross profit (possible non-operating income, unverified). ROE 12.7% (sector-annualized) vs sector median 2.9%.",
+  "mgmt": "EY_SPREAD +2.04pp → FAIR (PE 14.2 vs sector median 32.6, -57% discount). KinhDich: Que Khon (47), BAT LOI/GIU, 25% confidence (low-confidence bearish lean). ESC-4 DISCARDED this cycle (operating_profit=0 corrupt input, cannot compute non_operating_share).",
+  "supporting": {
+    "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+    "esc_2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "esc3": {
+    "esc_3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
-      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
-      "coverage_guard_held": true
+      "quarters_required": 4
     },
-    "esc4": {
+    "esc_4": {
       "result": "DISCARDED",
-      "reason": "operating_profit=0 (corrupt extraction, recurring 36th+ cycle)"
+      "reason": "operating_profit=0 corrupt"
     },
-    "esc5": {
+    "esc_5": {
       "result": false,
-      "report_id": null,
-      "existing_refine_status": "PARTIAL"
-    }
+      "reason": "report_id=null, refine_status=PARTIAL"
+    },
+    "confidence_pct": 80,
+    "refine_status": "PARTIAL",
+    "insider_signal": "none material",
+    "legal_risk": "none",
+    "overdue": "Q2-2026 report overdue since 2026-07-30 (Q1-2026 latest extracted)"
   },
-  "product": "Steel production and distribution (construction steel, HRC/CRC flat steel, steel pipe)",
-  "customer": "Domestic construction/infrastructure contractors and manufacturers, plus export steel buyers",
-  "ops": "Gross margin 15.8%; operating_profit field extraction corrupt (0 tỷ VND, 36th+ consecutive cycle) — net profit (9,055.9 tỷ VND) exceeds gross profit, non-operating income component per validator warning",
-  "mgmt": "ROE 12.7% above steel-sector median (2.9%); foreign net-buy flow +480K shares 5-session, stronger than sector — extraction data-quality gap on operating-profit line still unresolved, do not treat as a going-concern signal",
+  "generated_at": "2026-08-25T15:20:00Z",
   "_processed": {
-    "fingerprint": "13ae0312ae35fb5a7c1228bb0ab0e7d2349409820d6bb3c8d5daaef25f7d314a",
-    "processedAt": "2026-08-25T00:10:25Z",
+    "fingerprint": "0d709ebab8d1ca250e7b8f9363005d36f2d59680314ec0b38b9f13c0178a0f00",
+    "processedAt": "2026-08-25T15:30:58Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

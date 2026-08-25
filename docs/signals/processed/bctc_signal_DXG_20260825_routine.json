@@ -4,30 +4,22 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "ey_spread_pct": -3.5,
-  "valuation_verdict": "AVOID",
-  "roe_pct": 1.9,
-  "kinhdich": {
-    "que": "Quan (20)",
-    "trend": "TRUNG TINH",
-    "signal": "THAN TRONG",
-    "confidence_pct": 13
+  "product": "Residential real estate development and brokerage",
+  "customer": "Homebuyers/investors in HCMC and satellite provinces",
+  "ops": "NO BCTC EXTRACTED DATA — get_bctc_full returns 'Chưa có dữ liệu' (41st+ consecutive cycle, unresolved extraction gap; dev-team pickup pending since c162 cash-flow-anomaly signal). Sector-comparison-only view: ROE 1.9% vs sector median 7.3% — well below peers.",
+  "mgmt": "EY_SPREAD -3.50pp → AVOID (PE 66.5 vs sector median 16.1, +312% premium — do NOT post bullish signal per valuation_verdict=AVOID rule). KinhDich: Que Tuy (45), THUAN LOI/THAN TRONG, 75% confidence — notably high-confidence cautious-positive reading that DIVERGES from the AVOID fundamental valuation verdict; flag for human review, do not reconcile automatically.",
+  "supporting": {
+    "esc_gates": "not evaluable — no BCTC data extracted for this ticker",
+    "confidence_pct": null,
+    "refine_status": "no report filed / no data",
+    "insider_signal": "none material",
+    "legal_risk": "none",
+    "overdue": "Q2-2026 report overdue since 2026-07-30 (no prior quarter ever successfully extracted)"
   },
-  "esc_gate": {
-    "esc1": "UNEVALUABLE_SCOPE_REDUCED",
-    "esc2": "N/A_NO_DATA",
-    "esc3": "N/A_NO_DATA",
-    "esc4": "N/A_NO_DATA",
-    "esc5": "N/A_NO_DATA",
-    "data_gap": "get_bctc_full(DXG) returns 'Chưa có dữ liệu' — 40th+ consecutive cycle unresolved despite DXG_2026_Q1/Q2 PDFs on file since 2026-08-01/08-03"
-  },
-  "product": "Residential real estate development (apartments, townhouses, land-bank projects, southern Vietnam focus)",
-  "customer": "Retail homebuyers and investors in HCMC-region residential projects",
-  "ops": "No live BCTC extraction available this cycle (40th+ cycle) — valuation/ROE figures below sourced from get_sector_comparison only, not from a fresh BCTC pull",
-  "mgmt": "PE premium +312% vs real-estate sector median while ROE (1.9%) is well below median (7.3%) — valuation not supported by profitability on the data available; extraction gap prevents deeper forensic read",
+  "generated_at": "2026-08-25T15:20:00Z",
   "_processed": {
-    "fingerprint": "2caf1dd45ecd39cc0a0386f679948e3807521650788c6214746e44220d29155c",
-    "processedAt": "2026-08-25T00:10:25Z",
+    "fingerprint": "32fb3839a031deac7bfad5f8304da1b497cfbe6fe5da99f9a182900fbfda3f41",
+    "processedAt": "2026-08-25T15:30:58Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -23255,7 +23255,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T14:45:11Z",
+    "_updated_at": "2026-08-25T15:30:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23369,6 +23369,259 @@
         "payload": "stale pending BCTC (2 rows >72h)",
         "createdAt": "2026-08-25T14:39:03Z",
         "drained_at": "2026-08-25T14:42:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "32fb3839a031deac7bfad5f8304da1b497cfbe6fe5da99f9a182900fbfda3f41",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Residential real estate development and brokerage",
+          "customer": "Homebuyers/investors in HCMC and satellite provinces",
+          "ops": "NO BCTC EXTRACTED DATA — get_bctc_full returns 'Chưa có dữ liệu' (41st+ consecutive cycle, unresolved extraction gap; dev-team pickup pending since c162 cash-flow-anomaly signal). Sector-comparison-only view: ROE 1.9% vs sector median 7.3% — well below peers.",
+          "mgmt": "EY_SPREAD -3.50pp → AVOID (PE 66.5 vs sector median 16.1, +312% premium — do NOT post bullish signal per valuation_verdict=AVOID rule). KinhDich: Que Tuy (45), THUAN LOI/THAN TRONG, 75% confidence — notably high-confidence cautious-positive reading that DIVERGES from the AVOID fundamental valuation verdict; flag for human review, do not reconcile automatically.",
+          "supporting": {
+            "esc_gates": "not evaluable — no BCTC data extracted for this ticker",
+            "confidence_pct": null,
+            "refine_status": "no report filed / no data",
+            "insider_signal": "none material",
+            "legal_risk": "none",
+            "overdue": "Q2-2026 report overdue since 2026-07-30 (no prior quarter ever successfully extracted)"
+          },
+          "generated_at": "2026-08-25T15:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T15:30:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0b84f06598931b0b01bfaa8774def7ee1bc29675e4465f5d54ca86714be378a6",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services & software exports (offshore dev for Japan/US/APAC), telecom (FPT Telecom, equity-method since 2026), education (FPT Edu), digital transformation consulting",
+          "customer": "Enterprise IT buyers globally (offshore outsourcing clients), domestic broadband/telecom subscribers, students across FPT's education network",
+          "ops": "Q1-2026 net revenue 12,480 tỷ VND (-22.3% YoY headline due to FTEL deconsolidation to equity method; +8.7% YoY on comparable basis); gross margin 34.0%; operating margin 22.0%; net profit 2,477 tỷ VND (+13.8% YoY comparable). ROE 28.3% (sector-annualized) vs sector median 10.6% — well above peers.",
+          "mgmt": "EY_SPREAD +2.25pp → FAIR (PE 13.8 vs sector median 17.3, -20% discount; PB 3.6 vs 1.5, +136% premium). KinhDich: Que Tieu Qua (62), TRUNG TINH/GIU, 37% confidence. ESC-5 TRUE (7/15 refine units <0.50 confidence, min=0.45) — Opus deep-dive GUARD-HELD (session-owned, expires ~2026-08-25T21:23Z).",
+          "supporting": {
+            "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+            "esc_2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc_3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4
+            },
+            "esc_4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "esc_5": {
+              "result": true,
+              "min_confidence": 0.45,
+              "low_confidence_unit_count": 7,
+              "escalation_status": "GUARD-HELD"
+            },
+            "confidence_pct": 81,
+            "refine_status": "DONE",
+            "insider_signal": "none material",
+            "legal_risk": "none",
+            "overdue": "Q2-2026 report overdue since 2026-07-30 (Q1-2026 latest extracted)"
+          },
+          "generated_at": "2026-08-25T15:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T15:30:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0d709ebab8d1ca250e7b8f9363005d36f2d59680314ec0b38b9f13c0178a0f00",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (long steel, HRC, billets) and construction materials",
+          "customer": "Construction/infrastructure contractors, steel distributors, export markets",
+          "ops": "Q1-2026 net revenue 52,901 tỷ VND; gross margin 15.8%; net profit 9,056 tỷ VND. Operating Profit line reported as 0 tỷ VND — DATA QUALITY ISSUE, corrupt/unextracted field, 37th+ consecutive cycle unresolved. Validation warning: net profit exceeds gross profit (possible non-operating income, unverified). ROE 12.7% (sector-annualized) vs sector median 2.9%.",
+          "mgmt": "EY_SPREAD +2.04pp → FAIR (PE 14.2 vs sector median 32.6, -57% discount). KinhDich: Que Khon (47), BAT LOI/GIU, 25% confidence (low-confidence bearish lean). ESC-4 DISCARDED this cycle (operating_profit=0 corrupt input, cannot compute non_operating_share).",
+          "supporting": {
+            "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+            "esc_2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc_3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4
+            },
+            "esc_4": {
+              "result": "DISCARDED",
+              "reason": "operating_profit=0 corrupt"
+            },
+            "esc_5": {
+              "result": false,
+              "reason": "report_id=null, refine_status=PARTIAL"
+            },
+            "confidence_pct": 80,
+            "refine_status": "PARTIAL",
+            "insider_signal": "none material",
+            "legal_risk": "none",
+            "overdue": "Q2-2026 report overdue since 2026-07-30 (Q1-2026 latest extracted)"
+          },
+          "generated_at": "2026-08-25T15:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T15:30:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d8b0dd2a234ae06b3808e588ebb1b5f2dce25c94518b359138a0be4566500681",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Corporate & retail banking, trade finance, bancassurance cross-sell",
+          "customer": "State-owned/large corporates, retail depositors/borrowers, SME clients",
+          "ops": "Q1-2026 net interest income 17,421 tỷ VND; operating profit margin 80.9%; net profit 9,462 tỷ VND. ROE 16.7% (sector-annualized) vs sector median 17.6% — slightly below peer median. OCF/NI ratio Q1-2026 = 1.37x (healthy cash conversion).",
+          "mgmt": "EY_SPREAD +2.09pp → FAIR (PE 14.1 vs sector median 9.0, +57% premium; PB +45% premium — market pricing VCB at a quality premium vs peer banks). KinhDich: Que Tieu Qua (62), TRUNG TINH/GIU, 37% confidence. ESC-2 balance check imbalance 0.37% (within 0.5% tolerance, FALSE).",
+          "supporting": {
+            "esc_1": "unevaluable (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+            "esc_2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc_3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio_note": "well below 0.40 threshold"
+            },
+            "esc_4": {
+              "result": "N/A",
+              "reason": "bank — non-operating framing not applicable"
+            },
+            "esc_5": {
+              "result": false,
+              "reason": "report_id=null, refine_status=PARTIAL"
+            },
+            "confidence_pct": 75,
+            "refine_status": "PARTIAL",
+            "insider_signal": "none material",
+            "legal_risk": "none",
+            "overdue": "Q2-2026 report overdue since 2026-08-14 (Q1-2026 latest extracted)"
+          },
+          "generated_at": "2026-08-25T15:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-25T15:30:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a8ac148c55cfbbc3c37e4037838098a653ed2a5bb1ef4e881cdaeb94aa30d5ca",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "INFO",
+        "payload": {
+          "from": "cowork-team",
+          "to": "po",
+          "type": "signal_feedback",
+          "severity": "INFO",
+          "summary": "container_vm_headroom_mb 3608->2351->1207 across 3 ticks is a transient ocr-bench container (2.476GiB/2.5GiB, unhealthy), NOT a service leak — mcp-server is 296MiB/3GiB. Guard the open pdf-extractor memory investigation against this contamination.",
+          "dedup_key": "vm-headroom-collapse-attributable-to-transient-ocr-bench-container-20260825",
+          "provenance": "cowork-dispatcher-tick-observation",
+          "owner_hint": "po to note against sys-20260825T142316-4385; no dev dispatch implied",
+          "detail": "MEASUREMENT (3 consecutive cowork ticks, pressure-state.json container_vm_headroom_mb):\n  14:20:55Z -> 3608 MB\n  14:35:14Z -> 2351 MB  (-1257)\n  14:48:56Z -> 1207 MB  (-1144)\nMonotone, ~1200 MB/tick. On n=1 I declined to file; on n=3 I probed docker before escalating.\n\nROOT CAUSE — transient peer benchmark, NOT a service leak:\n  docker stats 14:50Z:\n    ocr-bench-paddleocr-run2   2.476GiB / 2.5GiB   99.05%   (Up 7 min, UNHEALTHY)\n    pdf-extractor-1            1.632GiB / 2.5GiB   65.27%\n    rag-service-1              1.224GiB / 2GiB     61.20%\n    mcp-server-1               296.4MiB / 3GiB      9.65%   <-- gateway is FINE\nCorrelates with two untracked peer files seen in git status at 14:35Z:\n  scripts/audits/ocr-backend-bench.sh, scripts/audits/ocr_bench_inner.py\nContainer is named run2, so a run1 preceded it; run2 started ~14:42Z, which is AFTER the\n14:20->14:35 drop. So the earlier decrement is attributable to run1 (or pdf-extractor growth),\nnot to run2. Each run appears to hold ~2.5 GiB for its lifetime.\n\nWHY THIS MATTERS TO PO NOW:\n1. system-auditor row sys-20260825T142316-4385 (\"pdf-extractor memory analysis: genuine working\n   set pressure, not leak\") is open and routed to po this same tick. Its conclusion looks right,\n   but anyone re-reading container_vm_headroom_mb over the next few hours will see a collapsing\n   number that is substantially BENCH load, not pdf-extractor. Do not let the bench contaminate\n   that investigation's evidence in either direction.\n2. Any detector that trips on container_vm_headroom_mb is, right now, primed to fire a false\n   positive attributing ad-hoc benchmark load to a long-lived service.\n\nWHAT IS AND IS NOT AT RISK:\n  NOT at risk: the gateway. mcp-server sits at 296 MiB against a 3 GiB cap.\n  Self-limiting: the bench container is at 99.05% of its OWN 2.5 GiB cap and already UNHEALTHY.\n  Per-container caps are containing it as designed — it will OOM itself, not the fleet.\n  Genuinely low: VM-wide headroom at 1207 MB. A concurrent run3 alongside a still-live run2\n  would be the thing that turns this from contained into an incident.\n\nROUTER SCOPE: observation only. No spawn, no mutation, no container touched. The bench is a\npeer's active experiment and is theirs to stop or let finish.\n",
+          "createdAt": "2026-08-25T14:50:49Z"
+        },
+        "createdAt": "2026-08-25T14:50:49Z",
+        "drained_at": "2026-08-25T15:30:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a968117828ee1a2dcf3a1518e0d96a615a0e2e54f3b39aaabc0910717d76a138",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T15:07:39Z",
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": null
+          },
+          "last_fired_timestamp": "2026-08-25T15:06:26Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "15:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 34,
+          "note": "Single-slot FIRE tick. Step 4.7 ran (WON_SLOTS non-empty) for the first time this session after two drain-only ticks where its WON_SLOTS guard correctly skipped it. CYCLE-SNAPSHOT PROMOTION DEFECT OBSERVED END-TO-END IN ONE TICK, both artifacts on disk: Step 4.7's FILE_TICK=$(date -u +%H:%M) wrote docs/data/cycle-snapshot-15:04.json (wall clock), while Step 6.0's promoter looked up the NOMINAL tick 15:00; docs/data/cycle-snapshot-15:00.json does not exist, so cycle_snapshot_promoted=false (16th consecutive) and cycle-snapshot-latest.json remains frozen at tick=00:00 created_at=2026-08-23T00:07:50Z. Prior observations had the naming defect and the never-promoted symptom as separate facts; this tick links them causally. Fix already routed to architect (superseded design 0d77460a3, NOT landed) - preferred remedy is newest-cycle-snapshot-*.json-within-7-min selection, which kills the class with no writer change. Step 5.1 fan-out gate FIRED DEGRADED: container_vm_headroom_mb=1207 < headroom_floor_mb=1500, so MAX_PARALLEL dropped 4->2. Non-binding at 1 slot, but the cause was a transient ad-hoc ocr-bench-paddleocr-run2 container (2.476GiB/2.5GiB, unhealthy), i.e. a benchmark throttling real dispatcher fan-out capacity - the concrete consequence predicted in docs/signals/cowork-team-20260825T145049Z.json. That container has since exited; headroom recovered 1207 -> 2659 MB by Step 6.0, confirming the transient diagnosis and refuting the leak reading the raw 3608->2351->1207 trend suggested. Step 5.1's DOCUMENTED load parse is still wrong (9th occurrence): `uptime | awk -F'load average' ... -F','` yields truncated \"4\" vs the real 4.96; verified working form is `uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'`. Do NOT pin LC_ALL=C. Immaterial here (both < 24 threshold) so the DEGRADED verdict was headroom-driven either way. dev_head read from canonical top-level .head.status; the deprecated .task_board.head stub and a generic .task_id fallback would each have yielded a fabricated \"active\". Step 5.3 off-flow detector is on the DEFERRED path per its TIMING CONTRACT (BGFAN-1) - evaluated when the spawn return lands, gating a possible last_fired de-stamp against FIRED_AT=2026-08-25T15:06:26Z, pre-write value 2026-08-24T15:03:54Z."
+        },
+        "createdAt": "2026-08-25T15:07:39Z",
+        "drained_at": "2026-08-25T15:30:58Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
