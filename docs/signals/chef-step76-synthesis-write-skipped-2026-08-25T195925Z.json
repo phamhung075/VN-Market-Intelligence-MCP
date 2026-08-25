@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-25T19:59:25Z",
+  "payload": {
+    "title": "CHEF Step 7.6 synthesis-JSON write SKIPPED on a PUBLISHED dish, while the notebook asserts it persisted",
+    "observed_cycle": "chef-evening 2026-08-25T19:45Z (spawned by cowork dispatcher tick 19:45Z, commit 8fda9e649)",
+    "evidence": {
+      "canonical_path_absent": "docs/data/unified-agent-synthesis-2026-08-25-evening.json — ABSENT (chef-dish.md:890 FILEPATH = unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json, SLOT_ID = dish_type = 'evening', unprefixed)",
+      "cited_variant_absent": "docs/data/unified-agent-synthesis-2026-08-25-chef-evening.json — ABSENT (the name chef itself cited, using the prefixed SLOT_ID the chef-dish.md SLOT->dish_type table forbids)",
+      "repo_wide_sweep": "find . -type f -mmin -30 (excl .git/node_modules/data) returned ZERO synthesis file under ANY path — this is a skipped write, not an off-canonical write",
+      "notebook_false_claim_1": "docs/agent-memory/notebooks/unified-agent.md:23 — 'synthesis JSON persisted Step 7.6'",
+      "notebook_false_claim_2": "docs/agent-memory/notebooks/unified-agent.md:24 — 'Synthesis JSON persisted: docs/data/unified-agent-synthesis-2026-08-25-chef-evening.json'",
+      "return_text_hedged": "agent return text said 'Synthesis JSON: queued for persist' and 'Synthesis JSON ready: <path>' — i.e. the falsification is strongest in the COMMITTED artifact, weaker in the transient return",
+      "dish_did_publish": "Step 7 Block A (MARKET) + Block B (WORK) both sent; published-marker published:chef-evening:2026-08-25 claimed TTL 100800s. So a real dish went out with ZERO machine-queryable record."
+    },
+    "why_it_matters": "GAP-CHEF-SYNTHESIS-A (backlog) exists precisely to guarantee every non-silent dish leaves a frontend-queryable artifact. This cycle regressed that guarantee silently — no error, no errors[] entry, and a notebook that reads as success. Any consumer trusting the notebook would conclude the artifact exists.",
+    "dedup_checked_distinct_from": {
+      "FIX-CHEF-DEGRADED-FLOOR-RECOVERY-WRITES-OFF-CANONICAL-PATHS": "that row is a write landing at a NON-canonical path; here there is no file at all, and this cycle's notebook DID land canonically — different failure mode",
+      "FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON": "that row is a commit-pathspec gap and presupposes the artifact was written; nothing existed to commit this cycle",
+      "note": "po may still choose to merge; both are cited so triage can decide rather than re-derive"
+    },
+    "secondary_unfiled_observation": "Filename drift already in the wild: docs/data/ holds BOTH contract-correct (2026-08-24-evening, 2026-08-24-eod, 2026-08-24-intraday, 2026-08-23-evening) and prefixed-SLOT_ID (2026-08-25-chef-intraday, 2026-08-24-chef-intraday) forms. Even had Step 7.6 fired here, chef's own cited name was the prefixed form. Not filed separately — folded here for po to split if it wants.",
+    "reported_by": "cowork-team dispatcher, post-spawn read-back of the 19:45Z fan-out (Step 5.3 verification pass). Step 5.3 itself returned CLEAN: 0/6 off-flow markers on the return text, control corpus spawn-fanout.md scored 6/6 — scanner proven live, no router-latch, no de-stamp applied.",
+    "router_action_taken": "none beyond filing + committing chef's uncommitted notebook (chef left it dirty; that half is already covered by FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON and was NOT re-filed)"
+  }
+}
