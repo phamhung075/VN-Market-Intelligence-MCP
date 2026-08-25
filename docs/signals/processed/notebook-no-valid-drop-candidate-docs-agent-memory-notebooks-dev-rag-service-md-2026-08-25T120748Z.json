@@ -15,5 +15,11 @@
     "sentinel_section_count": 1,
     "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
     "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "75287f68a43bf7d2824d5c14dc41d373c32f683f513a889f2d5f5dc84347c148",
+    "processedAt": "2026-08-25T12:15:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

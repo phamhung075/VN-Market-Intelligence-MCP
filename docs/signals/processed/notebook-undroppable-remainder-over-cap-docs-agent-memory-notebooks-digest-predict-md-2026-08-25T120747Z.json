@@ -17,5 +17,11 @@
     "undroppable_byte_count": 38160,
     "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
     "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "bce2ee7ea893abe68e4852513acf551490e77c26c96c9365c21129643a4e4f34",
+    "processedAt": "2026-08-25T12:15:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

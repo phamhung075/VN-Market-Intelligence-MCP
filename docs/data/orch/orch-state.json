@@ -640,7 +640,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-25.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-25.json"
       },
       {
         "id": "sys-20260825T121451-0eb5",
@@ -22802,7 +22802,7 @@
         "last_served_tick": "2026-08-25T05:10:32Z"
       }
     },
-    "_updated_at": "2026-08-25T08:12:20Z",
+    "_updated_at": "2026-08-25T12:15:26Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23283,6 +23283,391 @@
         },
         "createdAt": "2026-08-25T08:05:55Z",
         "drained_at": "2026-08-25T08:12:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "47ed06890275fb569ec615dc84078560b03420cda5edf7c6589c9e8748e9e2f8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "architect",
+        "type": "wiring-gap-measured",
+        "priority": "high",
+        "payload": {
+          "summary": "Producer cadence (4h) is DOUBLE the signal TTL (2h), so alert-commander-market is structurally blind to news-scout for roughly a third of its fires. Measured end-to-end this tick, not inferred, and it retro-explains an empty-bus cycle observed 15 minutes earlier.\n",
+          "measurement": "MEASURED INPUTS\n  TTL          = 2h exactly. Signal 11340 created ~08:08:08Z, expiry field reads 2026-08-25 10:08:08. Same for 11341.\n  Producer     = news-scout. Slots: news-scout-offhours cron \"0 */4 * * *\"; news-scout-sentiment cron \"30 1 * * 1-5\".\n  Consumer     = alert-commander. Slot alert-commander-market cron \"*/15 2-8 * * 1-5\" -> 28 fires per weekday.\n  Consumer query window = 2h (c253 notebook: \"get_agent_signals(agent, 2h)\" plus 6 explicit signal_type queries).\n\nDERIVED COVERAGE inside the consumer's 02:00-08:59 window\n  news-scout fires at 01:30, 04:00, 08:00 -> signals alive 01:30-03:30, 04:00-06:00, 08:00-10:00.\n  DEAD ZONES inside 02:00-08:59: 03:30-04:00 (30 min) and 06:00-08:00 (120 min) = 150 min of a 419-min window.\n  ~36% of alert-commander-market's daily fires -- about 10 of 28 -- can see no news-scout signal at all, by construction.\n\nINDEPENDENT CONFIRMATION (not the same observation restated)\n  c253 ran 07:52Z and reported the bus empty of ALL SIX consumed types. 07:52 falls inside the computed 06:00-08:00 dead zone. The arithmetic predicted that cycle before I looked at it.\n\nSAME-TICK RACE, on top of the dead zone\n  At the 08:00 tick the dispatcher fans out producer and consumer in ONE batch. Both alert-commander spawns went out at 08:06; news-scout posted its signals at 08:08. The consumer reads a bus the producer has not written yet, so even the \"alive\" window effectively opens ~2 minutes after the consumer has already queried.\n\nSCOPE LIMIT -- do not overstate\n  Other producers of urgent_news / chain_catalyst were NOT enumerated. This quantifies news-scout-sourced coverage only. If other agents emit these types on a tighter cadence the practical gap is smaller, and that should be measured before any fix is sized.\n",
+          "separate_discrepancy": "SEPARATE DISCREPANCY, filed as an observation rather than a verdict.\n\nnews-scout's return claims 4 signals posted: 11338 (urgent_news, VIC), 11339 (urgent_news, VPB), 11340 (chain_catalyst), 11341 (chain_catalyst).\n\nOnly 11340 and 11341 are retrievable. Queries run:\n  get_agent_signals{from_agent:\"news-scout\", hours_back:6}                        -> 2 rows (11340, 11341)\n  get_agent_signals{from_agent:\"news-scout\", signal_type:\"urgent_news\", hours_back:2} -> \"Khong co tin hieu moi\"\n  get_agent_signals{agent:\"alert-commander\", signal_type:\"urgent_news\", hours_back:6} -> \"Khong co tin hieu moi\"\n\nBoth windows comfortably cover the claimed creation time. I do NOT conclude the posts failed -- urgent_news may carry different addressing or visibility than chain_catalyst, and I did not read the emitter. What is established is only this: two of four returned IDs are not retrievable by either the producer-side or the consumer-side query for their declared type. Worth one look at the urgent_news write path.\n\nNote also both visible rows already read \"Trang thai: read\" within ~6 minutes of creation, with no consumer cycle in between that I can account for.\n",
+          "why_it_surfaced_now": "The 08:00Z tick fanned out producer and consumer in the same batch for the first time this session, which put both cadences and the TTL in view at once.",
+          "same_tick_observation": "SAME-TICK OBSERVATION, reported with its ambiguity intact.\n\nThe co-fired consumer (alert-commander-market, cycle c254) reported its bus \"empty of all 6 consumed types ... no chain_catalyst signal in window\", while news-scout created chain_catalyst 11340 and 11341 at 08:08:08Z in that same tick. c254's notebook stamp is 08:08:49Z, so its Step 3 query ran within the same MINUTE as the producer's write.\n\nThat is too close to attribute confidently to the fan-out race rather than to ordinary query timing. It is consistent with the race and does not establish it. The DEAD-ZONE half of this finding does not depend on it and stands on the cadence-vs-TTL arithmetic alone.\n"
+        },
+        "createdAt": "2026-08-25T08:11:38Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "222ab4a63a4c1521752b2904f956bb20607df13acee5825178eb2598f171ae0f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "architect",
+        "type": "root-cause-mechanism-found",
+        "priority": "high",
+        "payload": {
+          "mechanism": "The reader's snapshot-key derivation is PROSE INTERPRETED BY THE AGENT, not code — and it exists in two live copies whose text disagrees. That, not \"a non-deterministic reader\", is the root cause of the cycle-snapshot cache miss.\n\nCOPY A — .claude/skills/cycle-bootstrap/SKILL.md:58 (the declared SSOT):\n    TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 -> \"02:05\")\nCOPY B — .claude/skills/step-0-cowork/SKILL.md:39:\n    TICK = current UTC time as HH:MM (e.g. \"02:05\")\n\nCopy B has NO rounding clause — it specifies the RAW wall clock. Copy B's own header says \"Full protocol: .claude/skills/cycle-bootstrap/SKILL.md\" and then restates the rule inline instead of deferring to it, which is how the two drifted apart. Its example value \"02:05\" is itself on a 5-min boundary, so the copy reads as if it rounds without ever saying so.\n\nalert-commander reaches BOTH: docs/agents/alert-commander/init.md and docs/agents/alert-commander/flow/stage-bootstrap.md both reference step-0-cowork, while cycle-bootstrap is named as the full protocol. 12+ agent files across market-watcher, digest-predict, bctc-analyst, qa-responder reference step-0-cowork too.\n",
+          "token_blindness": "NEITHER copy mentions scheduled_utc — measured, 0 occurrences in both files. A spec-compliant reader is therefore token-blind BY SPECIFICATION, not by bug.\n\nThis partially REINSTATES my original claim, which I withdrew too broadly at cf302f00e. Precise position now: token-blindness is real and specced (established at the source); what the c253 sample correctly falsified was only the stronger claim that observed behaviour is UNIFORMLY token-blind — c253 probed the nominal 07:45, which neither copy authorises, so at least one invocation used the token on its own initiative. Both halves stated so this is not re-litigated a third time.\n",
+          "evidence_ledger": "Six consecutive alert-commander cycles, probed key read from the committed notebook prose in every case (c250-c252 recovered from git history — c252 was pruned from the live file by c255's AC-2 retention, so the live notebook no longer holds it):\n\nc250 07:08:22Z tick=07:05 -> probed 07:05  HIT   consistent with Copy A (rounded)\nc251 07:24:44Z tick=07:22 -> probed 07:22  miss  consistent with Copy B (raw)\nc252 07:37:30Z tick=07:30 -> probed 07:35  miss  consistent with Copy A (rounded)\nc253 07:52:16Z tick=07:45 -> probed 07:45  miss  NEITHER copy authorises this - nominal/token\nc254 08:08:49Z tick=08:05 -> probed 08:05  HIT   consistent with Copy A (rounded)\nc255 08:11:39Z tick=08:05 -> probed 08:05  HIT   consistent with Copy A (rounded)\n\nDistribution: Copy-A-consistent x4, Copy-B-consistent x1, unexplained x1. 3 hits of 6.\n\nINFERENCE, not proof: the notebook never records WHICH copy a cycle followed, so copy-A-vs-copy-B is the explanation that fits, not an observed fact. What IS observed is that the two copies differ textually and both are reachable.\n\nc254 and c255 are the controlled pair - same agent, same flow, spawned in the same second by the 08:00Z tick, both probed 08:05. They AGREE. So the derivation is not per-invocation noise within a tick; it varies across ticks. This retires my registered prediction (2) with a negative result.\n",
+          "fix_design_impact": "Requirements this adds to the fix already routed at cf302f00e:\n\n1. BOTH copies must change in the same commit. Changing only the declared SSOT leaves Copy B live and the drift continues. Preferred shape: delete Copy B's inline restatement entirely and leave only its existing \"Full protocol ->\" pointer, so there is one rule, not two.\n2. The reader rule must become a token read, not a clock read: derive the key from the scheduled_utc prompt token's HH:MM portion. This is why the scheduled_utc Consumer Contract (spawn-fanout.md, currently scoped to \"the leading 10 characters\" = the date, for publish-marker keys) must be EXTENDED before it can be wired here - extend-then-wire, not wire.\n3. Writer side unchanged from cf302f00e: tick-snapshot.md Step 4.7 keys the filename AND the in-file .tick off raw `date -u +%H:%M`; both go to the nominal tick.\n4. Delete the stale note at cycle-bootstrap/SKILL.md - \"The snapshot writer (cowork-team dispatcher) is a future task. Until it lands, Step -1 will always miss and fall through to Step 0 - zero behavior regression.\" CONFIRMED still present at the SSOT. The writer has been live all day; this note tells every reader the miss is expected.\n5. Newly measured, unrelated to the key: the freshness window is 7 minutes (both copies, step 2). The writer lands at roughly tick+5..8min and readers probe at roughly tick+7, so same-tick readers are inside it - but the margin is thin and neither copy anchors the window on the nominal tick either.\n\nWhy writer-and-reader must land together, restated correctly: a writer-only change TRADES the coincidental hits for deterministic ones and nets positive only once the reader is pinned. All 3 hits above were coincidental - the writer's raw clock happened to land on the same 5-min slot the reader's rounding produced.\n"
+        },
+        "createdAt": "2026-08-25T08:21:28Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aa9363c9fdb60b92c83094bd5d2a2279725912cbaaa2f277275ebddf2135cfbe",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-25T08:15Z",
+          "classification": "FIRE",
+          "slots_fired": 2,
+          "slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "execution": "verdict=WORK, drift_min=7 (safe envelope 0-10, no WARN). Step 0a drain no-op — new_signals=0, 5th consecutive clean tick. Step 4.2 pressure age 16.5min vs 20 threshold, stale_warning=false, calendar_status=open, container_vm_headroom_mb=5192. Steps 4.3/4.4/4.5/4.5b superseded no-ops (downgraded=[], suppressed_cadence=[], chef_mutex_applied=false). Step 4b collision guard: two distinct agents, no WARN. Step 4.6 both slots claimed {claimed:true}. Step 4.7 executed verbatim. Step 5.1 gate: cores=12, load=7.33, threshold=24, headroom 5192 vs floor 1500 -> DEGRADED=false, MAX_PARALLEL=4, 2 slots = single batch, no inter-batch wait. trigger_prompt/flow_path consistency MATCH on both; both flow files exist. Both spawned run_in_background=true. Slot tokens released {ok:true,released:1} each. Step 5b fired_at=2026-08-25T08:24:59Z, updated both, skipped none.\n",
+          "deferred_destamp": "DEFERRED reconciliation owed on both slots when their task notifications arrive (BGFAN-1 TIMING CONTRACT). Step 5b stamped last_fired=2026-08-25T08:24:59Z for both. Prior values, for de-stamp ONLY on a genuine MARKER_HITS>=2 and ONLY if the field still equals this tick's stamp (never to null — BLOCKER-3 monotonic-forward-only):\n  chef-intraday          <- 2026-08-25T07:22:29Z\n  alert-commander-market <- 2026-08-25T08:06:37Z\n",
+          "registered_prediction": "REGISTERED PREDICTION — the cleanest test yet of the root cause found this tick (commit 49f2c37ac).\n\nStep 4.7 wrote docs/data/cycle-snapshot-08:23.json (.tick=08:23, 16566 B) against nominal tick 08:15. 08:23 is NEITHER on a 5-min boundary NOR the nominal. So for the first time all three candidate derivations predict the SAME outcome for the spawned alert-commander:\n  Copy A (cycle-bootstrap/SKILL.md:58, \"round to nearest 5-min slot\") -> probes 08:25 -> MISS\n  Copy B (step-0-cowork/SKILL.md:39, raw HH:MM)                       -> probes 08:25 -> MISS\n  nominal / scheduled_utc token                                        -> probes 08:15 -> MISS\n\nA reported HIT would falsify the mechanism outright. A miss is consistent with it but weakly so, since three models agree — the discriminating value is entirely in the negative case. Verify by reading the COMMITTED notebook section, not the return summary: only alert-commander's notebook format records the probed key at all (news-scout and market-watcher log nothing — measured, grep -i snapshot yields only macro_snapshot), and the narrated filename has been shown to be the actual probed key rather than an echo of the header (c252 narrated 07:35 against its own header 07:30).\n",
+          "recurring": "cycle_snapshot_promoted=false — 10TH CONSECUTIVE. emit ran 08:25:09Z with an 85-second-old snapshot on disk; latest is unchanged at 4468 B, .tick=00:00, created 2026-08-23T00:07:50Z (now 2d8h stale) versus this tick's 16566 B. Consistent with the standing INFERENCE that the promoter builds its own payload and may never read the writer's files — emit_pressure_state's source is still unread, so this stays an inference.\n\nemit_pressure_state also returned tick_id=null this tick (it carried a value on the 08:00Z emit). Noted, not diagnosed.\n\nStep 5.1 load parse — 7TH OCCURRENCE. Live `uptime` returns \"load averages: 7,33 6,35 4,33\" (comma decimals). The flow's own parse is wrong in BOTH locales. Verified fix: uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'. Do NOT pin LC_ALL=C — that is what produces the concatenation garbage.\n\nchef-intraday trigger_prompt line 2 still carries the non-canonical \"MCP: https://zenmidi.com/vn-market/mcp\". Canonical is https://zenmidi.com/gateway/mcp. Passed verbatim per spawn-fanout.md's rule that ENTRY_PROMPT uses slot.trigger_prompt and not a composition from flow_path. Owner hint: agent-father.\n\nregime_status lookup key (telemetry.md:18-19) still does not exist; live value is at macro_snapshot.data.signals.carry.regime. Owner architect. last_regime=unknown in pressure-state again this tick.\n"
+        },
+        "createdAt": "2026-08-25T08:25:45Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "741267d7365b89594d8c001927b527f569c0fa025f9494e4d3e2eac3b417f3a2",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "high",
+        "payload": {
+          "tick": "2026-08-25T12:00Z",
+          "classification": "FIRE",
+          "slots_fired": 3,
+          "slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "deferred_destamp": "last_fired=2026-08-25T12:06:55Z on all three; prior value for all three = 2026-08-25T08:06:37Z. De-stamp only on genuine MARKER_HITS>=2 and only if the field still equals this stamp.",
+          "incident": "FLEET OUTAGE 2026-08-25T08:26Z -> 12:00Z (~3h34m). Both agents spawned by the 08:15Z tick terminated mid-flight on an ACCOUNT-LEVEL API quota: \"You've hit your weekly limit - resets 2pm (Europe/Paris)\". Account-level, so peer sessions were equally dead — there was no live peer to defer to.\n\nHow far each got before dying:\n  chef-intraday          — reached Step 1 CLUSTER, detected 4 convergence clusters (Iran-sanctions trade_war id11341, real_estate sector, DBC/VIC/HPG ticker, DAG RSI 15.4 / HUT RSI 22.5 extremes), gate-fired PROCEED TO DISH, died before chef-dish.md. No dish written.\n  alert-commander-market — reached Step 0c only.\n\nRoughly 14 cowork ticks (08:30Z through 11:45Z) never ran. That window covers the TAIL OF VN MARKET HOURS: the session closes 08:59Z, so alert-commander-market lost its 08:30Z and 08:45Z fires and chef-intraday lost its remaining intraday windows. Real coverage loss, not merely delayed work.\n\nCLEANUP VERIFIED CLEAN, not assumed: full task_list_held dump shows NO orphaned publish marker for chef-intraday (it died before the publish gate ever claimed one) and NO stranded cowork-slot tokens (this dispatcher released all four before the agents died). Nothing to force-release.\n\nNO DE-STAMP OWED for the 08:15Z stamps. last_fired=2026-08-25T08:24:59Z stands on both. BGFAN-1's de-stamp targets the OFF-FLOW case — an agent that latched onto router protocol and never entered its flow. Both of these entered their flows and executed real steps; they died to an external quota. last_fired records dispatch, not success, so the stamp is accurate as written.\n",
+          "prior_prediction": "The 08:15Z registered prediction (cycle-snapshot-08:23.json — off-boundary, so Copy A / Copy B / nominal ALL predicted MISS) is PARTIALLY confirmed and cannot be closed.\n\nEvidence for: the dying alert-commander-market reported \"No macro_snapshot in bootstrap response — calling get_macro_snapshot directly per Step 0c\", which is the Step -1 MISS path — on a hit it would have used $CYCLE_SNAPSHOT.macro_snapshot as c254/c255 did.\n\nWhy it cannot be closed: the agent died before writing a notebook section, and the probed KEY is only ever recorded in notebook prose. So the miss is observed but the derivation that produced it is not. Directionally consistent, evidentially incomplete. Do not count it as a confirmed sample.\n",
+          "registered_prediction": "NEW REGISTERED PREDICTION — and unlike 08:15Z this one DISCRIMINATES between the three models.\n\nStep 4.7 wrote docs/data/cycle-snapshot-12:05.json (.tick=12:05, 14980 B) against nominal tick 12:00. 12:05 IS on a 5-min boundary, so the models diverge:\n  Copy A (cycle-bootstrap/SKILL.md:58, round to nearest 5-min slot) -> probes 12:05 -> HIT\n  Copy B (step-0-cowork/SKILL.md:39, raw HH:MM)                     -> probes 12:06 -> MISS\n  nominal / scheduled_utc token                                      -> probes 12:00 -> MISS\n\nalert-commander-critical is in this batch, and alert-commander is the only agent whose notebook format records the probed key at all — so this tick yields exactly one usable sample.\n\nTIMING CAVEAT, stated up front so it is not used as an escape hatch afterwards: \"round to NEAREST\" makes Copy A sensitive to probe time. Spawn was 12:06:5x. A probe before 12:07:30 rounds to 12:05 (HIT); a probe after rounds to 12:10 (miss). So a Copy-A miss is only informative if the notebook stamp shows a late probe. The 7-min freshness window (12:05 file usable to 12:12) is not the binding constraint here.\n",
+          "recurring": "PRESSURE-STATE STALE 220 MINUTES with stale_warning=false. Read at this tick: emitted_at 2026-08-25T08:25:09Z against a 20-min threshold. The flag is computed by the EMITTER at emit time, so it structurally cannot report the emitter's own downtime — during a fleet outage the staleness signal is exactly as dead as the thing it measures. Its calendar_status=\"open\" was stale too: VN market closed 08:59Z, this read happened at 12:04Z. Any consumer trusting stale_warning as a liveness proxy is blind in precisely the case it exists for.\n\ncycle_snapshot_promoted=false — 11TH CONSECUTIVE. latest unchanged at 4468 B, .tick=00:00, created 2026-08-23T00:07:50Z (now 2d12h stale) versus this tick's 14980 B.\n\nemit_pressure_state returned tick_id=null for the 2ND CONSECUTIVE emit (08:25Z and 12:06Z), where the 08:06Z emit carried a value. Noted, not diagnosed.\n\nStep 0a: 1 NEW row, qa-20260825T082357 (from qa, type preserved_bug_no_tracking_row), to=po. HELD AT NEW, not marked READ — the cowork drain still has no pending_triage_inbox re-envelope step and po still has 0 slots, so READ here means mark-without-delivery. A peer dev-team tick delivers it. Deviation from work-tick.md Step 0a as written, stated as required.\n\nStep 5.1 load parse — 8TH OCCURRENCE (uptime returns comma decimals). chef-intraday's non-canonical MCP line and the nonexistent regime_status key are unchanged; neither was in this tick's slot set.\n"
+        },
+        "createdAt": "2026-08-25T12:07:47Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4facdd5e3eb3431a3b5080788e89ae7828cd1c9b9f67b475c318b793ec238751",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow-wiring-gap-controlled",
+        "priority": "high",
+        "payload": {
+          "tick": "2026-08-25T12:00Z",
+          "owner_hint": "agent-father",
+          "finding": "SAME-TICK CONTROLLED CONTRAST — both agents dispatched by the 12:00Z cowork tick, both in offhours mode, both required to persist a cycle notebook, spawned within the same second.\n\n  market-watcher  -> Step 5 \"Mutex commit d41596771 (pathspec-scoped)\". VERIFIED REAL: commit exists, touches exactly docs/agent-memory/notebooks/market-watcher.md, 1 file. Working tree clean afterwards.\n  news-scout      -> return listed the notebook under \"Files Modified\" and reported \"Notebook c282 appended\", but made NO COMMIT. Working tree still shows `M docs/agent-memory/notebooks/news-scout.md`; the newest commit touching that file is c46bf951e, the 08:07Z cycle.\n\nThis upgrades the standing finding from a standalone observation to a controlled one: identical tick, identical mode, identical persistence obligation, opposite outcome. The variable is the flow wiring, not load, not timing, not the gateway.\n\nnews-scout DID complete real work — 30 articles, 4 signals shipped (11395 urgent_news VIC, 11396 urgent_news DBC, 11397 chain_catalyst FPT tech sell-off, 11398 chain_catalyst Brent) — so this is a persistence gap, not a no-op cycle. The cycle's own record of that work is what goes unpersisted.\n\nROUTER ACTION TAKEN, stated so it is not mistaken for the agent's own commit: the dispatcher committed the orphaned notebook itself. news-scout's notebook is single-writer and the agent had already exited, so the multi-writer read-to-commit hazard does not apply here. Rationale for not simply leaving it: an unscoped tree-hygiene revert has previously been observed going repo-wide when a task_zone is unresolvable, which would silently destroy this file's contents. The commit message attributes the work to news-scout.\n\nOwner hint: agent-father (agent flow-doc wiring). Compare market-watcher's Step 5 offhours mutex-commit block against news-scout's equivalent — market-watcher's is the working reference implementation.\n"
+        },
+        "createdAt": "2026-08-25T12:11:19Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1f0a709cb3931d557476ec060554dee4827b65f3bd5259135edb3c582f4507ca",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-25T12:06:03Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cfd011a821556fe0555b879751130f069cfd3eb8e62d9acb306095a25923a2ce",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "tied_sections": "9:20260824000000000:## c134 · 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)\n39:20260824000000000:## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-25T12:06:05Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8339c0388c759f9576369bad39a695cfc421d0d9ef3ed2d98686d0e39fe2a85d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "tied_sections": "9:20260824000000000:## c134 · 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)\n39:20260824000000000:## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-25T12:07:47Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "59e63b2f0cebdb7464dd053bf7e9558acf5e96c1065a6d0e73e73ebb4e15fd53",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 186,
+          "cap": 200,
+          "byte_count": 27694,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:06:06Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "75287f68a43bf7d2824d5c14dc41d373c32f683f513a889f2d5f5dc84347c148",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 186,
+          "cap": 200,
+          "byte_count": 27694,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:07:48Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "017e4c91cd1ecb95b2d27ab6e8b087f9104c1c0f33845bad1f68fd12f7d273c0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line": 39,
+          "heading": "## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "section_count": 2,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-25T12:06:05Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0863433c06b47712ede359dc516ae851233d4a65e5b5d028e3d9990f74891017",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line": 39,
+          "heading": "## c135 · 2026-08-24T20:13-20:41Z (slot=tnb-audit; this session=bf7a4cd2-3b58-488c-84da-d5d660411fd4; VN-date=2026-08-25) — DUPLICATE DISPATCH, NO-OP PUBLISH",
+          "section_count": 2,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-25T12:07:47Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8d41773d9465efb975665f347fb4b3583087b60a2259aa7321e6648881b6f47a",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 15307,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:06:04Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "15645bf35b2d1ccc3a74b4bcfa2197632efaa9fd391aee22e686980cf6ebdd86",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 15307,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:07:47Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "55ecf74937e577907b856fb66da720cd036ce1463edda9cf101fa946ad215a77",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 112,
+          "cap": 200,
+          "byte_count": 19953,
+          "byte_cap": 12000,
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "undroppable_line_count": 41,
+          "undroppable_byte_count": 13916,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:06:04Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "03b807c4a8e47cbb90ddd5da3083e6e1f0e6621c98ffdeb8532beae50a071be0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 112,
+          "cap": 200,
+          "byte_count": 19953,
+          "byte_cap": 12000,
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "undroppable_line_count": 41,
+          "undroppable_byte_count": 13916,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:07:46Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7f0b42a5180aced3f0abd125bac8982110dde891c5f91100b2950ed072280ba7",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 58,
+          "cap": 200,
+          "byte_count": 39860,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:06:04Z",
+        "drained_at": "2026-08-25T12:15:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bce2ee7ea893abe68e4852513acf551490e77c26c96c9365c21129643a4e4f34",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 58,
+          "cap": 200,
+          "byte_count": 39860,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-25T12:07:47Z",
+        "drained_at": "2026-08-25T12:15:26Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

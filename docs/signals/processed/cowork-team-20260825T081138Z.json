@@ -11,5 +11,11 @@
     "separate_discrepancy": "SEPARATE DISCREPANCY, filed as an observation rather than a verdict.\n\nnews-scout's return claims 4 signals posted: 11338 (urgent_news, VIC), 11339 (urgent_news, VPB), 11340 (chain_catalyst), 11341 (chain_catalyst).\n\nOnly 11340 and 11341 are retrievable. Queries run:\n  get_agent_signals{from_agent:\"news-scout\", hours_back:6}                        -> 2 rows (11340, 11341)\n  get_agent_signals{from_agent:\"news-scout\", signal_type:\"urgent_news\", hours_back:2} -> \"Khong co tin hieu moi\"\n  get_agent_signals{agent:\"alert-commander\", signal_type:\"urgent_news\", hours_back:6} -> \"Khong co tin hieu moi\"\n\nBoth windows comfortably cover the claimed creation time. I do NOT conclude the posts failed -- urgent_news may carry different addressing or visibility than chain_catalyst, and I did not read the emitter. What is established is only this: two of four returned IDs are not retrievable by either the producer-side or the consumer-side query for their declared type. Worth one look at the urgent_news write path.\n\nNote also both visible rows already read \"Trang thai: read\" within ~6 minutes of creation, with no consumer cycle in between that I can account for.\n",
     "why_it_surfaced_now": "The 08:00Z tick fanned out producer and consumer in the same batch for the first time this session, which put both cadences and the TTL in view at once.",
     "same_tick_observation": "SAME-TICK OBSERVATION, reported with its ambiguity intact.\n\nThe co-fired consumer (alert-commander-market, cycle c254) reported its bus \"empty of all 6 consumed types ... no chain_catalyst signal in window\", while news-scout created chain_catalyst 11340 and 11341 at 08:08:08Z in that same tick. c254's notebook stamp is 08:08:49Z, so its Step 3 query ran within the same MINUTE as the producer's write.\n\nThat is too close to attribute confidently to the fan-out race rather than to ordinary query timing. It is consistent with the race and does not establish it. The DEAD-ZONE half of this finding does not depend on it and stands on the cadence-vs-TTL arithmetic alone.\n"
+  },
+  "_processed": {
+    "fingerprint": "47ed06890275fb569ec615dc84078560b03420cda5edf7c6589c9e8748e9e2f8",
+    "processedAt": "2026-08-25T12:15:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
