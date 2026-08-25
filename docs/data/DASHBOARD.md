@@ -2350,3 +2350,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-02 · data_stale: ssc-iboard
+**Severity:** WARN | **Date:** 2026-08-25 | **Status:** OPEN
+**Location:** market_prices (HOSE)
+**Details:** market_prices HOSE stale ~0.9h since 2026-08-25T21:45:03Z vs 0.25h cadence, re-confirmed live
+**Impact:** quote freshness degraded
+**Root cause:** likely market-close after-hours pattern, cadence check not off-hours-aware
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-25T22:44:00Z (signal sys-20260825T224042-4c5b, system-auditor -> po, dedup_key=data_stale:ssc-iboard:B-02, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
