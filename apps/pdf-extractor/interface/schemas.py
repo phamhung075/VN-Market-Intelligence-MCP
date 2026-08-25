@@ -96,8 +96,14 @@ class RasterizeRequestSchema(BaseModel):
         report_id: Report identifier (used as output subdirectory name).
         filename:  PDF filename (basename only) — resolved to data/pdfs/{filename}.
         pages:     List of 1-indexed page numbers to rasterize.
+        force:     Re-render even when the PNG already exists (default False).
+                   FIX-PDFX-OCR-ORIENTATION AC-6: PNGs written before the
+                   orientation fix are sideways on the shared volume and plain
+                   idempotency would serve them forever. force=true is the
+                   invalidation lever for this artifact.
     """
 
     report_id: str
     filename: str
     pages: list[int]
+    force: bool = False

@@ -210,6 +210,11 @@ def _rasterize_and_ocr_page_worker(pdf_path: str, page_num: int) -> str:
         logger.info(
             "_rasterize_and_ocr_page_worker: loading PaddleOCR (lang=vi, CPU-only) — first call"
         )
+        # use_angle_cls=False: DELIBERATE — the old "BCTC tables are not rotated"
+        # premise is FALSE and is gone (FIX-PDFX-OCR-ORIENTATION-UNDETECTED-ROTATED-
+        # BCTC-PAGES-READ-UPSIDE-DOWN). Rotation is corrected on the rasterized
+        # pixels below via infrastructure/ocr_orientation, one OSD probe per page,
+        # instead of PaddleOCR's per-text-line angle-classifier CNN.
         # lang='vi': PEK-OCR-ROOTCAUSE — was "en", whose rec-model character dictionary has
         # no Vietnamese diacritics and cannot emit them. BCTC text requires the Vietnamese
         # model; mirrors the same fix already applied to ocr_adapter.py and the table path
@@ -246,6 +251,18 @@ def _rasterize_and_ocr_page_worker(pdf_path: str, page_num: int) -> str:
                 img_array = np.stack([img_array[:, :, 0]] * 3, axis=-1)
         finally:
             doc.close()
+
+        # FIX-PDFX-OCR-ORIENTATION AC-2 site 2/3 (PaddleOCR fallback read).
+        from infrastructure.ocr_orientation import correct_orientation
+
+        img_array, _orientation_deg = correct_orientation(img_array)
+        if _orientation_deg:
+            logger.info(
+                "_rasterize_and_ocr_page_worker: page %d rotated %d deg clockwise "
+                "before OCR (orientation auto-detected)",
+                page_num,
+                _orientation_deg,
+            )
 
         ocr_result = _paddle_ocr_worker_instance.ocr(img_array, cls=False)
 
@@ -413,8 +430,25 @@ def ocr_pages_worker(pdf_path: str, page_numbers: List[int]) -> List[Dict]:
                 pages_out.append({"page_number": page_num, "text": ""})
                 continue
 
+            # FIX-PDFX-OCR-ORIENTATION AC-2 site 2/3 (PRIMARY read).
+            # Mirrors ocr_adapter.ocr_pages(): a rotated page yields hundreds of
+            # chars of mojibake, above LOW_TESSERACT_PAGE_CHARS, so the PaddleOCR
+            # fallback below never fires — correcting only the PaddleOCR
+            # construction site would leave this path broken. One OSD probe per
+            # page; same-object no-op on pages already upright.
+            from infrastructure.ocr_orientation import correct_orientation
+
+            page_image, _orientation_deg = correct_orientation(images[0])
+            if _orientation_deg:
+                logger.info(
+                    "ocr_pages_worker: page %d rotated %d deg clockwise before Tesseract "
+                    "(orientation auto-detected)",
+                    page_num,
+                    _orientation_deg,
+                )
+
             text: str = pytesseract.image_to_string(
-                images[0], lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
+                page_image, lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
             )
 
             # ── FIX-BCTC-BANK-PDF-OCR-RASTERIZE: PaddleOCR fallback ──────────

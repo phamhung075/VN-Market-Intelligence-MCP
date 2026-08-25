@@ -160,6 +160,22 @@ def _exec_tesseract(
             image, lang=lang, config=config, timeout=deadline_s, output_type=real_output_type
         )
 
+    if mode == "osd":
+        # FIX-PDFX-OCR-ORIENTATION: page-orientation probe (tesseract --psm 0
+        # against the `osd` traineddata). Routed through the gateway like every
+        # other tesseract invocation so it is covered by the same concurrency
+        # bound, wall-clock deadline and orphan reaping — an OSD probe forks a
+        # tesseract child exactly like image_to_string does.
+        # Callers pass lang="osd"; `image_to_osd` has no meaningful
+        # DATAFRAME shape, so DICT is the only supported output_type.
+        return pytesseract.image_to_osd(
+            image,
+            lang=lang,
+            config=config,
+            timeout=deadline_s,
+            output_type=pytesseract.Output.DICT,
+        )
+
     raise ValueError(f"ocr_gateway._exec_tesseract: unknown mode {mode!r}")
 
 
@@ -434,8 +450,10 @@ def run_image_sync(
     directly; all were already inside asyncio.to_thread / ProcessPoolExecutor /
     PekEngineAdapter's own ThreadPoolExecutor(1)).
 
-    mode: "string" (pytesseract.image_to_string) or "data" (image_to_data;
-    output_type is then REQUIRED — one of OUTPUT_DICT / OUTPUT_DATAFRAME).
+    mode: "string" (pytesseract.image_to_string), "data" (image_to_data;
+    output_type is then REQUIRED — one of OUTPUT_DICT / OUTPUT_DATAFRAME), or
+    "osd" (image_to_osd; always DICT — the orientation probe, see
+    infrastructure/ocr_orientation.py).
     """
     deadline = PDFX_OCR_PAGE_TIMEOUT_S if deadline_s is None else deadline_s
     queue_wait = PDFX_OCR_QUEUE_WAIT_S if queue_wait_s is None else queue_wait_s

@@ -25,8 +25,13 @@ def register_rasterizer_routes(router: APIRouter, pdf_data_dir: str = "data/pdfs
         Calls rasterize_page() for each page only if PNG is missing (idempotent).
         Already-present pages are counted in the response without re-rendering.
 
-        Accepts:  { report_id: str, filename: str, pages: list[int] }
+        Accepts:  { report_id: str, filename: str, pages: list[int], force?: bool }
         Returns:  { rasterized: list[int], paths: list[str] }
+
+        force=true (FIX-PDFX-OCR-ORIENTATION AC-6) re-renders even when the PNG
+        already exists — the invalidation route for page images rasterized
+        before the orientation fix, which are stored sideways and would
+        otherwise be served from cache forever.
         Auth: none (internal service — same Docker network).
 
         Returns HTTP 503 if page_rasterizer is not importable (missing pymupdf).
@@ -84,6 +89,7 @@ def register_rasterizer_routes(router: APIRouter, pdf_data_dir: str = "data/pdfs
                     report_id=body.report_id,
                     page_number=page_num,
                     dpi=dpi_env,
+                    force=body.force,
                 )
                 rasterized.append(page_num)
                 paths.append(str(out_path))

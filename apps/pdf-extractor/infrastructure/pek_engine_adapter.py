@@ -406,6 +406,16 @@ def _load_pek_models() -> Dict[str, Any]:
     try:
         from paddleocr import PaddleOCR  # type: ignore
         paddle_table = PaddleOCR(
+            # use_angle_cls=False: DELIBERATE — the old "BCTC tables are not
+            # rotated" premise is FALSE and is gone (FIX-PDFX-OCR-ORIENTATION-
+            # UNDETECTED-ROTATED-BCTC-PAGES-READ-UPSIDE-DOWN). Turning the flag
+            # on here would ALSO be inert on the default deployment:
+            # select_ocr_backend() defaults to tesseract-vie and OCR_TEXT_BACKEND
+            # is unset, so this instance supplies the table GRID, not the cell
+            # TEXT. Rotation is therefore corrected on the rasterized pixels in
+            # _run_table_extraction() — one OSD probe per PAGE, applied to every
+            # table crop on that page — which fixes the tesseract-vie backend,
+            # the paddleocr backend and the auto backend with one mechanism.
             use_angle_cls=False,
             lang="vi",  # PEK-OCR-ROOTCAUSE: was "en" — Vietnamese BCTC requires Vietnamese model
             use_gpu=False,
@@ -1132,6 +1142,34 @@ class PekEngineAdapter:
                     import numpy as np  # type: ignore
                     page_arr = np.array(page_img)
 
+                    # FIX-PDFX-OCR-ORIENTATION AC-2 site 3/3.
+                    # ONE OSD probe on the whole page (O(1) in text-line count),
+                    # then apply that page rotation to each table crop. Probing
+                    # per-crop instead would cost N probes/page and would also
+                    # fail far more often — Tesseract OSD raises "Too few
+                    # characters" on sparse numeric-only regions, which is the
+                    # normal shape of a BCTC table cell.
+                    # Coordinate safety: the bboxes come from layout detection
+                    # run on the UNROTATED raster, so the crop is taken from the
+                    # unrotated page first and only the cropped pixels are
+                    # rotated. No bbox arithmetic changes, and the cell bboxes
+                    # emitted downstream stay in the original page coordinate
+                    # space that _cells_to_row_bands and the LF-OVERLAY zone
+                    # mapper already expect.
+                    from infrastructure.ocr_orientation import (
+                        detect_rotation_degrees,
+                        rotate_image,
+                    )
+
+                    page_rotation = detect_rotation_degrees(page_arr)
+                    if page_rotation:
+                        logger.info(
+                            "PekEngineAdapter: page %d orientation auto-detected — "
+                            "rotating every table crop %d deg clockwise before OCR",
+                            page_num,
+                            page_rotation,
+                        )
+
                     region_cells: Dict[int, List[Dict]] = {}
                     for region_idx, bbox in enumerate(table_bboxes):
                         x0, y0, x1, y1 = _safe_bbox(bbox)
@@ -1142,6 +1180,8 @@ class PekEngineAdapter:
                         ]
                         if crop.size == 0:
                             continue
+                        # No-op (same object) when page_rotation == 0.
+                        crop = rotate_image(crop, page_rotation)
                         try:
                             if self._ocr_backend is not None:
                                 # --- Pluggable TEXT step (PEK-IMPL-OCR) ---
@@ -1173,13 +1213,29 @@ class PekEngineAdapter:
                                             pts = item[0]
                                             text_conf = item[1]
                                             if pts and len(pts) == 4:
-                                                xs = [p[0] for p in pts]
-                                                ys = [p[1] for p in pts]
-                                                cells.append({
-                                                    "bbox": [
+                                                if page_rotation:
+                                                    # FIX-PDFX-OCR-ORIENTATION: pts are in
+                                                    # the ROTATED crop's frame, so
+                                                    # `min(xs) + x0` would place them wrong
+                                                    # in page space. Fall back to the region
+                                                    # bbox — the same geometry granularity
+                                                    # the injected-backend path above always
+                                                    # emits. Text stays correct; only
+                                                    # sub-region geometry is coarsened, and
+                                                    # ONLY on rotated pages.
+                                                    cell_bbox = [
+                                                        float(x0), float(y0),
+                                                        float(x1), float(y1),
+                                                    ]
+                                                else:
+                                                    xs = [p[0] for p in pts]
+                                                    ys = [p[1] for p in pts]
+                                                    cell_bbox = [
                                                         min(xs) + x0, min(ys) + y0,
                                                         max(xs) + x0, max(ys) + y0,
-                                                    ],
+                                                    ]
+                                                cells.append({
+                                                    "bbox": cell_bbox,
                                                     "text": text_conf[0] if text_conf else "",
                                                     "score": text_conf[1] if text_conf else 0.0,
                                                 })

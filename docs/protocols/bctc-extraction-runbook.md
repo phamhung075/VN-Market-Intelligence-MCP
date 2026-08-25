@@ -125,6 +125,89 @@ console.log(JSON.stringify(r));
 
 ---
 
+## Page Orientation (FIX-PDFX-OCR-ORIENTATION-UNDETECTED-ROTATED-BCTC-PAGES-READ-UPSIDE-DOWN, 2026-08-25)
+
+**Symptom:** landscape subsidiary/notes pages come back as mojibake
+(`Buộp yeq yueop Yury eA Busip Aex 'nj neg`) with HIGH char count and HIGH
+apparent confidence, so no char-floor or confidence gate fires. `refine_bctc_md`
+flags them `ocr_garbled:page_appears_corrupted_upside_down_or_encoding_error`
+and the unit goes terminal-FAILED.
+
+**Root cause:** these pages carry a portrait `/MediaBox` (612x792) with
+`/Rotate = 0` but sideways CONTENT. No PDF metadata flags them and no rasterizer
+setting fixes them. The three PaddleOCR construction sites carried the written
+premise "BCTC tables are not rotated" — falsified: **19 of 71 pages** of
+`VIC_2026_Q1.pdf` and **2 of 18** of `DBC_2025_Q4.pdf` need a 90 degree
+clockwise correction.
+
+**Fix:** `apps/pdf-extractor/infrastructure/ocr_orientation.py` — ONE Tesseract
+OSD probe per PAGE (`ocr_gateway.run_image_sync(mode="osd", lang="osd")`,
+O(1) in text-line count), correction by a single `numpy.rot90`. Applied on the
+rasterized pixels UPSTREAM of the OCR-backend dispatch at every site:
+
+| Site | Path |
+|------|------|
+| `infrastructure/ocr_adapter.py` | page text — primary Tesseract read **and** the PaddleOCR rasterize fallback |
+| `infrastructure/ocr_worker.py` | page text in the ProcessPoolExecutor child — same two sub-paths |
+| `infrastructure/pek_engine_adapter.py` | table path — one probe per page, applied to every table crop |
+| `infrastructure/page_rasterizer.py` | the PNG `get_bctc_page_image` serves the refine agent |
+
+PaddleOCR's `use_angle_cls` stays **False** on purpose — it is a
+per-detected-text-LINE CNN pass (O(n) in a dense BCTC table, the OOM shape) and
+it is inert on the default deployment anyway, because `select_ocr_backend()`
+defaults to `tesseract-vie` and `OCR_TEXT_BACKEND` is unset.
+
+**No new env knob. No new model weight** — `osd.traineddata` is already in the
+image (`tesseract --list-langs` → eng / osd / vie).
+
+**Fails closed:** any OSD failure, gateway-capacity or deadline error, or a
+below-floor orientation confidence ⇒ rotate 0, and the array returned is the
+SAME OBJECT, so an upright page is byte-for-byte unchanged.
+
+**Measured cost** (container cgroup, 200 DPI, 10-page arms x3 interleaved):
+- all-upright pages (pure overhead, worst case): **+1.35 s/page** wall clock
+- mixed rotated+upright pages: **-1.76 s/page** — the probe pays for itself,
+  Tesseract is much slower on a sideways page than on a corrected one
+- memory: window peak 360→363 MiB against a 2560 MiB (2.5 GiB) cap,
+  `memory.events` `max`=0 and `oom_kill`=0 throughout, `memory.peak` delta 0.0
+
+**Re-running the evidence:**
+```bash
+docker cp scripts/audits/ocr-orientation-probe.py \
+  vn-market-intelligence-mcp-pdf-extractor-1:/tmp/ocr-orientation-probe.py
+docker exec vn-market-intelligence-mcp-pdf-extractor-1 python3 /tmp/ocr-orientation-probe.py \
+  --pdf /app/data/pdfs/VIC_2026_Q1.pdf --pages 11,13,14,15,16,34,41,60,67 --ocr
+# cost A/B:
+docker cp scripts/audits/ocr-orientation-cost-probe.py \
+  vn-market-intelligence-mcp-pdf-extractor-1:/tmp/cost-probe.py
+docker exec vn-market-intelligence-mcp-pdf-extractor-1 python3 /tmp/cost-probe.py \
+  --pdf /app/data/pdfs/VIC_2026_Q1.pdf --pages 13,14,15,16,41,58,59,17,18,19 --repeats 3
+```
+
+### Invalidating text/images already stored sideways
+
+Fixing the constructor recovers nothing that is already persisted.
+
+| Stored artefact | Served by | Invalidation | Status |
+|---|---|---|---|
+| `/data/bctc-page-images/{report_id}/page_NNNN.png` | `get_bctc_page_image` | `POST /api/rasterize {"force": true}` (new field) | **WIRED** — `rasterize_page(..., force=True)` re-renders and corrects |
+| `bctc_layout_units.stitched_markdown` | `get_bctc_pending_refine` | re-run `/extract-md-tables` for the report_id (upsert on `(report_id, unit_id)`) | available |
+| `pdf_extracted_text` (market.db) | `get_bctc_page_text` (`source: sqlite_ocr`) | `DELETE FROM pdf_extracted_text WHERE filename = ?` then re-run `extractAndStorePdfPages` | **NOT WIRED — and deleting alone re-writes the same garble.** See gap below |
+
+> **GAP — a FOURTH OCR construction site, outside `apps/pdf-extractor/`.**
+> `pdf_extracted_text` is written by
+> `apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts::ocrOnePage()`,
+> which shells out to `pdftoppm -r 200 | tesseract stdin stdout -l vie+eng`
+> with **no `--psm` and no orientation detection** (Tesseract then defaults to
+> psm 3, which does layout analysis but NOT orientation detection). It is
+> reached in production from `composition-root.ts` §4b on every mcp-server
+> start. That is the read that produced the garbled VIC page text. It is
+> mcp-server's zone; `dev-mcp-server` must fix it (e.g. `--psm 1`, or an
+> `image_to_osd` pre-pass) before any `pdf_extracted_text` invalidation is
+> worth triggering.
+
+---
+
 ## PEK table-OCR text backend — `OCR_TEXT_BACKEND` and the per-region rescue
 
 Distinct from the scanned-PDF fallback above: this governs the *table* path
