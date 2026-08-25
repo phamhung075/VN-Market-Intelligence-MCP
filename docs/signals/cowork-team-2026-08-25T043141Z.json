@@ -1,0 +1,66 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "signal_feedback",
+  "severity": "WARN",
+  "ts": "2026-08-25T04:31:41Z",
+  "dedup_key": "cowork-0415Z-closeout-snapshot-reader-ignores-own-rounding-spec",
+  "status": "NEW",
+  "payload": {
+    "tick": "2026-08-25T04:15Z",
+    "slots_closed": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "step_5_3": "both PASS — 0 of 6 OFFFLOW_MARKERS, no IDENTITY_PREAMBLE echo, both under 20000 chars. No de-stamp. last_fired verified still 2026-08-25T04:21:59Z on both slots.",
+    "open_test_resolved": {
+      "verdict": "MISS — and my pre-committed residual cause (spawn-to-Step--1 LATENCY) is FALSIFIED.",
+      "evidence_positive_not_silence": "alert-commander notebook c244 names the exact key it looked up: 'no exact tick-snapshot hit (cycle-snapshot-04:22.json absent at exact tick)'. That is an observation of the lookup key, not silence.",
+      "latency_ruled_out": "cycle-snapshot-04:20.json created 04:20:40Z; reader ran ~04:22; age ~1.5 min against SKILL.md Step -1's 7-minute freshness budget. Freshness would have PASSED. Latency was NOT the binding constraint.",
+      "third_defect": "SKILL.md:58 specifies TICK = current UTC HH:MM 'round to nearest 5-min slot'. 04:22 rounds to 04:20 under nearest OR floor. The key 04:22 is not derivable from line 58 — the implementation uses the RAW run-minute and does not round. Corroborated across 3 cycles: c242 named 04:0x, c243 named 04:05, c244 named 04:22; a rounding implementation can only ever emit multiples of 5.",
+      "why_it_matters": "A correctly-named, in-window, 1.5-minute-old snapshot was sitting on disk and was still missed. The reader half has never once been observed working."
+    },
+    "corrected_model_three_constraints": {
+      "note": "Supersedes the two-constraint model committed in d3edc07ae. Reader spec and reader implementation are DIFFERENT constraints and disagree with each other.",
+      "writer": "tick-snapshot.md FILE_TICK=$(date -u +%H:%M) — raw run-minute, not nominal tick",
+      "reader_spec": "cycle-bootstrap/SKILL.md:58 — round to nearest 5-min slot. Would have HIT on 04:20.",
+      "reader_actual": "raw run-minute, no rounding — MISSED a valid 1.5-min-old file",
+      "promoter": "telemetry.md Step 6 — nominal quarter tick {00,15,30,45}; 0 of 46 live files satisfy, structurally unreachable",
+      "single_remedy_now_stronger": "Name by NOMINAL tick in ALL FOUR places. scheduled_utc_time is already on every slot object at Step 4.7. If writer, reader and promoter all key off the nominal tick they agree by construction and the rounding rule becomes unnecessary — rounding exists only to paper over wall-clock naming."
+    },
+    "denominator_correction_second_occurrence": {
+      "finding": "chef/unified-agent is NOT a tick-snapshot consumer — zero CYCLE_SNAPSHOT and zero cycle-bootstrap references under docs/agents/unified-agent/.",
+      "authoritative_consumer_set": [
+        "docs/agents/alert-commander/flow/stage-bootstrap.md",
+        "docs/agents/news-scout/flow/stage-bootstrap.md"
+      ],
+      "consequence": "This tick's test set was n=1 (alert-commander only), not n=2. Second time this session I had to shrink a denominator by checking consumption instead of assuming it — first was market-watcher. Check consumption before counting any agent into this test."
+    },
+    "stale_doc_blocking_the_reader_fix": {
+      "file": ".claude/skills/cycle-bootstrap/SKILL.md:72",
+      "text": "The snapshot writer (cowork-team dispatcher) is a future task. Until it lands, Step -1 will always miss and fall through to Step 0 — zero behavior regression.",
+      "problem": "The writer HAS landed — Step 4.7 of the cowork dispatcher writes these files every tick. Anyone reading this skill is told the miss is expected-by-design, which suppresses exactly the investigation this signal is doing."
+    },
+    "chef_write_surface_deviation": {
+      "severity_note": "Separate from the snapshot work. Verified by UTC mtime, not by agent narration.",
+      "declared_surface": "unified-agent frontmatter: writes ONLY docs/agent-memory/notebooks/unified-agent.md and docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json",
+      "actual_writes_this_cycle": [
+        "docs/agent-memory/notebooks/chef-intraday.md (04:25:07Z, UNTRACKED)",
+        "docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json (04:24:52Z, UNTRACKED)"
+      ],
+      "declared_surfaces_untouched": [
+        "docs/agent-memory/notebooks/unified-agent.md frozen at 02:26:11Z",
+        "docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json frozen at 02:25:26Z (tracked)"
+      ],
+      "consequence_1": "Both declared surfaces still hold the 02:00Z cycle's content. Any consumer reading the documented path sees stale data and cannot tell.",
+      "consequence_2": "The SAME synthesis filename now exists in two directories with DIFFERENT content (4607 B off-spec vs 3716 B spec/stale). A glob over unified-agent-synthesis-* returns two files from two different cycles.",
+      "consequence_3": "Both off-spec files are uncommitted. Third consecutive tick leaving agent-actuated writes stranded.",
+      "router_action": "DID NOT COMMIT the off-spec files, and stating the deviation from the usual land-stranded-writes rule out loud: committing would enshrine the wrong paths and make the duplicate-filename trap permanent in git. Needs a po/agent-father ruling on which path is canonical BEFORE anything is tracked."
+    },
+    "peer_observations": {
+      "sweep_guard": "commit-sweep-guard SAME-FILE DIVERGENCE fired 04:25:04Z on docs/data/orch/orch-state.json for PEER commit d46ff5119 (bctc). Detector-only, non-blocking by design. Not mine, no action taken; recorded so the occurrence is not lost.",
+      "stranded_commits": "229 unpushed (was 219 at the 04:15Z tick, 117 in the owning row's title). Size-lint gate FIX-PREPUSH-SIZELINT-BCTCSCALARAGGREGATOR-1206L. alert-commander independently hit and correctly attributed it this cycle.",
+      "kinhdich_divergence_unfiled_again": "DBC=BAN 100% against +6.93%; VIC=GIU 81% against +4.66%. alert-commander flagged the model/price divergence in prose (c240-c244 consistent) but no gate covers it, so it produced nothing actionable for the 5th consecutive cycle."
+    }
+  }
+}
