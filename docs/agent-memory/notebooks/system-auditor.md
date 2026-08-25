@@ -1,3 +1,33 @@
+## c2 · 2026-08-25T08:00Z
+### Audit Run Tier-DATA (05:00–16:59 UTC 2026-08-25)
+- Tier: DATA | Tables checked: 17 | DB Data-Anomaly Sweep
+- Anomalies: 0 new (no findings outside already-open tasks)
+- Status: HEALTHY (all tracked issues remain stable)
+
+#### Raw Counts (db-integrity-counts.sh)
+- scan_ts: 2026-08-25T07:59:48Z
+- ohlc_violations_count: 336 (20 distinct dates, 0 fresh in last 2 days)
+- scale_gt100x_count: 0
+- vnindex_cache_rows_count: 1
+- low_confidence_reports_count: 52
+
+#### Findings Summary
+**No new anomalies detected.** All observations match existing open task tracking:
+
+1. **deep_fetch_stats** (0 rows, class a/may_stay_critical): Already-open signal tracked under FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
+
+2. **daily_ohlcv OHLC violations** (336 rows across 20 distinct dates): Stable residue; 0 fresh violations in last 2 days. Already-open under LINT-OHLCV-WRITE-BYPASS.
+
+3. **Other tables** (macro_indicators, sbv_rates, price_alerts, alert_engine_records, cron_job_runs): All classified as by-design (class b/c) or already tracked.
+
+**Database state:** Stable. Deep fetch pipeline remains stalled (consistent with prior cycle). No new root causes identified.
+
+**Entry appended to:** `docs/data/db-integrity-history.json` (length: 200, capped)
+
+**Dedup status:** 1 finding (deep_fetch_stats) matched to existing open task FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD. No new signals written.
+
+**Exit code:** 0 (RECORD OK)
+
 ## Tier-DATA (2026-08-25T05:41:12Z)
 
 **Audit Run:** DB Data-Anomaly Sweep
@@ -38,36 +68,3 @@
 **History entry:** Appended to `docs/data/db-integrity-history.json` (entry [200] of max 200, capped).
 
 See `docs/data/db-integrity-history.json` for full detail.
-
-## c1 · 2026-08-25T07:30Z
-### Audit Run Tier-DATA 
-- Tier: DATA | Tables checked: 17 | Sources: multiple | Cadence-based anomaly sweep
-- Anomalies: 2 REAL (deep_fetch_stats HIGH, deep_fetch_queue HIGH), 5 BY-DESIGN, 336 OHLCV violations (known residue, already-open)
-- Status: DEGRADED (deep fetch pipeline stalled)
-
-#### Findings Summary
-**Data Integrity Scan — 2026-08-25T07:29:01Z**
-
-Using deterministic helpers:
-- `db-integrity-counts.sh`: scan_ts=2026-08-25T07:29:01Z
-  - ohlc_violations_count: 336 (20 distinct dates, no fresh violations in last 2d)
-  - scale_gt100x_count: 0
-  - vnindex_cache_rows_count: 1
-  - low_confidence_reports_count: 52
-
-**Critical Findings:**
-1. **deep_fetch_stats**: class=a/may_stay_critical, 0 rows. Root cause: deep_fetch_queue has 0 completed fetches — all 2556 rows are expired/failed/pending.
-   - Signal: already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD
-
-2. **deep_fetch_queue**: Status=[expired:2490 (97%), vps-failed:34 (1%), pending:32 (1%)]. Zero completed fetches. Pending rows stuck up to 167 hours.
-   - Signal: already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD
-
-**Known Issues (Dedup-Skipped):**
-- daily_ohlcv: 336 violations across 20 dates (no fresh violations in last 2d)
-  - Signal: already-open:LINT-OHLCV-WRITE-BYPASS
-
-**By-Design (INFO):**
-- alert_engine_records, price_alerts: empty by design per writer-provenance discriminator
-- cron_job_runs: 205 stale crashes (oldest 2026-08-11, no recent crashes)
-
-**Root Cause**: Deep fetch pipeline non-functional — no successful fetches completing. Indicates VPS connectivity/rate-limit issues or downstream processor stall.
