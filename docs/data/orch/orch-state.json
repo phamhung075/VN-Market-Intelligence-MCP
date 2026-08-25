@@ -17019,7 +17019,7 @@
         "next_agent": "architect",
         "created_at": "2026-08-25T16:24:00Z",
         "created_by": "po (triage-20260825T1612Z)",
-        "updated_at": "2026-08-25T16:22:59Z",
+        "updated_at": "2026-08-25T17:05:44Z",
         "updated_by": "po (triage-20260825T1612Z)",
         "baseline_pass": true,
         "dedup_key": "cowork-team:drain-only-work-tick-falls-between-step47-and-step61-guards",
@@ -17031,7 +17031,22 @@
           "AC-2 A drain-only WORK tick produces exactly one docs/signals record. Prove it on a real drain-only tick, not a fixture.",
           "AC-3 A genuinely empty tick (no slots, no one-shots, no new signals, no drain) still produces nothing — the SILENT path must not become chatty. Negative control.",
           "AC-4 Reconcile the two out-of-contract ticks (12:15Z, 12:30Z on 2026-08-25): say explicitly whether their emitted telemetry is valid under the new definition or must be marked as produced off-contract. Do not silently adopt them as precedent."
-        ]
+        ],
+        "status_note": "TWO FINDINGS, one causal chain, both measured live on 2026-08-25. Kept in one row because they share a zone (docs/agents/cowork-team/flow/) and an owner; do not split without keeping the cause attached to the consequence. || FINDING 1 -- CAUSE, confirmed at source (this is new, and it is why a drain-only WORK tick exists at all). The preflight SILENT gate is `slots_empty AND one_shots_empty AND signal_count == 0` (scripts/agents-flow/cowork-tick-preflight.sh Step 7, ~L357-368), where signal_count = `[.signal_queue.rows[] | select(.status==\"NEW\" and .to in <cowork recipients>)] | length`. So ANY NEW row addressed to po/tran-ngoc-bau/alert-commander/unified-agent forces verdict=WORK on EVERY tick until that row's status changes. || That collides head-on with the standing held-row policy. work-tick.md Step 0a says mark drained rows NEW -> READ; but PO's own selector reads NEW, so marking READ strands the row (documented repeatedly, incl. feedback_cowork_drain_marks_po_rows_read_but_po_selects_new_and_has_no_slot, 3+ occurrences, one confirmed end-to-end 2026-08-25 when a held row went NEW -> RESOLVED via PO's own run 05f735b9c). Holding at NEW is therefore CORRECT -- and holding at NEW is exactly what pins signal_count >= 1. A correctly-handled row defeats the SILENT gate for as long as it waits. || COST, measured, not estimated: rtr-20260825T1645-ocrrotation was minted 16:45Z and held. Ticks 16:45Z and 17:00Z both returned WORK with slots:[] and one_shots:[] -- zero dispatchable work -- driven solely by that one row, and each paid the full WORK continuation body (drain read, pressure-read, emit, commit check, release) instead of the SILENT path (one bash call, exit 0, lock auto-released). The window is unbounded in ticks: it lasts until PO next runs, and PO's cadence is not 15 minutes. This directly negates TOKEN-ECONOMY-TICK-PREFLIGHT WU-2, whose stated purpose is that \"~80% of ticks are SILENT\" and should never pay the 15,916-byte main.md read. || FINDING 2 -- CONSEQUENCE, the original subject of this row. On such a tick MATCHES is empty, so Step 4.7 (tick-snapshot.md, guarded on WON_SLOTS) skips AND Step 6.1's silent condition (`SILENT==true AND spawned empty AND errors empty`, telemetry.md L28) is satisfied, so no docs/signals/cowork-team-*.json is written either. The tick leaves no signal record at all despite having executed a real drain body. Step 6.0 and Step 6.2 do still run, so pressure-state.json is the ONLY on-disk trace. || SUGGESTED AC, for architect to accept/reject -- deliberately NOT actioned by the router: (i) decide whether a held-for-PO NEW row should count toward the SILENT gate at all, or whether the gate needs a \"NEW but already-seen-this-tick\" distinction (e.g. a drained_at/seen_at stamp that leaves status=NEW intact for PO's selector while clearing the gate) -- note this must NOT be solved by marking READ, which reintroduces the stranding defect; (ii) either widen telemetry.md's silent to `MATCHES empty AND one_shots empty AND drained_rows == 0`, or explicitly declare drain-only ticks telemetry-free so the absence stops reading as a miss; (iii) fix the stale main.md parenthetical \"4.7 (tick-snapshot.md, guarded on WON_SLOTS)\" if 4.7's guard changes. || PRIORITY QUESTION for PO, not changed by the router: this row is P2, set before Finding 1 was known. The unbounded per-tick cost may warrant re-rating. || Evidence gathered by the router across cowork ticks 16:45Z and 17:00Z 2026-08-25; gate condition read from the script, not inferred from behaviour."
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-preserved-bug-no-tracking-row",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "zone": "cross-service/",
+        "title": "Unrouted signal type 'preserved_bug_no_tracking_row' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:preserved_bug_no_tracking_row",
+        "created_at": "2026-08-25T17:00:23Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=preserved_bug_no_tracking_row routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-25T17:00:24Z"
       }
     ],
     "closed_sprints": [
