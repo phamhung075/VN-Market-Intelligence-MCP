@@ -39,3 +39,10 @@
 - Feedback: 0 signals reviewed (insufficient prior data) | Filter hints: none (defaults applied)
 - Fired: FTSE inflow bullish, fund losses bearish, KDH insider mixed, gold surge macro
 - Coverage: 34 watchlist tickers analyzed
+
+## c001 · 2026-08-25T00:07:10Z
+- Items: 30 | Impacts: 20 | Signals: [chain_catalyst(2), urgent_news(3)] | Regime: NEUTRAL | Carry: NEUTRAL
+- Market: VN-Index 1788.78 (+20.66) | Gold $4734.60 (+0.39%) | Oil $92.13 (-1.07)
+- Top themes: Gold safe-haven (+2.2σ), Fund losses across 91 funds, S&P 500 tech weakness (Iran tensions)
+- Watchlist coverage: VIC, VHM strong foreign demand | KDH insider accumulation amid debt +64% | HPG bluechip accumulation
+- Feedback: 0 signals prior cycle | Filter hints: [default thresholds]
