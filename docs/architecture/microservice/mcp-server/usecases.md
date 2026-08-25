@@ -470,7 +470,23 @@ each step's query/compute logic lives in its own module under `usecases/briefing
 `BEARISH_WARNING_THRESHOLD`) are re-exported from `assembleBriefing.ts` unchanged.
 
 ### assembleEveningSummary.ts
-Daily close summary generation
+Daily close summary generation. `_assembleEveningSummaryImpl` is a thin step
+sequencer (FACTORY-APP-split-assembleEveningSummary, mirroring the sibling
+FACTORY-APP-split-assembleBriefing split); each step's query/compute logic
+lives in its own module under `usecases/eveningSummary/` (e.g.
+`queryVnIndexSnapshot.ts`, `queryTopAlerts.ts`, `queryWatchlistMovers.ts`,
+`computeTaSummaryStep.ts`, `queryForeignFlowMovers.ts`,
+`queryPredictionSignalsStep.ts`, `computePortfolioPnlStep.ts`,
+`queryGlobalSnapshotStep.ts`, ...). One step — `queryTopStories` — is
+genuinely identical to morning briefing's own Step 3 and is imported directly
+from `usecases/briefing/queryTopStories.ts` rather than duplicated; every
+other evening step has a verified behavioral difference from its briefing
+counterpart (documented in each module's own header — e.g. the evening
+global-snapshot query has no `ORDER BY`/prev-row delta fields, and the
+freshness-gate WORK-channel message text differs) and is intentionally kept
+separate. Public exports (`EveningSummary`, `AssembleEveningSummaryOptions`,
+`VnIndexSnapshot`, `ForeignFlowMover`, `WatchlistMover`, `PredictionDiag`,
+`TaDiag`) are re-exported from `assembleEveningSummary.ts` unchanged.
 
 ### orchestrateRecapCommand.ts
 Telegram `/recap`/`/recapw`/`/recapm` orchestration (FACTORY-INFRA-split-telegramCommands):
