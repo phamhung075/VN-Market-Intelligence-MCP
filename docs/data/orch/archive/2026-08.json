@@ -28786,6 +28786,24 @@
       "triaged_at": "2026-08-24T01:04:14Z",
       "triaged_by": "po",
       "disposition": "REFUTED + MINTED FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES. Premise verified at source before dispositioning, per the flow doc's verify-the-premise rule: the cycles this signal says are missing all ran. Tier-1 c116 completed 2026-08-24T00:30Z (notebook line 3/5, commit 3dc3ee791) 11min before the signal; tier-2 completed 00:49Z (commit 4145766ac) 8min after it. The gap is an artefact of D-CYCLE-2's completion-evidence predicate — order-dependent notebook parse on tier-1, heartbeat-only with no fallback on tier-2/3 — not of missing coverage. NOT closed as noise: the false-positive mechanism is itself the tracked defect."
+    },
+    {
+      "id": "sys-20260824T020933-6921",
+      "ts": "2026-08-24T02:09:33Z",
+      "from": "system-auditor",
+      "to": "architect",
+      "type": "auditor_probe_anomaly",
+      "summary": "Tier-1 heartbeat frozen: probe threshold wedge",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-24T02:00Z",
+      "dedup_key": "detector_wedge:tier1_heartbeat_frozen:mem_threshold_floor",
+      "triaged_at": "2026-08-24T13:20:31Z",
+      "triaged_by": "po",
+      "disposition": "REHOUSED-TO-ROW",
+      "po_triage_note": "Marked READ by a drain, never delivered to po (po selectors read status=NEW). Content rehoused into task rows before the 24h archive-out, so eviction to docs/data/orch/archive/2026-08.json is now a deliberate decision. Transport defect: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. | PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z by po at 2026-08-24T14:30:07Z; invented timestamped field names are unreachable to every conventional reader — standing rule): Tier-1 heartbeat freeze = FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL, now blocked behind the debounce cron-prompt row. The frozen value is correct-by-contract, not a bug."
     }
   ],
   "backlog_detail": [],
