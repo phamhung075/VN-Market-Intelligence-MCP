@@ -1,46 +1,53 @@
-## c5 · 2026-08-25T15:03Z
-### Audit Run Tier-1 (14:58–15:03 UTC 2026-08-25)
-- Tier: 1 | Services: 12 checked (host_runtime_set) | Sources: 0 | DB checks: 0
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 dedup-skipped
-- Status: HEALTHY (all 12 host_runtime_set containers Up+healthy, all health endpoints 200, A-20 3/3, A-21 crashRestarts=1<2, A-30 zero ENGAGE across 13 running containers, A-32 disk 46%<85%, A-33 hooks all live. 1 WARN = recurrence of an already-open detector-defect, dedup-skipped.)
-- Fire-election: WON, task_id=cron:auditor-t1:2026-08-25T14:30Z
-- Trigger: pre-gate `auditor-tier1-last-trigger.json` verdict=FAILURE 14:53:57Z, signature `mem_creep:ocr-bench-paddleocr-run2` (97.64%); all other pre-gate checks PASS.
+## c6 · 2026-08-25T17:09Z
+### Audit Run Tier-1 (17:00–17:09 UTC 2026-08-25) — targeted mem_creep verification, dispatched by coordinator
+- Tier: 1 | Services: 13 checked (12 host_runtime_set + 1 ephemeral) | Sources: 0 | DB checks: 0
+- Anomalies: 1 new (0 critical, 0 warn on A-30 itself, 1 WARN meta-finding) | 0 dedup-skipped
+- Fire-election: WON, task_id=cron:auditor-t1:2026-08-25T17:00Z
+- Trigger cited by coordinator: pre-gate `auditor-tier1-last-trigger.json` verdict=FAILURE 16:57:13Z, signature `mem_creep:vn-market-intelligence-mcp-pdf-extractor-1` (85.77%). Did NOT re-run `scripts/agents-flow/auditor-tier1-probe.sh` (mutates spawn-debounce ledger as a side effect — proven by the coordinator on this same tick). Debounce ledger read-only: this signature's own entry has spawn_count=4, first_seen_at 2026-08-24T12:42:19Z.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-08-25T14:58:04Z ===
---- docker ps -a ---
-ocr-bench-auto-run3 Up 31s (health: starting) | 12 host_runtime_set containers Up (healthy): mcp-server-1(44m,RestartCount=1), frontend-1, pdf-extractor-1, alert-engine-1, rag-service-1, news-fetch-1, api-gateway-1, stock-price-1, macro-indicators-1, mcp-gateway, technical-analysis-1, kinh-dich-service-1 (all 8h) | +flaresolverr-1 (8h, outside host_runtime_set/not_deployed_by_design, pre-existing scope gap)
---- health endpoints ---
-[health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK (5/5 HTTP 200)
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP all 13 containers, baselines 1.75%-63.84% (max=pdf-extractor-1) — none >= 85% investigate-gate, zero ENGAGE
---- disk df -h / ---
-/dev/disk1s4s1 233Gi 13Gi 16Gi 46% /
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1/2/3] HTTP 200 x3 — pass_count=3/3
+=== AUDITOR PROBE 2026-08-25T17:00:35Z ===
+--- docker ps -a --- : 12/12 host_runtime_set Up (healthy), +ocr-bench-tesseract-vie-3698 (ephemeral, health:starting, image=pdf-extractor, out of host_runtime_set) +flaresolverr-1 (pre-existing scope gap)
+--- health endpoints --- : 5/5 HTTP 200
+--- restart count --- : mcp-server RestartCount=1
+--- memory pressure --- : mcp-server MemPerc=8.45%
+--- memory pressure multi-probe reclamation (A-30) --- :
+  SKIP (< 85%): ocr-bench-tesseract-vie-3698(38.62%) mcp-server(11.25%) frontend(9.57%) alert-engine(2.05%) rag-service(33.56%) news-fetch(2.84%) api-gateway(2.65%) stock-price(2.69%) macro-indicators(2.15%) flaresolverr(5.50%) technical-analysis(3.75%) kinh-dich-service(2.59%)
+  ENGAGE: vn-market-intelligence-mcp-pdf-extractor-1 baseline 85.77%
+  {"container":"vn-market-intelligence-mcp-pdf-extractor-1","window":{"probes":6,"interval_sec":13,"span_sec":65},
+   "state":{"oom_killed_before":"false","oom_killed_after":"false","restart_count_before":"0","restart_count_after":"0","state_changed_during_window":false},
+   "vm":{"vmhwm_kb_before":"2433436","vmhwm_kb_after":"2433436","mem_limit_kb":"2621440","vmhwm_advancing_in_window":false,"vmhwm_pinned_at_cap":true},
+   "samples":[{"n":1,"t":"17:00:49Z","pct":85.77},{"n":2,"t":"17:01:04Z","pct":85.77},{"n":3,"t":"17:01:19Z","pct":85.77},{"n":4,"t":"17:01:34Z","pct":86.19},{"n":5,"t":"17:01:49Z","pct":86.19},{"n":6,"t":"17:02:05Z","pct":86.19}],
+   "analysis":{"min_pct":85.77,"max_pct":86.19,"median_pct":85.98,"reclamation_dips":0,"discontinuities":0},
+   "verdict":"FOLD","reason":"benign GC sawtooth or below tripwire"}
+--- disk df -h / --- : 45%
+--- pdf-extractor in-container multi-probe (A-20) --- : 3/3 HTTP 200
 === PROBE DONE ===
 ```
 
 ### Findings
-- **A-01..A-11 = PASS**: 12/12 host_runtime_set Up. `not_deployed_by_design[]` empty (live jq). flaresolverr healthy but outside both lists — pre-existing gap, not new, not filed (out of Tier-1 battery).
-- **A-12..A-20 = PASS**: 5/5 health 200. A-20 override PASS, 3/3 in-container.
-- **A-21 = PASS**: cumulative RestartCount=1 (evidence-only). Windowed crash query: `{"crashRestarts":1,"crashTimestamps":["2026-08-25 14:13:59"]}` — 1 < ALERT_THRESHOLD=2 → PASS.
-- **A-30 = PASS, zero ENGAGE**: all 13 running containers (12 fleet + ephemeral `ocr-bench-auto-run3`) baselined < 85%. Nothing to interpret.
-- **A-32 = PASS**: 46% < 85% (avail 24Gi→16Gi vs prior c4 cycle's 37%, direction noted, still 39pp under threshold).
-- **A-33 = PASS**: 4/4 load-bearing hooks present+executable+registered; 3/3 LOW-tier registered.
-- **MCP cross-check**: `get_system_status` 0 open circuits, 0 DOWN services, consistent with docker ps. `get_cron_health` checked for DOWN-signal only; `bctcReparseJob last_status=crashed` observed, left for next Tier-2 cycle (A-29 out of Tier-1 scope).
+- **A-30 (pdf-extractor) = FOLD, no emit** (per spec: FOLD → PASS). Discriminator sees no escalation signal: 0 dips, 0 discontinuities, no state change, OOMKilled false before/after, VmHWM pinned at cap (2433436kB/2621440kB) but NOT advancing during this window.
+- **Independent cgroup read** (direct `docker exec ... cat /sys/fs/cgroup/memory.*`, taken ~30s before the probe run): `memory.current=2349654016B` (~2240.9MiB), `memory.max=2684354560B` (2560MiB — matches the coordinator's stated 2.5GiB cap exactly), `memory.peak=2684370944B` (~2560.0MiB, i.e. peak has reached the hard cap). `memory.events`: `max=5920 oom=0 oom_kill=0` — the cgroup hard limit has been hit thousands of times but the kernel has reclaimed, never killed. `docker inspect`: `OOMKilled=false RestartCount=0 ExitCode=0`.
+- **Container lifecycle**: `Created=2026-08-24T13:35:05Z` but `StartedAt=2026-08-25T06:33:03Z` — this container's current process is only ~10.5h old (a clean stop/start with exit_code=0, RestartCount=0, NOT a crash — restart policy `unless-stopped`; container logs at 06:33Z show a normal uvicorn/ProcessPoolExecutor startup, no error). It reached the 85%+ band well within that 10.5h window, which argues AGAINST an unbounded multi-day leak (a leak would reset near-zero at restart and take a long time to reclimb) and FOR a workload-intrinsic steady-state footprint.
+- **Historical cross-check (git log, independent of coordinator's cited 08-11 data point)**: this container has recurred in an 85.1–87.1% MemPerc band on every A-30 deep-probe since at least 2026-08-08 (c22 2026-08-09 was the one genuine ESCALATE investigated at the time; every cycle since — c23, c30/c32 sustained-WARN dedup-skips, c47, c52, c64/c65/c67, c116/c117, 2026-08-24T03:00Z 87.06%, today) resolved FOLD or benign-tracked. This is a >2-week plateau, not creep.
+- **Prior-art, same day**: an earlier Tier-1 cycle today (commit `c5ffb1d0e`, 14:24:20Z+0200/14:23:16Z tick) already ran a deeper cgroup investigation and filed `sys-20260825T142316-4385` (INFO, dedup_key `pdf_extractor_memory_pressure_investigation:A-30`, still NEW/unactioned to po) concluding genuine anonymous-working-set pressure, not a leak, recommending a cap increase to 3–3.5GiB. My independent readings this cycle corroborate that conclusion (same cap-pinned peak, same zero-OOM-kill pattern). Not re-filed — would be a duplicate.
+- **Two existing WARN signals** (`sys-20260825T133632-2f9d`, `sys-20260825T150107-0332`, dedup_key `detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope`) cover a DIFFERENT, already-tracked root cause: short-lived OCR-benchmark containers polluting the mem_creep composite signature. Not the same mechanism as this cycle's finding (below) — the persistent named container `pdf-extractor-1` is not an ephemeral test harness.
 
-### Detector-defect recurrence (dedup-skipped, WARN)
-A-30 mem_creep pre-gate ephemeral-container gap RECURRED under a new container name. Trigger named `ocr-bench-paddleocr-run2(97.64%)` at 14:53:57Z; by this probe (14:58:04Z, ~4min later) it is GONE from `docker ps -a` — verified by direct observation, not inferred (consistent with a `docker compose run --rm` self-removal, same class as the prior `paddle-sentinel-test` occurrence). Successor ephemeral `ocr-bench-auto-run3` running at 41.90%, well under gate — naming/timing is consistent with the OCR confidence-discriminator work PO ruled on this session (board row `FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS`, `docs/data/orch/orch-state.json:16492`, status=BACKLOG, next_agent=dev-pdf-extractor; status_note: PaddleOCR MEASURED+REJECTED, peaks 2790MiB/2560MiB cap, decision `docs/agent-memory/decisions/triage-20260825T1345Z-po.md`) — but this subagent did NOT `docker inspect`/`exec` that specific container to independently confirm the linkage. **Could not verify caller-cited task_id `OCR-PADDLE-VI-LANG-FIX-AND-REBENCH`** — `grep -rn` across `docs/` returns 0 hits; dropped per RAW-CITE GATE, disposition rests only on direct observation + the board row actually found.
-Same root cause as already-open `sys-20260825T133632-2f9d` (dedup_key `detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope`, filed 13:36:32Z): `_check_mem_creep()` scopes ALL running containers vs `_check_docker_ps()`'s `host_runtime_set` scope — unbounded-cardinality ephemeral names defeat the name-keyed spawn debounce (confirmed: `auditor-tier1-spawn-debounce.json` shows this as a fresh first-sighting signature, spawn_count=1).
-Re-emitted under the SAME dedup_key per instruction (do not duplicate): `[emit-signal] SKIP-dedup dedup_key=detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope last_sent=2026-08-25T13:36:32Z id=sys-20260825T150107-0332` (BUG telegram correctly suppressed; signal_queue row DID write). `[emit-dashboard] OK id=sys-20260825T150107-0332 check_id=A-30`, committed `0623a113f`.
-**No destructive action taken** — neither container touched.
+### New finding filed this cycle
+The pre-gate's per-signature spawn-debounce window is 1h (`docs/data/auditor-tier1-spawn-debounce.json`); this signature (`mem_creep:vn-market-intelligence-mcp-pdf-extractor-1`) has spawn_count=4 in ~28h on its current ledger entry alone, against an underlying condition that git history shows has persisted 17+ days and has NEVER escalated on deep-probe. Each re-spawn burns a full Tier-1 subagent + ~95–105s deep-probe subprocess to reconfirm a state that resolves FOLD every time — a detector-cadence cost distinct from the two mechanisms already tracked above. Filed WARN, detect-only, no fix implemented or mandated (candidate directions named in the signal: action the existing cap-increase recommendation, or lengthen debounce for signatures with N consecutive FOLD verdicts):
+`[emit-signal] OK dedup_key=detector_defect:auditor-tier1-probe:mem_creep_debounce_window_vs_persistent_fold_baseline:pdf-extractor id=sys-20260825T170808-1ae7`
+`[emit-dashboard] OK id=sys-20260825T170808-1ae7 check_id=A-30-GATE`
+Both read back and committed (`aad5f750a` signal_queue+dedup-ledger, `35bac8cbe` DASHBOARD.md).
 
-### Deliberately NOT filed
-- `ocr-bench-paddleocr-run2` termination — no crash evidence, clean `--rm` self-removal pattern.
-- `bctcReparseJob crashed` — A-29 is Tier-2 scope, left for next cycle.
-- Notebook heading-format drift (`## Audit Run Tier-DATA (c88)` / `## Audit Run Tier-2 (c89)` — cycle number embedded in a non-`## c<N>` heading) observed while deriving NEXT_N (regex correctly ignored them, landed NEXT_N=5 from c4). Doc/memory hygiene is Tier-3 scope — carried over as a note only.
+### CONTRACT-CONTRADICTION
+NONE — the coordinator's brief asserted no verdict, only asked for independent verification; the pre-gate's FAILURE→SPAWN and this cycle's own A-30 FOLD are not a contradiction (documented CALLER-INSTRUCTION PRECEDENCE / pre-gate-vs-cycle split, AUD-CP-1).
+
+### Deliberately NOT done
+- No `docker stop/restart/rm/compose down|up` on pdf-extractor or any peer container (constraint honored — observation-only: `docker ps`, `docker stats`, `docker inspect`, `docker exec ... cat /sys/fs/cgroup/*`, `docker logs`).
+- No subagent spawned.
+- Did not re-invoke `scripts/audits/verify-a30-mcp-memory-reclamation.sh` standalone — reused the JSON block already embedded in this cycle's own `docs/agents/system-auditor/probe.sh` PROBE_OUT, per the coordinator's efficiency note.
+- Did not touch `docs/data/auditor-tier1-last-healthy.json` or `docs/data/auditor-tier1-last-trigger.json` (both read-only from this flow).
 
 ### Summary
-Fleet genuinely healthy on every Tier-1 dimension this cycle: 12/12 containers Up, 5/5 health 200, A-20 3/3, A-21 windowed-crashes=1 (below alert threshold), A-30 zero ENGAGE (max 63.84%), A-32 46%, A-33 all hooks live. The one WARN is a RECURRENCE (new container name, same detector-defect class) of an already-open, already-tracked finding about the auditor's OWN pre-gate tooling — correctly SKIP-deduped on Telegram while still landing a fresh signal_queue + DASHBOARD row. The pre-gate's trigger container had already exited by probe time — verified, not inferred. No destructive operations performed.
+mem_creep pre-gate FAILURE on pdf-extractor (85.77%) verified independently via cgroup `memory.current`/`memory.peak`/`memory.events` (never `ru_maxrss`): a >2-week-old plateau at 85–87% of a confirmed 2560MiB cap, zero OOM kills, kernel reclaiming not killing, this cycle's own A-30 discriminator FOLD (no escalation signal). TREND=steady, not monotonic creep. Root cause of the memory reading itself was already established by an earlier cycle today (genuine working-set demand, cap-increase recommended, still pending action). This cycle's own contribution: a new WARN signal on the detector's own re-spawn cadence against a long-settled baseline. No destructive action taken.
