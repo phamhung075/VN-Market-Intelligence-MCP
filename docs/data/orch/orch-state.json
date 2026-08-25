@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T08:12:20Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-25T08:23:57Z",
+    "_updated_by": "qa",
     "archive": [],
     "rows": [
       {
@@ -619,6 +619,17 @@
           "killed_candidate": "entry-schema instability — FALSE, all variant keys are June residue aging out of the 200-cap; current shape stable at 195-197/200",
           "discovered_by": "router raw-verification of the 07:59:48Z DATA sweep — no detector caught either"
         }
+      },
+      {
+        "id": "qa-20260825T082357",
+        "ts": "2026-08-25T08:23:57Z",
+        "from": "qa",
+        "to": "po",
+        "type": "preserved_bug_no_tracking_row",
+        "summary": "hangSeng!==0 omitted in evening queryGlobalSnapshotStep.ts (deliberate, pre-existing, disclosed in ad0ff8268) — zero board row tracks it. Needs a BACKLOG row.",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md#qa-S207"
       }
     ],
     "last_triaged_at": "2026-08-24T14:29:30Z",
@@ -18924,6 +18935,74 @@
             "observed_at": "2026-08-24T18:34:35Z"
           }
         }
+      },
+      {
+        "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
+        "priority": "P1",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-APP-split-assembleEveningSummary",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary",
+        "promoted_at": "2026-08-25T06:54:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-25T08:23:34Z",
+        "claimed_at": "2026-08-25T08:17:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "updated_by": "dev-mcp-server",
+        "evidence": "commit ad0ff8268 (13 new usecases/eveningSummary/ step modules + thin sequencer, doc update); notebook + decision-journal S95 in commit a9ae069b1",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-25T08:23:33Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh + grep DDD/security + git diff vs parent for hangSeng guard",
+            "args": "commit=ad0ff8268; files=14 eveningSummary/ modules + assembleEveningSummary.ts + usecases.md",
+            "live_value_observed": "ancestor=yes; stat touches all 14 claimed files; bun test 35 pass 0 fail (5-file targeted evening bundle); tsc 0 errors; mock-guard PASS; DDD grep clean; security grep clean; hangSeng guard byte-identical vs pre-split (queryGlobalSnapshotStep.ts vs assembleEveningSummary.ts@ad0ff8268^ line 679) confirming deliberate behavior-preservation, not new regression",
+            "observed_at": "2026-08-25T08:23:33Z"
+          }
+        },
+        "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify PASS. Refactor sound: bun test 35/35 (targeted evening-summary bundle), tsc 0 errors, mock-guard PASS (14 files), DDD/security clean, no domain/ touched. PRIMARY ADJUDICATION (dispatch brief): hangSeng omission in queryGlobalSnapshotStep.ts (checks vix/dxy/sp500!==0, never hang_seng) is CONFIRMED present and DELIBERATE — byte-identical to pre-split guard (diffed vs ad0ff8268^), disclosed in commit msg + in-file comment + dev-mcp-server journal as pre-existing, refactor-only-scope, left unfixed. NO board row tracks the underlying hangSeng defect (grepped orch-state.json/backlog-detail.json/archive/ — zero hits) -- surfaced separately via signal_queue row to po (type preserved_bug_no_tracking_row), not folded into this sign-off."
+      },
+      {
+        "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
+        "type": "FIX",
+        "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "devteam-eligibility:effective-nextagent-detail-first-no-recency",
+        "files": [
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "status_note": "CONFIRMED IN CODE. scripts/lib/devteam-eligibility.jq def effective_next_agent($detail_items) (~line 342) and its twin def effective_owner (~line 331) both resolve detail-FIRST: if the backlog-detail.json copy has a non-empty string they return it and never look at the board row. Neither compares the two updated_at stamps, even though BOTH planes carry one. Comment cites FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16) as the origin of detail-first. LIVE INSTANCE (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE): hot review[] row was rerouted qa->ops at 13:50Z; docs/data/orch/archive/backlog-detail.json still said qa, stamped 12:51:27Z (~1h older). The resolver returned the stale qa, QA-Drain re-claimed, a third qa pass re-derived the same HELD verdict, redispatch_count=1. As of 2026-08-23T15:0xZ both planes read next_agent=qa again (hot updated 14:53:08Z, cold 12:51:27Z) so this specific row has converged, but the resolver defect is structural and re-fires on every hot-row reroute. SCOPE NOTE: this is NOT FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (BACKLOG, developer) — that row is about the CLAIM script reading a cached dispatch_lane. The claim script is correct as written; the defect is in the resolver. AC-1: when both planes carry updated_at, the more recent wins; detail-first is retained ONLY as the tie-break/when-one-side-is-absent rule, preserving the 2026-07-16 intent. AC-2: fixture replay of the PEK divergence (hot=ops@13:50Z, cold=qa@12:51Z) resolves to ops BEFORE the fix and qa AFTER on the reversed fixture. AC-3: effective_owner gets the identical treatment in the same change — same defect shape, same file. AC-4: no regression in scripts/audits/bounded1-supervised-lane-report.sh output on the live board.\n[QA] Review Record (direct-commit verify): commit 6b94d0832 verified -- ancestor-confirmed, sole claimed file scripts/lib/devteam-eligibility.jq touched. AC-1/AC-2/AC-3 confirmed via direct jq-fixture execution against effective_next_agent/effective_owner (board-newer wins, detail-newer wins, tie->detail unchanged, board-only/detail-only/legacy-no-ts/unparseable-ts all fall back to detail-first unchanged) -- matches spec exactly, including the explicitly-requested tie case. AC-4: devteam-dispatch-gate-satisfiability.sh now shows 113 PASS/2 FAIL (not the row's claimed 114/1) -- A/B'd via pre-fix jq extracted from git show 6b94d0832~1 (no git stash) against the SAME frozen live board snapshot: both old and new code resolve zero review[] rows to next_agent==qa right now, proving the 2nd failure is the audit script's own <20 review[] padding-threshold coupling to live board content (the one masking row already drained to qa[] this tick), not a regression from this commit. bounded1-supervised-lane-report.sh exit 0. mock-guard PASS (no production-source surface for .jq). No TS/tsc surface touched. Not OOM-class.",
+        "updated_at": "2026-08-25T08:24:19Z",
+        "promoted_at": "2026-08-25T07:32:38Z",
+        "promoted_by": "po/triage-20260825T073238Z",
+        "updated_by": "developer",
+        "po_expedited_at": "2026-08-25T07:32:38Z",
+        "po_expedited_by": "po",
+        "po_escalation_20260825T0727Z": "P1 -> P0 AND promoted backlog[]->ready[] with a po_expedited_at incident stamp. TRIGGER: dev-team escalation 2026-08-25T04:46:23Z upgraded its own 04:21Z P1 filing after a full census showed the LANE-LEVEL consequence, not just two mis-resolved rows. Census: review_total=27, status_REVIEW=17, rows_with_hot_next_agent_qa=1, rows_with_cold_next_agent_qa=0, rows_with_effective_next_agent_qa=0, qa_drain_picked_this_tick=0, qa_wip=3, qa_cap=10, take_budget_available=7. QA-Drain resolved ZERO eligible rows while holding 7 free budget: the review lane is DAMMED, not merely lossy. MASKING ROW: FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED is the ONLY review[] row routed to qa on the hot board (hot next_agent=qa, cold next_agent=developer); effective_next_agent() prefers the cold backlog-detail.json value, resolves it to developer, and QA-Drain never sees it. ONE stale cold entry is sufficient to zero the entire lane. 12 further hot/cold divergent rows were enumerated in the same census. This row is the resolver fix and therefore the dam. po_expedited_at routes it through the Incident-Lane Consumer's own INCIDENT_CAP=2 budget (dev-team/flow/main.md, UNCONDITIONAL head-decoupled site) instead of the shared WIP<=2 slot, so it does not have to win the RLC starvation lottery. LIVE MEASUREMENT (po, this tick): zero rows in the whole board carried po_expedited_at before this write — the incident lane has been live and completely unused.",
+        "implementation_note": "[developer 2026-08-25T07:55:25Z] FIXED + committed 6b94d0832. scripts/lib/devteam-eligibility.jq: effective_owner()/effective_next_agent() now recency-compare via new parse_ts() (ISO8601->epoch, null-safe) instead of blind detail-first — when BOTH board and detail carry a non-empty value AND both carry a parseable updated_at, the STRICTLY more recent stamp's value wins; detail-first retained UNCHANGED as tie-break/one-side-absent fallback (AC-1). Verified with ad-hoc jq fixtures (not committed, scratchpad-only): PEK-shaped divergence (board newer) resolves to board's value, reversed fixture (detail newer) resolves to detail's value, and every pre-existing fallback shape (board-only, detail-only, no-updated_at legacy rows, tied stamps) is byte-identical to pre-fix behavior (AC-2). effective_owner() got the identical treatment in the same commit (AC-3). scripts/audits/devteam-dispatch-gate-satisfiability.sh: 114/116 PASS both BEFORE and AFTER this change (confirmed via git-stash A/B on the live board) — the one failing assertion (SLS gate at in_progress=1 saturated shape) is byte-identical pre/post-fix, a pre-existing live-board-shape condition unrelated to this resolver change, NOT a regression (AC-4). scripts/audits/bounded1-supervised-lane-report.sh: identical output before/after, exit 0 both. tsc/bun test not applicable — pure jq library, no TS surface touched.",
+        "claimed_at": "2026-08-25T08:17:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-25T08:23:52Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + ad-hoc jq fixture execution against effective_next_agent/effective_owner + devteam-dispatch-gate-satisfiability.sh + bounded1-supervised-lane-report.sh + mock-guard.sh",
+            "args": "commit=6b94d0832; files=scripts/lib/devteam-eligibility.jq",
+            "live_value_observed": "ancestor=yes; stat touches 1/1 claimed file; 8 direct jq fixtures (board-newer/detail-newer/tie/board-only/detail-only/legacy-no-ts/board-ts-unparseable/detail-ts-unparseable) all match spec on BOTH effective_next_agent and effective_owner; devteam-dispatch-gate-satisfiability.sh 113 pass/2 fail (both pre-existing board-content-coupled, confirmed via A/B replay of pre-fix vs post-fix jq on frozen live snapshot -- zero delta); bounded1-supervised-lane-report.sh exit 0; mock-guard.sh PASS",
+            "observed_at": "2026-08-25T08:23:52Z"
+          }
+        }
       }
     ],
     "head": {
@@ -22572,37 +22651,6 @@
         "redispatch_count": 3
       },
       {
-        "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
-        "type": "FIX",
-        "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "devteam-eligibility:effective-nextagent-detail-first-no-recency",
-        "files": [
-          "scripts/lib/devteam-eligibility.jq"
-        ],
-        "status_note": "CONFIRMED IN CODE. scripts/lib/devteam-eligibility.jq def effective_next_agent($detail_items) (~line 342) and its twin def effective_owner (~line 331) both resolve detail-FIRST: if the backlog-detail.json copy has a non-empty string they return it and never look at the board row. Neither compares the two updated_at stamps, even though BOTH planes carry one. Comment cites FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16) as the origin of detail-first. LIVE INSTANCE (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE): hot review[] row was rerouted qa->ops at 13:50Z; docs/data/orch/archive/backlog-detail.json still said qa, stamped 12:51:27Z (~1h older). The resolver returned the stale qa, QA-Drain re-claimed, a third qa pass re-derived the same HELD verdict, redispatch_count=1. As of 2026-08-23T15:0xZ both planes read next_agent=qa again (hot updated 14:53:08Z, cold 12:51:27Z) so this specific row has converged, but the resolver defect is structural and re-fires on every hot-row reroute. SCOPE NOTE: this is NOT FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (BACKLOG, developer) — that row is about the CLAIM script reading a cached dispatch_lane. The claim script is correct as written; the defect is in the resolver. AC-1: when both planes carry updated_at, the more recent wins; detail-first is retained ONLY as the tie-break/when-one-side-is-absent rule, preserving the 2026-07-16 intent. AC-2: fixture replay of the PEK divergence (hot=ops@13:50Z, cold=qa@12:51Z) resolves to ops BEFORE the fix and qa AFTER on the reversed fixture. AC-3: effective_owner gets the identical treatment in the same change — same defect shape, same file. AC-4: no regression in scripts/audits/bounded1-supervised-lane-report.sh output on the live board.",
-        "updated_at": "2026-08-25T08:17:32Z",
-        "promoted_at": "2026-08-25T07:32:38Z",
-        "promoted_by": "po/triage-20260825T073238Z",
-        "updated_by": "developer",
-        "po_expedited_at": "2026-08-25T07:32:38Z",
-        "po_expedited_by": "po",
-        "po_escalation_20260825T0727Z": "P1 -> P0 AND promoted backlog[]->ready[] with a po_expedited_at incident stamp. TRIGGER: dev-team escalation 2026-08-25T04:46:23Z upgraded its own 04:21Z P1 filing after a full census showed the LANE-LEVEL consequence, not just two mis-resolved rows. Census: review_total=27, status_REVIEW=17, rows_with_hot_next_agent_qa=1, rows_with_cold_next_agent_qa=0, rows_with_effective_next_agent_qa=0, qa_drain_picked_this_tick=0, qa_wip=3, qa_cap=10, take_budget_available=7. QA-Drain resolved ZERO eligible rows while holding 7 free budget: the review lane is DAMMED, not merely lossy. MASKING ROW: FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED is the ONLY review[] row routed to qa on the hot board (hot next_agent=qa, cold next_agent=developer); effective_next_agent() prefers the cold backlog-detail.json value, resolves it to developer, and QA-Drain never sees it. ONE stale cold entry is sufficient to zero the entire lane. 12 further hot/cold divergent rows were enumerated in the same census. This row is the resolver fix and therefore the dam. po_expedited_at routes it through the Incident-Lane Consumer's own INCIDENT_CAP=2 budget (dev-team/flow/main.md, UNCONDITIONAL head-decoupled site) instead of the shared WIP<=2 slot, so it does not have to win the RLC starvation lottery. LIVE MEASUREMENT (po, this tick): zero rows in the whole board carried po_expedited_at before this write — the incident lane has been live and completely unused.",
-        "implementation_note": "[developer 2026-08-25T07:55:25Z] FIXED + committed 6b94d0832. scripts/lib/devteam-eligibility.jq: effective_owner()/effective_next_agent() now recency-compare via new parse_ts() (ISO8601->epoch, null-safe) instead of blind detail-first — when BOTH board and detail carry a non-empty value AND both carry a parseable updated_at, the STRICTLY more recent stamp's value wins; detail-first retained UNCHANGED as tie-break/one-side-absent fallback (AC-1). Verified with ad-hoc jq fixtures (not committed, scratchpad-only): PEK-shaped divergence (board newer) resolves to board's value, reversed fixture (detail newer) resolves to detail's value, and every pre-existing fallback shape (board-only, detail-only, no-updated_at legacy rows, tied stamps) is byte-identical to pre-fix behavior (AC-2). effective_owner() got the identical treatment in the same commit (AC-3). scripts/audits/devteam-dispatch-gate-satisfiability.sh: 114/116 PASS both BEFORE and AFTER this change (confirmed via git-stash A/B on the live board) — the one failing assertion (SLS gate at in_progress=1 saturated shape) is byte-identical pre/post-fix, a pre-existing live-board-shape condition unrelated to this resolver change, NOT a regression (AC-4). scripts/audits/bounded1-supervised-lane-report.sh: identical output before/after, exit 0 both. tsc/bun test not applicable — pure jq library, no TS surface touched.",
-        "claimed_at": "2026-08-25T08:17:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
-      },
-      {
         "id": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
         "type": "FEATURE",
         "title": "Create resolve-task-lane-by-id.jq; implement FR-4 read-guard + FR-5 board-flip write in dev-team/flow/main.md Step 0a-B",
@@ -22639,26 +22687,6 @@
         "updated_by": "developer",
         "claimed_at": "2026-08-25T08:17:30Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
-      },
-      {
-        "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
-        "priority": "P1",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-APP-split-assembleEveningSummary",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary",
-        "promoted_at": "2026-08-25T06:54:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-25T08:17:32Z",
-        "claimed_at": "2026-08-25T08:17:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "dispatch_lane": "dev-mcp-server",
-        "updated_by": "dev-mcp-server",
-        "evidence": "commit ad0ff8268 (13 new usecases/eveningSummary/ step modules + thin sequencer, doc update); notebook + decision-journal S95 in commit a9ae069b1",
         "drain_source_lane": "review"
       }
     ],
