@@ -1,3 +1,16 @@
+## Audit Run Tier-DATA (c88)
+
+**Run:** 2026-08-25T12:09:51Z | Pre-gate exit: SPAWN (5 watched tables changed since last sweep)
+
+**Summary:** DATA tier sweep completed. 3 findings recorded to db-integrity-history.json (all BY-DESIGN or already tracked).
+
+**Key results:**
+- deep_fetch_stats: 0 rows (class a, production writer exists) — REAL but already owned by FIX-DEEPFETCH-PIPELINE
+- daily_ohlcv OHLC violations: 336 across 20 dates, all pre-2026-08-25 (no fresh 2d violations) — BY-DESIGN, owned by CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR
+- financial_reports low-confidence: 52 rows (extraction_confidence < 0.2) — BY-DESIGN, expected PDF OCR noise
+
+**History append:** history_len_before=200, history_len_after=200 (at cap), signals_written=[] (all BY-DESIGN/already-tracked)
+
 ## c2 · 2026-08-25T08:00Z
 ### Audit Run Tier-DATA (05:00–16:59 UTC 2026-08-25)
 - Tier: DATA | Tables checked: 17 | DB Data-Anomaly Sweep
@@ -50,21 +63,3 @@
 - `macro_indicators` (1 row, stale 17.5h) — already-open: FIX-MACRO-INDICATORS-EMPTY-COLUMNS
 
 **Exit:** 0 (RECORD OK, no new signals)
-
-## Tier-DATA DB Data-Anomaly Sweep
-
-**Scan timestamp:** 2026-08-25T04:00:23Z  
-**Deterministic counts:** ohlc_violations=336 (20 distinct dates), scale_anomalies=0, vnindex_cache=1, low_confidence_reports=52
-
-**Findings summary (6 total, all already-open):**
-1. **daily_ohlcv** (INCORRECT, MED): 336 OHLC constraint violations across 20 distinct dates. Residue from prior data extraction issues; stable count (no fresh violations in last 2 days). Tracked under LINT-OHLCV-WRITE-BYPASS. Signal: already-open:LINT-OHLCV-WRITE-BYPASS.
-2. **cron_job_runs** (FAIL, WARN): 212 error rows (205 crashed + 7 error, ~0.1% error rate on 217k total). Low rate suggests transient failures, requires monitoring for spikes. Signal: already-open:FIX-CRON-RUNS-NULL-ERRORMSG.
-3. **deep_fetch_queue** (STALE, WARN): 2,541 rows (2,477 expired, 34 vps-failed, 30 pending). Stale backlog; assess if being drained or stuck. Signal: already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
-4. **deep_fetch_stats** (FAIL, WARN): 0 rows despite production writer. Either writer not invoked or records aggressively rotated. Signal: already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD.
-5. **macro_indicators** (STALE, WARN): 1 row only; feed producing minimal output. Check source availability and last ingest. Signal: already-open:FIX-MACRO-INDICATORS-EMPTY-COLUMNS.
-6. **sbv_rates** (STALE, WARN): 1 row only; SBV feed stale. Check source availability (may be offline outside business hours). Signal: already-open:AUDIT-FC-SBV-RATES.
-
-**Dedup status:** All findings matched to existing open task rows; no new signals written.  
-**History entry:** Appended to `docs/data/db-integrity-history.json` (entry [200] of max 200, capped).
-
-See `docs/data/db-integrity-history.json` for full detail.
