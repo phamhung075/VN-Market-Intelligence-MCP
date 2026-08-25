@@ -1,0 +1,70 @@
+{
+  "id": "cowork-team-20260825T055324Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "microservice_degraded",
+  "priority": "P0",
+  "status": "NEW",
+  "ts": "2026-08-25T05:53:24Z",
+  "dedup_key": "docker-engine-selfshutdown-0547Z-service-fs-injecting-event-blocked-60s-whole-vm-down-user-action",
+  "subject": "ESCALATED: the whole Docker VM is down, not just mcp-server. Engine self-shutdown at 05:47:38Z after 'service fs failed: injecting event blocked for 60s'. NOT the 2026-07-15 hypervisor class. Needs host action.",
+  "related": [
+    "cowork-team-20260825T052633Z",
+    "cowork-team-20260825T053537Z"
+  ],
+  "payload": {
+    "ESCALATION": {
+      "what_changed": "At the 05:45Z tick the preflight error text changed from the session-init message to 'transport failure calling https://zenmidi.com/vn-market'. That was not noise — it was the SECOND URL dying too. docker ps now returns nothing: 'Docker Desktop is unable to start'. All 13 containers are down, not just mcp-server.",
+      "scope": "frontend, pdf-extractor, mcp-server, alert-engine, rag-service, news-fetch, api-gateway, stock-price, macro-indicators, mcp-gateway, flaresolverr, technical-analysis, kinh-dich-service.",
+      "why_URL2_also_failed": "mcp-gateway is itself a container. It went down with the VM. That is why the failover URL flipped from answering-with-an-error to not answering at all."
+    },
+    "ROOT_CAUSE_from_the_backend_log": {
+      "chain": [
+        "05:46:37Z — Docker API still HEALTHY. Container event streams serving normally.",
+        "05:46:38Z — filesystem-sharing service blocks on event injection.",
+        "05:47:38.710Z — engine linux/virtualization-framework shutdown requested; state running -> stopping. Exactly +60s.",
+        "05:47:50.550Z — stopping hypervisor process.",
+        "05:47:50.556Z — com.docker.virtualization: process terminated due to explicit cancel.",
+        "05:47:50.572Z — [E] engine linux/virtualization-framework run error: 'service fs failed: injecting event blocked for 60s'."
+      ],
+      "reading": "A 60-second watchdog on Docker's host<->VM file-sharing service fired and the engine shut ITSELF down. This was an orderly self-shutdown triggered by an fs-layer stall, not a crash.",
+      "current_state": "Docker Desktop is running a GUI process '--name=error-dialog' (PID 2974, up 4m46s) — an error dialog is on screen awaiting a human."
+    },
+    "THIS_IS_NOT_THE_2026_07_15_HYPERVISOR_CLASS_checked_explicitly": {
+      "why_it_matters": "feedback_docker_hypervisor_crash_cli_recovery_exhausted_user_only says CLI recovery is exhausted and user-only for THAT signature. Applying it here without checking would be cargo-culting a conclusion from a different failure.",
+      "discriminator_1_socket": "2026-07-15: docker.sock ABSENT. Now: /Users/admin/.docker/run/docker.sock EXISTS (srwxr-xr-x).",
+      "discriminator_2_hypervisor_error": "2026-07-15: hypervisor.error.json showed 'Internal Virtualization error, VM stopped unexpectedly'. Now: that file DOES NOT EXIST anywhere under the Docker Data dir.",
+      "discriminator_3_backend": "2026-07-15: backend respawned but socket never bootstrapped. Now: backend is alive and answering IPC; it is the ENGINE that stopped, by its own request.",
+      "conclusion": "Different class. The engine performed a clean self-shutdown after an fs watchdog. Do NOT declare CLI recovery exhausted on the strength of the July incident — that ladder was climbed against a different fault."
+    },
+    "THE_LINK_TO_THE_0516Z_HANG_IS_NOT_ESTABLISHED_stated_as_a_limit": {
+      "temptation": "mcp-server hung at 05:16:16Z with a write-visibility error, and the VM's fs service wedged later. It is very tempting to call these one fault.",
+      "why_I_am_NOT_claiming_that": "They are 30 minutes apart, and the Docker API was demonstrably HEALTHY in between — container event streams were serving normally right up to 05:46:37Z. A single fs-layer fault that had already blocked mcp-server at 05:16 should not have left the engine healthy for the next half hour.",
+      "what_is_fair_to_say": "Both are filesystem/IO-layer symptoms and a shared root cause is a live hypothesis worth testing. It is NOT established, and must not be written into a remedy.",
+      "correction_to_my_own_earlier_filing": "In cowork-team-20260825T052633Z I called the 05:16Z hang a 'DEADLOCK / blocked event loop' — which implied an mcp-server APPLICATION bug and an mcp-server owner. That attribution is now unsafe: an equally consistent explanation is that the container was blocked on host-side IO. The observations (CPU 0.13%, flat memory, silent-on-a-write) fit both. Do not assign that row to a dev-* zone on the strength of my earlier wording."
+    },
+    "CHEF_MORNING_FINAL_READBACK_prediction_held": {
+      "outcome": "PID 93455 has EXITED. It wrote NOTHING — docs/agent-memory/notebooks/unified-agent.md mtime is still 2026-08-25T02:26:11Z from a prior cycle, and no chef-morning synthesis file exists.",
+      "significance": "The two-tick prediction is confirmed end to end: with MCP down, chef could neither publish nor claim a marker, and it exited clean rather than narrating a dish it never produced. The documented fabrication and marker-leak failure modes did NOT fire.",
+      "what_this_retires": "The 'watch for a late notebook entry narrating a dish that was never produced' item from the 05:30Z filing is CLOSED, negative. No cleanup needed.",
+      "what_it_does_not_retire": "chef-morning is still a LOST daily deliverable for 2026-08-25. Nothing produced the morning dish."
+    },
+    "TICKS_LOST_SO_FAR": {
+      "count": 3,
+      "list": [
+        "2026-08-25T05:15Z (chef-morning + alert-commander-market)",
+        "2026-08-25T05:30Z (alert-commander-market)",
+        "2026-08-25T05:45Z (alert-commander-market)"
+      ],
+      "note": "All three ABORTED, not dispatched. No election lock was ever claimed on any of them; all self-expire on the 600s TTL. No lock residue to clean up.",
+      "forward_exposure": "Every 15-min tick will keep returning ERROR until the VM is back. Next guaranteed slot due is chef-eod at 08:45Z."
+    },
+    "RECOVERY_and_the_TRAP": {
+      "likely_sufficient": "Quit Docker Desktop fully and relaunch it (the error dialog on screen may itself offer Restart). This is a stopped engine, not a faulted hypervisor.",
+      "THE_TRAP_do_not_do_this": "Do NOT 'rebuild the VM from scratch' by removing ~/Library/Containers/com.docker.docker/Data/vms. On Docker Desktop/Mac, named volumes live INSIDE the VM disk image, so that step DESTROYS market_data and bctc-page-images. It happened on 2026-07-15 and required restoring a 361MB backup. Host bind-mounts (./docs/data, ./data/pdfs) survive; named volumes do not.",
+      "if_it_does_come_back": "Verify volume integrity BEFORE trusting green health — row counts and MAX(date) on market.db. Green health on an empty DB masks total data loss (feedback_vm_rebuild_destroys_named_volumes_restore_then_launch).",
+      "not_a_disk_problem": "Checked: host / has 28Gi free, Docker.raw is 20G actual (233G is only the sparse apparent size). Host swap is tight (5312/6144M used) — noted, not diagnosed as the cause."
+    },
+    "WHAT_I_DID_NOT_DO": "No Docker restart, no VM touch, no agent spawn. Router-only, and this is host-level infra with a documented destructive-recovery trap one step away. Surfacing for a host action decision."
+  }
+}
