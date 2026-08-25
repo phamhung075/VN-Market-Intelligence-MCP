@@ -8,7 +8,9 @@
     "nominal_tick": "03:00",
     "classification": "FIRE",
     "reason": "spawned",
-    "spawned": ["alert-commander-market"],
+    "spawned": [
+      "alert-commander-market"
+    ],
     "errors": [],
     "one_shots": [],
     "dev_head": "idle",
@@ -25,5 +27,11 @@
     "last_fired_prewrite": "2026-08-25T02:50:50Z",
     "cycle_snapshot_promoted": false,
     "note": "HOLD (6th occurrence): the single NEW row sys-20260825T030018-5b15 (system-auditor -> po, auditor_cycle_missing, tier1, WARN) was HELD at NEW, not marked READ. Premise re-verified live this tick: jq '[.slots[]|select(.agent==\"po\")]|length' on cowork-schedule.json = 0, so Step 0a's route-to-slot branch is structurally unreachable for a to=po row and the cowork drain has no pending_triage_inbox re-envelope step. A peer dev-team drain delivers these within ~15-30 min. FINDING (corrects the natural reading of that row): the row's own claim is 'auditor tier-1 cycle possibly missing - no completion evidence in 10h (cadence 0.5h)', but docs/data/auditor-tier1-last-trigger.json was written at 2026-08-25T03:00:23Z, FIVE SECONDS after the WARN was filed at 03:00:18Z, with verdict FAILURE whose sole failing check is launchd_agents: com.vn-market.fleet-push (not-loaded). Probed launchctl directly: fleet-push is absent from launchctl list while ~/Library/LaunchAgents/com.vn-market.fleet-push.plist exists as an untracked regular file (0600, mtime 2026-08-24 14:33) rather than a repo symlink like its siblings. DO NOT read this as an outage. Board scan by SUBJECT across ALL lanes found two covering rows already in ready[]: FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS (P0, dispatch_lane=architect, next_agent=architect, created 2026-08-24T13:16:43Z) and FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED (P1, dispatch_lane=null, next_agent=architect). The latter's status_note carries a HARD CONSTRAINT: 'The remedy is to SCORE Disabled=1 as EXPECTED-DISABLED. The remedy is NOT to load the job. NEVER re-arm com.vn-market.fleet-push - not the plist Disabled key, not launchctl enable/load/bootstrap.' So the tier-1 WARN is a KNOWN FALSE POSITIVE with an open P1 covering row, and acting on it as written would violate an explicit standing constraint. Recording this because the held row will reach PO's inbox with no such context attached. NOT resolved and NOT dispatched by me - cowork dispatcher never spawns dev-team agents. Second correction to a plausible-but-wrong inference: fleet-push being unloaded is NOT a second cause of the 176-commit unpushed backlog alongside the pre-push size-lint hook; it is intended state. The size-lint hook remains the sole confirmed blocker (bctcScalarAggregator.ts 1206L vs 1205L ceiling), independently reproduced at 02:52Z by the alert-commander spawn of the prior tick, which correctly refused --no-verify and reported via telegram channel=bug message_id 5625. SNAPSHOT PROMOTION DEFECT reproduction #8, server-confirmed cycle_snapshot_promoted=false: Step 4.7 named the file docs/data/cycle-snapshot-03:05.json from wall-clock date -u +%H:%M while emit_pressure_state looks up the nominal tick 03:00. cycle-snapshot-latest.json remains frozen at tick 00:00 / created_at 2026-08-23T00:07:50Z and now serves regime UNKNOWN while this tick's live snapshot reads NEUTRAL - last_regime below is the live-measured value, not the frozen one, stated as a deliberate deviation. last_volatility_level sent as 'unknown' truthfully: a paths(scalars) scan proves zero volatility keys exist anywhere in the snapshot. dev_head read from canonical top-level .head (idle), never the deprecated .task_board.head stub. MACRO GAP 5th observation: alert-commander's 02:45Z cycle again fell back to REGIME=NEUTRAL because macro_snapshot lacks a Global-Liquidity line; that fallback sets the 0.75 chain_catalyst threshold which suppressed both of that cycle's signals (scored 0.4 and 0.6), so the gap is shaping alert output, not merely logging."
+  },
+  "_processed": {
+    "fingerprint": "894cb0c2d81f29a83d2c51f7c334ab8902cf36ed63982bc7f50e6799248a2939",
+    "processedAt": "2026-08-25T03:16:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

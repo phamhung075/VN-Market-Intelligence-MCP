@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T02:47:03Z",
+    "_updated_at": "2026-08-25T03:15:34Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -456,7 +456,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 10h (cadence 0.5h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -22312,9 +22312,259 @@
         "last_served_tick": "2026-08-25T01:16:34Z"
       }
     },
-    "_updated_at": "2026-08-25T02:53:07Z",
+    "_updated_at": "2026-08-25T03:16:09Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "86c3ec141e399c675905e72cf0376d0e640971e86f067bfcaf7854b2b6456eba",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-1 cycle possibly missing — no completion evidence in 10h (cadence 0.5h)",
+        "createdAt": "2026-08-25T03:00:18Z",
+        "drained_at": "2026-08-25T03:15:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cd20048e8edf8f0f69c5450bf7e5811047b0f948346c0eaa2c0abf1917ed7ac7",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 9 staged file(s) not necessarily this actor's own: apps/mcp-server/src/application/usecases/pollNews/deepFetchEnqueue.ts apps/mcp-server/src/application/usecases/pollNews/ingestEntries.ts apps/mcp-server/src/application/usecases/pollNews/ragEmbed.ts docs/agent-memory/modules/tool-usage-stats.json docs/agent-memory/notebooks/unified-agent.md docs/data/auditor-output-contract-violations.json docs/data/db-integrity-probe-last-snapshot.json docs/data/orch/orch-state.json docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-25T02:26:26Z",
+        "drained_at": "2026-08-25T03:16:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c4d22e98161443dfe80703db297eac42f7e92b6a3c99e9f5ef1953cecb01989b",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md",
+          "line_count": 143,
+          "cap": 600,
+          "byte_count": 42529,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 6529,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T02:43:26Z",
+        "drained_at": "2026-08-25T03:16:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a09d5f434521e3ce7220a86f4790310a5057df80334ede8f2d0900dbab525ea0",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-25T02:22:53Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": 60,
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T02:21:39Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:15",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 111,
+          "signal_backlog": 34,
+          "note": "Step 0a drain was a genuine no-op: signal_queue NEW=0 (24 READ / 6 triaged). The 6 to=po CCATO rows HELD at NEW on the 02:00Z tick were delivered by a peer dev-team drain at 02:12:16Z (commit b63efd0ea) — 4th confirmation that holding, not marking READ, is the delivery mechanism; round-trip was ~6 min. Verified by source+drained_at cluster per the documented method, NEVER by row id. IMPORTANT NON-DEFECT: the drain commit says '6 chef CCATO rows' but the inbox cluster holds 4 entries. Traced rather than reported as loss — the re-envelope is keyed by CONTENT HASH and the 6 rows carry only 4 distinct returned_value payloads {not found in database, 62.1, 61, 60} (62.1 x2 and 61 x2 collapsed). No row was lost; the content-hash layer is silently repairing the CCATO emitter's missing dedup_key. dev_head is 'active' this tick, not idle: dev-team is mid Review-Lane QA-Drain on FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK (head updated 02:19:32Z). DEFECT 1 (5th consecutive, both halves observed in-tick): Step 4.7 named its snapshot cycle-snapshot-02:20.json from the WALL clock while emit_pressure_state looks up the NOMINAL tick 02:15 -> cycle_snapshot_promoted:false again. DEFECT 2 (NEW SEVERITY — the frozen latest now serves a WRONG value, not merely a stale one): cycle-snapshot-latest.json is still the 23 Aug 02:09 / 4468-byte file, and its .macro_snapshot.data.signals.carry.regime reads UNKNOWN, while this tick's live snapshot reads NEUTRAL. Any consumer honoring the documented source therefore gets UNKNOWN against a live NEUTRAL. Corroborated independently: alert-commander's 02:00Z cycle reported no REGIME field on get_macro_snapshot and fell back to NEUTRAL. Also reconfirmed 5th time: .market_context is type string in BOTH files, the documented key regime_status exists NOWHERE (only .macro_snapshot.data.signals.carry.regime does), and zero volatility keys exist in either document — so last_volatility_level was sent as 'unknown' rather than fabricated, and last_regime was sent as the live-measured NEUTRAL with this deviation from the documented cycle-snapshot-latest.json source stated here rather than hidden. PRE-WRITE last_fired values for a Step 5.3 de-stamp: chef-intraday=2026-08-24T08:20:55Z (an 18h gap that is CORRECT, not an outage — cron '13 2-8 * * 1-5' has no eligible tick between Mon 08:13 and Tue 02:13), alert-commander-market=2026-08-25T02:06:20Z."
+        },
+        "createdAt": "2026-08-25T02:22:53Z",
+        "drained_at": "2026-08-25T03:16:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "904141c24d87fc406ea7b1d91006e36c31e0f17543dadd039dbc1c9661abbbc5",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "P3",
+        "payload": {
+          "fire_time": "2026-08-25T02:37:15Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T02:36:24Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:30",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 111,
+          "signal_backlog": 35,
+          "new_signals": 12,
+          "note": "DRAIN HELD (5th occurrence, premise re-verified live this tick: jq on cowork-schedule.json shows po slots=0, so work-tick.md Step 0a route-to-slot branch is structurally unreachable and the cowork drain still has no pending_triage_inbox re-envelope step). All 12 NEW rows are to=po from=chef type=narrative_contradiction, held at NEW, NOT marked READ. || CCATO RE-EMISSION AMPLIFIER — NEW FINDING: the 12 rows are EXACTLY 2x the identical 6-row cohort {not-found-in-database, 62.1, 62.1, 61, 61, 60} that a peer already drained at 02:12:16Z (b63efd0ea). Source is chef commit dca608eb2 (02:13Z publish, most recent orch-state write). Distinct payload values across all 12 = only 4 {60, 61, 62.1, not-found-in-database}, and the pending_triage_inbox already holds exactly those 4 content-hash envelopes from the earlier drain. Therefore draining these 12 would produce ZERO new inbox entries: the content-hash re-envelope silently absorbs the whole re-emission. Net effect: signal_queue grows unboundedly while downstream delivery is flat, so the defect is INVISIBLE to any inbox-side observer. Same cycle=2026-08-24 and same forged ts 2026-08-24T00:00:00Z on all 12; still zero dedup_key. Extends project_ccato_bash_emitter_no_dedupkey_inverted_verdict_future_ts: the emitter does not merely omit dedup_key, it re-emits the full cohort per run. || SNAPSHOT PROMOTION DEFECT — 6th consecutive reproduction, now server-confirmed: emit_pressure_state returned cycle_snapshot_promoted:false. Step 4.7 wrote docs/data/cycle-snapshot-02:35.json (FILE_TICK=date -u wall clock) while the nominal tick is 02:30 — the lookup misses by construction. cycle-snapshot-latest.json remains frozen at 2026-08-23T00:07:50Z (4468 B, tick 00:00) and serves carry.regime=UNKNOWN while the live snapshot reads NEUTRAL, i.e. it now serves a WRONG value, not merely a stale one. || last_regime DEVIATION (unchanged from prior tick, stated openly): Step 6.0 spec says read regime_status from cycle-snapshot-latest.json. That key exists NOWHERE (re-proven this tick by a paths(scalars) scan: the only regime key is macro_snapshot.data.signals.carry.regime) and the file is frozen. Emitted the live-measured NEUTRAL rather than the frozen UNKNOWN. last_volatility_level=unknown is truthful: zero volatility keys exist in either file. || Fan-out gate computed live from SSOT: headroom 2682MB >= floor 1500, load1 4.56 < 24 (12 cores x factor 2) => not degraded, MAX_PARALLEL=4; only 1 slot matched so the cap never bound. Slot token claimed ttl=180 and released after the spawn attempt. Step 5.3 off-flow scan pending on agent return (BGFAN-1 deferred; pre-write last_fired for a de-stamp was 2026-08-25T02:21:39Z)."
+        },
+        "createdAt": "2026-08-25T02:37:15Z",
+        "drained_at": "2026-08-25T03:16:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "90d8652da16b0dee8c1548c798326b09aeda6da67f5ea252a4999d76153c7cad",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "P3",
+        "payload": {
+          "fire_time": "2026-08-25T02:51:22Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-25T02:50:50Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:45",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 111,
+          "signal_backlog": 36,
+          "new_signals": 0,
+          "note": "DRAIN NO-OP — signal_queue NEW=0 this tick; the 12 rows held at 02:30Z were drained by a peer at 02:47:03Z (39ee2cd76, 22 rows -> 8 envelopes + cold-evict 22). Census now READ:18 triaged:6. || CORRECTION — my 02:30Z tick note (commit 822e7f251) predicted the 12 chef CCATO rows would produce ZERO new pending_triage_inbox entries because their 4 distinct content hashes were already delivered at 02:12:16Z. THAT PREDICTION WAS WRONG and the measured behaviour is more actionable than what I predicted. Measured: the 02:47:03Z dashboard cluster holds 8 entries = 4 chef CCATO + 4 genuinely-new system-auditor rows (auditor_cycle_missing x1, db_integrity_breach x3: daily_ohlcv 0 distinct codes expected >=25, financial_reports 6 low-confidence expected <=5, bctc_vps_queue 1 stale pending >72h expected 0). The 4 chef envelope_ids (1031b7c8d14b.., 627c3b9bf92a.., 7f836c145da9.., cf1fe96f4b15..) are BYTE-IDENTICAL to the 4 already present from 02:12:16Z. || REVISED MECHANISM: the content-hash collapse is INTRA-BATCH ONLY, not global. Within one drain 12 rows collapse to 4 envelopes; across drains there is NO dedup, so the same envelope_id is now present TWICE in pending_triage_inbox. Verified by group_by on envelope_id: exactly 4 ids each with count=2. PO inbox now holds 8 chef CCATO entries representing 4 distinct findings. || WHY THIS MATTERS MORE THAN THE ABSORPTION I PREDICTED: envelope_id is the field a consumer would key on for idempotency, and it is duplicated. Any consumer deduping by envelope_id silently drops half the cluster; any consumer not deduping double-processes. The CCATO emitter re-emitting its full cohort per run (project_ccato_bash_emitter_no_dedupkey_inverted_verdict_future_ts) therefore DOES reach downstream, amplified 2x per re-emission rather than absorbed. Do not verify inbox delivery by counting entries and do not assume envelope_id is unique. || SNAPSHOT PROMOTION — 7th consecutive reproduction, server-confirmed again: emit_pressure_state returned cycle_snapshot_promoted:false. Step 4.7 wrote cycle-snapshot-02:50.json (FILE_TICK=date -u wall clock) against nominal tick 02:45. cycle-snapshot-latest.json still frozen at 2026-08-23T00:07:50Z serving carry.regime=UNKNOWN vs live NEUTRAL. || last_regime=NEUTRAL emitted from live measurement, deviation from the frozen spec source stated as in prior ticks; last_volatility_level=unknown truthful (zero volatility keys). || Fan-out gate: headroom 2484MB >= 1500 floor (down from 2682 last tick), load1 5.21 < 24 (12 cores x2) => not degraded, MAX_PARALLEL=4, 1 slot so cap never bound. Slot token ttl=180 claimed and released after the spawn attempt. Step 5.3 off-flow scan pending on return (BGFAN-1 deferred); pre-write last_fired for a de-stamp was 2026-08-25T02:36:24Z. || PUSH BLOCKER unchanged and worsening: bctcScalarAggregator.ts is 1206L vs ceiling 1205L (over by ONE line), stranding 166 commits off origin/main. Covering rows backlog[477] and backlog[545] both P1 with dispatch_lane:null => unpickable by DRS. Row 545 title still says 117 commits; actual 166."
+        },
+        "createdAt": "2026-08-25T02:51:22Z",
+        "drained_at": "2026-08-25T03:16:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "894cb0c2d81f29a83d2c51f7c334ab8902cf36ed63982bc7f50e6799248a2939",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "nominal_tick": "03:00",
+          "classification": "FIRE",
+          "reason": "spawned",
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "one_shots": [],
+          "dev_head": "idle",
+          "devq": 110,
+          "signal_backlog": 36,
+          "new_signals": 1,
+          "pressure_mode": "adaptive",
+          "fanout_gate": "NORMAL",
+          "max_parallel": 4,
+          "headroom_mb": 2775,
+          "load_1min": 1.82,
+          "cores": 12,
+          "last_fired_timestamp": "2026-08-25T03:06:20Z",
+          "last_fired_prewrite": "2026-08-25T02:50:50Z",
+          "cycle_snapshot_promoted": false,
+          "note": "HOLD (6th occurrence): the single NEW row sys-20260825T030018-5b15 (system-auditor -> po, auditor_cycle_missing, tier1, WARN) was HELD at NEW, not marked READ. Premise re-verified live this tick: jq '[.slots[]|select(.agent==\"po\")]|length' on cowork-schedule.json = 0, so Step 0a's route-to-slot branch is structurally unreachable for a to=po row and the cowork drain has no pending_triage_inbox re-envelope step. A peer dev-team drain delivers these within ~15-30 min. FINDING (corrects the natural reading of that row): the row's own claim is 'auditor tier-1 cycle possibly missing - no completion evidence in 10h (cadence 0.5h)', but docs/data/auditor-tier1-last-trigger.json was written at 2026-08-25T03:00:23Z, FIVE SECONDS after the WARN was filed at 03:00:18Z, with verdict FAILURE whose sole failing check is launchd_agents: com.vn-market.fleet-push (not-loaded). Probed launchctl directly: fleet-push is absent from launchctl list while ~/Library/LaunchAgents/com.vn-market.fleet-push.plist exists as an untracked regular file (0600, mtime 2026-08-24 14:33) rather than a repo symlink like its siblings. DO NOT read this as an outage. Board scan by SUBJECT across ALL lanes found two covering rows already in ready[]: FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS (P0, dispatch_lane=architect, next_agent=architect, created 2026-08-24T13:16:43Z) and FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED (P1, dispatch_lane=null, next_agent=architect). The latter's status_note carries a HARD CONSTRAINT: 'The remedy is to SCORE Disabled=1 as EXPECTED-DISABLED. The remedy is NOT to load the job. NEVER re-arm com.vn-market.fleet-push - not the plist Disabled key, not launchctl enable/load/bootstrap.' So the tier-1 WARN is a KNOWN FALSE POSITIVE with an open P1 covering row, and acting on it as written would violate an explicit standing constraint. Recording this because the held row will reach PO's inbox with no such context attached. NOT resolved and NOT dispatched by me - cowork dispatcher never spawns dev-team agents. Second correction to a plausible-but-wrong inference: fleet-push being unloaded is NOT a second cause of the 176-commit unpushed backlog alongside the pre-push size-lint hook; it is intended state. The size-lint hook remains the sole confirmed blocker (bctcScalarAggregator.ts 1206L vs 1205L ceiling), independently reproduced at 02:52Z by the alert-commander spawn of the prior tick, which correctly refused --no-verify and reported via telegram channel=bug message_id 5625. SNAPSHOT PROMOTION DEFECT reproduction #8, server-confirmed cycle_snapshot_promoted=false: Step 4.7 named the file docs/data/cycle-snapshot-03:05.json from wall-clock date -u +%H:%M while emit_pressure_state looks up the nominal tick 03:00. cycle-snapshot-latest.json remains frozen at tick 00:00 / created_at 2026-08-23T00:07:50Z and now serves regime UNKNOWN while this tick's live snapshot reads NEUTRAL - last_regime below is the live-measured value, not the frozen one, stated as a deliberate deviation. last_volatility_level sent as 'unknown' truthfully: a paths(scalars) scan proves zero volatility keys exist anywhere in the snapshot. dev_head read from canonical top-level .head (idle), never the deprecated .task_board.head stub. MACRO GAP 5th observation: alert-commander's 02:45Z cycle again fell back to REGIME=NEUTRAL because macro_snapshot lacks a Global-Liquidity line; that fallback sets the 0.75 chain_catalyst threshold which suppressed both of that cycle's signals (scored 0.4 and 0.6), so the gap is shaping alert output, not merely logging."
+        },
+        "createdAt": "2026-08-25T03:07:16Z",
+        "drained_at": "2026-08-25T03:16:09Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",
     "last_po_triage_note": "Step 0-SIG 2026-08-24T00:09Z — cleared 8 of 12 envelopes (6 distinct envelope_ids; 2 ids were delivered twice, which orch-apply accepted without complaint). FOUR ENVELOPES DELIBERATELY HELD, NOT CLEARED, second consecutive tick: recurring-bug x2 (bd05e417, ba1ec99c), sprint_registry_dangling_ids x1 (9fbfb401), system_issue x1 UNDERSCORE form (31b7f837). Pipeline-A's routing table in docs/agents/po/flow/triage-signals.md has no row for any of these three types, so clearing them would turn signal-type-coverage-guard green by deleting the guard's own input instead of by adding a routing row. Their fix rows are already open and named: FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and FIX-TRIAGESIGNALS-SYSTEMISSUE-UNDERSCORE-FORM-UNROUTED (both backlog, next_agent=agent-father). The holds are released only when those land.",
     "last_po_triage_consumed": 6,

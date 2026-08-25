@@ -4,11 +4,20 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-25T02:22:53Z",
-    "matched_slots": ["chef-intraday", "alert-commander-market"],
-    "won_slots": ["chef-intraday", "alert-commander-market"],
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md", "docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +27,19 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "chef-intraday": "cadence", "alert-commander-market": "cron" },
-    "cadence_minutes": { "chef-intraday": 60, "alert-commander-market": null },
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60,
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-25T02:21:39Z",
-    "last_fired_slots": ["chef-intraday", "alert-commander-market"],
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +51,11 @@
     "note": "Step 0a drain was a genuine no-op: signal_queue NEW=0 (24 READ / 6 triaged). The 6 to=po CCATO rows HELD at NEW on the 02:00Z tick were delivered by a peer dev-team drain at 02:12:16Z (commit b63efd0ea) — 4th confirmation that holding, not marking READ, is the delivery mechanism; round-trip was ~6 min. Verified by source+drained_at cluster per the documented method, NEVER by row id. IMPORTANT NON-DEFECT: the drain commit says '6 chef CCATO rows' but the inbox cluster holds 4 entries. Traced rather than reported as loss — the re-envelope is keyed by CONTENT HASH and the 6 rows carry only 4 distinct returned_value payloads {not found in database, 62.1, 61, 60} (62.1 x2 and 61 x2 collapsed). No row was lost; the content-hash layer is silently repairing the CCATO emitter's missing dedup_key. dev_head is 'active' this tick, not idle: dev-team is mid Review-Lane QA-Drain on FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY-NO-SESSION-LIVENESS-CHECK (head updated 02:19:32Z). DEFECT 1 (5th consecutive, both halves observed in-tick): Step 4.7 named its snapshot cycle-snapshot-02:20.json from the WALL clock while emit_pressure_state looks up the NOMINAL tick 02:15 -> cycle_snapshot_promoted:false again. DEFECT 2 (NEW SEVERITY — the frozen latest now serves a WRONG value, not merely a stale one): cycle-snapshot-latest.json is still the 23 Aug 02:09 / 4468-byte file, and its .macro_snapshot.data.signals.carry.regime reads UNKNOWN, while this tick's live snapshot reads NEUTRAL. Any consumer honoring the documented source therefore gets UNKNOWN against a live NEUTRAL. Corroborated independently: alert-commander's 02:00Z cycle reported no REGIME field on get_macro_snapshot and fell back to NEUTRAL. Also reconfirmed 5th time: .market_context is type string in BOTH files, the documented key regime_status exists NOWHERE (only .macro_snapshot.data.signals.carry.regime does), and zero volatility keys exist in either document — so last_volatility_level was sent as 'unknown' rather than fabricated, and last_regime was sent as the live-measured NEUTRAL with this deviation from the documented cycle-snapshot-latest.json source stated here rather than hidden. PRE-WRITE last_fired values for a Step 5.3 de-stamp: chef-intraday=2026-08-24T08:20:55Z (an 18h gap that is CORRECT, not an outage — cron '13 2-8 * * 1-5' has no eligible tick between Mon 08:13 and Tue 02:13), alert-commander-market=2026-08-25T02:06:20Z."
   },
   "priority": "low",
-  "createdAt": "2026-08-25T02:22:53Z"
+  "createdAt": "2026-08-25T02:22:53Z",
+  "_processed": {
+    "fingerprint": "a09d5f434521e3ce7220a86f4790310a5057df80334ede8f2d0900dbab525ea0",
+    "processedAt": "2026-08-25T03:16:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
