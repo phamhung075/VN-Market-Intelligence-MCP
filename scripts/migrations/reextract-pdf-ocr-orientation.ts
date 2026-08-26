@@ -51,6 +51,16 @@
  *   # Apply (DELETE + re-extract with the hardcoded --psm 1 pipeline):
  *   bun scripts/migrations/reextract-pdf-ocr-orientation.ts --filename VIC_2026_Q1.pdf --apply
  *
+ *   # --pages <comma-list> (CORPUS-SCOPE-79-FILES follow-up, 2026-08-25):
+ *   # targeted mode — DELETE + re-extract ONLY the named page_number(s)
+ *   # instead of every page in the file. Same DB row shape (INSERT OR
+ *   # REPLACE), same --apply/dry-run gate. Use this for known-garbled-page
+ *   # sweeps (see scripts/audits/detect-pdf-ocr-orientation-garble.ts) — a
+ *   # 312-page targeted sweep across 79 files is ~12x cheaper than the
+ *   # 3786-page whole-file sweep the default mode would otherwise run.
+ *   # When --pages is absent, behavior is UNCHANGED (whole-file, default).
+ *   bun scripts/migrations/reextract-pdf-ocr-orientation.ts --filename VIC_2026_Q2.pdf --pages 10,48,57 --apply
+ *
  *   # Against the live named-volume DB (docker exec — matches other
  *   # CANONICAL scripts in this zone):
  *   docker cp scripts/migrations/reextract-pdf-ocr-orientation.ts \
@@ -159,10 +169,28 @@ if (import.meta.main) {
   const filename = filenameIdx >= 0 ? args[filenameIdx + 1] : undefined;
   const dpiIdx = args.indexOf("--dpi");
   const dpi = dpiIdx >= 0 ? parseInt(args[dpiIdx + 1] ?? "200", 10) : DPI_DEFAULT;
+  const pagesIdx = args.indexOf("--pages");
+  const pagesArg = pagesIdx >= 0 ? args[pagesIdx + 1] : undefined;
 
   if (!filename) {
     log("ERROR: --filename <pdf_extracted_text.filename> is required (e.g. --filename VIC_2026_Q1.pdf)");
     process.exit(2);
+  }
+
+  // --pages <comma-list> parse + validate — targeted mode (CORPUS-SCOPE-79-FILES).
+  // Absent => undefined => whole-file default path below, unchanged.
+  let targetPages: number[] | undefined;
+  if (pagesArg !== undefined) {
+    const parsed = pagesArg
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .map((s) => parseInt(s, 10));
+    if (parsed.length === 0 || parsed.some((n) => !Number.isInteger(n) || n < 1)) {
+      log(`ERROR: --pages must be a comma-separated list of positive integers (got "${pagesArg}")`);
+      process.exit(2);
+    }
+    targetPages = [...new Set(parsed)].sort((a, b) => a - b);
   }
 
   const PROJECT_ROOT = resolve(import.meta.dir, "..", "..");
@@ -170,7 +198,7 @@ if (import.meta.main) {
   const PDF_DIR = Bun.env["PDF_DIR"] ?? resolve(PROJECT_ROOT, "data", "pdfs");
   const pdfPath = resolve(PDF_DIR, filename);
 
-  log(`mode=${isApply ? "APPLY" : "DRY-RUN"}`);
+  log(`mode=${isApply ? "APPLY" : "DRY-RUN"}${targetPages ? ` (targeted, --pages ${targetPages.join(",")})` : " (whole-file)"}`);
   log(`DB_PATH=${DB_PATH}`);
   log(`pdfPath=${pdfPath}`);
 
@@ -198,6 +226,17 @@ if (import.meta.main) {
   for (const s of sample) {
     log(`  page ${s.page_number}: ${s.len} chars, confidence=${s.confidence}, sample="${s.sample.replace(/\n/g, "\\n")}"`);
   }
+  if (targetPages) {
+    const targetSample = db
+      .query<{ page_number: number; len: number; sample: string }, (string | number)[]>(
+        `SELECT page_number, LENGTH(text_content) len, SUBSTR(text_content,1,80) sample FROM pdf_extracted_text WHERE filename = ? AND page_number IN (${targetPages.map(() => "?").join(",")}) ORDER BY page_number`,
+      )
+      .all(filename, ...targetPages);
+    log(`BEFORE (targeted pages only, ${targetPages.length} requested): ${targetSample.length} currently-stored row(s) match`);
+    for (const s of targetSample) {
+      log(`  page ${s.page_number}: ${s.len} chars, sample="${s.sample.replace(/\n/g, "\\n")}"`);
+    }
+  }
 
   if (!isApply) {
     log("DRY-RUN — no writes. Re-run with --apply to DELETE + re-extract with the --psm 1 (orientation-fixed) pipeline.");
@@ -210,28 +249,59 @@ if (import.meta.main) {
   }
 
   const totalPages = await getPageCount(pdfPath) || 30;
-  const maxPages = Math.min(totalPages, 80); // mirrors OCR_MAX_PAGES cap in pdfOcrWorker.ts
-  log(`re-extracting ${maxPages} page(s) (of ${totalPages} total) with --psm 1 at DPI ${dpi}...`);
-
-  db.run("DELETE FROM pdf_extracted_text WHERE filename = ?", [filename]);
-  log(`deleted ${beforeCount} pre-existing row(s) for filename=${filename}`);
-
   const insert = db.prepare(
     "INSERT OR REPLACE INTO pdf_extracted_text (filename, page_number, text_content, confidence) VALUES (?, ?, ?, ?)",
   );
 
   let extracted = 0;
   let skipped = 0;
-  for (let page = 1; page <= maxPages; page++) {
-    const text = await ocrOnePageFixed(pdfPath, page, dpi);
-    if (text.length < LOW_CHAR_SKIP_THRESHOLD) {
-      skipped++;
-      continue;
+
+  if (targetPages) {
+    // ── Targeted mode: DELETE + re-extract ONLY the named page_number(s). ──
+    const outOfRange = targetPages.filter((p) => totalPages > 0 && p > totalPages);
+    if (outOfRange.length > 0) {
+      log(`WARNING: page(s) [${outOfRange.join(",")}] exceed pdfinfo-reported totalPages=${totalPages} — attempting anyway`);
     }
-    const confidence = text.length > 50 ? 0.8 : 0.5;
-    insert.run(filename, page, text, confidence);
-    extracted++;
-    if (page % 10 === 0) log(`progress: page ${page}/${maxPages}`);
+    log(`re-extracting ${targetPages.length} targeted page(s) of ${filename} (of ${totalPages} total in file) with --psm 1 at DPI ${dpi}...`);
+
+    const placeholders = targetPages.map(() => "?").join(",");
+    const deleteResult = db.run(
+      `DELETE FROM pdf_extracted_text WHERE filename = ? AND page_number IN (${placeholders})`,
+      [filename, ...targetPages],
+    );
+    log(`deleted ${deleteResult.changes} pre-existing row(s) for the ${targetPages.length} targeted page(s)`);
+
+    for (const page of targetPages) {
+      const text = await ocrOnePageFixed(pdfPath, page, dpi);
+      if (text.length < LOW_CHAR_SKIP_THRESHOLD) {
+        skipped++;
+        log(`  page ${page}: SKIPPED (< ${LOW_CHAR_SKIP_THRESHOLD} chars after OCR)`);
+        continue;
+      }
+      const confidence = text.length > 50 ? 0.8 : 0.5;
+      insert.run(filename, page, text, confidence);
+      extracted++;
+      log(`  page ${page}: re-extracted, ${text.length} chars`);
+    }
+  } else {
+    // ── Whole-file mode (default, unchanged behavior). ──
+    const maxPages = Math.min(totalPages, 80); // mirrors OCR_MAX_PAGES cap in pdfOcrWorker.ts
+    log(`re-extracting ${maxPages} page(s) (of ${totalPages} total) with --psm 1 at DPI ${dpi}...`);
+
+    db.run("DELETE FROM pdf_extracted_text WHERE filename = ?", [filename]);
+    log(`deleted ${beforeCount} pre-existing row(s) for filename=${filename}`);
+
+    for (let page = 1; page <= maxPages; page++) {
+      const text = await ocrOnePageFixed(pdfPath, page, dpi);
+      if (text.length < LOW_CHAR_SKIP_THRESHOLD) {
+        skipped++;
+        continue;
+      }
+      const confidence = text.length > 50 ? 0.8 : 0.5;
+      insert.run(filename, page, text, confidence);
+      extracted++;
+      if (page % 10 === 0) log(`progress: page ${page}/${maxPages}`);
+    }
   }
 
   const afterCount = (
