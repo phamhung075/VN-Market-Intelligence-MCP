@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "dev-kinh-dich returned FACTORY-KINHDICH-extract-hexagram-data to review[]/next=qa but left .head pinned to it; router reset. Head-idle chain (BOUNDED-1 -> SLS -> RLC -> DRS -> QA-Drain) was unreachable until this write.",
-    "updated_at": "2026-08-26T04:30:27Z",
-    "updated_by": "router"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-STOCK-extract-vndirect-mapper",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-STOCK-extract-vndirect-mapper — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-26T05:15:50Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5609,15 +5609,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-FRONTEND-reconcile-formatters",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-reconcile-formatters"
-      },
-      {
-        "title": "Extract a pure VnDirect quote-mapper primitive; collapse Tier1/Tier2 duplication",
-        "priority": "P1",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-STOCK-extract-vndirect-mapper",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-extract-vndirect-mapper"
       },
       {
         "title": "Wire one consumer per shared package (or prune) + collapse divergent DTOs",
@@ -24342,7 +24333,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T04:10:36Z",
+    "last_triaged_at": "2026-08-26T05:15:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
@@ -24397,6 +24388,21 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128."
+      },
+      {
+        "title": "Extract a pure VnDirect quote-mapper primitive; collapse Tier1/Tier2 duplication",
+        "priority": "P1",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-STOCK-extract-vndirect-mapper",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-extract-vndirect-mapper",
+        "promoted_at": "2026-08-26T05:15:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-26T05:15:50Z",
+        "claimed_at": "2026-08-26T05:15:50Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
