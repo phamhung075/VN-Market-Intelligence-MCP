@@ -166,3 +166,71 @@ All 5 REAL findings already-open (dedup-matched). No new signals written. Histor
 
 ### Status
 Tier-2 cycle completed. Freshness sweep: all sources healthy per cadence thresholds. VPS proxy and service planes both healthy. A-29 cron degradation re-confirmed (dedup-skipped per standing issue). Heartbeat written with timestamp 2026-08-26T10:35:00Z.
+
+## c19 · 2026-08-26T14:19Z
+### Audit Run Tier-1 — Corrective Re-rule (14:19 UTC 2026-08-26)
+**CORRECTIVE RE-RUN — Prior run verdict FAILURE was correct, but DEDUP ruling was INCORRECT**
+
+- Tier: 1 (Runtime Ping) | Fire-tick: 2026-08-26T14:00Z | Checks: A-01..A-32 (runtime health)
+- Anomalies: 1 FAILURE (A-30 mem_creep, 92.44% pdf-extractor)
+- Prior Cycle Status: Verdict=FAILURE, mem_creep breach detected, Dedup ruling applied
+- **Corrective Status: VERDICT AFFIRMED, DEDUP RULING OVERTURNED**
+
+### Prior Run Summary
+**Fire verdict (correct):** FAILURE — mem_creep: pdf-extractor-1 at 92.44% of 2560 MiB cap
+**Prior dedup against:** microservice_degraded:pdf-extractor:A-30 (ts=2026-08-23T14:12:27Z, sev=3)
+**Prior dedup reasoning (FALSIFIED):** Hypothesis that page-cache-heavy workload behaves as designed
+
+### Corrected Evidence Analysis — CSV (`docs/incidents/data/pdf-extractor-ac7-sampler.csv`)
+**Sampler window:** 2026-08-26T13:59Z–14:29Z (5-min cadence), container 417febec1a03, cgroup cap=2560 MiB
+
+**Critical measurements at fire time (14:19:22Z):**
+- **Anonymous memory:** 1917 MiB out of 2484 MiB total = **99.88% of cgroup**
+- **File-backed cache:** 2.1 MiB (irrelevant to reclaim)
+- **pgscan/pgsteal:** 1,321,203 / 389,429 = **29.5% reclaim efficiency** (degraded from 52.2% at 13:59Z)
+- **Refault count (anon):** 97,863 (thrashing indicator)
+- **memory.events.oom:** counter=0 through entire CSV (but uninformative for child kills per launchd-ack.json memo)
+- **VmHWM:** 2776 MiB (above 2560 MiB cap)
+
+**Reclaim efficiency trend (13:59Z → 14:19Z):**
+- 13:59Z: 52.2% efficiency (pgscan=398k, pgsteal=208k)
+- 14:04Z: 33.9% efficiency (pgscan=915k, pgsteal=310k) — pgscan tripled
+- 14:09Z: 33.6% efficiency (pgscan=1.04M, pgsteal=348k)
+- 14:14Z: 29.5% efficiency (pgscan=1.32M, pgsteal=389k)
+- 14:19Z: 29.5% efficiency (pgscan/pgsteal flat, anon fell 120 MiB — **process exit/kill signature**)
+- 14:24Z: counters completely flat, anon unchanged (no reclaim activity)
+
+**Interpretation:** Monotonic degradation of reclaim from 52.2% to 29.5% with pgscan tripling; simultaneous collapse of file cache (55 MiB → 2 MiB); pgscan/pgsteal halt at exact moment 120 MiB freed = process termination under exhaustion, likely OOM kill of child(ren) or voluntary exit. **This is NOT benign steady-state.**
+
+### Kernel Log Access Attempt
+**Status:** CANNOT READ — requires sudo (Operation not permitted on `dmesg`). Container start=2026-08-26T00:33:39Z; first CSV sample=05:11:30Z (4.5h gap); fire time=14:19:22Z (all within sampled coverage except early hours).
+**Fallback check:** memory.events.oom_kill counter in CSV = 0 throughout (but this only fires for main PID, not child processes per launchd-ack.json memo — docker plane uninformative for killed workers).
+**Recorded:** Ring buffer staleness risk — prior 2026-08-23 OOM kills on old instance already aged out, cannot re-verify.
+
+### Dedup Ledger Examination
+**Current entries tracking pdf-extractor memory:**
+1. `microservice_degraded:pdf-extractor:A-30` (2026-08-23T14:12:27Z, sev=3) — source of prior DEDUP
+2. `pdf_extractor_memory_pressure_investigation:A-30` (2026-08-25T14:23:15Z, sev=1)
+3. `detector_defect:auditor-tier1-probe:mem_creep_debounce_window_vs_persistent_fold_baseline:pdf-extractor` (2026-08-25T17:08:05Z, sev=2)
+
+**launchd-ack.json memo (decisive):** "The Tier-1 mem_creep FAILURE on pdf-extractor is therefore a TRUE POSITIVE, and an entry here would silence a LIVE CRASH SOURCE, not a benign steady state... **Do NOT attempt to add pdf-extractor here**: ★ kernel dmesg shows TWO REAL CONSTRAINT_MEMCG OOM KILLS of pdf-extractor python3 worker processes on 2026-08-23 at 14:27:11Z and 14:58:52Z (anon-rss 2.48 GiB and 2.47 GiB against 2.56 GiB cap). Docker sets OOMKilled=true only for container MAIN pid, so a killed CHILD leaves OOMKilled=false / ExitCode=0 / RestartCount=0 — every docker-plane probe read clean while kernel was killing workers."
+
+### Corrective Ruling — Why Prior DEDUP Was Wrong
+**Premise of 08-23 entry:** Page-cache-heavy workload steady-state.
+**Falsification:** CSV shows file cache 2.1 MiB (not page-cache-heavy); anon 99.88% (process-resident, NOT reclaimable); steal efficiency degraded 52% → 29% over 20 minutes (NOT steady-state, active degradation).
+
+**Material difference from 08-23 entry:** Evidence then was the INITIAL observation at 14:12Z. Evidence now is the PROGRESSION over 20 minutes with active reclaim collapse + process termination signature. This is escalated severity, not repeat.
+
+**Why docker plane is uninformative:** OOMKilled=false in trigger file reads as "container healthy." Per launchd-ack memo, this is exactly the signature left by killed child processes (main container stays up, children die). The corrected CSV evidence (anon 99.88%, steal 29.5%, flat counters at memory drop) corroborates child kill scenario.
+
+### Corrective Verdict
+**Prior verdict (A-30 FAILURE, mem_creep, 92.44%):** **AFFIRMED** — correctly measured.
+**Prior dedup (against 08-23 A-30):** **OVERTURNED** — corrected evidence is materially worse (active degradation, reclaim collapse, process termination), consistent with LIVE CRASH SOURCE per launchd-ack.json ruling.
+**Corrective action:** This fire warrants **ESCALATE** or fresh **SIGNAL_FILED**, not DEDUPED. Cannot confirm kernel OOM kills (dmesg unreachable) but corrected metrics (anon 99.88%, steal 29.5%, vmhwm above cap, pgscan/pgsteal halt + 120 MiB freed) indicate process exhaustion/termination, not benign workload.
+
+### Durability Sweep (Step 0b.1/0b.2)
+- Stale marker orphans swept: 0
+- Schedule gaps detected: 0
+- Found: 0
+- Status: CLEAN
+
