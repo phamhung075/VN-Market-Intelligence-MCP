@@ -31497,6 +31497,52 @@
         ],
         "ask": "Attach this reproduction to the FR4/FR5 child and decide whether it changes that child priority. Router did NOT promote it — position noted only: ready[21] of 109, P1, dispatch_lane null, 8 P0s ahead in band. Evidence could not be written onto the row inline: it is 11947B against ORCH_ROW_PROSE_CEILING_BYTES=12000, and the bulk is five bespoke po_triage_*/po_corroboration_* keys (10.5KB) that are PO-owned, so dev-team did not restructure them."
       }
+    },
+    {
+      "id": "verdictgate-20260825T071500Z",
+      "ts": "2026-08-25T07:15:00Z",
+      "from": "router",
+      "to": "dev-team",
+      "type": "system-issue",
+      "summary": "DATA-tier verdict label is an unbound free-judgment escape hatch around the mandatory dedup+signal\nactuator -- and it has already left 336 arithmetically-impossible OHLC rows with no owner in any\nlane. Found by router raw-verification of the 2026-08-25T07:00:48Z sweep, not by any detector.\n\nSTRUCTURAL DEFECT (primary). scripts/db-integrity-history-append.sh is the sole actuator for the\n.signal_queue write, and it is gated on the verdict STRING. Verbatim from its own source:\n  line 30: \"A finding whose verdict is NOT \\\"REAL\\\" (BY-DESIGN/CLEAN/WARN/etc.) is passed through\n            untouched -- no [signal write]\"\n  line 74: if [ \"$verdict\" = \"REAL\" ] && [ -n \"$table\" ] && [ \"$table\" != \"null\" ]; then\nFIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED correctly hardened the REAL path from prose into\na deterministic script actuator, precisely because prose-only enforcement had let the SAME residue\nbe re-signalled 3x. But the verdict LABEL ITSELF was left as free LLM judgment with no binding to\nthe evidence. So anything an agent labels BY-DESIGN / NOISE / CLEAN is invisible to dedup-check,\ninvisible to the signal write, and invisible to every enforcement path in the cron -- while still\nbeing recorded in the durable history trail as an inspected, dispositioned finding. The hardening\nis bypassable by a one-word choice, and the bypass leaves no trace that a bypass occurred.\n\nCONCRETE INSTANCE (how it surfaced). The 07:00:48Z sweep labelled the 336-row daily_ohlcv OHLC\nviolation residue verdict=\"BY-DESIGN\", signal_id=null. That skipped the actuator. Router then\nscanned for an owner and found NONE.\n  Counts, verbatim from scripts/db-integrity-counts.sh (scan_ts 2026-08-25T06:58:59Z):\n    ohlc_violations_count=336, ohlc_violation_distinct_dates=20, fresh_ohlc_violations_last_2d=0,\n    daily_ohlcv_total=789928, daily_ohlcv_newest_date=2026-08-25\n  Owner scan: ZERO matching rows across ALL task_board lanes INCLUDING archive/done_verified AND\n  the 21 nested closed_sprints[].tasks[] (regex ohlc.?violation|high.?low.?violat|H>=O|L<=O over\n  each row's full tostring). The only two signal_queue keyword hits are both INAPT on inspection\n  and must not be counted as coverage: sys-20260825T024042-6445 is a DIFFERENT daily_ohlcv anomaly\n  (\"0 distinct codes (expected >=25)\", 02:40Z, CRITICAL, to=po), and mdjg-20260825T055425 is the\n  router's own journal-guard row which merely mentions daily_ohlcv in passing.\n  Count behaviour, read DETERMINISTICALLY from history .counts[] (the cron assigns this comparison\n  to router/dev-team, not to the auditor): flat 336 at 03:29:55Z, 04:00:23Z, 04:30:50Z, 05:03:23Z,\n  05:41:12Z, 07:00:48Z. No delta. Stated as the recorded numbers, no trend asserted.\n\nWHY \"BY-DESIGN\" IS THE WRONG LABEL HERE: an OHLC bar violating H>=max(O,C) or L<=min(O,C) is\narithmetically impossible for real market data -- it is bad ingest, not an intentional state. The\nDEFENSIBLE part of the disposition is URGENCY, not designedness: fresh_ohlc_violations_last_2d=0\nmeans nothing new is being produced, so this is dormant historical residue needing a data cleanup,\nnot a live bleed. Correct shape was verdict=\"REAL\" + severity WARN/MED, letting the actuator run\nand either attach it to an existing row or mint one. NOT ATTRIBUTING BAD FAITH to the sweep -- it\nmade a judgment the system explicitly permits; the finding is that the system permits it silently.\n\nSCOPE DISCIPLINE OBSERVED: no date-narrowing claim is made here. distinct_dates=20 (>1), so per\nFIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED AC-4 any \"concentrated on a single date\" claim\nwould be FALSE and is deliberately not asserted.\n\nDEDUP: NOT COVERED for the verdict-label defect. Keyword scan over-matched badly (40 rows contain\n\"BY-DESIGN\" in prose -- the documented generic-token over-match), so candidates were judged by\ninspection, not by hit count. Closest is FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-\nNEVER-FIRES (backlog, P1, cross-service/): SAME FAMILY -- a hand-authored label with no binding to\nthe measured value defeating an enforcement path -- but it is the SEVERITY field defeating the\ndedup layer's escalation bypass. This is the VERDICT field defeating the dedup+signal actuator\noutright. Different field, different mechanism, different blast radius. PRIOR ART, DO NOT FOLD.\nFor the 336-row residue itself: genuinely untracked, no row to fold into.\n\nSUGGESTED SHAPE, not prescribed: bind the verdict to evidence rather than trusting the string --\ne.g. require a non-REAL verdict on a table with a non-zero anomaly count to carry a justification\nfield, or route non-REAL findings through a cheaper \"dispositioned, no signal\" ledger so a\nBY-DESIGN call is at least auditable after the fact. Implementer's call.\n",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "scripts/db-integrity-history-append.sh",
+      "payload": {
+        "dedup_key": "datatier:verdict-label-unbound-bypasses-dedup-signal-actuator",
+        "structural_defect": "actuator gated on free-text verdict string; BY-DESIGN/NOISE/CLEAN silently skip dedup-check AND signal write, leaving no trace of the bypass",
+        "source_evidence": [
+          "scripts/db-integrity-history-append.sh:30",
+          "scripts/db-integrity-history-append.sh:74"
+        ],
+        "instance_table": "daily_ohlcv",
+        "instance_counts_verbatim": {
+          "ohlc_violations_count": 336,
+          "ohlc_violation_distinct_dates": 20,
+          "fresh_ohlc_violations_last_2d": 0,
+          "daily_ohlcv_total": 789928,
+          "daily_ohlcv_newest_date": "2026-08-25",
+          "counts_scan_ts": "2026-08-25T06:58:59Z"
+        },
+        "owner_scan_result": "ZERO rows across ALL lanes incl. archive/done_verified and 21 nested closed_sprints[].tasks[]",
+        "inapt_keyword_hits_rejected": [
+          "sys-20260825T024042-6445 (different daily_ohlcv anomaly: 0 distinct codes)",
+          "mdjg-20260825T055425 (router journal-guard row, incidental table mention)"
+        ],
+        "recorded_counts_flat_at": [
+          "2026-08-25T03:29:55Z",
+          "2026-08-25T04:00:23Z",
+          "2026-08-25T04:30:50Z",
+          "2026-08-25T05:03:23Z",
+          "2026-08-25T05:41:12Z",
+          "2026-08-25T07:00:48Z"
+        ],
+        "related_row": "FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES",
+        "related_aptness": "PARTIAL / PRIOR ART — same family (hand-authored label unbound to evidence defeats an enforcement path) but that row is the SEVERITY field defeating the escalation bypass; this is the VERDICT field defeating the dedup+signal actuator outright. Do not fold.",
+        "dedup_method_note": "keyword scan over-matched (40 rows contain BY-DESIGN in prose); candidates judged by inspection, not hit count",
+        "discovered_by": "router raw-verification of the 07:00:48Z DATA sweep — no detector caught it",
+        "urgency_note": "data half is dormant (fresh_last_2d=0), structural half is not"
+      }
     }
   ],
   "backlog_detail": [],

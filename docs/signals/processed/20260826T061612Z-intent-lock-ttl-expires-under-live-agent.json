@@ -23,5 +23,11 @@
       "release-on-return only and treat an expired-at-release (released:0) as a loud signal rather than a silent no-op"
     ],
     "negative_control": "a fix must NOT make a genuinely dead sessions lock un-reclaimable; orphan reclamation via the presence/force-release ladder must still work."
+  },
+  "_processed": {
+    "fingerprint": "4428bf453b8deeaf476330533314202841386cbc4b9b6d33918a4fd266f8f027",
+    "processedAt": "2026-08-26T07:14:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
