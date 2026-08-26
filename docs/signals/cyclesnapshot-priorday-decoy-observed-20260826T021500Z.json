@@ -1,0 +1,27 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "flow-defect",
+  "priority": "medium",
+  "createdAt": "2026-08-26T02:15:00Z",
+  "payload": {
+    "action_requested": "FOLD evidence onto the EXISTING backlog row FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (dedup_key cycle_snapshot:wallclock_name_vs_nominal_lookup, occurrence_count 3 -> 4). DO NOT MINT A NEW ROW. Nothing here changes the fix shape already settled in po_fold_20260825.",
+    "why_this_is_worth_a_fold": "AC-4 and po_premise_amendment item (4) both describe the prior-day same-name collision in the CONDITIONAL: 'a same-name collision waiting for today's tick at the same minute' / 'the promoter WOULD find a same-HH:MM file from a PRIOR DAY'. It stopped being conditional at 02:05Z 2026-08-26. The collision fired, against a real consumer, on live market data. That upgrades AC-4 from hardening to a required leg of the fix.",
+    "observation": {
+      "tick": "2026-08-26T02:00Z cowork fan-out, slot alert-commander-market, cycle c260",
+      "producer_wrote": "docs/data/cycle-snapshot-02:04.json, content created_at 2026-08-26T02:04:23Z",
+      "consumer_looked_up": "docs/data/cycle-snapshot-02:05.json (its own wall-clock minute, exact-match rule)",
+      "what_the_lookup_HIT": "a PRIOR-DAY file, content created_at 2026-08-25T02:05:26Z — exactly 24h+0m old, still inside the 1440-min prune window",
+      "what_was_ignored": "cycle-snapshot-02:04.json, ~1 minute old and valid, present in the same directory at lookup time",
+      "outcome": "alert-commander checked the date INSIDE the file, rejected it as wrong-day, and fell through to direct get_cycle_bootstrap + get_macro_snapshot. Correct data served. The consumer's own date check was the ONLY thing between this and 24h-old macro data being consumed as current."
+    },
+    "two_defects_visible_in_one_event": {
+      "1_stale_hit_not_a_miss": "Every prior fold recorded this defect as a MISS (promoter finds nothing, promoted:false, falls through, costs an extra fetch). This event is a HIT on the wrong file. A miss degrades gracefully; a stale hit does not. Any AC-3 return-shape work must be able to express 'found a file, it was from another day' as distinct from both {promoted:false,stale:false} and {promoted:false,stale:true}.",
+      "2_prune_window_equals_collision_period": "scripts/tick-snapshot.md:58 prunes at -mmin +1440. The filename namespace repeats every 1440 min. Those being EQUAL means every HH:MM name has a same-named prior-day twin alive for the last minutes before prune. Verified now: 37 snapshot files on disk, oldest 2026-08-25T02:05Z, i.e. the prune is working exactly as written — the residue is structural, not a prune bug. Pruning BY DATE rather than by age (already AC-4's wording) removes the twin entirely; widening the age threshold does not."
+    },
+    "corroborates_not_contradicts": "po_fold_20260825's decisive finding — 'the reader enumerated the dir, SAW a valid ~1-2min-old cycle-snapshot-12:05.json, and discarded it on a self-invented exact-match rule that grep finds in NEITHER copy'. Same shape, 14h later, different agent, different slot. The self-invented exact-match rule is reproducible across consumers, so it is not one agent's prose slip.",
+    "collateral_still_true": "docs/data/cycle-snapshot-latest.json still carries tick '00:00', created_at 2026-08-23T00:07:50Z — now ~74h stale (was 44h at the 2026-08-24T20:30Z amendment). cycle_snapshot_promoted false again this tick: 35 consecutive by the dispatcher's own count.",
+    "router_action_taken": "Evidence only. No board write, no flow-doc edit — the row is architect-owned and its fix shape is already settled.",
+    "reported_by": "router session, 2026-08-26T02:00Z cowork tick post-return verification"
+  }
+}
