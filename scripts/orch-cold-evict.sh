@@ -103,6 +103,24 @@
 # longer reachable through this script's own control flow. Regression gate:
 # scripts/test/orch-cold-evict-tests.sh TEST 12.
 #
+# CALLER-BASELINE MIGRATION (AC-1/AC-4, FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-
+# AFTER-CALLER-JQ-READ, 2026-08-26): this is the first real (non-flow-doc,
+# always-executing) caller migrated onto orch-apply.sh's caller-supplied CAS
+# baseline. HASH_BEFORE is now captured at the very top of the retry loop
+# (before compute_id_maps() reads the hot file) and threaded through as
+# ORCH_APPLY_CALLER_BASELINE_HASH on the orch-apply.sh invocation below. This
+# closes a residual staleness window this script's own pre-existing mtime-CAS
+# loop (above) does NOT cover: a peer write landing after this loop's own
+# mid-loop MTIME_BEFORE/MTIME_AFTER check but before orch-apply.sh's own CAS
+# baseline is evaluated (i.e. during the cold-archive rename +
+# verify_cold_archive_write() + process-spawn gap before orch-apply.sh
+# starts) — pre-migration, orch-apply.sh self-captured its own baseline at
+# its own (later) process startup, already downstream of such a write, so its
+# check trivially matched and the peer's change was silently overwritten on
+# rename. Regression + fault-injection gate: scripts/test/orch-cold-evict-
+# tests.sh TEST 13 (proves the guard FIRES on an injected peer write in
+# exactly this window, and still PASSES normally with none injected).
+#
 # Usage:
 #   scripts/orch-cold-evict.sh [--dry-run] [--exclude-ids ID1,ID2 [--exclude-ids ID3]]
 #
@@ -314,6 +332,19 @@ get_mtime() {
     return
   fi
   stat -c "%Y" "$1"
+}
+
+# ─── portable sha256 (macOS shasum / Linux sha256sum) ───────────────────────
+# AC-4 (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ): mirrors
+# scripts/orch-apply.sh's own get_hash() exactly — used to capture a
+# caller-observed baseline (see HASH_BEFORE below) that this script threads
+# into orch-apply.sh via ORCH_APPLY_CALLER_BASELINE_HASH.
+get_hash() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
 }
 
 log() { echo "[orch-cold-evict] $*" >&2; }
@@ -1151,6 +1182,28 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   # ── capture hot file mtime before any computation ─────────────────────────
   MTIME_BEFORE=$(get_mtime "${ORCH_STATE}")
 
+  # AC-4 (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ) — capture
+  # a content hash at this SAME instant (before any of this script's own
+  # reads below) and thread it through to orch-apply.sh's own CAS check as
+  # ORCH_APPLY_CALLER_BASELINE_HASH (see the invocation near "Writing hot
+  # file" below). This closes a residual window that this loop's own
+  # MTIME_BEFORE/MTIME_AFTER pair (checked further down, right before the
+  # cold-archive rename) does NOT cover: a peer write landing AFTER that
+  # mid-loop check but BEFORE orch-apply.sh's own CAS baseline is evaluated
+  # (i.e. during the cold-archive rename + verify_cold_archive_write +
+  # process-spawn gap before orch-apply.sh starts). Pre-migration, that
+  # window was invisible: orch-apply.sh (unmigrated) self-captured its own
+  # baseline at its OWN later process startup, which is already downstream
+  # of any such peer write, so its BASELINE_BEFORE==BASELINE_AFTER check
+  # trivially matched and the peer's change was silently overwritten on
+  # rename. Capturing HASH_BEFORE this early and passing it through means
+  # orch-apply.sh's baseline is fixed at the true observation instant (this
+  # line), not its own start — any write landing anywhere after this line,
+  # for the remainder of this whole pass, is now caught. See
+  # scripts/test/orch-cold-evict-tests.sh TEST 13 for the failing-then-
+  # passing proof (fault-injected peer write in exactly this window).
+  HASH_BEFORE=$(get_hash "${ORCH_STATE}")
+
   # ── re-read cold IDs each iteration (handles partial-failure recovery) ─────
   # If a previous run wrote cold but failed before hot rename, items appear in
   # both files. Re-reading cold IDs here prevents re-adding them to cold while
@@ -1271,6 +1324,14 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   # removed, sourced from the SAME rm_sig_rows map already computed above
   # (not re-derived) — keeps the declaration and the actual removal
   # mechanically in lockstep, never hand-maintained.
+  # CALLER-BASELINE MIGRATION (AC-1/AC-4, FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-
+  # AFTER-CALLER-JQ-READ): pass HASH_BEFORE (captured at loop-top, above,
+  # before this pass's own reads/computation/cold-archive-write) through as
+  # ORCH_APPLY_CALLER_BASELINE_HASH so orch-apply.sh's CAS check compares
+  # against the true pre-read observation instant instead of its own
+  # (later) self-captured process-start mtime. HASH takes precedence over
+  # mtime in orch-apply.sh, so this also strictly tightens precision versus
+  # the 1s-resolution mtime this script already checks internally above.
   SIGNAL_EVICTION_IDS=$(echo "${MAPS}" | jq -r '.rm_sig_rows | keys | join(",")')
   log "Writing hot file (via orch-apply.sh gated write): ${ORCH_STATE}"
   set +e
@@ -1278,6 +1339,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
     | ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}" \
       ORCH_APPLY_ALLOW_SHRINK="orch-cold-evict.sh:scheduled-eviction" \
       ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS="${SIGNAL_EVICTION_IDS}" \
+      ORCH_APPLY_CALLER_BASELINE_HASH="${HASH_BEFORE}" \
       bash "${REPO_ROOT}/scripts/orch-apply.sh"
   apply_exit=${PIPESTATUS[1]}
   set -e

@@ -188,6 +188,53 @@
  *                              2+ is the reproduced stale-full-doc-revert
  *                              incident shape.
  *
+ *                              DEFENSIBILITY RE-EXAMINED (QA CHANGES_REQUESTED
+ *                              2026-08-25, dispatch qa-S202, re-raised in the
+ *                              same row's 2nd pass): threshold=1 means the
+ *                              ORIGINAL bug's minimal shape — a single stale
+ *                              row reverted, not just the reproduced 5-row
+ *                              incident — is, by construction, ALSO
+ *                              indistinguishable from a legitimate single-row
+ *                              backward move, and so still sails through
+ *                              undeclared. Considered and REJECTED: lowering
+ *                              the default to 0 unconditionally. Grep-
+ *                              verified 2026-08-26 (`grep -rn
+ *                              'task_board\.\(backlog\|review\|qa\|in_progress\)
+ *                              = ' docs/agents/*\/flow/*.md`, cross-checked
+ *                              against LANE_RANK above): at least THREE live,
+ *                              frequently-exercised call sites depend on this
+ *                              exact tolerance today, none of which declare
+ *                              themselves via ORCH_APPLY_DECLARED_BACKWARD_
+ *                              LANE_MOVES — `docs/agents/qa/flow/main.md`
+ *                              (CHANGES_REQUESTED, qa[]->review[]) and TWO
+ *                              independent triggers in `docs/agents/dev-team/
+ *                              flow/main.md` (WF-1a BLOCKED-task self-heal,
+ *                              and the resume-attempt-bound-exceeded self-
+ *                              heal — both in_progress[]->backlog[]).
+ *                              Lowering the threshold to 0 without migrating
+ *                              ALL of these (a multi-file, cross-flow-doc,
+ *                              cross-agent-type effort) would make every one
+ *                              of these load-bearing self-healing/QA paths
+ *                              fail-closed on its OWN legitimate write —
+ *                              strictly worse than the residual gap being
+ *                              closed. The architecturally correct fix for
+ *                              the single-row-revert shape specifically is
+ *                              AC-1's caller-supplied CAS baseline (see
+ *                              scripts/orch-apply.sh header): once a caller
+ *                              passes ORCH_APPLY_CALLER_BASELINE_HASH/MTIME,
+ *                              ANY staleness relative to that caller's own
+ *                              pre-read observation — 1 row or 100 — is
+ *                              caught directly by the CAS mismatch,
+ *                              independent of and strictly stronger than
+ *                              this lane-rank heuristic, which is only a
+ *                              defense-in-depth backstop for callers that
+ *                              have not yet migrated. Retained at 1 as an
+ *                              accepted, documented trade-off rather than
+ *                              silently left unexamined; a future task that
+ *                              migrates the three callers above to declare
+ *                              their own known single-row moves may safely
+ *                              lower this to 0.
+ *
  * EXIT CODES:
  *   0 = conservation OK (within floor, below MIN_BASELINE, or bypass honored)
  *       AND zero undeclared row-identity drops (signal_queue.rows[] AND

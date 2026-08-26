@@ -895,6 +895,114 @@ fi
 assert_real_live_unchanged "T12c"
 
 # =============================================================================
+# TEST 13 — FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ (AC-1/AC-4
+#   caller migration): orch-cold-evict.sh now captures a content hash
+#   (HASH_BEFORE) at the top of its retry loop — BEFORE compute_id_maps()
+#   reads the hot file — and threads it through to orch-apply.sh as
+#   ORCH_APPLY_CALLER_BASELINE_HASH. This closes a residual staleness window
+#   this script's own pre-existing mtime-CAS loop does NOT cover: a peer
+#   write landing AFTER this script's own mid-loop MTIME_BEFORE/MTIME_AFTER
+#   check (right before the cold-archive rename) but BEFORE orch-apply.sh's
+#   own CAS baseline is evaluated (i.e. during the cold-archive rename +
+#   verify_cold_archive_write() + process-spawn gap before orch-apply.sh
+#   starts). Pre-migration, orch-apply.sh (unmigrated) self-captured its
+#   baseline at its own LATER process startup — already downstream of any
+#   such peer write — so its before/after check trivially matched and the
+#   peer's concurrent change was silently clobbered on rename.
+#
+#   (a) FIRES: a PATH-shadowed `mv` performs the real cold-archive rename
+#       (so cold-side behaviour is completely unaffected) and THEN, in that
+#       exact residual window, mutates the hot fixture file as a stand-in
+#       for a peer's concurrent write — before this fix, that write would
+#       have been silently overwritten by this script's own (by-then-stale)
+#       candidate; after this fix, orch-apply.sh's CAS check must catch it
+#       every retry (the injected mutation reproduces on each attempt),
+#       exhausting MTIME_CAS_RETRIES and aborting non-zero with the hot
+#       file left holding the PEER's write, never this run's own candidate.
+#   (b) PASSES: identical fixture, no fault injection — normal eviction
+#       still succeeds exit 0 (regression guard: HASH_BEFORE threading does
+#       not perturb the non-concurrent mainline path).
+# =============================================================================
+FAKE_BIN_T13="$FIXTURE_ROOT/fake-bin-t13"
+mkdir -p "$FAKE_BIN_T13"
+cat > "$FAKE_BIN_T13/mv" <<'EOS'
+#!/usr/bin/env bash
+dest="${@: -1}"
+case "$dest" in
+  *"/archive/"*.json)
+    # Perform the REAL cold-archive rename first — cold-side behaviour must
+    # stay completely unaffected by this fault injection.
+    /bin/mv "$@" || exit $?
+    # Simulate a peer write landing in the residual gap between this
+    # script's own internal mid-loop CAS check (already passed, earlier in
+    # orch-cold-evict.sh) and orch-apply.sh's own pre-rename CAS check
+    # (invoked next, right after this cold-archive rename completes).
+    if [ -n "${FAKE_INJECT_HOT_PATH:-}" ] && [ -f "${FAKE_INJECT_HOT_PATH}" ]; then
+      _inject_tmp=$(mktemp)
+      jq --arg id "PEER-INJECTED-$$-${RANDOM}" \
+         '.task_board.backlog += [{"id":$id,"status":"BACKLOG"}]' \
+         "${FAKE_INJECT_HOT_PATH}" > "${_inject_tmp}" \
+        && /bin/mv "${_inject_tmp}" "${FAKE_INJECT_HOT_PATH}"
+    fi
+    exit 0
+    ;;
+  *) exec /bin/mv "$@" ;;
+esac
+EOS
+chmod +x "$FAKE_BIN_T13/mv"
+
+# --- (a) FIRES: fault-injected peer write in the residual window ------------
+new_fixture "t13a-cas-baseline-fires-on-injected-peer-write" "$BASE_FIXTURE"
+EXIT_T13A=0
+FAKE_INJECT_HOT_PATH="$HOT_PATH" MTIME_CAS_RETRIES=2 PATH="$FAKE_BIN_T13:$PATH" run_cold_evict \
+  || EXIT_T13A=$?
+
+if [ "$EXIT_T13A" -ne 0 ]; then
+  pass "T13a — CAS baseline FIRES: run aborts non-zero when a peer write lands in the residual window"
+else
+  fail "T13a — expected non-zero exit (CAS mismatch should have fired), got 0 — guard is a no-op"
+fi
+
+if grep -q "orch-apply.sh CAS mismatch" "$FIXTURE_ROOT/.last-stderr"; then
+  pass "T13a — stderr confirms orch-apply.sh's own CAS check is what fired (not some other abort path)"
+else
+  fail "T13a — expected 'orch-apply.sh CAS mismatch' in stderr, got: $(tail -8 "$FIXTURE_ROOT/.last-stderr")"
+fi
+
+if jq -e '[.task_board.backlog[].id] | any(startswith("PEER-INJECTED-"))' "$HOT_PATH" >/dev/null 2>&1; then
+  pass "T13a — hot file retains the PEER's injected row (never silently clobbered)"
+else
+  fail "T13a — PEER-INJECTED row missing from hot file — the stale candidate overwrote the peer's write"
+fi
+
+if jq -e '[.task_board.backlog[].id] | index("BL-DONE-1")' "$HOT_PATH" >/dev/null 2>&1; then
+  pass "T13a — hot file still holds BL-DONE-1 (this run's OWN stale eviction candidate correctly rejected)"
+else
+  fail "T13a — BL-DONE-1 missing from hot file — this run's stale candidate applied despite the CAS mismatch"
+fi
+
+assert_real_live_unchanged "T13a"
+
+# --- (b) PASSES: identical fixture, no fault injection -----------------------
+new_fixture "t13b-cas-baseline-control-no-injection" "$BASE_FIXTURE"
+EXIT_T13B=0
+run_cold_evict || EXIT_T13B=$?
+
+if [ "$EXIT_T13B" -eq 0 ]; then
+  pass "T13b — control (no concurrent peer write): HASH_BEFORE threading does not perturb the mainline path — exit 0"
+else
+  fail "T13b — control expected exit 0, got $EXIT_T13B — $(tail -8 "$FIXTURE_ROOT/.last-stderr")"
+fi
+
+if jq -e '[.task_board.backlog[].id] | index("BL-DONE-1") | not' "$HOT_PATH" >/dev/null 2>&1; then
+  pass "T13b — BL-DONE-1 correctly evicted from hot file (normal eviction still functions)"
+else
+  fail "T13b — BL-DONE-1 still present in hot file — normal eviction broken by this change"
+fi
+
+assert_real_live_unchanged "T13b"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
