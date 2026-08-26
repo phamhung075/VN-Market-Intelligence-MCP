@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-26T09:25:21Z",
-    "updated_by": "agent-father (TASK-CRON-SKILLMD-PROBE-WIRING terminal shape -> review)"
+    "status": "in_progress",
+    "active_task_id": "FIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS",
+    "next_agent": "architect",
+    "next_action": "Ready-Lane Consumer claim of FIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS — spawn architect DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-26T09:45:17Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23417,35 +23418,6 @@
         "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
       },
       {
-        "id": "FIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "supervised": false,
-        "baseline_pass": true,
-        "dedup_key": "journal-guard:alert-transport-on-monitored-plane",
-        "files": [
-          "scripts/market-db-journal-guard.sh",
-          "launchd/"
-        ],
-        "title": "market-db-journal-guard's BUG alert channel is structurally dead for the exact duration of every outage it exists to report — send_telegram executes ON mcp-server, so 7/7 alerts were undeliverable across a 74-min CRITICAL mcp-server outage (2026-08-25 ~05:31Z->06:45Z)",
-        "created_at": "2026-08-25T07:32:38Z",
-        "created_by": "po/triage-20260825T073238Z",
-        "updated_at": "2026-08-25T22:30:08Z",
-        "updated_by": "po/triage-20260825T073238Z",
-        "status_note": "EVIDENCE, NOT INFERENCE (router, live 2026-08-25): the cron's exit-2/exit-3 branch alerts via call_tool(server=\"vn-market\", tool=\"send_telegram\"). send_telegram runs on the mcp-server container. mcp-server being down is precisely the condition that makes the probe emit exit 3 — so the alert transport is down at the exact moment every alert fires. Self-cancelling by construction, not a flaky-transport problem. Ticks 1-7 of 2026-08-25 each attempted exactly one send_telegram per contract; all 7 failed with 'The socket connection was closed unexpectedly.' The user was never notified of a CRITICAL fleet outage through the intended channel by ANY tick; the outage was resolved by host action. The 7 verdict lines are permanently lost — the cron contract forbids reconstructing a verdict line from memory, so they cannot be replayed post-recovery either. SECOND LIVE INSTANCE OF THE SAME CLASS, SAME MORNING (fold the design, not the AC): the cowork dispatcher aborted 4+ consecutive ticks (05:15/05:30/05:45/06:00Z) and explicitly did NOT run its documented preflight-error-fallback.md, correctly reasoning that every step of that chain (0a drain, 0b presence, 0b.2 election, 4.6 claims, 4.7 snapshot) also needs the dead MCP — i.e. a second documented error-recovery path that is unusable in exactly the failure it was written for. A fix that only moves the journal-guard's transport leaves that one standing. NOT A DATA-PLANE INCIDENT: the invariant itself held throughout (post-recovery journal_mode=delete, wal_present=false, shm_present=false, market.db intact). This row is entirely about the reporting plane. SHAPE OF FIX IS DELIBERATELY NOT PRESCRIBED — an out-of-band transport that does not depend on the monitored plane (direct Telegram HTTP from the host, or a host-side spool that flushes on recovery) is the obvious family; choosing belongs to the implementer, which is why next_agent=architect. AC-1: with mcp-server stopped, a forced exit-3 tick delivers a user-visible alert. AC-2: no verdict line is lost when the transport is unavailable at fire time (spool-and-flush or equivalent). AC-3: state explicitly whether the cowork preflight-error-fallback instance above is in or out of scope — do not leave it unaddressed by silence. DEDUP: whole-board scan (po, this tick) found no row about routing outage alerts through the box that is down; FIX-SYSTEMMAP-TELEGRAM-ENVVAR-NAMES-WRONG and FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER are unrelated.",
-        "promoted_at": "2026-08-25T20:56:11Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect",
-        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
-        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
-      },
-      {
         "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION",
         "title": "SQLite corruption (5th recurrence): systemic root-cause fix required — bind-mounted market.db loses advisory-lock enforcement across Docker Desktop host/container boundary",
         "subject": "Docker Desktop bind-mount locking defect causing recurring SQLite corruption on market.db (04-25, 07-13, 07-30, 08-06, 08-26)",
@@ -24685,6 +24657,37 @@
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128.",
         "po_lanefix_20260826T0536Z": "LANE MOVE ATTEMPTED AND REFUSED, po 2026-08-26T05:36Z — recorded so this is not re-attempted blindly. The row is BLOCKED while parked in the WIP lane, the STATUSFLIP-LANEMOVE straggler shape that docs/agents/dev-team/flow/execute-tier.md CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) says must move out. Moving it in_progress[] -> backlog[] made orch-apply's row-prose-ceiling check abort the entire write: 'live=0B -> candidate=18774B'. The 0B is false — PROSE_CEILING_LANES omits in_progress[], so the pre-move baseline reads zero and the move looks like 18.7KB of brand-new prose. Owning row already exists and is already dispatchable: TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES (ready[], READY, P1, developer). Re-attempt the move only AFTER that lands. Harmless meanwhile: BLOCKED rows are excluded from wip_in_progress (devteam-eligibility.jq:117) and claimed_by/claimed_at/owner_client_session are all null, so it holds no claim and consumes no dispatch budget. Its BLOCKED status is CORRECT, not stale: blocker TASK-COWORK-MUTEX-001 is genuinely still at REVIEW."
+      },
+      {
+        "id": "FIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "supervised": false,
+        "baseline_pass": true,
+        "dedup_key": "journal-guard:alert-transport-on-monitored-plane",
+        "files": [
+          "scripts/market-db-journal-guard.sh",
+          "launchd/"
+        ],
+        "title": "market-db-journal-guard's BUG alert channel is structurally dead for the exact duration of every outage it exists to report — send_telegram executes ON mcp-server, so 7/7 alerts were undeliverable across a 74-min CRITICAL mcp-server outage (2026-08-25 ~05:31Z->06:45Z)",
+        "created_at": "2026-08-25T07:32:38Z",
+        "created_by": "po/triage-20260825T073238Z",
+        "updated_at": "2026-08-26T09:45:17Z",
+        "updated_by": "po/triage-20260825T073238Z",
+        "status_note": "EVIDENCE, NOT INFERENCE (router, live 2026-08-25): the cron's exit-2/exit-3 branch alerts via call_tool(server=\"vn-market\", tool=\"send_telegram\"). send_telegram runs on the mcp-server container. mcp-server being down is precisely the condition that makes the probe emit exit 3 — so the alert transport is down at the exact moment every alert fires. Self-cancelling by construction, not a flaky-transport problem. Ticks 1-7 of 2026-08-25 each attempted exactly one send_telegram per contract; all 7 failed with 'The socket connection was closed unexpectedly.' The user was never notified of a CRITICAL fleet outage through the intended channel by ANY tick; the outage was resolved by host action. The 7 verdict lines are permanently lost — the cron contract forbids reconstructing a verdict line from memory, so they cannot be replayed post-recovery either. SECOND LIVE INSTANCE OF THE SAME CLASS, SAME MORNING (fold the design, not the AC): the cowork dispatcher aborted 4+ consecutive ticks (05:15/05:30/05:45/06:00Z) and explicitly did NOT run its documented preflight-error-fallback.md, correctly reasoning that every step of that chain (0a drain, 0b presence, 0b.2 election, 4.6 claims, 4.7 snapshot) also needs the dead MCP — i.e. a second documented error-recovery path that is unusable in exactly the failure it was written for. A fix that only moves the journal-guard's transport leaves that one standing. NOT A DATA-PLANE INCIDENT: the invariant itself held throughout (post-recovery journal_mode=delete, wal_present=false, shm_present=false, market.db intact). This row is entirely about the reporting plane. SHAPE OF FIX IS DELIBERATELY NOT PRESCRIBED — an out-of-band transport that does not depend on the monitored plane (direct Telegram HTTP from the host, or a host-side spool that flushes on recovery) is the obvious family; choosing belongs to the implementer, which is why next_agent=architect. AC-1: with mcp-server stopped, a forced exit-3 tick delivers a user-visible alert. AC-2: no verdict line is lost when the transport is unavailable at fire time (spool-and-flush or equivalent). AC-3: state explicitly whether the cowork preflight-error-fallback instance above is in or out of scope — do not leave it unaddressed by silence. DEDUP: whole-board scan (po, this tick) found no row about routing outage alerts through the box that is down; FIX-SYSTEMMAP-TELEGRAM-ENVVAR-NAMES-WRONG and FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER are unrelated.",
+        "promoted_at": "2026-08-25T20:56:11Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
+        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)",
+        "claimed_at": "2026-08-26T09:45:17Z",
+        "claimed_by": "dev-team (ready-lane consumer)"
       }
     ]
   },
@@ -24706,7 +24709,7 @@
         "last_served_tick": "2026-08-26T04:42:49Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-26T00:47:28Z"
+        "last_served_tick": "2026-08-26T09:44:06Z"
       },
       "drs": {
         "last_served_tick": "2026-08-26T01:14:13Z"
@@ -24718,7 +24721,7 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T09:40:53Z",
+    "_updated_at": "2026-08-26T09:44:06Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
