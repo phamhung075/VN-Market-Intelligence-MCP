@@ -71,3 +71,5 @@ Close: 69.200 VND (-2.26%) | RSI: 49.5 | Volume: 745.8K (202% avg) | YoY: -18.5%
 ## [News Scout] Batch2 Sentiment — 2026-08-25 01:30 UTC
 
 2026-08-25 | **BEARISH** FPT exposed to US tech downturn amid Iran trade-war escalation. FPT has 12% doanh thu from US (IT services, cloud, AI). S&P 500 + Nasdaq weakness carries spillover risk. Watch for guidance cuts if US PMI contracts | YoY: Continued deterioration from 2026-05 bullish; geopolitical risk now primary driver
+
+2026-08-26 16:00 | Close: 72.600 VND (+2.69%) | RSI: 61.5 | Vol: 432.7K (239% avg) | YoY: +32.15% | Sentiment: Bullish — Foreign investor buying signal (200B+), tech sector strength, US market tailwind (12% USA revenue exposure) | Brief action: Buy on dip — Strong foreign buying, tech sector rotation, hold for mid-term gains | Regime: NEUTRAL | Anomaly: YES — Volume spike 239% vs average, foreign buying accumulation, overbought RSI but strong momentum continuation signal

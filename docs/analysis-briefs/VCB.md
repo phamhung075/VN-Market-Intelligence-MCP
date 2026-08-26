@@ -68,3 +68,5 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 2026-08-13 16:00 | Close: 59.500 VND (-0.34%) | RSI: 53.2 | Vol: 3.24M (85% avg) | YoY: -8.5% | Regime: NEUTRAL | Brief action: Hold — Banking sector coordinated decline -1.88% avg amid macro uncertainty; neutral technicals; VN-Index down 27.5 pts; macro: oil neutral, gold bullish defensive, USD/VND bearish
 
 2026-08-25 16:00 | Close: 59.400 VND (+0.34%) | RSI: 54.4 | Vol: 5577200 (116.8% avg) | YoY: +2.1% | Daily: +0.34% | Sentiment: Neutral | Brief action: Hold | Regime: NEUTRAL | Status: Banking recovery trend continues; elevated volume on FTSE inflow; technical consolidation mid-band
+
+2026-08-26 16:00 | Close: 60.300 VND (+1.52%) | RSI: 59.0 | Vol: 5.25M (112% avg) | YoY: +8.52% | Sentiment: Neutral — Banking sector rally +1.52% today, Vietcombank security fraud warning (proactive disclosure, manageable), VN-Index strength supports banking | Brief action: Hold — Banking sector tailwind, fraud warning is proactive risk management, monitor news | Regime: NEUTRAL | Anomaly: NO
