@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-26T05:13:17Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 7 staged file(s) not necessarily this actor's own: docs/agents/ops/flow/docker.md docs/data/coverage-state.json docs/data/dev-team-idle-widen-state.json docs/data/orch/orch-state.json docs/incidents/data/pdf-extractor-ac7-sampler.csv docs/incidents/data/rag-durability-2026-08-25T1318Z-16c59b5e929f-window.csv scripts/pdf-extractor-cgroup-sampler.sh. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid88433:git commit -m ops(ac7-sampler): arm persistent pdf-extractor cgroup memory sampler\\012\\012Deployed scripts/pdf-extractor-cgroup-sampler.sh running nohup,\\012sam]<-[pid88423:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
+  "_processed": {
+    "fingerprint": "4677ed38e28b0a51988d465618d4a7129e319a4121dc8b528c076ac2163467ba",
+    "processedAt": "2026-08-26T05:27:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

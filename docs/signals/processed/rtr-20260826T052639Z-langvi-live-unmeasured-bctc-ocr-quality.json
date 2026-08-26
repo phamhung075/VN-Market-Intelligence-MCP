@@ -20,5 +20,11 @@
     "ask": "Mint a row to measure production BCTC extraction quality post-lang=vi (before/after on real documents, e.g. the known-bad DXG and FPT p9 exemplars). Gate it >=09:00Z weekday - measuring requires RUNNING the extractor, which is barred 02:00-08:59Z.",
     "do_not_conflate": "This does NOT reopen wholesale tesseract->PaddleOCR replacement, which stays rejected on the valid lang=vi benchmark (2.4x latency, pinned at memory.max). Separate track: the auto/per-page RESCUE path, whose no-fire-rate-is-safe blocker is being re-measured now by the AC-7 sampler (series completes ~2026-08-26T17:11Z).",
     "caution": "Do NOT cite a quality improvement until the measurement exists. Asserting one now repeats the exact error the PaddleOCR memory file was opened to correct."
+  },
+  "_processed": {
+    "fingerprint": "6b86310ac2c88370dcf0e05384f7554ce37c6dfd6b1fe08af45bd17da6d889a7",
+    "processedAt": "2026-08-26T05:27:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
