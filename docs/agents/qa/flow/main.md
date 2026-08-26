@@ -1,4 +1,4 @@
-<!-- size-justification: 275L (corrected from stale 227L claim, drift undocumented pre-2026-07-25) — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. QA-FLOW-QUALITY-AUDIT-CHECKLIST-FRESHNESS 2026-07-25: +1L — thin dispatch row to new sub-flow `./quality-audit.md` (checklist-demand sourcing + freshness verification + gap-escalation now durable, was ephemeral router-prompt-only; lazy-load pattern, no logic inlined here). 2026-08-12 doc-self-heal (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS verify-committed cycle): +2L — Direct-Commit Verify step 4 gained a non-bun-zone substitution note (pytest/mypy for Python microservices, run inside the zone's actual deployed image, never host/sandbox — host dependency drift silently produced a false 195/195-green claim on rag-service). FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW 2026-08-15 (agent-father): +~30L — new "OOM-Class Durability Gate" section in Pipeline (detection rule + D1-D5 summary, full spec delegated to new SSOT `docs/standards/oom-durability-verification-bar.md`, generalised fleet-wide from RAG-MEM-DURABILITY-BAR v2) + a cross-reference paragraph in Direct-Commit Verify (the observed path for every OOM-class row so far) gating `vc-approved`; closes 5 defects (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion, stale grandfather-exemption) proven live on the rag-service OOM incident. FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR 2026-08-23 (agent-father): +50L — `vc-approved`/`vc-changes` verdict exits gained literal `jq | orch-apply.sh` executable blocks (both previously prose-only, no write actuator at all — 4 confirmed stranded rows permanently consumed `qa[]` `QA_CAP=10` slots) + a self-verify re-read on each, matching the `FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR` template (commit `3ce726a6e`). SAME ROW, redispatch 1 (agent-father, 2026-08-23T14:20Z, after qa CHANGES_REQUESTED on commit `863a250e3`): +24L (366→390L actual; the "275L" claim at the head of this justification has been stale since at least the 2026-08-15 edit and is NOT corrected here — out of this row's scope) — the shipped jq could not pass `orch-validate.mjs` at all, so all three of qa's findings are closed here: `del(.next_agent)` replacing `next_agent: null` (TaskSchema:208 is optional-NOT-nullable, unlike HeadSchema:324), a mandatory RC-VERIF `verification.raw_probe` block with a fail-loud empty-field refuse (§ 8A `checkVerificationGate` hard-rejects DONE_VERIFIED without it), `($t.owner // $t.owner_agent // "po")` replacing the null-emitting `$t.owner`, widened self-verify predicates on both blocks, and a `ORCH_APPLY_LIVE_FILE_OVERRIDE` dry-run recipe so the next editor verifies by executing rather than reading. -->
+<!-- size-justification: 275L (corrected from stale 227L claim, drift undocumented pre-2026-07-25) — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. QA-FLOW-QUALITY-AUDIT-CHECKLIST-FRESHNESS 2026-07-25: +1L — thin dispatch row to new sub-flow `./quality-audit.md` (checklist-demand sourcing + freshness verification + gap-escalation now durable, was ephemeral router-prompt-only; lazy-load pattern, no logic inlined here). 2026-08-12 doc-self-heal (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS verify-committed cycle): +2L — Direct-Commit Verify step 4 gained a non-bun-zone substitution note (pytest/mypy for Python microservices, run inside the zone's actual deployed image, never host/sandbox — host dependency drift silently produced a false 195/195-green claim on rag-service). FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW 2026-08-15 (agent-father): +~30L — new "OOM-Class Durability Gate" section in Pipeline (detection rule + D1-D5 summary, full spec delegated to new SSOT `docs/standards/oom-durability-verification-bar.md`, generalised fleet-wide from RAG-MEM-DURABILITY-BAR v2) + a cross-reference paragraph in Direct-Commit Verify (the observed path for every OOM-class row so far) gating `vc-approved`; closes 5 defects (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion, stale grandfather-exemption) proven live on the rag-service OOM incident. FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR 2026-08-23 (agent-father): +50L — `vc-approved`/`vc-changes` verdict exits gained literal `jq | orch-apply.sh` executable blocks (both previously prose-only, no write actuator at all — 4 confirmed stranded rows permanently consumed `qa[]` `QA_CAP=10` slots) + a self-verify re-read on each, matching the `FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR` template (commit `3ce726a6e`). SAME ROW, redispatch 1 (agent-father, 2026-08-23T14:20Z, after qa CHANGES_REQUESTED on commit `863a250e3`): +24L (366→390L actual; the "275L" claim at the head of this justification has been stale since at least the 2026-08-15 edit and is NOT corrected here — out of this row's scope) — the shipped jq could not pass `orch-validate.mjs` at all, so all three of qa's findings are closed here: `del(.next_agent)` replacing `next_agent: null` (TaskSchema:208 is optional-NOT-nullable, unlike HeadSchema:324), a mandatory RC-VERIF `verification.raw_probe` block with a fail-loud empty-field refuse (§ 8A `checkVerificationGate` hard-rejects DONE_VERIFIED without it), `($t.owner // $t.owner_agent // "po")` replacing the null-emitting `$t.owner`, widened self-verify predicates on both blocks, and a `ORCH_APPLY_LIVE_FILE_OVERRIDE` dry-run recipe so the next editor verifies by executing rather than reading. FIX-DEVTEAM-QADRAIN-SELECTION-BLIND-TO-QA-NOT-BEFORE-TIME-GATE 2026-08-26 (developer, architect brief `docs/architecture-briefs/2026-08-26-qadrain-shared-hop-timegate-conservation-skipstrand.md` §1b): +34L (390→424L) — new mandatory Step 0d "Not-Before Gate Check", inserted immediately after Step 0c/before Smart-Skip so it runs before ANY jump target; the one convergence point every dispatch path (scripted QA-Drain OR router hand-dispatch) passes through, closing the class the picker-side `scripts/lib/devteam-eligibility.jq` gate cannot reach (hand-dispatch bypasses that script entirely). -->
 
 # QA — Main Flow
 
@@ -66,7 +66,7 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 | Pipeline result: arch concern (new domain/MCP tool/cross-service) | `architect-review` |
 | Tests broken on `main` | `emergency` |
 
-After pre-checks (project-root, notebook-read, Smart-Skip), jump to the labelled section. Verdict branches at end of `pipeline` are JUMP TOs, not sequential walks.
+After pre-checks (project-root, notebook-read, delta-read, **Step 0d not-before gate check**, Smart-Skip), jump to the labelled section. Verdict branches at end of `pipeline` are JUMP TOs, not sequential walks.
 
 ---
 
@@ -82,6 +82,40 @@ Read handoff using delta-read skill:
   last_read_at:     <from signal payload handoff_delta.last_read_at, or null>
 → store anchor_out + read_at into context (emit in RETURN block as handoff_delta for next round)
 ```
+
+**Step 0d — Not-Before Gate Check (mandatory, before ANY jump target)** — architect brief `docs/architecture-briefs/2026-08-26-qadrain-shared-hop-timegate-conservation-skipstrand.md` §1b. This is the ONE convergence point every dispatch path — scripted (Review-Lane QA-Drain, either call site) OR hand (router/human `task_claim` + `Agent("qa", ...)`) — passes through before any verify work runs; the picker-side gate in `scripts/lib/devteam-eligibility.jq` only protects the two scripted call sites, not hand-dispatch.
+
+```
+Read this task's own row directly off docs/data/orch/orch-state.json by task_id
+(wherever it currently lives — do not assume a lane). Check every key in the
+known allowlist — SSOT: gate_not_before_keys in scripts/lib/devteam-
+eligibility.jq; KEEP THIS LIST IN SYNC WITH THAT ONE, never hand-copy a stale
+snapshot:
+  qa_not_before, next_recheck_not_before, qa_new_window_earliest_d1_close
+
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+If ANY present key's value is LATER than $NOW:
+  - STOP. Do not run BCTC/OOM/test/DDD/security checks — no further tool
+    calls against this row's content.
+  - Reverse the dispatch, in ONE orch-apply.sh write: if drain_source_lane is
+    set, move the row back to that lane ("review"/"done") with matching
+    status ("REVIEW"/"DONE"); clear claimed_at/claimed_by/drain_source_lane.
+    Route next_agent to the row's own owner/owner_agent (fallback "po") —
+    same fallback chain as the existing verify-committed path.
+  - Do NOT increment redispatch_count — no verify work happened, nothing to
+    charge.
+  - Append a short status_note: "[QA] HOLD — <key>=<value> not yet elapsed
+    (now=<now>). Not dispatched, not charged."
+  - Self-verify at HEAD (same discipline as every other lane-move in this file).
+  - RETURN UNVERIFIED-BLOCKED, reason = the gating key + value,
+    PIPELINE: continue — do NOT jump to pipeline/verify-committed/etc.
+
+No known key present, or all present keys already elapsed → proceed
+unchanged to Smart-Skip / the JUMP-TO table.
+```
+
+**Residual, not closed here:** the field-name fragmentation itself (3+ ad hoc names, no normalization) is contained by a known-list, not eliminated — if a 5th name appears, both this list and `gate_not_before_keys` must be updated by hand.
 
 ## Smart-Skip
 - Test-only change → skip DDD + security. Run: unit + regression + tsc.

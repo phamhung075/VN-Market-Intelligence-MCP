@@ -66,6 +66,15 @@
 #     auto-dispatch (their correct destination is deliberate owner
 #     assignment, not a blind qa spawn against a row that was never even
 #     ROUTED to qa in the first place).
+#   - NOT-BEFORE TIME-GATE (FIX-DEVTEAM-QADRAIN-SELECTION-BLIND-TO-QA-NOT-
+#     BEFORE-TIME-GATE, architect brief docs/architecture-briefs/2026-08-26-
+#     qadrain-shared-hop-timegate-conservation-skipstrand.md §1a): a row
+#     carrying any known do-not-pick-before-T field (`is_gated_not_before`,
+#     scripts/lib/devteam-eligibility.jq — KNOWN-LIST: qa_not_before,
+#     next_recheck_not_before, qa_new_window_earliest_d1_close) with a value
+#     STRICTLY LATER than `$now` is excluded from $candidates entirely — no
+#     lane-move, no stamp, byte-identical skip. Absent/null/unparseable gate
+#     values never suppress selection.
 #   - priority key: `priority_rank` (0=P0/critical ... 9=unset), imported
 #     from the already-`include`-d scripts/lib/devteam-eligibility.jq — no
 #     new predicate file, same shared def BOUNDED-1/SLS/RLC/DRS already use.
@@ -187,6 +196,7 @@ def age_epoch:
       )
     ]
     | map(select((.row | effective_next_agent($detail_items)) == "qa"))
+    | map(select((.row | is_gated_not_before($now)) | not))   # FIX-DEVTEAM-QADRAIN-SELECTION-BLIND-TO-QA-NOT-BEFORE-TIME-GATE
     | map(. + { rank: (.row | priority_rank), age: (.row | age_epoch) })
     | sort_by([.rank, .age])
 ) as $candidates

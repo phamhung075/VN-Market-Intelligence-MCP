@@ -562,26 +562,50 @@ built minutes earlier, wholesale-restoring stale `qa[]`/`review[]` arrays and re
 — the write's own diff never named them.
 **Fix:** `undeclaredBackwardLaneMoves()` (in `orch-conservation-check.mjs`) tracks every
 `task_board.<FLAT_TASK_LANES>[].id` present in both live and candidate; if the candidate's lane has
-a strictly lower pipeline rank than the live lane (backlog < ready < in_progress < review < qa <
-done < done_verified), that id is a "backward move." A SINGLE undeclared backward move per write is
-tolerated (`CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES`, default 1) — this covers every known
-sanctioned single-row backward workflow (e.g. `qa/flow/main.md`'s `CHANGES_REQUESTED` path moves
-exactly one row `qa[]`->`review[]` by name; grep-verified 2026-08-24: every current
-`.task_board.<lane> = [...]` backward-lane assignment across `scripts/*.jq` and every dev-agent
-flow-doc write targets exactly one `.id`; batch multi-row claim scripts, e.g. the QA_CAP=10
-Review-Lane QA-Drain, always move FORWARD, never backward, so this floor never affects them). TWO OR
-MORE undeclared backward moves in the SAME write is the exact reproduced-incident shape and is a HARD
-REJECT (exit 1, live untouched) — independent of, and **never bypassable by**,
-`ORCH_APPLY_ALLOW_SHRINK` (same orthogonality rationale as the two row-identity dimensions above). A
-caller with a genuine, deliberate reason to revert 2+ rows in one write (no such caller exists today)
-can declare them via `ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES=<comma-separated ids>`, mirroring the
-existing declared-eviction escape hatches rather than leaving this permanently fail-closed for a
-hypothetical future legitimate case. Scoped to the flat `task_board` lanes only —
+a strictly lower `LANE_RANK` TIER than the live lane, that id is a "backward move." A SINGLE
+undeclared backward move per write is tolerated (`CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES`,
+default 1) — this covers every known sanctioned single-row backward workflow (e.g.
+`qa/flow/main.md`'s `CHANGES_REQUESTED` path moves exactly one row `qa[]`->`review[]` by name;
+grep-verified 2026-08-24: every current `.task_board.<lane> = [...]` backward-lane assignment across
+`scripts/*.jq` and every dev-agent flow-doc write targets exactly one `.id`). TWO OR MORE undeclared
+backward moves in the SAME write is the exact reproduced-incident shape and is a HARD REJECT (exit 1,
+live untouched) — independent of, and **never bypassable by**, `ORCH_APPLY_ALLOW_SHRINK` (same
+orthogonality rationale as the two row-identity dimensions above). A caller with a genuine,
+deliberate reason to revert 2+ rows in one write (no such caller exists today) can declare them via
+`ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES=<comma-separated ids>`, mirroring the existing
+declared-eviction escape hatches rather than leaving this permanently fail-closed for a hypothetical
+future legitimate case. Scoped to the flat `task_board` lanes only —
 `active_sprints[]`/`closed_sprints[].tasks[]` have no single flat-lane rank and are out of scope (the
 reproduced incident was entirely within the flat lanes).
+
+**CORRECTED 2026-08-26 (FIX-QADRAIN-DONE-TO-QA-SCORES-BACKWARD-CONSERVATION-ABORTS-WHOLE-DRAIN,
+architect brief `docs/architecture-briefs/2026-08-26-qadrain-shared-hop-timegate-conservation-
+skipstrand.md` §2):** `LANE_RANK` is now an explicit TIER map, decoupled from `FLAT_TASK_LANES`'
+array position — `backlog`(0) < `ready`(1) < `in_progress`(2) < {`review`, `done`}(3, SAME TIER) <
+`qa`(4) < `done_verified`(5). The paragraph above previously claimed "batch multi-row claim
+scripts, e.g. the QA_CAP=10 Review-Lane QA-Drain, always move FORWARD, never backward, so this
+floor never affects them" — that was FALSE for the `done[]`-origin half of that batch under the
+prior flat array-position rank (`done`=5 > `qa`=4, so every `done[]->qa[]` drain row scored
+BACKWARD, and at >=2 such rows in one write the guard aborted the ENTIRE write, including the
+strictly-forward `review[]`-origin rows riding along in the same batch — live-reproduced
+2026-08-26T03:22Z, 2 review + 2 done eligible, first attempt landed ZERO of 4). `done[]` is a
+SECOND pre-QA staging lane feeding `qa[]`, exactly like `review[]` (both are unioned by
+`scripts/devteam-review-claim-qa-drain.jq`'s own candidate selector) — NOT a post-QA stage; only
+`done_verified[]` is the true post-QA terminal lane. Giving `review`/`done` the same tier makes the
+"batch claims always move forward" claim TRUE again. A genuine stale-revert of `qa[]->done[]`
+(candidate tier 3 < live tier 4) is still correctly flagged backward — only the `done`<->`qa`
+boundary in the forward (`done`->`qa`) direction changed. `LANE_RANK` is used in exactly ONE place
+repo-wide (grep-verified 2026-08-26).
 Test coverage: `bash scripts/test/orch-apply-wrapper-tests.sh` (`LANE-BACKWARD-SINGLE-TOLERATED` /
 `LANE-BACKWARD-MULTI-REJECTED` / `LANE-BACKWARD-DECLARED-ALLOWED` / `LANE-FORWARD-BATCH-HAPPY`
-cases, 109/109 total unaffected+new).
+cases, 109/109 total unaffected+new) + `bash scripts/test-orch-conservation-lane-rank.sh` (new,
+2026-08-26 — direct `orch-conservation-check.mjs` fixture harness: AC1 two-or-more `done[]`-origin
+`qa[]` claims land clean with no bypass; AC2 negative control, a genuine 2-row `qa[]->done[]` stale
+revert still aborts; AC3 replays the exact 03:22Z 2-review+2-done shape, lands all 4; NG1 same-tier
+`review[]<->done[]` lateral moves are never flagged even 2-at-once; NG2 the pre-existing single-row
+`qa[]->review[]` CHANGES_REQUESTED revert is unaffected — 12/12 passing, negative-controlled against
+the pre-fix HEAD copy to confirm the harness genuinely discriminates the defect, not vacuously
+passes).
 
 **CANONICAL: CAS caller-supplied baseline (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ, AC-1/AC-2, 2026-08-24)**
 Root cause: `scripts/orch-apply.sh`'s pre-fix CAS guard captured its "before" mtime at its OWN

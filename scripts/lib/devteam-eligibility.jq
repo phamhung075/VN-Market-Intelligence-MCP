@@ -667,3 +667,34 @@ def all_children_terminal($detail_items; $status_map):
   | ($children | length) > 0
     and ( [ $children[] | ($status_map[.] // "MISSING") ]
           | all(is_terminal_task_status(.)) );
+
+# ---- not-before dispatch gate (FIX-DEVTEAM-QADRAIN-SELECTION-BLIND-TO-QA-
+# NOT-BEFORE-TIME-GATE, architect brief docs/architecture-briefs/2026-08-26-
+# qadrain-shared-hop-timegate-conservation-skipstrand.md §1a) ----
+# KNOWN-LIST, not full field-name normalization -- the do-not-pick-before-T
+# semantic ships under multiple ad hoc field names across the fleet
+# (grep-verified 2026-08-26: qa_not_before, next_recheck_not_before,
+# qa_new_window_earliest_d1_close -- zero code readers existed anywhere
+# before this fix). Any NEW gate-field name a future PO/QA ruling invents
+# MUST be appended HERE and to the mirrored copy in
+# docs/agents/qa/flow/main.md's Step 0d, or it silently reverts to
+# unguarded -- same hand-maintained-array drift class the `$routed` guard in
+# guard-signal-type-coverage.sh already hit once (see
+# feedback_dedup_... / po_regression_recheck_20260807 in the archive).
+def gate_not_before_keys: ["qa_not_before", "next_recheck_not_before", "qa_new_window_earliest_d1_close"];
+
+# `.` = candidate row object. A row is GATED (not yet dispatchable) if ANY
+# known key holds a value that parses (via parse_ts above, already
+# null-safe/malformed-safe) to a STRICTLY LATER instant than $now. Absent
+# key / null / unparseable value = that key does not gate -- mirrors
+# parse_ts's existing convention elsewhere in this file (a malformed
+# timestamp reads as absent, never as "gate forever" and never as "always
+# gated"). Epoch comparison (not string comparison) sidesteps a
+# lexicographic-boundary concern entirely.
+def is_gated_not_before($now):
+  . as $row
+  | (parse_ts($now)) as $now_ts
+  | ( gate_not_before_keys
+      | map( parse_ts($row[.]) )
+      | map( select(. != null) )
+      | any(. > $now_ts) );

@@ -101,8 +101,13 @@
  *   in the fleet moves at most one row backward per write (grep-verified 2026-08-24: every
  *   `.task_board.<lane> = [...]` backward-lane assignment across scripts jq files and every
  *   dev-agent flow-doc write targets exactly one `.id`; batch multi-row claim scripts — e.g.
- *   the QA_CAP=10 Review-Lane QA-Drain — always move FORWARD, never backward, so this floor does
- *   not affect them). TWO OR MORE undeclared backward moves landing in the SAME write is the
+ *   the QA_CAP=10 Review-Lane QA-Drain — always move FORWARD BY TIER, never backward, so
+ *   this floor does not affect them — see LANE_RANK below: `review` and `done` share tier 3
+ *   as two pre-QA staging lanes both feeding qa[]=tier 4, so a done[]->qa[] drain row is a
+ *   same-or-forward tier move, not backward; this was corrected 2026-08-26,
+ *   FIX-QADRAIN-DONE-TO-QA-SCORES-BACKWARD-CONSERVATION-ABORTS-WHOLE-DRAIN, after the prior
+ *   flat array-position rank scored every such row backward). TWO OR MORE undeclared backward
+ *   moves landing in the SAME write is the
  *   exact reproduced-incident shape (a stale full-doc candidate reverting several rows nobody on
  *   this write named) and is a HARD REJECT, independent of (and NEVER bypassable by)
  *   ORCH_APPLY_ALLOW_SHRINK — same orthogonality rationale as the two row-identity dimensions
@@ -366,16 +371,52 @@ function undeclaredInboxDrops(liveDoc, candidateDoc) {
 }
 
 /**
- * LANE_RANK — pipeline order for the lane-placement dimension. Reuses the
- * exact FLAT_TASK_LANES ordering already used for task_total() above (that
- * array is written in pipeline order: backlog -> ready -> in_progress ->
- * review -> qa -> done -> done_verified). Does NOT cover active_sprints[]/
- * closed_sprints[].tasks[] — those have no single flat-lane rank and are out
- * of scope for this dimension (the reproduced incident was entirely within
- * the flat lanes: qa[]/review[]).
+ * LANE_RANK — pipeline TIER for the lane-placement dimension.
+ *
+ * FIX-QADRAIN-DONE-TO-QA-SCORES-BACKWARD-CONSERVATION-ABORTS-WHOLE-DRAIN
+ * (2026-08-26, brief docs/architecture-briefs/2026-08-26-qadrain-shared-hop-
+ * timegate-conservation-skipstrand.md §2): this map is now an EXPLICIT tier
+ * assignment, DECOUPLED from FLAT_TASK_LANES' array position — that array's
+ * order still governs task_total()'s iteration only (order is irrelevant
+ * there, it's a sum) and is UNAFFECTED by this change. Blindly reusing array
+ * position as rank encoded "done comes after qa," which is FALSE for this
+ * board: `done[]` = developer-complete work AWAITING QA sign-off, NOT a
+ * post-QA stage — it is a SECOND pre-QA staging lane feeding qa[], exactly
+ * like review[] (both are unioned by scripts/devteam-review-claim-qa-
+ * drain.jq's own candidate selector). Only `done_verified[]` is the true
+ * post-QA terminal lane. Under the old array-position rank, `done`(5) >
+ * `qa`(4), so every legitimate done[]->qa[] drain scored BACKWARD, and at
+ * >=2 such rows in one write, undeclaredBackwardLaneMoves() below aborted
+ * the ENTIRE write (see this file's own header "batch claims always move
+ * FORWARD" invariant, which was false for done-origin drain rows until this
+ * fix). `review` and `done` now share tier 3 (lateral move between them is
+ * never flagged, matching their shared pre-QA-staging role); `qa` stays
+ * tier 4; `done_verified` stays the sole terminal tier 5. The JSON lane keys
+ * are UNCHANGED (`done[]` remains `done[]` everywhere) — only this LOCAL
+ * derived rank map changes. LANE_RANK is used in exactly ONE place repo-wide
+ * (grep-verified 2026-08-26: `grep -rn LANE_RANK` outside this file returns
+ * zero code hits) — narrow blast radius.
+ *
+ * A genuine stale-revert of qa[]->done[] (candidate lane `done`=3, live lane
+ * `qa`=4) is STILL correctly flagged backward (3 < 4) — this change only
+ * affects the done<->qa boundary in the forward (done->qa) direction; the
+ * reproduced multi-row stale-full-doc-revert incident this guard exists to
+ * catch is untouched.
+ *
+ * Does NOT cover active_sprints[]/closed_sprints[].tasks[] — those have no
+ * single flat-lane rank and are out of scope for this dimension (the
+ * reproduced incident was entirely within the flat lanes: qa[]/review[]).
  * @type {Record<string, number>}
  */
-const LANE_RANK = Object.fromEntries(FLAT_TASK_LANES.map((lane, i) => [lane, i]));
+const LANE_RANK = {
+  backlog: 0,
+  ready: 1,
+  in_progress: 2,
+  review: 3,
+  done: 3,
+  qa: 4,
+  done_verified: 5,
+};
 
 /**
  * Build a Map of task `.id` -> flat lane name, scanning FLAT_TASK_LANES only

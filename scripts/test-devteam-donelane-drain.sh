@@ -49,6 +49,7 @@ SEC_DRAIN="$REPO_ROOT/scripts/devteam-review-claim-secondary-drain.jq"
 REPORT="$REPO_ROOT/scripts/audits/devteam-review-lane-drain-report.sh"
 STARVE_REPORT="$REPO_ROOT/scripts/audits/devteam-deps-satisfied-sole-failure-report.sh"
 COLD_EVICT="$REPO_ROOT/scripts/orch-cold-evict.sh"
+SKIP_REVERT="$REPO_ROOT/scripts/devteam-qadrain-skip-revert.jq"
 
 cd "$REPO_ROOT"   # both .jq files use `include "scripts/lib/devteam-eligibility"`
 
@@ -79,6 +80,21 @@ run_qa_drain() {
   local orch="$1" budget="${2:-1}"
   jq --arg now "$NOW" --argjson take_budget "$budget" \
      --slurpfile detail "$EMPTY_DETAIL" -f "$QA_DRAIN" "$orch"
+}
+
+# run_qa_drain_at <orch-fixture> <take_budget> <now> -> output document on stdout
+# Same as run_qa_drain but with a CALLER-SUPPLIED $now (I13 month/year-boundary
+# fixtures need a $now other than the file-global NOW above).
+run_qa_drain_at() {
+  local orch="$1" budget="${2:-1}" now="$3"
+  jq --arg now "$now" --argjson take_budget "$budget" \
+     --slurpfile detail "$EMPTY_DETAIL" -f "$QA_DRAIN" "$orch"
+}
+
+# run_skip_revert <orch-fixture> <id> [now] -> output document on stdout
+run_skip_revert() {
+  local orch="$1" id="$2" now="${3:-$NOW}"
+  jq --arg id "$id" --arg now "$now" -f "$SKIP_REVERT" "$orch"
 }
 
 # run_sec_drain <orch-fixture> -> output document on stdout
@@ -315,6 +331,132 @@ check "C10 starvation report threads the REAL eligibility lib" \
   "$([ "$(grep -c 'scripts/lib/devteam-eligibility' "$STARVE_REPORT")" -ge 1 ] && echo yes || echo no)" "yes"
 check "C10 starvation report emits JSON with per-row unmet-dep reasons" \
   "$(bash "$STARVE_REPORT" --json 2>/dev/null | jq -r 'if (type=="object" and has("starved")) then "ok" else "bad" end')" "ok"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CASE 11 (I9/I10, AC-1) — FIX-DEVTEAM-QADRAIN-SELECTION-BLIND-TO-QA-NOT-
+# BEFORE-TIME-GATE: qa_not_before gate on the qa-drain candidate pipeline.
+# ─────────────────────────────────────────────────────────────────────────────
+F11="$TMP/case11.json"
+board '{
+  "review": [
+    {"id":"GATED-FUTURE","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","qa_not_before":"2026-08-08T00:00:01Z"},
+    {"id":"GATED-PAST","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","qa_not_before":"2026-08-07T23:59:59Z"}
+  ]
+}' > "$F11"
+OUT11="$(run_qa_drain "$F11" 10)"
+check "I9 future qa_not_before EXCLUDES the row (byte-identical skip)" \
+  "$(echo "$OUT11" | jq -r '.task_board.qa | map(.id) | index("GATED-FUTURE") // "absent"')" "absent"
+check "I9 the future-gated row stays byte-identical in review[] (AC-3)" \
+  "$(echo "$OUT11" | jq -c '.task_board.review[] | select(.id=="GATED-FUTURE")')" \
+  "$(jq -c '.task_board.review[] | select(.id=="GATED-FUTURE")' "$F11")"
+check "I10 past qa_not_before INCLUDES the row" \
+  "$(echo "$OUT11" | jq -r '.task_board.qa | map(.id) | index("GATED-PAST") // "absent"')" "0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CASE 12 (I11, AC-2) — next_recheck_not_before symmetric proof: same
+# future-excludes/past-includes shape, different known-list field name.
+# ─────────────────────────────────────────────────────────────────────────────
+F12="$TMP/case12.json"
+board '{
+  "review": [
+    {"id":"RECHECK-FUTURE","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","next_recheck_not_before":"2026-08-08T00:00:01Z"},
+    {"id":"RECHECK-PAST","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","next_recheck_not_before":"2026-08-07T23:59:59Z"}
+  ]
+}' > "$F12"
+OUT12="$(run_qa_drain "$F12" 10)"
+check "I11 future next_recheck_not_before EXCLUDES (AC-2 symmetric)" \
+  "$(echo "$OUT12" | jq -r '.task_board.qa | map(.id) | index("RECHECK-FUTURE") // "absent"')" "absent"
+check "I11 elapsed next_recheck_not_before does NOT suppress selection" \
+  "$(echo "$OUT12" | jq -r '.task_board.qa | map(.id) | index("RECHECK-PAST") // "absent"')" "0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CASE 13 (I12, AC-5) — negative control: a row carrying NO gate field at all
+# is unaffected by the new predicate.
+# ─────────────────────────────────────────────────────────────────────────────
+F13="$TMP/case13.json"
+board '{
+  "review": [
+    {"id":"NO-GATE-ROW","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z"}
+  ]
+}' > "$F13"
+OUT13="$(run_qa_drain "$F13" 10)"
+check "I12 absent-gate row is NOT treated as future (AC-5)" \
+  "$(echo "$OUT13" | jq -r '.task_board.qa | map(.id) | join(",")')" "NO-GATE-ROW"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CASE 14 (I13, AC-6) — month-boundary and year-boundary fixture pair. Epoch
+# comparison (not string comparison) is used, but this is a regression proof,
+# not an assumption that string-compare would have failed.
+# ─────────────────────────────────────────────────────────────────────────────
+NOW_MONTH_BOUNDARY="2026-08-31T23:59:59Z"
+F14A="$TMP/case14a.json"
+board '{
+  "review": [
+    {"id":"MONTH-FUTURE","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","qa_not_before":"2026-09-01T00:00:00Z"},
+    {"id":"MONTH-PAST","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","qa_not_before":"2026-08-31T23:59:58Z"}
+  ]
+}' > "$F14A"
+OUT14A="$(run_qa_drain_at "$F14A" 10 "$NOW_MONTH_BOUNDARY")"
+check "I13 month-boundary: 1s-future gate (crosses into Sept) still EXCLUDES" \
+  "$(echo "$OUT14A" | jq -r '.task_board.qa | map(.id) | index("MONTH-FUTURE") // "absent"')" "absent"
+check "I13 month-boundary: 1s-past gate still INCLUDES" \
+  "$(echo "$OUT14A" | jq -r '.task_board.qa | map(.id) | index("MONTH-PAST") // "absent"')" "0"
+
+NOW_YEAR_BOUNDARY="2026-12-31T23:59:59Z"
+F14B="$TMP/case14b.json"
+board '{
+  "review": [
+    {"id":"YEAR-FUTURE","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","qa_not_before":"2027-01-01T00:00:00Z"},
+    {"id":"YEAR-PAST","status":"REVIEW","next_agent":"qa","priority":"P0","updated_at":"2026-08-01T00:00:00Z","qa_not_before":"2026-12-31T23:59:58Z"}
+  ]
+}' > "$F14B"
+OUT14B="$(run_qa_drain_at "$F14B" 10 "$NOW_YEAR_BOUNDARY")"
+check "I13 year-boundary: 1s-future gate (crosses into 2027) still EXCLUDES" \
+  "$(echo "$OUT14B" | jq -r '.task_board.qa | map(.id) | index("YEAR-FUTURE") // "absent"')" "absent"
+check "I13 year-boundary: 1s-past gate still INCLUDES" \
+  "$(echo "$OUT14B" | jq -r '.task_board.qa | map(.id) | index("YEAR-PAST") // "absent"')" "0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CASE 15 (AC-3, FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-
+# ROW-IN-QA) — devteam-qadrain-skip-revert.jq reverses one row's qa[] move
+# after a per-row outer_claim failed post-batch-move, and the row is picked
+# back up by the ordinary claim script on a subsequent invocation.
+# ─────────────────────────────────────────────────────────────────────────────
+F15="$TMP/case15.json"
+board '{
+  "qa": [
+    {"id":"STRANDED-REVIEW-ORIGIN","status":"QA","next_agent":"qa","priority":"P0","updated_at":"2026-08-25T20:21:26Z","claimed_at":"2026-08-26T04:00:00Z","claimed_by":"dev-team (review-lane qa-drain)","drain_source_lane":"review"}
+  ]
+}' > "$F15"
+OUT15="$(run_skip_revert "$F15" "STRANDED-REVIEW-ORIGIN" "2026-08-26T04:05:00Z")"
+check "AC-3 reverted row leaves qa[]" \
+  "$(echo "$OUT15" | jq -r '.task_board.qa | length')" "0"
+check "AC-3 reverted row lands back in review[] (its drain_source_lane)" \
+  "$(echo "$OUT15" | jq -r '.task_board.review | map(.id) | join(",")')" "STRANDED-REVIEW-ORIGIN"
+check "AC-3 status flipped QA -> REVIEW (matching source lane)" \
+  "$(echo "$OUT15" | jq -r '.task_board.review[0].status')" "REVIEW"
+check "AC-3 claimed_at/claimed_by/drain_source_lane all cleared" \
+  "$(echo "$OUT15" | jq -c '.task_board.review[0] | [has("claimed_at"),has("claimed_by"),has("drain_source_lane")]')" \
+  "[false,false,false]"
+check "AC-3 status_note records the revert (not charged)" \
+  "$(echo "$OUT15" | jq -r '.task_board.review[0].status_note | test("SKIP-REVERT"; "i")')" "true"
+check "AC-3 reverted row is picked back up by the ordinary claim script (proves 'subsequent tick')" \
+  "$(run_qa_drain_at <(echo "$OUT15") 10 "2026-08-26T04:06:00Z" | jq -r '.task_board.qa | map(.id) | join(",")')" \
+  "STRANDED-REVIEW-ORIGIN"
+
+# defensive no-op: id absent from qa[] -> unchanged
+F15B="$TMP/case15b.json"
+board '{"qa": [{"id":"OTHER-ROW","status":"QA"}]}' > "$F15B"
+check "AC-3 defensive no-op when the id is not present in qa[]" \
+  "$(run_skip_revert "$F15B" "MISSING-ID" | jq -S -c .)" "$(jq -S -c . "$F15B")"
+
+# defensive no-op: id present IN qa[] but a peer already progressed its status
+# past QA (e.g. DONE_VERIFIED) without yet moving it out of the lane array —
+# the revert must never clobber that.
+F15C="$TMP/case15c.json"
+board '{"qa": [{"id":"ALREADY-VERIFIED","status":"DONE_VERIFIED","drain_source_lane":"review"}]}' > "$F15C"
+check "AC-3 defensive no-op when the row already left status==QA (peer progressed it)" \
+  "$(run_skip_revert "$F15C" "ALREADY-VERIFIED" | jq -S -c .)" "$(jq -S -c . "$F15C")"
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
