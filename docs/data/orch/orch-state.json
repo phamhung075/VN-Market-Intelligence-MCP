@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PRECLAIM-INTENT-KEY-TTL-600-EXPIRES-UNDER-LONG-RUNNING-AGENT",
-    "next_agent": "architect",
-    "next_action": "Ready-Lane Consumer claim of FIX-PRECLAIM-INTENT-KEY-TTL-600-EXPIRES-UNDER-LONG-RUNNING-AGENT — spawn architect DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-26T19:13:49Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-26T19:34:19Z",
+    "updated_by": "architect",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23714,6 +23713,35 @@
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "architect",
         "updated_at": "2026-08-26T16:44:16Z"
+      },
+      {
+        "id": "FIX-PRECLAIM-INTENT-KEY-TTL-600-EXPIRES-UNDER-LONG-RUNNING-AGENT",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P0",
+        "size": "S",
+        "zone": ".claude/skills/dispatch-claim/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-26T01:22:10Z",
+        "created_by": "po",
+        "updated_at": "2026-08-26T19:34:19Z",
+        "updated_by": "architect",
+        "dedup_key": "preclaim:intent-key-ttl-600-no-heartbeat",
+        "files": [
+          ".claude/skills/dispatch-claim/CARD.md",
+          ".claude/skills/dispatch-claim/SKILL.md"
+        ],
+        "related": [
+          "FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW"
+        ],
+        "title": "PRE-CLAIM Phase B guards duplicate spawns with task_claim(intent:<agent>:<key>, ttl=600) and NO heartbeat renewal, so any agent running longer than 10 minutes outlives its own duplicate-spawn guard. architect and agent-father routinely run 10-25 minutes, so the guard inverts into a duplicate-ENABLER for most of a normal run.",
+        "status_note": "PO TRIAGE 2026-08-26T01:16Z — CONFIRMED TWICE ON MEASURED RUNTIMES, in the same tick, 2026-08-26. (i) architect ran 2026-08-26T00:37Z to 01:00Z = 1,369,909 ms (~22m50s); its task_release at return reported ok:true released:0, i.e. the lock was ALREADY GONE — an unguarded window of roughly 12m50s. (ii) agent-father the same tick ran 669,440 ms (~11m10s), also past 600s, and released:1 only because its release happened to race inside a re-claim window. IMPACT: a peer session running the same PRE-CLAIM sees the key free and spawns a duplicate of a still-live agent. The router-side 'Background agent still running' harness notice is out-of-band and is NOT visible to a peer terminal, so nothing else catches it. THIS IS A SIBLING, NOT A DUPLICATE, of FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW (currently review[]): that defect is the identical shape and its fix shipped as ecb825731, but it heartbeats task:<row-id> and does not touch the intent:<agent>:<key> namespace at all — which is precisely the namespace CARD.md itself calls the hard gate. DESIGN CONSTRAINT CARRIED FROM THE SIBLING, do not lose it: do NOT simply raise the constant. The sibling work demonstrated that an unbounded keepalive inverts the guard the other way, because then a dead agent key never expires and blocks every future spawn. Any bound must live OUTSIDE the renewed lock. Preferred direction: heartbeat the intent key while the spawned agent is provably live, with an externally-held bound. Source: signal committed as 53c9fe5b3, drained to the PO inbox by 786354728.",
+        "occurrence_6_20260826T0308Z": "6th confirmation, first with a measured duration. agent-father ran 1082s on FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (dev-team tick 2026-08-26T02:37Z); its intent:agent-father:main lock was claimed at dispatch with the CARD.md-mandated ttl=600 and had EXPIRED by return — router task_release returned released:0. Same tick, two peers under the same TTL released:1 (developer 772s, qa 631s), so this is not intermittent: it tracks runtime, and 600s is simply shorter than a normal specialist run. Consequence is the dedup lock inverting into a duplicate-ENABLER: for the final ~8 minutes of that run the intent key was free and any peer tick could have spawned a second agent-father on the same work. Cf. the identical inversion recorded for S2/ILC resume-key ttl=3600.",
+        "dispatch_lane": "agent-father",
+        "occurrence_count": 3,
+        "po_occ3_20260826T0729Z": "OCCURRENCE 3 + P1->P0 ESCALATION + backlog[]->ready[] PROMOTE, po 2026-08-26T07:29Z (triage-20260826T0707Z). Envelope 4428bf45 (type=recurring-bug, from=dev-team, priority=low — the LOW priority is the envelope's, not this row's). THIRD measured runtime confirmation in under 12 hours, and the first on `po` itself: intent:po:main + intent:po:triage were both claimed ttl_seconds=600 at ~06:00:30Z; po ran 1,009,293ms (16m49s) and returned ~06:17:20Z; BOTH task_release calls returned ok:true released:0 — i.e. already expired. Unguarded window ~7 minutes, during which session-presence held 2 live peer router sessions, either of which would have read the key as free. Second po sample the same day: 937s. So po, like architect (22m50s) and agent-father (11m10s) already recorded on this row, is unguarded for the TAIL OF ESSENTIALLY EVERY INVOCATION. WHY P0 (not impact-this-time — no duplicate po was actually spawned): 3/3 sampled runs across 3 different agent types measured the guard expired before the agent returned. This is not a tail risk, it is the steady state — the Phase B mutex is a duplicate-spawn ENABLER for the majority of every long run, fleet-wide, on the router's own hot path. Same inversion shape as the already-recorded S2/ILC resume-key ttl=3600 defect, but at 600s it fires far more often. WHY PROMOTED TO ready[]: the row sat at backlog[582] of 597. DRS's in-band tiebreak is ARRAY INDEX, not age, so a P0 minted at the tail of backlog[] ranks effectively last and would not have been reached. next_agent=architect is on the DRS-ratified allowlist, so ready[] is genuinely dispatchable for it. NEGATIVE CONTROL carried forward from the envelope, must survive into the fix: raising the ttl or heartbeating the intent lock MUST NOT make a genuinely dead session's lock un-reclaimable — orphan reclamation via the presence/Phase-A reaper path has to keep working.",
+        "architect_review_note": "Brief: docs/architecture-briefs/2026-08-26-fix-preclaim-intent-key-ttl600-spawned-agent-self-renewal.md.\nRoot cause: dev-team's task:<row-id> resume-key keepalive (sibling fix, already shipped) cannot\ntransfer to intent:<agent>:<key> because dev-team cannot itself call the spawn tool a level deeper\n(nested-spawn limitation) and exits within ms after handing off -- its own liveness proof is a LATER\ncron tick. intent: is claimed by the party that runs the REAL blocking spawn; that context is inert\n(no interleaved tool-call slot) for the agent's entire measured runtime (10-25min, 4 samples), so ONLY\nthe spawned agent is provably live throughout -- it must self-renew, nothing on the router side can.\nDesign: the claiming dispatcher embeds a SELF_RENEW_BLOCK text instruction into the spawn prompt it\nalready builds (reusing the already-passed coordination_session value -- no new plumbing); the spawned\nagent issues ONE task_heartbeat(intent:<agent>:<key>, owner_client_session=<dispatcher's session>,\nttl_seconds=3600) as one of its first tool calls. Base claim ttl (600s) UNCHANGED -- never simply\nraised. Single-shot, bounded, non-recurring: never makes a dead session's lock permanently unreclaimable\n(row's own negative control preserved); an agent that never reaches the instruction degrades\nbyte-identically to today's pre-fix behavior. Exact CARD.md (+1L) / SKILL.md (new Step 2.5b) diffs are\nin the brief, ready to apply verbatim. Verification plan (scratch coordination.db replay, never live)\nis brief section 4. NEXT: agent-father applies the two diffs and runs the verification plan."
       }
     ],
     "review": [
@@ -24467,38 +24495,7 @@
     },
     "last_triaged_at": "2026-08-26T18:13:24Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PRECLAIM-INTENT-KEY-TTL-600-EXPIRES-UNDER-LONG-RUNNING-AGENT",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": ".claude/skills/dispatch-claim/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "created_at": "2026-08-26T01:22:10Z",
-        "created_by": "po",
-        "updated_at": "2026-08-26T19:13:49Z",
-        "updated_by": "po (triage-20260826T0707Z)",
-        "dedup_key": "preclaim:intent-key-ttl-600-no-heartbeat",
-        "files": [
-          ".claude/skills/dispatch-claim/CARD.md",
-          ".claude/skills/dispatch-claim/SKILL.md"
-        ],
-        "related": [
-          "FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW"
-        ],
-        "title": "PRE-CLAIM Phase B guards duplicate spawns with task_claim(intent:<agent>:<key>, ttl=600) and NO heartbeat renewal, so any agent running longer than 10 minutes outlives its own duplicate-spawn guard. architect and agent-father routinely run 10-25 minutes, so the guard inverts into a duplicate-ENABLER for most of a normal run.",
-        "status_note": "PO TRIAGE 2026-08-26T01:16Z — CONFIRMED TWICE ON MEASURED RUNTIMES, in the same tick, 2026-08-26. (i) architect ran 2026-08-26T00:37Z to 01:00Z = 1,369,909 ms (~22m50s); its task_release at return reported ok:true released:0, i.e. the lock was ALREADY GONE — an unguarded window of roughly 12m50s. (ii) agent-father the same tick ran 669,440 ms (~11m10s), also past 600s, and released:1 only because its release happened to race inside a re-claim window. IMPACT: a peer session running the same PRE-CLAIM sees the key free and spawns a duplicate of a still-live agent. The router-side 'Background agent still running' harness notice is out-of-band and is NOT visible to a peer terminal, so nothing else catches it. THIS IS A SIBLING, NOT A DUPLICATE, of FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW (currently review[]): that defect is the identical shape and its fix shipped as ecb825731, but it heartbeats task:<row-id> and does not touch the intent:<agent>:<key> namespace at all — which is precisely the namespace CARD.md itself calls the hard gate. DESIGN CONSTRAINT CARRIED FROM THE SIBLING, do not lose it: do NOT simply raise the constant. The sibling work demonstrated that an unbounded keepalive inverts the guard the other way, because then a dead agent key never expires and blocks every future spawn. Any bound must live OUTSIDE the renewed lock. Preferred direction: heartbeat the intent key while the spawned agent is provably live, with an externally-held bound. Source: signal committed as 53c9fe5b3, drained to the PO inbox by 786354728.",
-        "occurrence_6_20260826T0308Z": "6th confirmation, first with a measured duration. agent-father ran 1082s on FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (dev-team tick 2026-08-26T02:37Z); its intent:agent-father:main lock was claimed at dispatch with the CARD.md-mandated ttl=600 and had EXPIRED by return — router task_release returned released:0. Same tick, two peers under the same TTL released:1 (developer 772s, qa 631s), so this is not intermittent: it tracks runtime, and 600s is simply shorter than a normal specialist run. Consequence is the dedup lock inverting into a duplicate-ENABLER: for the final ~8 minutes of that run the intent key was free and any peer tick could have spawned a second agent-father on the same work. Cf. the identical inversion recorded for S2/ILC resume-key ttl=3600.",
-        "dispatch_lane": "architect",
-        "occurrence_count": 3,
-        "po_occ3_20260826T0729Z": "OCCURRENCE 3 + P1->P0 ESCALATION + backlog[]->ready[] PROMOTE, po 2026-08-26T07:29Z (triage-20260826T0707Z). Envelope 4428bf45 (type=recurring-bug, from=dev-team, priority=low — the LOW priority is the envelope's, not this row's). THIRD measured runtime confirmation in under 12 hours, and the first on `po` itself: intent:po:main + intent:po:triage were both claimed ttl_seconds=600 at ~06:00:30Z; po ran 1,009,293ms (16m49s) and returned ~06:17:20Z; BOTH task_release calls returned ok:true released:0 — i.e. already expired. Unguarded window ~7 minutes, during which session-presence held 2 live peer router sessions, either of which would have read the key as free. Second po sample the same day: 937s. So po, like architect (22m50s) and agent-father (11m10s) already recorded on this row, is unguarded for the TAIL OF ESSENTIALLY EVERY INVOCATION. WHY P0 (not impact-this-time — no duplicate po was actually spawned): 3/3 sampled runs across 3 different agent types measured the guard expired before the agent returned. This is not a tail risk, it is the steady state — the Phase B mutex is a duplicate-spawn ENABLER for the majority of every long run, fleet-wide, on the router's own hot path. Same inversion shape as the already-recorded S2/ILC resume-key ttl=3600 defect, but at 600s it fires far more often. WHY PROMOTED TO ready[]: the row sat at backlog[582] of 597. DRS's in-band tiebreak is ARRAY INDEX, not age, so a P0 minted at the tail of backlog[] ranks effectively last and would not have been reached. next_agent=architect is on the DRS-ratified allowlist, so ready[] is genuinely dispatchable for it. NEGATIVE CONTROL carried forward from the envelope, must survive into the fix: raising the ttl or heartbeating the intent lock MUST NOT make a genuinely dead session's lock un-reclaimable — orphan reclamation via the presence/Phase-A reaper path has to keep working.",
-        "claimed_at": "2026-08-26T19:13:48Z",
-        "claimed_by": "dev-team (ready-lane consumer)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
