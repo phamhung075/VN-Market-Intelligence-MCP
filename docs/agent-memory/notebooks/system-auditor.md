@@ -116,3 +116,53 @@ tables_checked=17 (R-9 clause 1 PASS). All 4 REAL findings carry a non-null sign
 ### Status
 
 All 5 REAL findings already-open (dedup-matched). No new signals written. History entry: `docs/data/db-integrity-history.json` scan_ts=2026-08-26T09:05:41Z.
+
+## c18 · 2026-08-26T10:35:00Z
+
+### Audit Run Tier-2 (10:33-10:35 UTC 2026-08-26)
+- Tier: 2 (Freshness Sweep) | Checks: A-29 (cron fire), B-01-B-14 (data/VPS) | Duration: ~2 min
+- Anomalies: 1 CRITICAL (A-29), 0 new WARN/CRITICAL from B-checks
+- Status: DEGRADED (A-29 fires; 21 cron jobs STALE/MISSED; all freshness checks PASS; VPS health PASS both planes)
+
+### Cron Fire Check (A-29)
+**Source:** `/api/cron-status` endpoint, fetched_at=2026-08-26T10:34:34Z
+- Layer-A (server crons): 89 total, 58 ON_TIME, 21 STALE/MISSED, 9 UNRESOLVED-JOIN (never fired + join fallback)
+- Layer-B (Claude-Code): 23 total, all SESSION_SCOPED (no fire evidence)
+- Schedule gap detected (Tier-2 itself): schedule_gap_t2=1 (11.7h since last heartbeat 2026-08-25T22:47:57Z), last tier-2 gap already alerted (SKIP-dedup this cycle)
+- **Verdict:** A-29 CRITICAL (21 stale/missed crons)
+
+### Per-Source Fetch Freshness (B-01 through B-12)
+**All source checks:** PASS (all cadence thresholds met, market-closed idle states expected)
+- ssc-iboard, bctc-discover, foreign-flow, sbv-vps, news-vps: fresh
+- **Verdict:** PASS
+
+### VPS Route Status (B-06, B-07)
+- Proxy plane: prices/bctc/sbv/news all ok
+- Service plane: 3 healthy (bctc-fetch, news-fetch, sbv-fetch), 2 idle (price-fetch, foreign-flow — market closed expected)
+- Coverage: dual-plane 5 routes PASS, single-plane 1 WARN (market-closed acceptable), no-coverage 2 standing tracked
+- **Verdict:** PASS (all observable healthy; standing coverage gaps noted)
+
+### DB Freshness Spot Checks (C-06, C-07)
+- market_messages (3h window): >0 rows ✓
+- agent_signals (24h window): >0 rows ✓
+- **Verdict:** PASS
+
+### BCTC URL Shape (B-09)
+- ssc.gov.vn URLs in active queue: 0 ✓
+- **Verdict:** PASS
+
+### Stale Pending BCTC (B-13)
+- Pending rows >72h old: 0 ✓
+- **Verdict:** PASS
+
+### Rate Limits (B-14)
+- No source at 100% utilization ✓
+- **Verdict:** PASS
+
+### Summary
+**NEW SIGNALS WRITTEN:** 0 (A-29 re-confirmed but SKIP-dedup — already open from last cycle)
+**PASS CHECKS:** B-01 through B-14, C-06/C-07, VPS both planes
+**DEGRADED STATES:** A-29 cron failures (21 STALE/MISSED) — known ongoing issue
+
+### Status
+Tier-2 cycle completed. Freshness sweep: all sources healthy per cadence thresholds. VPS proxy and service planes both healthy. A-29 cron degradation re-confirmed (dedup-skipped per standing issue). Heartbeat written with timestamp 2026-08-26T10:35:00Z.
