@@ -138,3 +138,10 @@ Commits: 579e7c685 (triage-signals.md), 0bac54347 (orch-state.json terminal-flip
 - Live board `priority` field is a mixed P0-P3/high-low convention (measured: 61 P0, 317 P1, 82
   'high', 1 'HIGH', plus P2/P3/low/medium/normal/med) — flagged explicitly in the schema handoff so
   the P0/P1 hard-reject condition doesn't silently under-scope to only the P-tier rows.
+
+## EDIT 2026-08-26T20:28Z — task FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW, router-dispatched (QA rework return)
+- Change: corrected 3 false-claim prose instances in docs/agents/dev-team/flow/main.md asserting INCIDENT_CAP sits outside/never competes with the shared WIP<=2 slot -- wip_in_progress (scripts/lib/devteam-eligibility.jq) has no claimed_by filter and DOES count incident rows, a deliberate asymmetry already documented in that jq file (L153-157), not an oversight. Description-only fix, jq untouched (out of scope per QA remediation instruction).
+- Files modified: 1 (docs/agents/dev-team/flow/main.md, commit f44e4bc04)
+- Cascade: none
+- Validation: 3/3 false-claim instances found and corrected (QA cited 2 by stale line number; swept for a 3rd per dispatch instruction and found one at the ILC UNCONDITIONAL paragraph, not previously flagged)
+- Decision: re-worded to match scripts/lib/devteam-eligibility.jq own documented wording verbatim, per dispatch instruction not to invent new prose. Board: manually moved row review[] -> qa[] (status REVIEW -> QA, next_agent -> qa, commit stamped to f44e4bc04) via jq | scripts/orch-apply.sh -- NOT via the automated devteam-review-claim-qa-drain.jq script (this was a direct router-dispatched write, not a dev-team tick), so its BGFAN-1 claimed_at-correlated auto-dispatch will not discover this entry; flagged in the row status_note that a router hand-dispatch of qa (verify-committed mode) is the next required action. .head deliberately left byte-identical (confirmed via diff) -- this write path never touches it. orch-state.json NOT committed by this agent (router-owned file per commit_zone.excluded note in .claude/agents/agent-father.md).
