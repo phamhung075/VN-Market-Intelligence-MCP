@@ -1182,7 +1182,7 @@
         "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-verification",
-        "summary": "alert-commander writes the WRONG tick into its published-marker key and notebook header on 2 of the last 4 cycles, the 2 failures CONSECUTIVE (c265 03:20 for nominal 03:15; c266 03:35 for nominal 03:30). Root cause is a NAME COLLISION: cycle-bootstrap/SKILL.md Step -1 defines TICK as wall-clock rounded to a 5-min slot (a snapshot cache key), stage-dispatch-log.md defines <nominal_tick> as the cron instant (a dedup key) — both spelled 'tick', and the wrong one reaches the header on some cycles. MARKER_KEY is a cross-tick dedup mechanism, so a mis-derived key silently stops the gate from gating. No damage yet — both failing cycles exited silently and the spec forbids claiming a marker then. scheduled_utc IS already shipped in the prompt and IS ignored; the fix is consumer-side and must rename, not just re-derive.",
+        "summary": "alert-commander writes its OWN RAW WALL CLOCK (HH:MM at bootstrap, no rounding) into the published-marker key and notebook header where the spec requires the NOMINAL cron tick — 3 of the last 5 cycles, the 3 CONSECUTIVE (c265 03:20/nominal 03:15, c266 03:35/03:30, c267 03:49/03:45). This is the documented `date -u` fallback for a worker that does not consume the scheduled_utc line; alert-commander sits outside spawn-fanout.md ANCHOR-3's enumerated scope, so it was never wired to consume it — a SCOPE GAP, not an ANCHOR regression. RETRACTED in-row: my earlier floor-5 / round-5 / name-collision / snapshot-key mechanisms are ALL falsified by c267 (see RETRACTION block at end of detail) — read that before actioning. MARKER_KEY is a cross-tick dedup mechanism so a mis-derived key silently stops the gate gating; impact argument unaffected. No damage yet — all 3 failing cycles exited silently and the spec forbids claiming a marker then. OPEN: why c263/c264 got it right is unexplained and determines the shape of the fix.",
         "dedup_key": "alert_commander:nominal_tick_derivation_inconsistent_marker_key",
         "related": [
           "rtr-20260826T0257-snapshotagentconsumerclock",
@@ -1190,7 +1190,7 @@
           "ARCH-CRON-THREE-TIME-BASES-UNIFY"
         ],
         "action_requested": "Fold into the SAME landing as rtr-20260826T0257-snapshotagentconsumerclock — both arms are one root cause (agent invents a tick instead of reading the scheduled_utc line the dispatcher already ships) and one consumer-side edit closes both. Do NOT reopen the FIX-CHEF-MARKER-KEY-ANCHOR-* rows; all 4 are correctly DONE_VERIFIED and alert-commander was outside ANCHOR-3s enumerated scope.",
-        "detail": "SECOND consumer of \"the tick\" inside alert-commander derives it differently from the first, and this one is load-bearing for dedup rather than for a cache.\n\nWHAT IS SPECIFIED: docs/agents/alert-commander/flow/stage-dispatch-log.md:96 defines the notebook header as `## c<NNN> · <ISO-timestamp> (slot=<dispatched slot>, tick=<nominal tick>)`, and :39 defines the published-marker gate key as MARKER_KEY=\"published:alert-commander-market:<nominal_tick>\", with <nominal_tick> = \"this cycle's dispatched tick\". Both want the NOMINAL cron instant.\n\nMEASURED, 3 consecutive cycles (header read from docs/agent-memory/notebooks/alert-commander.md; nominal tick read from this dispatcher's own preflight verdict for the same fire):\n  c263 — wall 02:54:46Z, nominal 02:45 → header 02:45. Floored to the 15-min boundary. CORRECT.\n  c264 — wall 03:09:45Z, nominal 03:00 → header 03:00. Floored. CORRECT.\n  c265 — wall 03:21:45Z, nominal 03:15 → header 03:20. ROUNDED to a 5-min multiple. WRONG.\n03:20 is not a cron boundary for this slot (cron is */15 2-8 * * 1-5). It is exactly the key the snapshot lookup uses. So the agent did not merely mis-floor — it appears to have written the SNAPSHOT-lookup key into the field the spec reserves for the NOMINAL tick. Two different \"tick\" concepts live in this flow with no naming that separates them, and this cycle they cross-contaminated.\n\nWHY THIS IS WORSE THAN THE SNAPSHOT ARM: a wrong snapshot key costs a cache miss and falls through to get_cycle_bootstrap — zero data-integrity impact, which is exactly what rtr-20260826T0257-snapshotagentconsumerclock (already drained to architect) documents. A wrong MARKER_KEY is different: the published-marker gate is one of the two mechanisms slot-claim.md names as providing CROSS-TICK dedup (the other is last_fired boundary dedup in cowork-match-slots.js). A marker written under published:alert-commander-market:03:20 does not suppress a later cycle checking published:alert-commander-market:03:15, so the gate silently stops gating. Same failure class as feedback_chef_releases_published_marker_enables_peer_double_publish.\n\nWHAT IS NOT CLAIMED — limits of this evidence:\n  (a) NO damage observed. c265 hit the firing gate and exited silently, and stage-dispatch-log.md:38-39 forbids claiming the marker on a silent-exit cycle, so no marker was written with the bad key. The risk is latent, realised only on a FIRING cycle that mis-derives.\n  (b) INTERMITTENT, 1 of 3. Do not model this as deterministic; a fix verified on one cycle proves nothing.\n  (c) This is probably a SCOPE GAP, not a regression of the FIX-CHEF-MARKER-KEY-ANCHOR-* rows (all 4 DONE_VERIFIED, correctly). spawn-fanout.md's ANCHOR-3 comment enumerates the slots its SCHEDULED_UTC_LINE was meant to reach — chef-morning/eod/evening, digest-daily, digest-sunday, fb-daily, tnb-audit — and alert-commander is NOT in that list. So the producer half was never intended to serve this agent. Do not reopen the ANCHOR rows on the strength of this.\n\nTHE FIX IS ALREADY IN TRANSIT AND STILL DISCARDED: this dispatcher composes SCHEDULED_UTC_LINE into EVERY spawn prompt unconditionally, alert-commander included — the 03:15Z prompt carried the literal line scheduled_utc=2026-08-26T03:15:00.000Z. `grep -rn scheduled_utc docs/agents/alert-commander/` returns ZERO HITS (re-confirmed this tick). The agent is guessing a value it is already being handed. One consumer-side edit — derive nominal_tick from the scheduled_utc line, fall back to floor-to-cron-boundary only when absent — fixes THIS arm and the snapshot arm in rtr-20260826T0257 in the same landing, and needs no producer change.\n\nNOT a duplicate of ARCH-CRON-THREE-TIME-BASES-UNIFY (checked): that SPIKE is about timezone/DST bases across scheduling PLANES (UTC vs Asia/Ho_Chi_Minh vs machine-local France). This is tick-KEY derivation inside a single UTC plane. Archive (docs/data/orch/archive/2026-06.json, 2026-08.json) searched by subject — no prior row.\n=== AMENDED 2026-08-26T03:40Z (router, cowork 03:30Z tick) — SECOND OCCURRENCE, CONSECUTIVE. Two corrections to the text above and one new root cause. ===\n\nCORRECTION 1 — limit (b) above UNDERSTATES the frequency. It says \"INTERMITTENT, 1 of 3\". Measured now over four consecutive cycles:\n  c263 — wall 02:54:46Z, nominal 02:45 -> header 02:45. CORRECT (nominal).\n  c264 — wall 03:09:45Z, nominal 03:00 -> header 03:00. CORRECT (nominal). Its SNAPSHOT lookup separately used 03:05 — i.e. this cycle held the two values apart correctly.\n  c265 — wall 03:21:45Z, nominal 03:15 -> header 03:20. WRONG.\n  c266 — wall 03:37:46Z, nominal 03:30 -> header 03:35. WRONG.\nSo: 2 of 4, and the two failures are CONSECUTIVE, not scattered. Limit (b) as originally written invites treating this as noise. It is not noise — the last two cycles both failed.\n\nCORRECTION 2 — the original text calls the wrong value \"ROUNDED to a 5-min multiple\". That is imprecise and would send a fixer looking for the wrong arithmetic. c266's wall clock 03:37:46 rounds-to-NEAREST-5 as 03:40, but the header says 03:35. The operation is FLOOR-to-5, and more importantly it is applied to the wall clock AT BOOTSTRAP TIME, not to the notebook-write time.\n\nNEW ROOT CAUSE — a NAME COLLISION across two skill files, which explains why the same agent gets it right some cycles and wrong others:\n  .claude/skills/cycle-bootstrap/SKILL.md Step -1 defines, verbatim:\n      TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 -> \"02:05\")\n      SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json\n  docs/agents/alert-commander/flow/stage-dispatch-log.md:39,:96 define MARKER_KEY and the notebook header in terms of <nominal_tick>.\n  BOTH quantities are spelled \"tick\". They are not the same number and never were. On c265 and c266 the header value equals cycle-bootstrap's Step -1 TICK exactly (c265 bootstrap ~03:20 -> 03:20; c266 bootstrap ~03:35 -> 03:35, the file it reported hitting was 55s old at that moment). On c263/c264 the header value equals the nominal cron tick instead. Which of the two identically-named values reaches the header varies per cycle. That is the defect: not bad arithmetic, but two live variables sharing one name across the two files this agent reads every cycle. A fix that only corrects the arithmetic will regress.\n\nEMPIRICAL REFUTATION OF THE OBVIOUS PRODUCER-SIDE FIX — the 03:30Z spawn prompt carried the literal line scheduled_utc=2026-08-26T03:30:00.000Z (this dispatcher composes SCHEDULED_UTC_LINE unconditionally; verified in the prompt it sent). The agent still wrote 03:35. So the value is demonstrably SUPPLIED and IGNORED — not missing. Any fix framed as \"start shipping scheduled_utc to alert-commander\" is already done and will change nothing. The edit must be consumer-side, inside alert-commander's flow, and should RENAME as well as re-derive so the collision cannot reappear.\n\nINCIDENTAL, bears on the sibling row rtr-20260826T0257-snapshotagentconsumerclock: c266 reported HITTING docs/data/cycle-snapshot-03:34.json. Its own Step -1 rule can only ever compute a 5-minute-multiple path (03:35), so an exact-path lookup could not have found a file named 03:34 — the consumer is evidently not following its own documented exact-match rule either. Note this when landing that row: the consumer's lookup behaviour is itself undocumented, so \"fix the name\" may not be sufficient on its own. Contrast c265, which DID follow the exact-match rule and therefore missed a snapshot that was 1 minute old.\n\nSTILL NOT CLAIMED: no damage yet. c266, like c265, hit the firing gate and exited silently, and stage-dispatch-log.md:38-39 forbids claiming the marker on a silent-exit cycle. The bad key has still never been written. The risk remains latent until a FIRING cycle mis-derives. Limits (a) and (c) above stand unchanged.\n"
+        "detail": "SECOND consumer of \"the tick\" inside alert-commander derives it differently from the first, and this one is load-bearing for dedup rather than for a cache.\n\nWHAT IS SPECIFIED: docs/agents/alert-commander/flow/stage-dispatch-log.md:96 defines the notebook header as `## c<NNN> · <ISO-timestamp> (slot=<dispatched slot>, tick=<nominal tick>)`, and :39 defines the published-marker gate key as MARKER_KEY=\"published:alert-commander-market:<nominal_tick>\", with <nominal_tick> = \"this cycle's dispatched tick\". Both want the NOMINAL cron instant.\n\nMEASURED, 3 consecutive cycles (header read from docs/agent-memory/notebooks/alert-commander.md; nominal tick read from this dispatcher's own preflight verdict for the same fire):\n  c263 — wall 02:54:46Z, nominal 02:45 → header 02:45. Floored to the 15-min boundary. CORRECT.\n  c264 — wall 03:09:45Z, nominal 03:00 → header 03:00. Floored. CORRECT.\n  c265 — wall 03:21:45Z, nominal 03:15 → header 03:20. ROUNDED to a 5-min multiple. WRONG.\n03:20 is not a cron boundary for this slot (cron is */15 2-8 * * 1-5). It is exactly the key the snapshot lookup uses. So the agent did not merely mis-floor — it appears to have written the SNAPSHOT-lookup key into the field the spec reserves for the NOMINAL tick. Two different \"tick\" concepts live in this flow with no naming that separates them, and this cycle they cross-contaminated.\n\nWHY THIS IS WORSE THAN THE SNAPSHOT ARM: a wrong snapshot key costs a cache miss and falls through to get_cycle_bootstrap — zero data-integrity impact, which is exactly what rtr-20260826T0257-snapshotagentconsumerclock (already drained to architect) documents. A wrong MARKER_KEY is different: the published-marker gate is one of the two mechanisms slot-claim.md names as providing CROSS-TICK dedup (the other is last_fired boundary dedup in cowork-match-slots.js). A marker written under published:alert-commander-market:03:20 does not suppress a later cycle checking published:alert-commander-market:03:15, so the gate silently stops gating. Same failure class as feedback_chef_releases_published_marker_enables_peer_double_publish.\n\nWHAT IS NOT CLAIMED — limits of this evidence:\n  (a) NO damage observed. c265 hit the firing gate and exited silently, and stage-dispatch-log.md:38-39 forbids claiming the marker on a silent-exit cycle, so no marker was written with the bad key. The risk is latent, realised only on a FIRING cycle that mis-derives.\n  (b) INTERMITTENT, 1 of 3. Do not model this as deterministic; a fix verified on one cycle proves nothing.\n  (c) This is probably a SCOPE GAP, not a regression of the FIX-CHEF-MARKER-KEY-ANCHOR-* rows (all 4 DONE_VERIFIED, correctly). spawn-fanout.md's ANCHOR-3 comment enumerates the slots its SCHEDULED_UTC_LINE was meant to reach — chef-morning/eod/evening, digest-daily, digest-sunday, fb-daily, tnb-audit — and alert-commander is NOT in that list. So the producer half was never intended to serve this agent. Do not reopen the ANCHOR rows on the strength of this.\n\nTHE FIX IS ALREADY IN TRANSIT AND STILL DISCARDED: this dispatcher composes SCHEDULED_UTC_LINE into EVERY spawn prompt unconditionally, alert-commander included — the 03:15Z prompt carried the literal line scheduled_utc=2026-08-26T03:15:00.000Z. `grep -rn scheduled_utc docs/agents/alert-commander/` returns ZERO HITS (re-confirmed this tick). The agent is guessing a value it is already being handed. One consumer-side edit — derive nominal_tick from the scheduled_utc line, fall back to floor-to-cron-boundary only when absent — fixes THIS arm and the snapshot arm in rtr-20260826T0257 in the same landing, and needs no producer change.\n\nNOT a duplicate of ARCH-CRON-THREE-TIME-BASES-UNIFY (checked): that SPIKE is about timezone/DST bases across scheduling PLANES (UTC vs Asia/Ho_Chi_Minh vs machine-local France). This is tick-KEY derivation inside a single UTC plane. Archive (docs/data/orch/archive/2026-06.json, 2026-08.json) searched by subject — no prior row.\n=== AMENDED 2026-08-26T03:40Z (router, cowork 03:30Z tick) — SECOND OCCURRENCE, CONSECUTIVE. Two corrections to the text above and one new root cause. ===\n\nCORRECTION 1 — limit (b) above UNDERSTATES the frequency. It says \"INTERMITTENT, 1 of 3\". Measured now over four consecutive cycles:\n  c263 — wall 02:54:46Z, nominal 02:45 -> header 02:45. CORRECT (nominal).\n  c264 — wall 03:09:45Z, nominal 03:00 -> header 03:00. CORRECT (nominal). Its SNAPSHOT lookup separately used 03:05 — i.e. this cycle held the two values apart correctly.\n  c265 — wall 03:21:45Z, nominal 03:15 -> header 03:20. WRONG.\n  c266 — wall 03:37:46Z, nominal 03:30 -> header 03:35. WRONG.\nSo: 2 of 4, and the two failures are CONSECUTIVE, not scattered. Limit (b) as originally written invites treating this as noise. It is not noise — the last two cycles both failed.\n\nCORRECTION 2 — the original text calls the wrong value \"ROUNDED to a 5-min multiple\". That is imprecise and would send a fixer looking for the wrong arithmetic. c266's wall clock 03:37:46 rounds-to-NEAREST-5 as 03:40, but the header says 03:35. The operation is FLOOR-to-5, and more importantly it is applied to the wall clock AT BOOTSTRAP TIME, not to the notebook-write time.\n\nNEW ROOT CAUSE — a NAME COLLISION across two skill files, which explains why the same agent gets it right some cycles and wrong others:\n  .claude/skills/cycle-bootstrap/SKILL.md Step -1 defines, verbatim:\n      TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 -> \"02:05\")\n      SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json\n  docs/agents/alert-commander/flow/stage-dispatch-log.md:39,:96 define MARKER_KEY and the notebook header in terms of <nominal_tick>.\n  BOTH quantities are spelled \"tick\". They are not the same number and never were. On c265 and c266 the header value equals cycle-bootstrap's Step -1 TICK exactly (c265 bootstrap ~03:20 -> 03:20; c266 bootstrap ~03:35 -> 03:35, the file it reported hitting was 55s old at that moment). On c263/c264 the header value equals the nominal cron tick instead. Which of the two identically-named values reaches the header varies per cycle. That is the defect: not bad arithmetic, but two live variables sharing one name across the two files this agent reads every cycle. A fix that only corrects the arithmetic will regress.\n\nEMPIRICAL REFUTATION OF THE OBVIOUS PRODUCER-SIDE FIX — the 03:30Z spawn prompt carried the literal line scheduled_utc=2026-08-26T03:30:00.000Z (this dispatcher composes SCHEDULED_UTC_LINE unconditionally; verified in the prompt it sent). The agent still wrote 03:35. So the value is demonstrably SUPPLIED and IGNORED — not missing. Any fix framed as \"start shipping scheduled_utc to alert-commander\" is already done and will change nothing. The edit must be consumer-side, inside alert-commander's flow, and should RENAME as well as re-derive so the collision cannot reappear.\n\nINCIDENTAL, bears on the sibling row rtr-20260826T0257-snapshotagentconsumerclock: c266 reported HITTING docs/data/cycle-snapshot-03:34.json. Its own Step -1 rule can only ever compute a 5-minute-multiple path (03:35), so an exact-path lookup could not have found a file named 03:34 — the consumer is evidently not following its own documented exact-match rule either. Note this when landing that row: the consumer's lookup behaviour is itself undocumented, so \"fix the name\" may not be sufficient on its own. Contrast c265, which DID follow the exact-match rule and therefore missed a snapshot that was 1 minute old.\n\nSTILL NOT CLAIMED: no damage yet. c266, like c265, hit the firing gate and exited silently, and stage-dispatch-log.md:38-39 forbids claiming the marker on a silent-exit cycle. The bad key has still never been written. The risk remains latent until a FIRING cycle mis-derives. Limits (a) and (c) above stand unchanged.\n\n=== RETRACTION 2026-08-26T03:55Z (router, cowork 03:45Z tick) — c267 FALSIFIED THE MECHANISM I ASSERTED IN THE 03:40Z AMENDMENT. Read this block before acting on anything above it. ===\n\nBefore spawning the 03:45Z cycle I wrote a falsifiable prediction into docs/signals/cowork-team-20260826T034948Z.json: if the floor-5 mechanism claimed above were right, c267 would write tick=03:50. It wrote tick=03:49. The prediction failed and the mechanism is wrong.\n\nWITHDRAWN — three claims, all mine, all refuted by c267:\n  (i)  \"the operation is FLOOR-to-5 applied to the wall clock at bootstrap\" — floor-5 of 03:49:28 is 03:45, not 03:49. FALSE.\n  (ii) \"the header value equals cycle-bootstrap/SKILL.md Step -1's TICK exactly\" (round-to-nearest-5) — that yields 03:50 for c267, not 03:49. FALSE. The NAME COLLISION framing built on top of this is therefore UNSUPPORTED as stated and should not be actioned. Two variables named \"tick\" do genuinely exist across those two files, but the observed wrong value matches NEITHER of them, so the collision is not demonstrated to be the mechanism.\n  (iii) from the ORIGINAL filing: \"it appears to have written the SNAPSHOT-lookup key into the field the spec reserves for the NOMINAL tick\" — c266's snapshot filename was 03:34 while its header said 03:35, so the header is not the snapshot key either. FALSE. c267's header (03:49) equalling its snapshot filename (03:49) is a coincidence of the producer and the consumer landing in the same wall-clock minute.\n\nWHAT SURVIVES — one mechanism, consistent with all three failing cycles. The header equals the agent's OWN RAW WALL CLOCK, HH:MM, at bootstrap time, with no rounding of any kind. Reconstructed from each cycle's snapshot created_at plus the file age the agent itself reported:\n  c265 — snapshot 03:19 (created 03:19:29Z) REJECTED by the agent; bootstrap ~03:20 -> header 03:20. nominal 03:15.\n  c266 — snapshot 03:34 (created 03:34:39Z) hit at \"55s old\" -> bootstrap ~03:35 -> header 03:35. nominal 03:30.\n  c267 — snapshot 03:49 (created 03:49:15Z) hit at \"13s old\" -> bootstrap ~03:49:28 -> header 03:49. nominal 03:45.\nThree for three. This is plain `date -u +%H:%M` at bootstrap — which is EXACTLY the degraded fallback that spawn-fanout.md's own ANCHOR-3 comment predicts for a worker that does not consume the scheduled_utc line: \"emitting nothing lets each worker's own absent-branch fall back to `date -u` exactly as it did before this token existed.\" alert-commander is outside ANCHOR-3's enumerated slot list, so it was never wired to consume that line, and it is falling back exactly as documented. The defect is a SCOPE GAP, as limit (c) of the original filing already said — that part stands and is now the whole story.\n\nFREQUENCY, corrected again: 3 of 5, and the 3 are CONSECUTIVE (c265, c266, c267). The 03:40Z amendment said 2 of 4. The original filing said 1 of 3. It has been wrong on every cycle since it started and has not self-corrected.\n\nSTILL UNEXPLAINED, stated as an open question rather than guessed at: c263 (wall ~02:52, header 02:45) and c264 (wall ~03:06, header 03:00) wrote the NOMINAL tick correctly, which the raw-wall-clock mechanism does not account for. I do not have a mechanism for that and am not going to invent one — two failed hypotheses in two ticks is enough. Whoever lands this should treat \"why did c263/c264 get it right\" as a real question, because the answer determines whether the fix is \"start consuming scheduled_utc\" or \"stop an existing correct path from being bypassed\".\n\nUNCHANGED AND STILL LOAD-BEARING: scheduled_utc was supplied in the spawn prompt on ALL THREE failing cycles (03:15/03:30/03:45, composed unconditionally by this dispatcher) and ignored every time; `grep -rn scheduled_utc docs/agents/alert-commander/` is still ZERO HITS. No damage yet — all three failing cycles exited silently and stage-dispatch-log.md:38-39 forbids claiming the marker on a silent exit, so the bad key has still never been written. The consequence argument in the original filing (MARKER_KEY is one of two cross-tick dedup mechanisms per slot-claim.md, so a mis-derived key silently stops the gate gating) is unaffected by this retraction — only the mechanism was wrong, not the impact.\n"
       },
       {
         "id": "rtr-20260826T0336-datatierelapsednarrated",
@@ -1439,8 +1439,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-25T16:24:00Z",
-    "_updated_by": "po (triage-20260825T1612Z)",
+    "_updated_at": "2026-08-26T03:48:12Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10479,9 +10479,9 @@
         "created_by": "po (triage-signals agent_flow_defect, dev-team tick 2026-08-07T05:07Z)",
         "origin_signal_id": "router-2026-08-07T05:24:00Z-chef-commit-gap",
         "title": "unified-agent chef-dish.md Step 8e commit gap — own_paths/git-add pathspec never includes docs/data/unified-agent-synthesis-<date>-<slot>.json, so every non-silent dish cycle writes an artifact its own commit step structurally cannot commit; plus a same-day execution-level Step 8e skip that left chef-morning's own notebook uncommitted too",
-        "status_note": "AC: (1) chef-dish.md Step 8e own_paths/pathspec includes the synthesis JSON the agent's own Step 7.6 contract mandates writing, so the artifact lands in git HEAD in the same cycle that produced it; (2) a post-commit self-verification (git show --stat on the agent's own SHA, same pattern as po/main.md AC-3) asserts BOTH the notebook and the synthesis JSON are in HEAD before the cycle may RETURN success — closes the execution-level skip, which a widened pathspec alone does not; (3) regression: a chef cycle that writes a synthesis JSON and does not commit it must fail loud, not return clean. Owner agent-father (docs/agents/unified-agent/flow/ is its commit zone).",
+        "status_note": "AC: (1) chef-dish.md Step 8e own_paths/pathspec includes the synthesis JSON the agent's own Step 7.6 contract mandates writing, so the artifact lands in git HEAD in the same cycle that produced it; (2) a post-commit self-verification (git show --stat on the agent's own SHA, same pattern as po/main.md AC-3) asserts BOTH the notebook and the synthesis JSON are in HEAD before the cycle may RETURN success — closes the execution-level skip, which a widened pathspec alone does not; (3) regression: a chef cycle that writes a synthesis JSON and does not commit it must fail loud, not return clean. Owner agent-father (docs/agents/unified-agent/flow/ is its commit zone).\n\n[po/triage 2026-08-26T03:48Z] FOLD +1 live occurrence (2 envelopes, ONE incident). No new row minted -- the router's flow-defect envelope ca53b2c4f proposed filing this as a SEPARATE arm from the qa-lane P0 FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS; that separation is CORRECT (that P0's dedup_key scopes to actor:router-session, this is actor=unified-agent with a different root cause) but the router did not find THIS row, which already covers it exactly. Both envelopes fold here.\nOCCURRENCE 2026-08-26T02:23:05Z, cowork 02:15Z tick, slot=chef-intraday: commit-sweep-guard blocked a BARE commit (prior_warns=3 threshold=3 outcome=blocked, actor 7a47f7c6-8c8b-4939-929d-461d20cd32da) staging docs/agent-memory/notebooks/unified-agent.md + docs/data/unified-agent-synthesis-2026-08-26-intraday.json. Agent then retried with an explicit pathspec and landed e3f16b6c6 with exactly those 2 files -- correct outcome, but only after tripping the guard. Per triage-signals.md's bug-escalation rule this payload begins '[sweep-guard] BARE commit about to absorb' and carries escalated=true, so it is a TRUE POSITIVE BY CONSTRUCTION and a repeat-offender-after-block; it is NOT an agent-discipline failure, it is a MISSING INSTRUCTION, which is precisely what this row names.\nMECHANISM RE-CONFIRMED: chef-dish.md line 890 defines Step 7.6's write target FILEPATH=docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json and line 861 explicitly authorizes that write against the agent frontmatter; Step 8e's commit block (lines 1093-1098) omits it from ALL THREE of the own_paths comment, the git add pathspec, and the git commit trailing pathspec. The agent is instructed to write a file its own commit step cannot commit, so it must either strand the file or improvise.\nAC ADDITION: use the CONCRETE resolved filename the cycle already computed at Step 7.6, NOT a glob -- a glob pathspec would let this cycle's commit absorb a peer cycle's synthesis JSON, converting a strand into a sweep.\nCLASS NOTE + CORRECTION TO THE ENVELOPE'S RECOMMENDATION: the envelope calls this the THIRD confirmed instance of 'agent writes a documented path, the same flow omits it from its own commit pathspec' (prior two routed 2026-08-25 in signal 9b716c031: news-scout stage-log-notify.md:40 and market-watcher eod.md:101, both write docs/analysis-briefs/*.md and both omit it) and recommends PO commission a fleet-wide sweep predicate. That predicate ALREADY EXISTS as scripts/verify-fleet-commit-pathspec.sh; it is currently RED with 6 FAILs and is tracked at FIX-VERIFYFLEETPATHSPEC-LINEKEYED-ALLOWLIST-AND-FORWARDONLY-LOOKAHEAD (backlog, developer). So the correct fleet action is to LAND that row, not to commission a new sweep -- and once it is green it should be re-run to confirm whether the three known instances are the whole population.",
         "note": "MINTED 2026-08-07 by po from router-authored signal docs/signals/processed/router-2026-08-07T05:24:00Z-chef-commit-gap.json (type=agent_flow_defect, suggested_owner=agent-father). TWO DISTINCT DEFECTS on one flow step, both RAW-verified by the reporting router before the signal was written: (a) CONTRACT-LEVEL, standing — the Step 8e own_paths list never names docs/data/unified-agent-synthesis-<date>-<slot>.json even though Step 7.6 mandates writing one every non-silent cycle; found dirty for BOTH the 2026-08-07 chef-intraday (04:35) and chef-morning (05:15) cycles, and git log on unified-agent-synthesis-2026-08-07-intraday.json showed only the unrelated notebook-only commit 6e6ecc60c while the file itself was dirty at investigation time. (b) EXECUTION-LEVEL, that cycle only — chef-morning (05:15 tick) left its OWN notebook uncommitted, i.e. Step 8e did not run at all (no commit hash in the agent's return, git status dirty), which is a DIFFERENT failure from (a) because the notebook IS already in the documented own_paths. Contrast evidence the router recorded: alert-commander and system-auditor's same-window cycles both cited real commit hashes. Router recovered both files out-of-band via commit 83bb4359e (explicit pathspec) — that is recovery, NOT a fix; root cause is untouched. CLASS: commit_zone-excluded ships (memory project_commit_zone_excluded_agent_ships_board_stays_stale), here for a DATA artifact rather than the board. ADJACENCY worth noting for whoever picks this up: the very artifact being lost, unified-agent-synthesis-<date>-<slot>.json, is the same file family FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING is re-keying — an uncommitted synthesis is unrecoverable once the next cycle clobbers the path, so these two defects compound. DEDUP: GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (backlog, agent-father) covers COMPUTING/persisting the synthesis via flow+endpoint, not the commit pathspec — different mechanism, no fold.",
-        "updated_at": "2026-08-07T05:44:11Z"
+        "updated_at": "2026-08-26T03:54:44Z"
       },
       {
         "id": "FIX-DEDUPCHECK-MATCHEDTASKID-UNANCHORED-SUBSTRING-MISLABEL",
@@ -10500,8 +10500,8 @@
         "po_parent_20260807T0856": "Regression against FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (AC-1), which authored this script on 2026-08-06; that parent is no longer in any live lane (cold-evicted). Its AC-3 replay sampled 9 tables and demonstrably did NOT include macro_indicators — the colliding row FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD was already on the board when that replay ran (its own title references 2026-07-28), so the sample gap, not a later board change, is why this shipped green.",
         "po_minted_by": "po",
         "po_minted_at": "2026-08-07T08:56:03Z",
-        "updated_at": "2026-08-15T00:43:00Z",
-        "status_note": "[po/triage 2026-08-14T13:37Z] FOLD of telegram report 4860 + PRIORITY BUMP to P1 + SCOPE ADDITION. Same script, same root cause (unanchored jq contains()), now with a live masking consequence. New occurrence 2026-08-14T08:21:41Z: a macro_indicators STALE finding (data 21h old) was dedup'd to FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD, an unrelated .task_board.head schema bug, matched ONLY because that row's title mentions the dev-macro-indicators agent/zone — a table name colliding with an agent/zone-name substring. SCOPE ADDITION (do not close on the code fix alone): the real macro_indicators staleness finding is now PERMANENTLY MASKED as already-tracked and will never re-emit, so the fix MUST include a re-scan/replay of findings suppressed by a false match, not just a word-boundary/exact-field match on future scans. Fixing the matcher without replaying the masked findings leaves the actual data-staleness invisible. PRIORITY BUMPED because this defect is actively hiding a live data-integrity finding, not merely mislabelling one.",
+        "updated_at": "2026-08-26T03:54:44Z",
+        "status_note": "[po/triage 2026-08-14T13:37Z] FOLD of telegram report 4860 + PRIORITY BUMP to P1 + SCOPE ADDITION. Same script, same root cause (unanchored jq contains()), now with a live masking consequence. New occurrence 2026-08-14T08:21:41Z: a macro_indicators STALE finding (data 21h old) was dedup'd to FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD, an unrelated .task_board.head schema bug, matched ONLY because that row's title mentions the dev-macro-indicators agent/zone — a table name colliding with an agent/zone-name substring. SCOPE ADDITION (do not close on the code fix alone): the real macro_indicators staleness finding is now PERMANENTLY MASKED as already-tracked and will never re-emit, so the fix MUST include a re-scan/replay of findings suppressed by a false match, not just a word-boundary/exact-field match on future scans. Fixing the matcher without replaying the masked findings leaves the actual data-staleness invisible. PRIORITY BUMPED because this defect is actively hiding a live data-integrity finding, not merely mislabelling one.\n\n[po/triage 2026-08-26T03:48Z] FOLD +1 occurrence AND +1 MANDATORY REPLAY TARGET. Envelope 2c3cd107d (router, detector_defect, MED) reports the SAME root cause this row names -- DATA-tier dedup matches on TABLE NAME with no discrimination of what KIND of row it matched -- with a second live masking consequence. Occurrence: signal_outcomes STALE/HIGH (outcome evaluation stalled 31 days) was deduped into ALPHA-S5-TRUTH-LEDGER-BACKTEST, a BACKLOG feature row about building backtest calibration ON TOP OF signal_outcomes, next_agent unset, untouched since 2026-07-14. The match is pure table-name collision: the epic's title mentions signal_outcomes as a data SOURCE, it is not a row that could ever fix the stall. Net effect: a HIGH defect finding is now suppressed under an unowned P2 FEATURE epic and has no owner and no actionable row anywhere.\nThis is the SECOND finding confirmed masked by this defect (the first, macro_indicators STALE -> FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD, is already in this row's 2026-08-14 SCOPE ADDITION). The replay list this row's own AC already requires is therefore: (1) macro_indicators staleness, (2) signal_outcomes 31-day outcome-evaluation stall. Fixing the matcher without replaying BOTH leaves two live data-integrity findings invisible.\nADDITIONAL DISCRIMINATOR the fix should carry, beyond word-boundary/exact-field matching: a matched row whose next_agent is unset AND whose lane is backlog AND whose class is FEATURE cannot legitimately absorb a defect finding -- an unowned feature epic is not a tracking row. Both false matches so far would have been rejected by that predicate alone.\nCROSS-REF: the signal_outcomes stall itself has a partially-covering row, FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION (backlog, owner=po, next_agent UNSET). That row's own next_agent gap is why the finding had nowhere correct to land even absent this defect; it needs an owner assigned independently of this fix.",
         "updated_by": "po",
         "po_fold_20260815T0040": "FOLD of telegram report 4860 (2026-08-14T08:24:50Z) — a LIVE instance of exactly this defect, and the first one with a measured masking cost. scripts/db-integrity-dedup-check.sh dedup'd a macro_indicators STALE finding (scan 2026-08-14T08:21:41Z, data 21h old) into FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD — an unrelated .task_board.head schema bug that matched ONLY because its title names the dev-macro-indicators agent/zone. Consequence: a genuine 21h data-staleness finding is now permanently masked as already-tracked and will never re-surface, because the dedup verdict is sticky. This upgrades the row from 'emits a WRONG matched_task_id' (cosmetic mislabel) to 'silently discards real findings' (data-integrity blind spot). Fix must anchor the table-name match on a word boundary / exact field rather than jq contains() over the whole title string. Regression corpus: table name 'macro_indicators' must NOT match a title containing 'dev-macro-indicators'."
       },
@@ -13684,7 +13684,7 @@
         "next_agent": "dev-mcp-server",
         "created_at": "2026-08-23T09:04:15Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T09:04:38Z",
+        "updated_at": "2026-08-26T03:54:44Z",
         "updated_by": "po",
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/coordination/",
@@ -13692,7 +13692,7 @@
         ],
         "depends_on": [],
         "verification_gate": "root_cause_named_with_a_measurement_not_a_hypothesis_then_one_followup_FIX_row_minted",
-        "status_note": "OBSERVED 2026-08-23 by router during cron re-arm recovery. Measurement, not inference: task_list_held(kind='session-presence') returned exactly 1 row while >=3 distinct live owner_client_session values were demonstrably active. Re-probed ~08:5xZ the same morning: STILL exactly 1 row (007e33e4-b453-4bb3-8ab1-ef31495906a3, dev-team, current_task=preflight). The router's own session was absent from the roster until hand-registered seconds later.\n\nWHY THIS IS NOT COSMETIC:\n  - .claude/skills/dispatch-claim/CARD.md Phase A.5 presence roster is near-useless at this fidelity.\n  - Every cron re-arm skill (cron-cowork-team / cron-detect-loop / cron-standalone-team, Step 1b.1) names session-presence as its PRIMARY staleness oracle. An undercounting roster makes a LIVE peer read as DEAD -> double-arm. That is exactly the already-CONFIRMED-2x failure in memory feedback_cron_standalone_step1b1_presence_absence_false_dead_double_arm.md.\n  - Sibling of the recorded dashboard 'Chua tung chay' gap.\n\nROOT CAUSE IS UNKNOWN — DO NOT GUESS, DO NOT SHIP A FIX ON A HYPOTHESIS. Three candidate planes, measure each:\n  (a) agents skipping Step 0a self-registration — countable: grep the flow docs for the Step 0a call, then diff against which agent ids ever appear as owner_agent on a session-presence row over a 24h window.\n  (b) ttl_seconds 1800 expiring with no renewal hook on most families — countable: compare row created_at/heartbeat_at against 1800s for every family; cowork has a renewal hook (scripts/agents-flow/cowork-tick-preflight.sh Step 2), most do not.\n  (c) a write-path defect in the coordination store — countable: issue N known-distinct task_claim(kind='session-presence') calls and read back the row count.\nDeliverable: name the plane WITH the measurement that proves it, then mint ONE follow-up FIX row. Do not fold the fix into this SPIKE.\n\nBLOCKS-BY-COUPLING (not a hard dep): FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE's architect brief needs the answer to decide whether the presence roster is repaired or removed from the cron-guard decision path entirely. Deliberately NOT wired as depends_on so the architect brief is not stalled — the architect may proceed with 'remove from decision path' and this SPIKE then only governs Phase A.5."
+        "status_note": "OBSERVED 2026-08-23 by router during cron re-arm recovery. Measurement, not inference: task_list_held(kind='session-presence') returned exactly 1 row while >=3 distinct live owner_client_session values were demonstrably active. Re-probed ~08:5xZ the same morning: STILL exactly 1 row (007e33e4-b453-4bb3-8ab1-ef31495906a3, dev-team, current_task=preflight). The router's own session was absent from the roster until hand-registered seconds later.\n\nWHY THIS IS NOT COSMETIC:\n  - .claude/skills/dispatch-claim/CARD.md Phase A.5 presence roster is near-useless at this fidelity.\n  - Every cron re-arm skill (cron-cowork-team / cron-detect-loop / cron-standalone-team, Step 1b.1) names session-presence as its PRIMARY staleness oracle. An undercounting roster makes a LIVE peer read as DEAD -> double-arm. That is exactly the already-CONFIRMED-2x failure in memory feedback_cron_standalone_step1b1_presence_absence_false_dead_double_arm.md.\n  - Sibling of the recorded dashboard 'Chua tung chay' gap.\n\nROOT CAUSE IS UNKNOWN — DO NOT GUESS, DO NOT SHIP A FIX ON A HYPOTHESIS. Three candidate planes, measure each:\n  (a) agents skipping Step 0a self-registration — countable: grep the flow docs for the Step 0a call, then diff against which agent ids ever appear as owner_agent on a session-presence row over a 24h window.\n  (b) ttl_seconds 1800 expiring with no renewal hook on most families — countable: compare row created_at/heartbeat_at against 1800s for every family; cowork has a renewal hook (scripts/agents-flow/cowork-tick-preflight.sh Step 2), most do not.\n  (c) a write-path defect in the coordination store — countable: issue N known-distinct task_claim(kind='session-presence') calls and read back the row count.\nDeliverable: name the plane WITH the measurement that proves it, then mint ONE follow-up FIX row. Do not fold the fix into this SPIKE.\n\nBLOCKS-BY-COUPLING (not a hard dep): FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE's architect brief needs the answer to decide whether the presence roster is repaired or removed from the cron-guard decision path entirely. Deliberately NOT wired as depends_on so the architect brief is not stalled — the architect may proceed with 'remove from decision path' and this SPIKE then only governs Phase A.5.\n\n[po/triage 2026-08-26T03:48Z] FOLD -- BLAST-RADIUS ADDITION, no new row, and explicitly NOT a reopen of the Step 2.4 Axis C row (that row passed QA and is DONE_VERIFIED; the finding below is a hazard introduced by a sanctioned design, not an AC failure). Envelope 847066d1d (router, system-issue, WARN).\nA NEW CONSUMER now depends on this broken oracle in its most dangerous direction. Step 2.4 Axis C (landed 4f72c694c) promotes the Phase A.5 presence roster -- a read its OWN SKILL.md labels 'advisory; non-blocking' -- into a PERMISSIVE dispatch gate: a current-period cowork-slot marker whose owner_client_session is ABSENT from the roster is skipped as 'abandoned, not live', allowing the dispatch to proceed. Presence-absence is exactly the ambiguity this SPIKE exists to measure (a live session between presence renewals reads identical to a dead one), and here the ambiguity resolves in the direction whose failure mode is a DOUBLE PUBLISH to a real channel.\nWHY THIS RAISES THIS SPIKE'S VALUE: until now the roster's undercount produced conservative errors (a live session read as absent merely lost a claim). Axis C inverts the sign -- the same undercount now GRANTS a dispatch. The SPIKE's output must therefore include a directional statement, not just a count: for each consumer, does roster-absence fail safe or fail open. Two known fail-open consumers today: Step 2.4 Axis C, and FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE (ready[], developer).\nCross-ref memory: feedback_step24_cowork_collision_probe_ttl_exceeds_cadence_daily_false_positive and feedback_router_almost_rearmed_live_peer_cron_markers_20260822 both record that heartbeat AND presence lie for one renewal cadence after a close."
       },
       {
         "id": "FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP",
@@ -15243,7 +15243,8 @@
         "blocked_reason": "WP-B depends on UC-SDF-P2, which is still BACKLOG/plan_only/next_agent=ba and unclaimed. WP-A is fully delivered.",
         "blocked_at": "2026-08-24T08:59:19Z",
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P1",
-        "updated_at": "2026-08-24T08:59:20Z"
+        "updated_at": "2026-08-26T03:54:44Z",
+        "status_note": "\n\n[po/triage 2026-08-26T03:48Z] FOLD -- recurrence counter only, row remains BLOCKED, no re-mint. All six cowork-fire envelopes this tick report calendar_status='open' as a carried defect on what they count as the 28th through 33rd+ consecutive tick, and every one of them explicitly flags the value as reported-as-read rather than as-believed (i.e. the dispatchers are correctly refusing to trust it). This is the server-side computation defect this row exists to fix. Noted also: Step 4.3's calendar suppression is a SUPERSEDED no-op, so the wrong value is currently non-binding on suppression decisions -- which is why this has stayed BLOCKED without visible damage, and why it must not be read as harmless once Step 4.3 is un-superseded."
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE",
@@ -15341,7 +15342,7 @@
         "title": "cycle_snapshot_promoted has been false on 17 consecutive cowork ticks today: Step 4.7 names the file by wall clock at write (cycle-snapshot-HH:MM.json, offset +1..+6 min) while emitPressureStateTool derives the lookup key from the NOMINAL tick — no file the producer writes is reachable by the consumer, and cycle-snapshot-latest.json is 32.5h stale as a result",
         "status": "BACKLOG",
         "zone": "multi",
-        "priority": "P1",
+        "priority": "P0",
         "size": "M",
         "owner": "po",
         "next_agent": "architect",
@@ -15351,7 +15352,7 @@
         "baseline_pass": true,
         "created_at": "2026-08-24T11:02:59Z",
         "created_by": "po (triage-20260824T1050Z, Pipeline-A cowork-fire fold — 17 envelopes, one row)",
-        "updated_at": "2026-08-26T02:34:23Z",
+        "updated_at": "2026-08-26T03:54:44Z",
         "updated_by": "po",
         "dedup_key": "cycle_snapshot:wallclock_name_vs_nominal_lookup",
         "files": [
@@ -15369,11 +15370,9 @@
           "AC-5 VERIFY ON A REAL TICK, not a fixture: show cycle_snapshot_promoted=true and cycle-snapshot-latest.json carrying the current day's tick, on a live cowork fire. A fixture-only pass does not close this."
         ],
         "po_not_a_duplicate": "Non-terminal lanes swept for emitPressureStateTool|cycle-snapshot-latest|tick-snapshot|cycle_snapshot_promoted before minting. Four in-flight neighbours inspected and rejected: DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS (ready, agent-father) edits the SAME Step 4.7 but is about capturing the won_slots array, not the filename key; DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (backlog, BLOCKED, pm) is about read-before-write ordering on the signal bus, a different plane; DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION (ready, agent-father) extracts the bootstrap skill and would TOUCH the third spelling in AC-1, so coordinate with it; ARCH-CRON-THREE-TIME-BASES-UNIFY (backlog, medium, architect) is about timezone bases (UTC vs Asia/Ho_Chi_Minh vs machine-local CEST), not about wall-clock-vs-nominal within one base. No row names either code site.",
-        "po_premise_amendment_20260824T2030Z": "[po/triage 2026-08-24T20:30Z — PREMISE AMENDMENT, per Pipeline-A bug-escalation envelope 3af16e23777f whose own action_requested is \"Amend the existing backlog row. Do NOT mint a new row.\" NO new row minted; this row keeps its id, priority P1 and next_agent=architect.] HALF OF THIS ROW TITLE IS FALSIFIED. Measured 2026-08-24T20:11Z by direct observation of all three consumers spawned by the 20:00Z cowork tick plus the promoter source. (1) CONSUMER LEG — FALSIFIED. This row asserts the consumer \"looks up by nominal tick\" and that no file the producer writes is reachable. alert-commander, spawned that tick, reported CYCLE_SNAPSHOT hit (docs/data/cycle-snapshot-20:03.json, 2min fresh) and USED it, skipping get_macro_snapshot. Consumers resolve by FRESHNESS WINDOW, not by exact nominal tick. The wall-clock filename does not break consumers at all. Any fix scoped to \"make consumers tolerant\" is therefore work on a component that is not broken. (2) PROMOTER LEG — CONFIRMED, and it is the SOLE broken component. apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts promotes cycle-snapshot-<HH:MM>.json to cycle-snapshot-latest.json only if a file exists at tick_id own HH:MM. tick_id was 2026-08-24T20:00:00Z so it queried HH:MM=20:00; Step 4.7 (tick-snapshot.md) computes FILE_TICK=$(date -u +%H:%M) and wrote cycle-snapshot-20:03.json; no 20:00 file exists, no source found, cycle_snapshot_promoted=false. The row root_cause paragraph already pins both code sites correctly — it is the framing (\"producer vs consumer\") that is wrong, not the source reading. RENAME THE DEFECT: producer names by wall-clock, PROMOTER looks up by nominal tick. (3) DISCRIMINATE TWO FAILURE MODES WHEN FIXING — this is new and not in the row. The promoter has a stale-source fail-safe (FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE) that refuses a source older than SNAPSHOT_MAX_STALENESS_MS. It did NOT fire here. docs/data/ currently holds cycle-snapshot-20:02.json (created 2026-08-23T20:02:42Z), -20:18 (08-23T20:18:26Z) and -21:01 (08-23T21:01:32Z) — genuine prior-day residue inside the 1440-min prune window — but none is named 20:00, so the promoter found NO SOURCE AT ALL. Today case is {promoted:false, stale:false}; the fail-safe case is {promoted:false, stale:true}. They are different bugs and AC-3 (make the miss non-silent) must distinguish them in the return, not collapse them. (4) THE RESIDUE HAZARD IS REAL AND MUST SURVIVE THE FIX — reinforces AC-4. If a wall-clock write ever lands exactly on a :00/:15/:30/:45 minute, the promoter WOULD find a same-HH:MM file from a PRIOR DAY (filenames carry no date) and the staleness fail-safe becomes the only thing between that and downstream agents consuming day-old macro data as current. Any change to Step 4.7 that switches to the nominal tick must KEEP that fail-safe and should prune residue BY DATE, not only by age. (5) ONE-LINE FIX DIRECTION, unchanged in spirit from AC-1: Step 4.7 should derive FILE_TICK from the nominal tick already present in the tick context (the same value passed to emit_pressure_state as tick_id), never from date -u +%H:%M. (6) COUNTER UPDATE: consecutive cycle_snapshot_promoted=false ticks now 13 (20:15 nominal wrote 20:18). cycle-snapshot-latest.json created_at=2026-08-23T00:07:50Z, 44h stale. SEPARATE OBSERVATION worth carrying into AC-3: emit_pressure_state RETURNED cycle_snapshot_promoted=false but PERSISTED null to pressure-state.json (same non-persistence class as pressure_mode), so that file cannot be used to audit promotion history at all.",
-        "status_note": " || FOLD +1 occurrence, po triage 2026-08-25T01:07Z: cowork-fire envelope a9d6e71d (fire_time 2026-08-25T00:07:51Z, classification FIRE, errors[] empty, 4/4 slots won) self-reports in its own note 'Step 4.7 snapshot written as cycle-snapshot-00:05.json (wall clock) but emit_pressure_state looked up nominal tick 00:00 -> cycle_snapshot_promoted:false, recurring wall-clock-vs-nominal defect'. Exact match for this row's dedup_key cycle_snapshot:wallclock_name_vs_nominal_lookup, now confirmed still firing after the 17-consecutive-tick run this row was minted on. No re-mint.",
-        "po_fold_20260825T0727Z": "FOLD, 2 cowork envelopes (03:42Z confirmation + 03:56Z self-correction). Confirmation: reproductions=10, cycle_snapshot_promoted=false, race confirmed by ADVANCE PREDICTION on 3 samples (not post-hoc). CORRECTION THE IMPLEMENTER MUST READ BEFORE BUILDING — the same dispatcher retracted its own earlier remedy: 'READ THE SPEC, NOT THE AGENT PROSE — the consumer has NO nearest-file scan. My prior tolerance-window remedy was designed against behaviour I inferred from one agent sentence and never verified' (spec source .claude/skills/cycle-bootstrap/SKILL.md). So a read-side tolerance window is NOT the fix; do not build it. Fourth measurement, same day: writer uses raw-minute, reader-SPEC uses round-5, reader-ACTUAL uses raw-minute, promoter uses nominal-quarter — 36 of 46 existing names are unreachable by spec. Fix the NAMING contract across all four parties, not the lookup.",
-        "occurrence_count": 4,
-        "po_fold_20260825": "SUPERSEDED FIX SHAPE — 5 self-correcting cowork envelopes; only the 12:42Z one holds. WITHDRAWN by their own author: 'structurally unhittable'; 'reader ignores scheduled_utc'; and 'writer and reader must agree on a key' — the framing this row briefly carried. HOLDS: writer and reader BOTH sample RAW wall clock, at two different instants, at minute granularity, so no rounding rule can bridge them and neither live copy (cycle-bootstrap/SKILL.md:58 rounds, step-0-cowork/SKILL.md:39 does not) is 'the correct' one. DECISIVE: at 12:08:48Z the reader enumerated the dir, SAW a valid ~1-2min-old cycle-snapshot-12:05.json, and discarded it on a self-invented 'exact-match rule' that grep finds in NEITHER copy. THE KEY NEED NOT AGREE AT ALL. Smaller fix, no writer change: drop the key lookup, take the NEWEST cycle-snapshot-*.json inside the <=7min freshness gate both copies already specify. FULL DESIGN: DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION (same file, same step)."
+        "status_note": "[po/triage 2026-08-26T03:48Z] FOLD x3 arms + PRIORITY BUMP P1->P0. No new row (one arm carried an explicit do-not-mint flag; honoured). FULL PROSE + ALL MIGRATED HISTORY: detail_ref -> docs/agent-memory/decisions/triage-20260826T0348Z-po.md#cycle-snapshot (that file also holds this row's former po_premise_amendment_20260824T2030Z, po_fold_20260825T0727Z and po_fold_20260825 keys verbatim at §2.1-2.4; they were removed from the hot row only to satisfy the row-prose ceiling, nothing was discarded).\n(a) DIRECTORY CENSUS (envelope f9b11f827, amends the drained 02:15Z filing), measured 02:30Z: 36 cycle-snapshot-*.json total, 4 created TODAY, 32 created the PRIOR DAY, names spanning 02:20-21:05. Prior-day files are the MAJORITY of the directory, not prune residue at the window edge. Producer cadence is a fixed 15 min every day, so today's filename pool and yesterday's are nearly the same set: the directory is pre-seeded RIGHT NOW with a 24h-old decoy at nearly every tick name today will use for ~19 more hours. A stale HIT is the DEFAULT path; a clean miss is the exception. Confirmed hits 02:05Z and 02:20Z (alert-commander c261 read cycle-snapshot-02:20.json created 2026-08-25T02:20:38Z, exactly 24h old, while a ~1-min-old cycle-snapshot-02:19.json sat unconsulted in the same directory). BASIS FOR THE P0 BUMP: the only thing between this and a consumer acting on day-old macro data is each consumer's own inside-the-file date check -- per-consumer, contracted nowhere, and no future consumer is obliged to implement it.\n(b) THIRD CLOCK (envelope cf74c03f9): .claude/skills/cycle-bootstrap/SKILL.md Step -1 derives its tick from its OWN POST-spawn wall clock. 4/4 consecutive alert-commander cycles today (c261-c264), fresh-hit rate 0/4. NAME-SPACE mismatch, not a +1min offset -- consumer rounds to 5-min multiples, producer names by unrounded date -u +%H:%M. SEQUENCING: landing the producer-side rename ALONE makes THIS arm permanently, deterministically dead. Both arms must land together.\n(c) MARKER_KEY (envelope e7bd57fd4): alert-commander derives <nominal_tick> inconsistently between its published-marker key and its notebook header (c263/c264 correct, c265 wrote 03:20 where nominal was 03:15). MARKER_KEY is a cross-tick dedup mechanism, so a mis-derived key silently stops the gate from gating; failure mode is a DOUBLE PUBLISH to a real channel. No damage yet. Folded here ONLY because the envelope claims the same one-line consumer fix closes both (b) and (c) -- architect MUST verify that claim before scoping and split it out if it does not hold.\nFIX SHAPE UNCHANGED (settled at the migrated po_fold_20260825): drop the key lookup, take the NEWEST cycle-snapshot-*.json inside the <=7min freshness gate both copies already specify.\nSTILL DO NOT: (i) round the producer's filename to the nominal tick -- already withdrawn; it makes the producer's name collide with the prior day's EXACTLY rather than approximately. (ii) Widen the prune age threshold -- the prune window (1440 min) EQUALS the filename namespace period (1440 min) by construction, so every HH:MM name has a same-named prior-day twin alive in its final minutes; widening makes it worse.\nRECURRENCE: the 6 cowork-fire envelopes this tick report cycle_snapshot_promoted=false on the 36th-41st consecutive tick. cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z (~75h stale).",
+        "occurrence_count": 41,
+        "detail_ref": "docs/agent-memory/decisions/triage-20260826T0348Z-po.md#cycle-snapshot"
       },
       {
         "id": "FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL",
@@ -16480,8 +16479,8 @@
         "files": [
           "docs/agents/cowork-team/flow/spawn-fanout.md"
         ],
-        "status_note": "Reported by the cowork-team dispatcher in two consecutive fire envelopes (01ba03d4 01:36:50Z, d9e0fe31 02:07:40Z) with no board row, so it keeps being re-reported. PO reproduced it live on this host 2026-08-25T02:5xZ and ALSO falsified the proposed remedy — do not apply the reporter's fix as written.\n\nDOC LITERAL, docs/agents/cowork-team/flow/spawn-fanout.md:191 (Step 5.1 DEGRADED gate):\n  uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'\n\nMEASURED, same shell, back to back:\n  as written                  -> 1        (真 load 1.65; splits on this host's comma DECIMAL separator and keeps the integer part)\n  with LC_ALL=C prefix        -> 1.652.893.70   (MALFORMED)\nWhy the proposed fix is worse: under LC_ALL=C uptime prints '1.65 2.89 3.70' — period decimals, SPACE separated. -F',' then finds no comma, $1 becomes the whole three-number string, and gsub strips the spaces, concatenating all three load averages into one garbage token. The reporter's own framing (harmless at load 2.48 vs threshold 24, latent at 24.9 -> 24 passing <=24) is right about the DEFECT and wrong about the REMEDY: it converts a conservative under-read into a value that will not compare numerically at all.\n\nALSO CORRECT THE CITED PRECEDENT: the envelopes cite 'scripts/verify-a30-mcp-memory-reclamation.sh already carries the LC_ALL=C pin'. That path does not exist (the script is scripts/audits/verify-a30-mcp-memory-reclamation.sh) and grep -rl LC_ALL scripts/ does not list it either — LC_ALL appears in scripts/agents-flow/cron-marker-liveness-probe.sh, scripts/agents-flow/auditor-tier1-probe.sh, scripts/audits/mock-guard.sh and scripts/audits/commit-convention-audit.sh. Whoever takes this must not copy a pin from a file that has none.\n\nAC: pin the locale AND fix the field split together so the extractor returns a well-formed float under both locales — e.g. LC_ALL=C uptime | sed -E 's/.*load average[s]?: //' | awk '{print $1}' — and add a two-case regression (comma-decimal locale, period-decimal locale) asserting a numeric result and a correct >24 DEGRADED trip at 24.9. Fix the doc literal at :191; any script copying it must be fixed in the same pass.",
-        "updated_at": "2026-08-25T12:36:14Z",
+        "status_note": "Reported by the cowork-team dispatcher in two consecutive fire envelopes (01ba03d4 01:36:50Z, d9e0fe31 02:07:40Z) with no board row, so it keeps being re-reported. PO reproduced it live on this host 2026-08-25T02:5xZ and ALSO falsified the proposed remedy — do not apply the reporter's fix as written.\n\nDOC LITERAL, docs/agents/cowork-team/flow/spawn-fanout.md:191 (Step 5.1 DEGRADED gate):\n  uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,\"\",$1); print $1}'\n\nMEASURED, same shell, back to back:\n  as written                  -> 1        (真 load 1.65; splits on this host's comma DECIMAL separator and keeps the integer part)\n  with LC_ALL=C prefix        -> 1.652.893.70   (MALFORMED)\nWhy the proposed fix is worse: under LC_ALL=C uptime prints '1.65 2.89 3.70' — period decimals, SPACE separated. -F',' then finds no comma, $1 becomes the whole three-number string, and gsub strips the spaces, concatenating all three load averages into one garbage token. The reporter's own framing (harmless at load 2.48 vs threshold 24, latent at 24.9 -> 24 passing <=24) is right about the DEFECT and wrong about the REMEDY: it converts a conservative under-read into a value that will not compare numerically at all.\n\nALSO CORRECT THE CITED PRECEDENT: the envelopes cite 'scripts/verify-a30-mcp-memory-reclamation.sh already carries the LC_ALL=C pin'. That path does not exist (the script is scripts/audits/verify-a30-mcp-memory-reclamation.sh) and grep -rl LC_ALL scripts/ does not list it either — LC_ALL appears in scripts/agents-flow/cron-marker-liveness-probe.sh, scripts/agents-flow/auditor-tier1-probe.sh, scripts/audits/mock-guard.sh and scripts/audits/commit-convention-audit.sh. Whoever takes this must not copy a pin from a file that has none.\n\nAC: pin the locale AND fix the field split together so the extractor returns a well-formed float under both locales — e.g. LC_ALL=C uptime | sed -E 's/.*load average[s]?: //' | awk '{print $1}' — and add a two-case regression (comma-decimal locale, period-decimal locale) asserting a numeric result and a correct >24 DEGRADED trip at 24.9. Fix the doc literal at :191; any script copying it must be fixed in the same pass.\n\n[po/triage 2026-08-26T03:48Z] FOLD +6 consecutive confirmations, no re-mint, no priority change. All six cowork-fire envelopes in this tick's inbox self-report the defect in carried_defects, each naming spawn-fanout.md Step 5.1's own LOAD_1MIN expression (uptime | awk -F',') truncating the true load to its integer part on this locale-comma host: 4.50->4 (02:21Z), 9.32->9 (02:36Z), 5,28->5 (02:53Z), 3,76->3 (03:08Z), 3,47->3 (03:20Z), 3,18->3 (03:36Z). Every envelope independently states the defect is IN THE SPEC, not a caller improvisation, and that it is currently NON-BINDING because the threshold is 24 (12 cores x factor 2) -- no verdict has been affected. Priority deliberately left at P3: this is a latent correctness bug that only becomes a real comparison error if a future threshold is set near an integer boundary. Recorded so the count is not lost, not to escalate.",
+        "updated_at": "2026-08-26T03:54:44Z",
         "occurrence_count": 6,
         "updated_by": "po",
         "po_occurrence_6_20260825": "OCCURRENCE 6, reported in the 2026-08-25T08:08Z cowork tick telemetry: uptime yielded the comma-decimal '1,90' through the flow's parse. Verdict unaffected THIS tick only because 1.90 vs threshold 24 fails open — the truncation is silent whenever the load is genuinely near threshold, which is exactly when it matters. Remedy supplied by the reporter, recorded so the implementer does not re-derive it: `uptime | awk -F'load averages?:' '{print $2}' | awk '{v=$1; gsub(\",\",\".\",v); print v}'`. DO NOT pin LC_ALL=C — pinning it produces the concatenation garbage this row's own title already flags as the bad remedy."
@@ -17699,6 +17698,59 @@
         ],
         "status_note": "Filed by agent-father while closing FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (review[]). Not urgent — no signal is currently being silently lost (the any-unknown-type fallback still produces a durable artifact); this is a detection-latency/hygiene gap, not a data-loss gap.",
         "updated_at": "2026-08-26T03:04:04Z"
+      },
+      {
+        "id": "FIX-QADRAIN-DONE-TO-QA-SCORES-BACKWARD-CONSERVATION-ABORTS-WHOLE-DRAIN",
+        "title": "QA-Drain self-deadlocks: the claim script unions done[] by design while orch-conservation-check ranks done ABOVE qa, so every done->qa pick scores BACKWARD -- at >=2 such rows EVERY orch-apply write aborts and takes the forward-moving review[] rows down with it, and the done[] rows can only leave done[] via the drain they are blocking",
+        "owner": "po",
+        "next_agent": "architect",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "scripts/",
+        "created_at": "2026-08-26T03:48:12Z",
+        "dedup_key": "qadrain:done-to-qa-backward-lane-rank|conservation-abort-deadlock",
+        "origin_signal_id": "rtr-20260826T0325-qadrain-conservation-deadlock",
+        "files": [
+          "scripts/devteam-review-claim-qa-drain.jq",
+          "scripts/orch-conservation-check.mjs"
+        ],
+        "status_note": "MINTED by po triage 2026-08-26T03:48Z from router system-issue envelope d5eabd0c0 (CRITICAL). MECHANISM INDEPENDENTLY RE-VERIFIED IN-FILE THIS TICK, not taken on the envelope's word: scripts/devteam-review-claim-qa-drain.jq's own selection comment states 'candidate lanes: .task_board.review[] UNION .task_board.done[]', a DELIBERATE widening per architect brief docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md (done[] was a terminal-LOOKING lane with zero consumers, so nothing produced the DONE_VERIFIED token deps_satisfied() requires). scripts/orch-conservation-check.mjs:216 declares FLAT_TASK_LANES = [backlog,ready,in_progress,review,qa,done,done_verified] and :378 derives LANE_RANK straight from that array order, so done=5 and qa=4 and :430 scores done->qa as BACKWARD. :498 reads MAX_UNDECLARED_BACKWARD_MOVES default 1 and :500 aborts above it.\nTWO SHIPPED COMPONENTS DISAGREE ABOUT WHAT 'done' MEANS -- neither is individually wrong, the LANE VOCABULARY is. This board uses done[] = developer-complete AWAITING QA and done_verified[] = post-QA terminal (evidence: the blocked rows carry status=DONE AND next_agent=qa; a row still naming qa as next agent is by definition not terminal). LANE_RANK is a single FLAT array reused for a board with TWO terminal lanes and a NON-LINEAR DONE->QA->DONE_VERIFIED path.\nMEASURED LIVE 2026-08-26T03:22Z: review[] eligible (status=REVIEW,next=qa)=2, done[] eligible (status=DONE,next=qa)=2 -- exceeding the tolerance of 1 by exactly one row. First attempt aborted with '[orch-conservation-check] ABORTED -- lane-placement violation: 2 task row(s) moved BACKWARD ... exceeding the tolerated 1 undeclared backward move(s)'; rows drained on that attempt = 0 of 4 eligible, INCLUDING 3 P0. Both done[]-origin rows carried updated_at=2026-08-26T01:23:29Z, the same stamp -- one batch write earlier that night created the deadlock, which is why the lane drained normally before that day and why the defect only became observable then.\nWHY DEADLOCK AND NOT THROTTLE: a done[]-origin row leaves done[] ONLY by being claimed into qa[] by this same script. While >=2 sit there every invocation aborts, so none is ever claimed, so the count never falls back to 1. Stable at >=2 forever without outside intervention. Blast radius is the whole batch -- strictly-forward review[]-origin rows are discarded along with it, so a lane holding 27 review rows drains ZERO.\nCURRENT STATE (checked at mint time): done[] holds 6 rows and NONE currently carries next_agent=qa, so the deadlock is DISARMED right now. It re-arms the moment two done rows are flipped to next_agent=qa. Do not read the present green as a fix.\nWORKAROUND ALREADY USED, EXPLICITLY NOT A FIX: the 03:22Z router re-ran with ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES set to exactly the two ids (the hatch the guard's own abort message documents), scoped after diffing candidate-vs-live across all seven lanes to confirm nothing else moved non-forward; the batch of 4 then landed (3 P0 + 1 P1), review 29->27, qa 3->7, done 8->6. A router hand-setting a safety-bypass env var every time the lane is selected is not durable -- the next tick, and every peer session, hits the same wall with no memory of the analysis.\nAC: (1) two or more done[]-origin rows with next_agent=qa are claimable by scripts/devteam-review-claim-qa-drain.jq in a SINGLE orch-apply write with NO caller-set ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES and no raised tolerance; (2) a genuine stale-full-doc revert of >=2 rows STILL aborts (negative control -- prove the guard is not merely disarmed); (3) a fixture replays the exact 03:22Z shape (2 review + 2 done eligible) and lands 4 rows.\nFIX DIRECTION -- architect's call, three shapes ranked by the reporter: (1) teach the lane-placement dimension that done->qa is legitimate when the row carries next_agent==\"qa\", i.e. exempt exactly the transition the qa-drain script is designed to make -- narrowest, keeps the guard fully armed against real stale-revert writes, no vocabulary change; (2) have devteam-review-claim-qa-drain.jq emit the declaration itself for its own done[]-origin picks so no caller ever needs the env var -- localizes the knowledge in the component that holds the intent; (3) split the lane vocabulary so the rank array stops conflating 'developer done' with 'verified done' -- correct but widest blast radius, every consumer of FLAT_TASK_LANES.\nHARD FORBID: do NOT resolve this by raising CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES. That tolerance is what catches genuine stale-full-doc reverts (see memory feedback_orchapply_cas_window_misses_caller_read_transform_gap); raising it to cover N done-origin rows disarms it for exactly the class it exists to catch.\nRELATED, NOT DUPLICATE: memory feedback_caller_readback_lane_narrower_than_claim_script_silently_kills_lane records the SECONDARY drain dying on the SAME review-union-done design -- there the CALLER's readback was narrower than the script's selector; here the CONSERVATION GUARD rejects the union's done-half outright. Same union, two consumers, two different silent-death mechanisms. Worth scoping together. Also related and distinct: FIX-QADRAIN-NO-TASKID-LEVEL-CLAIM-DUPLICATE-QA-SPAWN (duplicate spawn, not conservation) and FIX-DONELANE-DEVTEAM-FLOWDOC-PROSE-SYNC (prose sync for the same done[] widening).",
+        "updated_at": "2026-08-26T03:54:44Z"
+      },
+      {
+        "id": "FIX-AUDITOR-DATATIER-DURABLE-TRAIL-NARRATED-NUMBERS-CONTRADICT-OWN-EVIDENCE",
+        "title": "system-auditor AUDIT_TIER=DATA writes LLM-NARRATED numbers into its durable trail instead of computed ones, and they are wrong in a severity-REDUCING direction -- elapsed-age deltas understated 15.6x and 2.8x in records that state the correct raw timestamp in the same sentence, plus a dedup_skipped counter emitted as 0 while the same return's own history entry records 3 and its prose says 2",
+        "owner": "po",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "docs/agents/system-auditor/flow/",
+        "created_at": "2026-08-26T03:48:12Z",
+        "dedup_key": "datatier:durable-trail-narrated-numbers-contradict-measured",
+        "origin_signal_id": "rtr-20260826T0234-auditordedupskipzero",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "scripts/db-integrity-history-append.sh"
+        ],
+        "status_note": "MINTED by po triage 2026-08-26T03:48Z from two router detector_defect envelopes, 8dbffd56a (WARN) and d7a5e9153 (WARN). Filed as ONE row with TWO arms because both are the same failure mode -- a number that a model NARRATED being written into the durable audit trail in place of a number that was MEASURED -- and both are fixed by the same shape.\nARM A -- ELAPSED-TIME DELTAS, WRONG IN A SEVERITY-REDUCING DIRECTION. Scan 2026-08-26T03:30:22Z: the signal_outcomes detail says 'no outcome checks in 2+ days' when the real age is 31.14 days (15.6x understated); the macro_indicators detail says 'approximately 14+ hours old' when the real age is 39.3 hours (2.8x understated). BOTH details state the CORRECT raw timestamp and then contradict it in the same sentence, so each record falsifies itself on its face and is checkable with no external data. The direction matters more than the magnitude: every error so far makes a finding look FRESHER, i.e. less severe, than it is -- a 31-day stall narrated as '2+ days' will not be prioritised as a stall.\nARM B -- DEDUP_SKIPPED COUNTER. The [OUTPUT-CONTRACT] emission on the 2026-08-26T02:30:33Z run reported dedup_skipped=0 while that same return's OWN history entry records 3 findings with dedup_check.already_open=true and its OWN prose narration says 2 -- THREE different values for one quantity inside a single return. Not a one-off: the prior DATA entry (scan_ts 2026-08-25T22:35:28Z) likewise records 2 already_open findings against an emitted 0.\nWHY ARM B IS LOAD-BEARING AND NOT COSMETIC: dedup_skipped is the only number that makes suppression VISIBLE in the trail. Reporting 0 while 3 findings were suppressed is exactly what let the two confirmed false-suppression incidents tracked on FIX-DEDUPCHECK-MATCHEDTASKID-UNANCHORED-SUBSTRING-MISLABEL (macro_indicators, and signal_outcomes -> ALPHA-S5-TRUTH-LEDGER-BACKTEST) stay invisible. Fixing the matcher there without fixing the counter here leaves the next false suppression equally unobservable.\nAC: (1) every numeric field in a DATA-tier durable record is COMPUTED from the raw timestamp/count it cites, never authored in prose -- ages derived by arithmetic on the stated timestamp; (2) a pre-write self-consistency assert fails loud when an emitted counter disagrees with the count of records it summarises (this run would have failed on 0 vs 3); (3) replay the 2026-08-26T03:30:22Z and 2026-08-25T22:35:28Z entries and show corrected values; (4) NEGATIVE CONTROL -- a fixture whose narrated and measured values agree must still PASS, proving the assert is not vacuous.\nNOT A DUPLICATE OF FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION: that row is about V4/V5 COMPARING a NEW-only anomaly tally against an ALL-emissions signals_posted counter (a comparison-denominator defect that yields false VIOLATION reports). This row is about the dedup_skipped VALUE ITSELF being emitted as 0 when the emitter's own records say 3 -- an upstream producer defect. Same accounting seam, different half; the V4/V5 comparison cannot be made correct while one of its inputs is fabricated. Cross-reference, do not merge.\nALSO DISTINCT FROM: FIX-AUDITOR-DATATIER-CRONJOBRUNS-ADHOC-COUNT-NONDETERMINISTIC (hand-authored query per run) and FIX-AUDITOR-DATATIER-REINVOKES-STATEFUL-PREGATE-SELF-DEFEATS-ROUTER-SPAWN (stateful probe re-invocation).",
+        "updated_at": "2026-08-26T03:54:44Z"
+      },
+      {
+        "id": "CLEAN-CTXBLOAT-DISPATCH-CLAIM-SKILL-730L-40405B",
+        "title": "context-bloat (skill-file class): .claude/skills/dispatch-claim/SKILL.md breaches BOTH caps by the widest margin on record -- 730L vs 200L cap (3.65x, overage 530) and 40405B vs 12000B byte-cap (3.37x, overage 28405) -- and it is a hot-path doc every router session loads before every spawn",
+        "owner": "claude-manager-helper",
+        "next_agent": "claude-manager-helper",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "created_at": "2026-08-26T03:48:12Z",
+        "dedup_key": "context_bloat_breach|file:.claude/skills/dispatch-claim/SKILL.md",
+        "files": [
+          ".claude/skills/dispatch-claim/SKILL.md",
+          ".claude/skills/dispatch-claim/CARD.md"
+        ],
+        "status_note": "MINTED by po triage 2026-08-26T03:48Z from context-bloat-backstop-hook envelope 43ceb6c06 (class=skill-file, reason='line-cap,byte-cap', action_required=prune_or_split). Dedup-checked against the four existing CLEAN-CTXBLOAT-* skill rows -- no row covers this file.\nPRIORITISED ABOVE the routine ctxbloat P3 for two reasons, not just size: (1) at 3.65x the line cap and 3.37x the byte cap this is the largest single breach among the currently-open ctxbloat rows (compare notebook-write SKILL 215L/13016B and cron-cowork-team SKILL 242L/14279B, both P3); (2) CLAUDE.md makes this file a MANDATORY pre-spawn read for every router session (step 2.5, PRE-CLAIM), so its bytes are paid on every dispatch, not lazily.\nSPLIT SHAPE ALREADY EXISTS AND SHOULD BE EXTENDED, NOT REINVENTED: this skill already ships a CARD.md hot-path companion, and CLAUDE.md already routes the hot path to it ('full claim call + claimed/re-entrant/peer-collision outcomes: CARD.md (hot path); full spec: sibling SKILL.md'). So the correct action is to move the remaining cold-path spec bulk OUT of SKILL.md rather than to prune content away -- the hot/cold split is designed, only the migration is incomplete.\nDO NOT prune by deleting the claim outcome semantics or the Step 0a/Phase A/Phase A.5/Step 2.4/Phase B ordering: memory records three separate incidents caused by sessions acting on a partial reading of this exact gate sequence (feedback_step24_cowork_collision_probe_ttl_exceeds_cadence_daily_false_positive, feedback_phaseb_intent_key_is_freeform_so_two_sessions_run_same_agent_concurrently, feedback_router_hand_dispatch_bypasses_deps_satisfied_gate).\nCOORDINATE WITH: UC-RDL-P4B-DOC-CUTOVER (backlog, developer) already plans a CLAUDE.md + dispatch-claim/{CARD.md,SKILL.md} cutover to dispatch_preflight. If that lands first it may subsume most of this file; check it before starting so this is not two rewrites of the same doc.\nAC: both caps satisfied (<=200L, <=12000B) on SKILL.md with no semantic content lost -- every gate, ordering constraint and outcome branch still reachable from CARD.md or the split sibling.",
+        "updated_at": "2026-08-26T03:54:44Z"
       }
     ],
     "closed_sprints": [
@@ -20557,6 +20609,57 @@
             "args": "commits=4f72c694c,723f5fdc6,e8a3507cf; files=.claude/skills/dispatch-claim/SKILL.md,scripts/agents-flow/cowork-dispatch-collision-probe.test.sh; test=cowork-dispatch-collision-probe.test.sh",
             "live_value_observed": "ancestor=yes(x3); fixture 6 passed 0 failed (T1..T6); negative control (pre-fix bare-prefix) on same fixture data: 3 passed 3 failed (T1,T3,T4 correctly FAIL pre-fix, T2,T5,T6 unaffected) -- non-vacuous; CADENCE_SEC_BY_BASIS{utc_date:86400,vn_date:86400,iso_week_period:604800,vn_date_saturday_anchor:604800} matches live cowork-schedule.json basis values on all 4 mapped bases; shellcheck 0 warnings; mock-guard.sh 'No production source files to scan. PASS.'; grep process.env/password/secret/token = 0 hits",
             "observed_at": "2026-08-26T03:36:04Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/pdf-extractor/",
+        "owner": "po",
+        "created_at": "2026-08-25T13:45:50Z",
+        "created_by": "po/triage-20260825T1345Z",
+        "updated_at": "2026-08-26T03:45:10Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "dedup_key": "pdfx-ocr:tesseract-confidence-mean-over-nonempty-rows",
+        "files": [
+          "scripts/audits/ocr_confidence_probe_inner.py",
+          "scripts/audits/ocr-confidence-probe.sh",
+          "scripts/audits/ocr_bench_inner.py"
+        ],
+        "title": "MEASUREMENT-ONLY CYCLE: the shipped min(precision, ink-coverage) discriminator is tuned on ONE document and over-fires 46% on the next. Do NOT modify ocr_backends.py. Find whether ANY recall proxy separates broken from legitimate table regions across a frozen, hash-deduplicated n>=8 sample — or report that none does.",
+        "evidence": "POSITIVE CONTROL (unchanged, independently reproduced by qa off bctc_layout_units via readonly bun:sqlite): FPT Q4 2025 report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65 page 9, quarterly income statement — pre-fix tesseract returned 122 chars, headers plus a stray '178%' and ZERO figures, while self-reporting 0.92 confidence; PaddleOCR on the same crop returns the full row. Post-fix under auto: 452 chars, 9/9 figures. So a genuine catastrophic per-page miss exists, a working rescue exists, and the confidence signal is the only thing between them — that framing is still correct and is why this row is not closed. NEGATIVE CONTROL is what failed: see qa's verify_note (full DBC_2025_Q4 data + methodology) and detail_ref (PO's structural analysis of why).",
+        "ac": "MEASUREMENT ONLY. Do NOT modify apps/pdf-extractor/infrastructure/ocr_backends.py this cycle; do NOT retune OCR_FALLBACK_THRESHOLD (PO has now rejected that twice). Full reasoning and the evidence behind every bar below: detail_ref. (AC-0) RUN FIRST, it can moot everything else — MEMORY-SCALING SWEEP. AUTO_FALLBACK_CONFIDENCE_THRESHOLD reads os.environ OCR_FALLBACK_THRESHOLD, so fire count is sweepable with NO code change and NO rebuild. On one document sweep the threshold to force N = 0,1,3,6,all fires and plot cgroup memory.peak and memory.events.max against N. Measured so far: FPT 1 fire = +111.8 MiB / 0 events; DBC 6 fires = +1493 MiB / 494 events, peak == memory.max EXACTLY. 6x fires gave ~13x delta. PaddleOCR is constructed unconditionally in _load_pek_models() in BOTH arms so model residency cancels and cannot explain it. FLAT vs N => residency, safe. RISING vs N => retention across calls, and then NO fire rate is safe and this is a hard blocker to report immediately. cgroup counters ONLY, never ru_maxrss. (AC-1) RE-ANALYSE THE SIGNALS ALREADY EMITTED BUT NEVER EVALUATED. ocr_confidence_probe_inner.py emits seven per-region signals; the original AC-1 evaluation reported four. Evaluate: line_ink_cov (ink inside level-4 line-box interiors — a DIFFERENT quantity from line_cov_ratio, which was correctly rejected as inert at 1.0000 everywhere; this one excludes the rule lines, seals and shading that make plain ink_cov issuer-dependent); min_conf; n_lvl5_conf_le0 and n_lvl5_empty_text (word slots where Tesseract emitted a box and FAILED to read it — a direct, LAYOUT-INDEPENDENT recall signal); and instrument NUMERIC-TOKEN DENSITY (count of parseable VND accounting figures), which is the signal a human used successfully on BOTH documents and is what the BCTC product actually cares about. (AC-2) RE-TEST THE CANDIDATE THAT WAS NEVER ACTUALLY TESTED. AC-1 originally called for 'recognised rows vs the rows THE LAYOUT DETECTOR found', but it was implemented against Tesseract's OWN level-4 line boxes — self-referential by construction (Tesseract emits a line box only where it already found words), which is why it returned 1.0000. DocLayout-YOLO already runs over every page and is INDEPENDENT. Test it properly before calling it dead. (AC-3) SAMPLE: n >= 8 documents, DEDUPLICATED BY CONTENT HASH (data/pdfs holds 324 files but only 188 unique by md5 — DBC_2025_Q4 / DBC_2024_Q4 / DBC_2023_Q4 are byte-identical), stratified >=2 banks (VCB/ACB/SHB/CTG) + >=2 industrials (HPG/DGC/BSR) + >=2 consumer-retail (SAB/FRT/KDC) + >=1 real-estate (DIG/KDH/DXG), with FPT HELD OUT and NOT counted toward n — a discriminator tuned on FPT cannot be validated on FPT. PUBLISH the ids and hashes BEFORE measuring so the sample cannot be revised after seeing results. (AC-4) THE BAR IS SEPARATION, NOT A THRESHOLD. Per signal per document publish the full per-region distribution plus max(score over genuinely-broken) and min(score over legitimate). Ground truth by READING EXTRACTED CELL CONTENT, never by the score under test. PASS requires min(legit) > max(broken) on EVERY document with margin AND one single fixed constant inside that gap on ALL of them at once. A per-document threshold is a lookup table, not a discriminator. FAILING is a valid, valuable outcome — report it and hand back to PO. (AC-5) CARRIED FROM THE CANCELLED PROBE ROW, both unanswered: per-unit sha256 diff of stitched_markdown, tesseract-vie vs auto, on DBC_2025_Q4 and on every sampled document — this is the number that says whether the 6 false-positive fires CHANGED output (replacing correctly-read VND lines with diacritic-degraded PaddleOCR text) or merely burned compute; and table-phase wall clock per document reported WITH its fire count, so cost is stated as marginal-cost-per-fire. Do NOT report a bare percentage-over-baseline: both existing figures (+3.8% and +54.9%) are single-fire measurements of a fire-count-dependent cost and neither is usable. (AC-6) OPTIONAL, EVALUATE AND REPORT AN OPINION, do not build: RESCUE-AND-VERIFY — fire liberally on a cheap signal, then ACCEPT the PaddleOCR result only if it strictly increases an objective content criterion (parseable VND figure count). Under that shape a false-positive fire costs compute and NEVER costs quality, and the discriminator degrades from a correctness gate to a cost filter. Does not dissolve AC-0. (AC-7) MARKET-HOURS GUARD, binding: never exercise pdf-extractor 02:00-08:59 UTC on weekdays.",
+        "status_note": "MEASUREMENT CYCLE 2 COMPLETE (dev-pdf-extractor, commit efc4d6d79). NEGATIVE RESULT: no candidate signal (line_ink_cov, ink_cov, mean_conf, min_conf, n_lvl5_*, numeric_token_count) separates broken from legitimate table regions with one fixed constant across 6 stratified documents. line_ink_cov is the most stable (legit floor 0.688-0.865) but FAILS against the one known broken exemplar (FPT p9 = 0.763, above DBC legit floor 0.688). Broken regions are rare: 1 in 51 FPT regions, 0 in 189 across 6 new documents (~0.4% base rate). AC-0 memory scaling is INDEPENDENTLY DISPOSITIVE: auto-mode saturates the 2.5GiB container cap at just 6 fires on an 18-page doc (peak==max, 914 hard-limit-hit events) — no fire rate is safe under the current architecture regardless of how the discriminator question resolves. Orientation fix 905e32be1 confirmed REAL: DBC p12/p15 were undetected-broken false negatives (conf 0.535/0.586, ABOVE the 0.5 gate, zero real content) and now read correctly. n=6 achieved vs target 8 (bank + consumer-retail each 1 short) — disclosed, time-boxed by market-hours guard + host CPU contention. ROUTED TO PO NOT QA (router, 22:15Z): no code changed — ocr_backends.py untouched, commit is docs+scripts only — so there is nothing to QA-verify; the open question is architectural (retire the confidence-gated auto architecture vs pursue AC-6 rescue-and-verify, gated FIRST on the memory ceiling). Full evidence in detail_ref.\n[QA] Review Record (direct-commit verify): Direct-commit verify PASS. Confirmed e9144ea75 genuinely replaces mean(conf)-over-recognised-only with min(precision, _ink_coverage-recall) (read diff, not prose) -- total-page-miss now collapses confidence via the recall term. Confirmed closing commit efc4d6d79 (status_note-named) is docs+scripts-only, ocr_backends.py + PDF-Extract-Kit untouched (AC constraint honored). Row .files[] is stale (cycle-1 artifact, not efc4d6d79's actual paths) -- bookkeeping gap only, non-blocking. n=6 manifest hashes byte-verified against live data/pdfs/. Cross-refs (DECISION-...-FLIP-TO-AUTO CANCELLED, FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM tracked+progressing) confirmed consistent. Live OCR-probe re-run correctly withheld: inside 02:00-08:59Z market-hours gate, live container Up/healthy and left untouched; non-fatal since closing commit changed no production code and underlying fix was already docker/pytest-verified by a prior qa cycle outside market hours.",
+        "dedup_checked": "2026-08-25T13:40Z via scripts/po-board-dedup-search.sh over NON-TERMINAL lanes and --all-lanes for /TesseractVie|AutoFallback|confidence.*heuristic|mean.*conf/, /paddle|PaddleOCR|tesseract|OCR/, /PEK-IMPL-OCR|ocr.?backend|OCR_BACKEND/. RE-CHECKED 2026-08-25T17:45Z by po across archive[]/done[]/done_verified[]/closed_sprints[] AND the cold archives docs/data/orch/archive/2026-0{6,7,8}.json .done_tasks[] on /ink.?coverage|recall|discriminat|OCR_TEXT_BACKEND|confidence|paddle/ — every hit read, none owns the OCR recall-proxy or discriminator-generalisation question. No duplicate exists on any lane, hot or cold.",
+        "related": [
+          "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
+          "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE"
+        ],
+        "baseline_pass": true,
+        "promoted_at": "2026-08-25T15:24:03Z",
+        "promoted_by": "po (ruling-20260825T1524Z)",
+        "dispatch_lane": "po",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-25T17:32:16Z",
+        "verify_note": "[QA] Direct-Commit Verify — CHANGES_REQUESTED. Full independent methodology and raw numbers.\n\nSETUP: `git status --short -- apps/pdf-extractor/` clean at HEAD; rebuilt `pdf-extractor:latest` fresh from HEAD (`docker compose build pdf-extractor`, 2026-08-25T16:53Z) so every check below ran against a binary that provably contains e9144ea75 -- confirmed via `docker run --rm --entrypoint sh vn-market-intelligence-mcp-pdf-extractor:latest -c \"grep -n 'RESCUE FIRED' /app/infrastructure/ocr_backends.py\"` (line 603, present). Live container `vn-market-intelligence-mcp-pdf-extractor-1` untouched throughout (still on old image sha256:12ec82d1..., confirmed via `docker inspect`).\n\nZONE HEALTH (independently re-run, not read from the commit message):\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"python3 -m pytest -q\"` -> 1075 passed, 11 skipped, 1 failed (`test_bt3_fix3_real_ocr_fidelity`, AC-12 \"79 rows not in [80,110]\"). Confirmed PRE-EXISTING and NOT caused by this fix: re-ran the identical test with `apps/pdf-extractor/infrastructure/ocr_backends.py` bind-mounted back to its pre-fix content (`git show <e9144ea75^>:...ocr_backends.py`) -- byte-identical failure, same row count (79), same page.\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"lint-imports\"` (the real entrypoint, NOT `python3 -m importlinter.cli lint-imports`, which the developer's own notebook correctly flags as printing nothing/evaluating nothing) -> 3 kept, 0 broken. Confirmed the false-green trap is NOT present in my own gate.\n- PDF-Extract-Kit subtree: `cd apps/pdf-extractor/PDF-Extract-Kit && git status --short` -> clean (it is its own nested git repo, HEAD fdb25fd).\n- G12 sandbox (30 green/6 negative-fixture red) NOT independently re-run -- out of scope of the OCR-confidence change (domain-primitive scenario sandbox, unrelated files) and not blocking given pytest + lint-imports were reproduced directly.\n\nAC-2 (page 9 rescue) -- CONFIRMED, two independent paths:\n1. Read live `data/live/market.db` (readonly bun:sqlite, never push-echo): `bctc_layout_units` report_id=e71f845d-...-9be, schema_page=9 -> md_len=452 (was 122), `stitched_markdown` contains all 9 figures verbatim as claimed (Doanh thu thuan 20.225.450/70.112.826; LNTT 3.498.405/13.038.869; LNST 2.988.149/11.225.523, plus 2024 comparatives).\n2. Fresh from-scratch bench run (my own image, my own containers) via `scripts/audits/ocr-backend-bench.sh tesseract-vie auto` against FPT Q4 2025 (e71f845d...) reproduced page 9 md_len 122 (tesseract-vie) -> 452 (auto), sha256 differs only on page 9 of 46 total units / 30 table units.\n\nAC-3 (FPT Q4 2025 negative control) -- CONFIRMED on FPT alone:\n- `unit_digests` diff between the two bench runs above: 29/30 table units byte-identical sha256, page 9 the sole diff. `rescue_fire_count=1`, `rescue_fire_pages=[9]`. Matches the commit's claim.\n\nAC-4 (FPT Q4 2025 memory) -- CONFIRMED on FPT, timing caveat:\n- cgroup memory.peak: tesseract-vie 1235070976 B (1177.9 MiB, 46.0% of the 2,684,354,560 B / 2560 MiB cap); auto 1346867200 B (1284.5 MiB, 50.2%). memory.events.max=0 both. Consistent in magnitude with the commit's claimed 49.8%/0 hard-limit-hits.\n- Timing NOT reproduced at the claimed magnitude: commit claims table-phase +3.8% (117.26s vs 112.97s); my run measured +54.9% (168.45s vs 108.78s auto vs tesseract-vie, same script `ocr_bench_inner.py`, sequential ephemeral containers). Absolute magnitudes are still small and within the 600s page timeout, and this is NOT itself an AC-4 blocker (AC-4's literal text only requires reporting wall-clock + staying under cap with comparable headroom, both of which hold) -- flagged as a reproducibility discrepancy on a claimed number, not a pass/fail criterion.\n\nHIGHEST-VALUE CHECK (per the qa_focus / router dispatch instruction) -- SECOND DOCUMENT, FAILS:\nRan `scripts/audits/ocr-confidence-probe.sh <uuid> /app/data/pdfs/DBC_2025_Q4.pdf` (18pp, 13 table pages; DBC = Dabaco, unrelated issuer, already tracked in docs/analysis-briefs/DBC.md, ordinary file from the same production PDF corpus -- not a cherry-picked adversarial input) plus a full tesseract-vie/auto bench pair via ad hoc `docker compose run --rm --no-deps -e OCR_TEXT_BACKEND=<x> ... ocr_bench_inner.py` (same script the row's own bench uses, just pointed at a different PDF/report_id since ocr-backend-bench.sh hardcodes FPT).\n\n- rescue_fire_count=6 of 13 table regions (46%), pages [4,10,11,13,14,16] -- vs 1/30 (3.3%) on FPT.\n- Read the RAW tesseract text for all 6 pages from the confidence-probe output (never inferred from the score): every one is a coherent, correctly-parsed VND accounting line (e.g. page 16: \"Doanh thu bán thành phẩm sản xuất 14.904.619.255.974\" / revenue line; page 10: \"1. Tiền và các khoản tương đương tiền 439.331.953.874\" / cash equivalents) -- NOT the \"header + garbled residue, zero figures\" shape that characterizes a genuine miss (contrast FPT page 9 pre-fix: 122 chars, headers + stray \"178%\", zero figures). These are real reads being wrongly penalised.\n- ink_coverage for these 6 legitimate regions: 0.443, 0.432, 0.387, 0.356, 0.329, 0.350 (page4-r1, page10, page11, page13, page14, page16 respectively) -- ALL below the 0.5 AutoFallback threshold AND below the FPT-derived \"lowest legitimate = 0.674\" floor the row's whole design argument rests on. The floor collapses to under half its claimed value on ordinary input from a different issuer.\n- Memory: auto run cgroup memory.current/peak = 2,684,354,560 B = memory.max EXACTLY (100.00% of the configured 2.5g docker-compose limit for this service), memory.events.max=494 (oom=0, oom_kill=0 -- did not crash, but repeatedly hit the hard ceiling and had to reclaim). tesseract-vie same document: peak 1,118,744,576 B (41.7%), events.max=0. This is a genuine, previously-undisclosed memory-safety regression under broader rescue firing, not merely a quality concern.\n- This independently reproduces exactly the risk PO already formalised as a hard gate: `PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN` (backlog[], AC-2: \"the lowest LEGITIMATE region's ink coverage must be >= 0.50, and NO legitimate region may score at or below any genuinely-broken region\"). My data shows that bar FAILS (0.329 legitimate vs threshold 0.50). Per that same row's AC-5, retuning the 0.5 constant is explicitly a non-remedy PO already rejected once.\n\nARTIFACTS (scratch, not committed -- reproducible via the exact commands above): bench-fpt-q4-2025.jsonl, probe-dbc-q4-2025.jsonl, bench2-dbc-q4-2025.jsonl under the QA session scratchpad.\n\nVERDICT: CHANGES_REQUESTED. The discriminator (min(precision, ink-coverage)) is mechanically sound and well-tested in isolation, and AC-2/AC-3/AC-4 as narrowly scoped to FPT Q4 2025 all hold -- but the row's implicit claim that this makes `auto` safe to enable does not survive a second, ordinary document from the same corpus. Route to dev-pdf-extractor: either (a) re-derive/augment the discriminator so it generalises (per PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN's own AC bar), or (b) narrow this row's claims to \"FPT Q4 2025 only, not yet proven safe fleet-wide\" and let PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN own the generalisation question -- but do not let `auto` become the production default (DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO) on FPT-only evidence, since production is unset/tesseract-vie today regardless (OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION, unaffected either way).\n",
+        "detail_ref": "docs/agent-memory/decisions/dev-pdf-extractor-ocr-widen-20260825T2210Z.md",
+        "po_ruling_20260825T1752Z": "NEXT WRITER READ THIS FIRST: this row sits ~1KB under the 12,000B prose ceiling and IS in a measured lane (ready[]), so appending findings inline WILL hard-reject the whole orch-apply write. Put your results in detail_ref (docs/agent-memory/decisions/triage-20260825T1752Z-po.md, or a sibling doc you create and repoint detail_ref at) and keep the row to a pointer. root_cause and qa_verdict_20260825T1730Z were dropped here to make room; both survive in git history and in qa's verify_note, which is ceiling-EXEMPT and stays on the row in full. Held at P1 and placed at ready[0] so the Ready-Lane Consumer's [priority_rank, array-index] sort ranks it first in its band rather than last (priority_rank collapses 'high' and 'P1' into one rank, so the band is ~90 rows and append-order would bury it). Incident-lane expedite REVOKED — there is no outage and inflating a measurement cycle into the incident lane devalues the real P0s. Moved OUT of in_progress[] because NO picker dispatches from that lane (devteam-backlog-claim-{ready-lane,incident-lane,design-router-sweep}.jq and devteam-claim-backlog-task-by-id.jq all read in_progress[] only to COUNT WIP): qa's review[] -> in_progress[] CHANGES_REQUESTED move left this row stranded AND holding one of the two WIP slots permanently. The move required shrinking prose from 13,965B to under the 12,000B ceiling, because orch-row-prose-ceiling-check.mjs measures only backlog/ready/review and scores a row arriving from an unmeasured lane as liveBytes=0 — i.e. net-new growth of its full size, a hard reject. Dropped fields (dev_impl_*, dev_ac_evidence_*, dev_zone_health_*, rebuild_required_*, qa_focus_*, po_priority_ruling_*, po_ac4_baseline_correction_*, po_zone_probe_correction_*) are preserved in git history and their surviving content is re-derived in detail_ref. NOTE the +3.8% table-phase figure from dev_ac_evidence is STRUCK, not merely dropped: unreproduced by qa on the same script and commit (+54.9%), not explicable by host contention (qa's tesseract arm was FASTER while its auto arm was 44% slower — contention slows both), and mechanically implausible against the valid lang=vi benchmark's ~8s/region for PaddleOCR.",
+        "po_closure_20260826T0116Z": "PO CLOSES THIS ROW 2026-08-26T01:16Z. The measurement cycle it was dispatched to run is COMPLETE and its negative result is VALID AND FINAL — closing on a definitive negative is a success, not an abandonment. Verified on this row own evidence rather than on relayed prose: cycle 2 (commit efc4d6d79) shows no candidate signal separates broken from legitimate table regions with a single fixed constant across 6 stratified documents; line_ink_cov is the most stable candidate and still fails (FPT p9 = 0.763 sits ABOVE DBC legit floor of 0.688). The methodological trap is now named and must not be re-entered: broken regions are a ~0.4% base rate (1 in 51 FPT regions, 0 in 189 across 6 documents), so any threshold tuned on the single positive exemplar was always going to over-fire on the next document. Do NOT re-open this as a threshold-tuning task.\nTHE ARCHITECTURAL QUESTION THIS ROW ROUTED TO PO IS NOW ANSWERED, AND THE ANSWER TURNS ON A DISTINCTION THE ROW DID NOT DRAW. There are TWO different tesseract-to-PaddleOCR fallback mechanisms live in this codebase, and only one of them is the failing one. (A) The CONFIDENCE-GATED path — AutoFallbackOcrBackend, selected by OCR_TEXT_BACKEND=auto, described at apps/pdf-extractor/main.py as 'Tesseract-first; PaddleOCR on low confidence'. That is the mechanism this row measured and falsified. RETIRED as the rescue trigger. Its sibling DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO is already CANCELLED in archive[], which is consistent. (B) The CHARACTER-COUNT path — apps/pdf-extractor/infrastructure/ocr_worker.py:455-495, which fires the PaddleOCR(lang=vi) rescue when a page yields fewer than LOW_TESSERACT_PAGE_CHARS and then keeps whichever output is longer. This is a DIFFERENT and far more robust discriminator: it does not need to distinguish 'broken' from 'legitimate-but-sparse' at all, because it only ever ADDS text and keeps the better of two results, so a false fire costs latency and never costs correctness. It is already shipped and it is the sanctioned bounded-rescue path. That asymmetry is exactly why (A) failed and (B) does not: (A) must classify, (B) only has to compare.\nCONSEQUENCE: no further discriminator work is authorised. The remaining blocker for the user standing BCTC-extraction-quality objective is memory, not detection, exactly as this row own AC-0 finding said — auto-mode saturates the 2.5 GiB cap at 6 fires on an 18-page document, and no fire rate is safe under the current architecture. That is now tracked on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (ready[], architect), whose root cause PO settled at source in the same tick: the ocr_executor child is never recycled and has zero malloc_trim coverage. ALSO BANKED HERE: this row independently re-confirmed the orientation fix 905e32be1 is REAL — DBC p12/p15 were undetected-broken FALSE NEGATIVES at confidence 0.535/0.586, both ABOVE the 0.5 gate while containing zero real content, and they now read correctly. That is a second, independent demonstration that the confidence field is not a usable brokenness signal. next_agent=qa is a formality: no production code changed (ocr_backends.py untouched, the commit is docs+scripts only), so there is nothing to functionally verify.",
+        "claimed_at": null,
+        "claimed_by": null,
+        "drain_source_lane": "done",
+        "qa_verified_at": "2026-08-26T03:45:09Z",
+        "owner_client_session": null,
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat/diff-read + md5 cross-check vs live data/pdfs/ + jq board cross-reference + docker-compose.yml config read + py_compile/bash -n + secrets-grep",
+            "args": "commit=efc4d6d79 (closing measurement-cycle commit, docs+scripts only, status_note-named); prior fix commit=e9144ea75 (production confidence-math change, ocr_backends.py); cross-refs: DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO(archive,CANCELLED), FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM(backlog,BLOCKED); manifest=scripts/audits/ocr-widen-sample-manifest.json (6 docs)",
+            "live_value_observed": "e9144ea75 ancestor=yes, diff genuinely swaps mean(conf)->min(precision,ink_coverage_recall); efc4d6d79 ancestor=yes, --stat shows 5 files all docs+scripts, zero ocr_backends.py/PDF-Extract-Kit touch; 6/6 manifest md5 hashes byte-match live data/pdfs/*; DECISION row status=CANCELLED matching rollback-trigger numbers; memory-headroom row status=BLOCKED next_agent=dev-pdf-extractor consistent w/ AC8 gate, code landing 1db5f9f81; docker-compose.yml pdf-extractor env has no OCR_TEXT_BACKEND key (defaults tesseract-vie); py_compile+bash -n clean on both new scripts; secrets/env grep empty. Live OCR-probe re-run explicitly NOT performed: market-hours hard gate + live container confirmed Up/healthy via docker ps, left untouched.",
+            "observed_at": "2026-08-26T03:45:09Z"
           }
         }
       }
@@ -24015,15 +24118,21 @@
         "status": "REVIEW",
         "priority": "P0",
         "size": "S",
-        "zone": "docs/agents/po/flow/",
+        "zone": "docs/agents/",
         "owner": "po",
-        "next_agent": "po",
+        "next_agent": "agent-father",
         "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
         "created_at": "2026-08-23T12:10:00Z",
         "created_by": "po/triage-20260823T1157Z",
         "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
         "files": [
-          "docs/agents/po/flow/triage-signals.md"
+          "docs/agents/po/flow/triage-signals.md",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/agents/dev-team/flow/post-cycle.md",
+          "docs/agents/cowork-team/flow/main.md",
+          "docs/agents/cowork-team/flow/match-slots.md",
+          "docs/agents/system-auditor/flow/main.md",
+          ".claude/skills/signal-dashboard/dashboard-protocol.md"
         ],
         "related": [
           "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
@@ -24040,9 +24149,9 @@
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
         "occurrence_count": 2,
-        "updated_at": "2026-08-26T03:33:44Z",
+        "updated_at": "2026-08-26T03:54:44Z",
         "updated_by": "router (AC-5 corroboration)",
-        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains.\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commit 9434b1b73): AC-1/AC-2 independently reproduced PASS (zsh echo|jq control-char parse-error repro pre-fix; printf|jq drains fixture 2->0 post-fix). AC-3 FAIL: trailing || true still present verbatim on the orch-apply pipe -- no fail-loud replacement shipped, so an unrelated orch-apply abort will still silently no-op with exit 0. AC-4 FAIL: no post-write self-verification/re-read block added near the CLEAR. AC-5 FAIL: commit swept only this one file; independent fleetwide grep across docs/agents/**/flow/*.md found the identical echo \"$VAR\" | jq idiom still live in 5+ other flow docs (system-auditor/flow/main.md, cowork-team/flow/main.md + match-slots.md, dev-team/flow/main.md + post-cycle.md) -- none reported/fixed/waived. Full detail: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-30.md STEP qa-S228.",
+        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains.\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commit 9434b1b73): AC-1/AC-2 independently reproduced PASS (zsh echo|jq control-char parse-error repro pre-fix; printf|jq drains fixture 2->0 post-fix). AC-3 FAIL: trailing || true still present verbatim on the orch-apply pipe -- no fail-loud replacement shipped, so an unrelated orch-apply abort will still silently no-op with exit 0. AC-4 FAIL: no post-write self-verification/re-read block added near the CLEAR. AC-5 FAIL: commit swept only this one file; independent fleetwide grep across docs/agents/**/flow/*.md found the identical echo \"$VAR\" | jq idiom still live in 5+ other flow docs (system-auditor/flow/main.md, cowork-team/flow/main.md + match-slots.md, dev-team/flow/main.md + post-cycle.md) -- none reported/fixed/waived. Full detail: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-30.md STEP qa-S228.\n\n[po/triage 2026-08-26T03:48Z] PO DISPOSITION on the QA CHANGES_REQUESTED return -- re-routed next_agent po->agent-father (fleet flow-doc zone; PO cannot self-implement a flow-doc edit and holding next_agent=po is what stranded this row). zone widened docs/agents/po/flow/ -> docs/agents/, files widened from 1 to 7. AC-1/AC-2 stay PASS. AC-3/AC-4/AC-5 confirmed unmet by independent router probe AND by this triage: `|| true` is still verbatim at docs/agents/po/flow/triage-signals.md:61 and there is still no post-write self-verification block.\nAC-5 SCOPE CORRECTION -- MEASURED THIS TICK, and it cuts BOTH ways:\n  * A naive fleet grep for `echo \"$VAR\" | jq` returns 211 hits across 30 files. That number is WRONG as an AC-5 target and must not be used. 23 of those files are .sh/.js under scripts/ carrying `#!/usr/bin/env bash`; bash's builtin echo does NOT interpret backslash escapes by default (no xpg_echo, no -e), so those call sites are NOT vulnerable to this defect. Sweeping them would be 190+ sites of pure churn on a false premise.\n  * The genuinely vulnerable plane is flow-doc/skill snippets that AGENTS execute through the Bash tool, which on this host runs /bin/zsh -c, where the builtin echo DOES expand escapes. Measured surface: 19 hits across 7 files under docs/agents/ + .claude/skills/ (one of the 19, in docs/agents/cowork-team/flow/pressure-cadence.md, is prose describing this very defect, so ~18 real call sites). That 7-file list is now this row's files[].\n  * The router's earlier '6 other flow files, 17 hits' figure is close to correct for the real plane and supersedes the 211.\nHIGHEST-PRIORITY SITE, do this one first and verify it independently: docs/agents/dev-team/flow/main.md Step 1, `pending_n=$(echo \"$pendingSignals\" | jq 'length')`. That is the gate deciding whether PO triage runs AT ALL. Router reproduced it against the live inbox this tick (echo -> `jq: parse error: Invalid escape at line 1, column 6704`; printf '%s' -> the correct count), so pending_n is a parse-error STRING, not a number, and the 'if pending_n == 0 -> skip the PO spawn' short-circuit is comparing garbage. It did not fire this tick only because the idle rotation selected qa_drain, which JUMPs past Step 1. Independently re-confirmed here: this tick's own 18-envelope / 36162-byte inbox reproduces the same parse error under echo and reads 18 under printf '%s'. The same file also carries the VERDICT_JSON copy.\nAC-4 SHAPE (write it as a readback, not a narration): after the CLEAR write, re-read .dev_team_idle_chain.pending_triage_inbox and assert every consumed envelope_id is absent; fail loud if not. The current `|| true` swallows the abort, so removing `|| true` (AC-3) without adding this readback (AC-4) only converts a silent no-op into an unchecked one.",
         "po_live_verification_20260826T0116Z": "PO VERIFIED LIVE 2026-08-26T01:22Z — FIX CONFIRMED WORKING ON REAL TRAFFIC, not on a synthetic repro. PO ran the documented durable-inbox CLEAR block end-to-end this tick against a genuinely populated inbox and it cleared 16 of 16 envelopes: depth 16 before, 0 after, orch-apply reported inbox_row_identity=clean and task_total unchanged at 884. The fix is the printf '%s' substitution for echo at docs/agents/po/flow/triage-signals.md lines 53-54, landed as 9434b1b73. Before it, zsh echo corrupted any payload containing a backslash-n escape, jq then produced an empty candidate id list, and orch-apply fail-loud-aborted on it. NOTE ON THIS ROW OWN ID, recorded so a future reader does not mis-triage it: the id says SILENT-NOOP and that is WRONG. The failure mode was a FAIL-LOUD ABORT — orch-apply refused the write and left the live file untouched, so nothing was ever half-drained and no envelope was ever lost. The id was knowingly not renamed because .head referential integrity is schema-enforced against it. Treat the id as a label, never as evidence about the failure mode. next_agent=qa for form only; the acceptance evidence is this live 16-envelope drain.",
         "drain_source_lane": "done",
         "redispatch_count": 1,
@@ -24249,48 +24358,6 @@
         "claimed_at": "2026-08-25T20:21:26Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review"
-      },
-      {
-        "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "QA",
-        "zone": "apps/pdf-extractor/",
-        "owner": "po",
-        "next_agent": "qa",
-        "created_at": "2026-08-25T13:45:50Z",
-        "created_by": "po/triage-20260825T1345Z",
-        "updated_at": "2026-08-26T03:24:48Z",
-        "updated_by": "po (adjudication-20260826T0116Z)",
-        "dedup_key": "pdfx-ocr:tesseract-confidence-mean-over-nonempty-rows",
-        "files": [
-          "scripts/audits/ocr_confidence_probe_inner.py",
-          "scripts/audits/ocr-confidence-probe.sh",
-          "scripts/audits/ocr_bench_inner.py"
-        ],
-        "title": "MEASUREMENT-ONLY CYCLE: the shipped min(precision, ink-coverage) discriminator is tuned on ONE document and over-fires 46% on the next. Do NOT modify ocr_backends.py. Find whether ANY recall proxy separates broken from legitimate table regions across a frozen, hash-deduplicated n>=8 sample — or report that none does.",
-        "evidence": "POSITIVE CONTROL (unchanged, independently reproduced by qa off bctc_layout_units via readonly bun:sqlite): FPT Q4 2025 report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65 page 9, quarterly income statement — pre-fix tesseract returned 122 chars, headers plus a stray '178%' and ZERO figures, while self-reporting 0.92 confidence; PaddleOCR on the same crop returns the full row. Post-fix under auto: 452 chars, 9/9 figures. So a genuine catastrophic per-page miss exists, a working rescue exists, and the confidence signal is the only thing between them — that framing is still correct and is why this row is not closed. NEGATIVE CONTROL is what failed: see qa's verify_note (full DBC_2025_Q4 data + methodology) and detail_ref (PO's structural analysis of why).",
-        "ac": "MEASUREMENT ONLY. Do NOT modify apps/pdf-extractor/infrastructure/ocr_backends.py this cycle; do NOT retune OCR_FALLBACK_THRESHOLD (PO has now rejected that twice). Full reasoning and the evidence behind every bar below: detail_ref. (AC-0) RUN FIRST, it can moot everything else — MEMORY-SCALING SWEEP. AUTO_FALLBACK_CONFIDENCE_THRESHOLD reads os.environ OCR_FALLBACK_THRESHOLD, so fire count is sweepable with NO code change and NO rebuild. On one document sweep the threshold to force N = 0,1,3,6,all fires and plot cgroup memory.peak and memory.events.max against N. Measured so far: FPT 1 fire = +111.8 MiB / 0 events; DBC 6 fires = +1493 MiB / 494 events, peak == memory.max EXACTLY. 6x fires gave ~13x delta. PaddleOCR is constructed unconditionally in _load_pek_models() in BOTH arms so model residency cancels and cannot explain it. FLAT vs N => residency, safe. RISING vs N => retention across calls, and then NO fire rate is safe and this is a hard blocker to report immediately. cgroup counters ONLY, never ru_maxrss. (AC-1) RE-ANALYSE THE SIGNALS ALREADY EMITTED BUT NEVER EVALUATED. ocr_confidence_probe_inner.py emits seven per-region signals; the original AC-1 evaluation reported four. Evaluate: line_ink_cov (ink inside level-4 line-box interiors — a DIFFERENT quantity from line_cov_ratio, which was correctly rejected as inert at 1.0000 everywhere; this one excludes the rule lines, seals and shading that make plain ink_cov issuer-dependent); min_conf; n_lvl5_conf_le0 and n_lvl5_empty_text (word slots where Tesseract emitted a box and FAILED to read it — a direct, LAYOUT-INDEPENDENT recall signal); and instrument NUMERIC-TOKEN DENSITY (count of parseable VND accounting figures), which is the signal a human used successfully on BOTH documents and is what the BCTC product actually cares about. (AC-2) RE-TEST THE CANDIDATE THAT WAS NEVER ACTUALLY TESTED. AC-1 originally called for 'recognised rows vs the rows THE LAYOUT DETECTOR found', but it was implemented against Tesseract's OWN level-4 line boxes — self-referential by construction (Tesseract emits a line box only where it already found words), which is why it returned 1.0000. DocLayout-YOLO already runs over every page and is INDEPENDENT. Test it properly before calling it dead. (AC-3) SAMPLE: n >= 8 documents, DEDUPLICATED BY CONTENT HASH (data/pdfs holds 324 files but only 188 unique by md5 — DBC_2025_Q4 / DBC_2024_Q4 / DBC_2023_Q4 are byte-identical), stratified >=2 banks (VCB/ACB/SHB/CTG) + >=2 industrials (HPG/DGC/BSR) + >=2 consumer-retail (SAB/FRT/KDC) + >=1 real-estate (DIG/KDH/DXG), with FPT HELD OUT and NOT counted toward n — a discriminator tuned on FPT cannot be validated on FPT. PUBLISH the ids and hashes BEFORE measuring so the sample cannot be revised after seeing results. (AC-4) THE BAR IS SEPARATION, NOT A THRESHOLD. Per signal per document publish the full per-region distribution plus max(score over genuinely-broken) and min(score over legitimate). Ground truth by READING EXTRACTED CELL CONTENT, never by the score under test. PASS requires min(legit) > max(broken) on EVERY document with margin AND one single fixed constant inside that gap on ALL of them at once. A per-document threshold is a lookup table, not a discriminator. FAILING is a valid, valuable outcome — report it and hand back to PO. (AC-5) CARRIED FROM THE CANCELLED PROBE ROW, both unanswered: per-unit sha256 diff of stitched_markdown, tesseract-vie vs auto, on DBC_2025_Q4 and on every sampled document — this is the number that says whether the 6 false-positive fires CHANGED output (replacing correctly-read VND lines with diacritic-degraded PaddleOCR text) or merely burned compute; and table-phase wall clock per document reported WITH its fire count, so cost is stated as marginal-cost-per-fire. Do NOT report a bare percentage-over-baseline: both existing figures (+3.8% and +54.9%) are single-fire measurements of a fire-count-dependent cost and neither is usable. (AC-6) OPTIONAL, EVALUATE AND REPORT AN OPINION, do not build: RESCUE-AND-VERIFY — fire liberally on a cheap signal, then ACCEPT the PaddleOCR result only if it strictly increases an objective content criterion (parseable VND figure count). Under that shape a false-positive fire costs compute and NEVER costs quality, and the discriminator degrades from a correctness gate to a cost filter. Does not dissolve AC-0. (AC-7) MARKET-HOURS GUARD, binding: never exercise pdf-extractor 02:00-08:59 UTC on weekdays.",
-        "status_note": "MEASUREMENT CYCLE 2 COMPLETE (dev-pdf-extractor, commit efc4d6d79). NEGATIVE RESULT: no candidate signal (line_ink_cov, ink_cov, mean_conf, min_conf, n_lvl5_*, numeric_token_count) separates broken from legitimate table regions with one fixed constant across 6 stratified documents. line_ink_cov is the most stable (legit floor 0.688-0.865) but FAILS against the one known broken exemplar (FPT p9 = 0.763, above DBC legit floor 0.688). Broken regions are rare: 1 in 51 FPT regions, 0 in 189 across 6 new documents (~0.4% base rate). AC-0 memory scaling is INDEPENDENTLY DISPOSITIVE: auto-mode saturates the 2.5GiB container cap at just 6 fires on an 18-page doc (peak==max, 914 hard-limit-hit events) — no fire rate is safe under the current architecture regardless of how the discriminator question resolves. Orientation fix 905e32be1 confirmed REAL: DBC p12/p15 were undetected-broken false negatives (conf 0.535/0.586, ABOVE the 0.5 gate, zero real content) and now read correctly. n=6 achieved vs target 8 (bank + consumer-retail each 1 short) — disclosed, time-boxed by market-hours guard + host CPU contention. ROUTED TO PO NOT QA (router, 22:15Z): no code changed — ocr_backends.py untouched, commit is docs+scripts only — so there is nothing to QA-verify; the open question is architectural (retire the confidence-gated auto architecture vs pursue AC-6 rescue-and-verify, gated FIRST on the memory ceiling). Full evidence in detail_ref.",
-        "dedup_checked": "2026-08-25T13:40Z via scripts/po-board-dedup-search.sh over NON-TERMINAL lanes and --all-lanes for /TesseractVie|AutoFallback|confidence.*heuristic|mean.*conf/, /paddle|PaddleOCR|tesseract|OCR/, /PEK-IMPL-OCR|ocr.?backend|OCR_BACKEND/. RE-CHECKED 2026-08-25T17:45Z by po across archive[]/done[]/done_verified[]/closed_sprints[] AND the cold archives docs/data/orch/archive/2026-0{6,7,8}.json .done_tasks[] on /ink.?coverage|recall|discriminat|OCR_TEXT_BACKEND|confidence|paddle/ — every hit read, none owns the OCR recall-proxy or discriminator-generalisation question. No duplicate exists on any lane, hot or cold.",
-        "related": [
-          "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
-          "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE"
-        ],
-        "baseline_pass": true,
-        "promoted_at": "2026-08-25T15:24:03Z",
-        "promoted_by": "po (ruling-20260825T1524Z)",
-        "dispatch_lane": "po",
-        "redispatch_count": 1,
-        "qa_changes_requested_at": "2026-08-25T17:32:16Z",
-        "verify_note": "[QA] Direct-Commit Verify — CHANGES_REQUESTED. Full independent methodology and raw numbers.\n\nSETUP: `git status --short -- apps/pdf-extractor/` clean at HEAD; rebuilt `pdf-extractor:latest` fresh from HEAD (`docker compose build pdf-extractor`, 2026-08-25T16:53Z) so every check below ran against a binary that provably contains e9144ea75 -- confirmed via `docker run --rm --entrypoint sh vn-market-intelligence-mcp-pdf-extractor:latest -c \"grep -n 'RESCUE FIRED' /app/infrastructure/ocr_backends.py\"` (line 603, present). Live container `vn-market-intelligence-mcp-pdf-extractor-1` untouched throughout (still on old image sha256:12ec82d1..., confirmed via `docker inspect`).\n\nZONE HEALTH (independently re-run, not read from the commit message):\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"python3 -m pytest -q\"` -> 1075 passed, 11 skipped, 1 failed (`test_bt3_fix3_real_ocr_fidelity`, AC-12 \"79 rows not in [80,110]\"). Confirmed PRE-EXISTING and NOT caused by this fix: re-ran the identical test with `apps/pdf-extractor/infrastructure/ocr_backends.py` bind-mounted back to its pre-fix content (`git show <e9144ea75^>:...ocr_backends.py`) -- byte-identical failure, same row count (79), same page.\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"lint-imports\"` (the real entrypoint, NOT `python3 -m importlinter.cli lint-imports`, which the developer's own notebook correctly flags as printing nothing/evaluating nothing) -> 3 kept, 0 broken. Confirmed the false-green trap is NOT present in my own gate.\n- PDF-Extract-Kit subtree: `cd apps/pdf-extractor/PDF-Extract-Kit && git status --short` -> clean (it is its own nested git repo, HEAD fdb25fd).\n- G12 sandbox (30 green/6 negative-fixture red) NOT independently re-run -- out of scope of the OCR-confidence change (domain-primitive scenario sandbox, unrelated files) and not blocking given pytest + lint-imports were reproduced directly.\n\nAC-2 (page 9 rescue) -- CONFIRMED, two independent paths:\n1. Read live `data/live/market.db` (readonly bun:sqlite, never push-echo): `bctc_layout_units` report_id=e71f845d-...-9be, schema_page=9 -> md_len=452 (was 122), `stitched_markdown` contains all 9 figures verbatim as claimed (Doanh thu thuan 20.225.450/70.112.826; LNTT 3.498.405/13.038.869; LNST 2.988.149/11.225.523, plus 2024 comparatives).\n2. Fresh from-scratch bench run (my own image, my own containers) via `scripts/audits/ocr-backend-bench.sh tesseract-vie auto` against FPT Q4 2025 (e71f845d...) reproduced page 9 md_len 122 (tesseract-vie) -> 452 (auto), sha256 differs only on page 9 of 46 total units / 30 table units.\n\nAC-3 (FPT Q4 2025 negative control) -- CONFIRMED on FPT alone:\n- `unit_digests` diff between the two bench runs above: 29/30 table units byte-identical sha256, page 9 the sole diff. `rescue_fire_count=1`, `rescue_fire_pages=[9]`. Matches the commit's claim.\n\nAC-4 (FPT Q4 2025 memory) -- CONFIRMED on FPT, timing caveat:\n- cgroup memory.peak: tesseract-vie 1235070976 B (1177.9 MiB, 46.0% of the 2,684,354,560 B / 2560 MiB cap); auto 1346867200 B (1284.5 MiB, 50.2%). memory.events.max=0 both. Consistent in magnitude with the commit's claimed 49.8%/0 hard-limit-hits.\n- Timing NOT reproduced at the claimed magnitude: commit claims table-phase +3.8% (117.26s vs 112.97s); my run measured +54.9% (168.45s vs 108.78s auto vs tesseract-vie, same script `ocr_bench_inner.py`, sequential ephemeral containers). Absolute magnitudes are still small and within the 600s page timeout, and this is NOT itself an AC-4 blocker (AC-4's literal text only requires reporting wall-clock + staying under cap with comparable headroom, both of which hold) -- flagged as a reproducibility discrepancy on a claimed number, not a pass/fail criterion.\n\nHIGHEST-VALUE CHECK (per the qa_focus / router dispatch instruction) -- SECOND DOCUMENT, FAILS:\nRan `scripts/audits/ocr-confidence-probe.sh <uuid> /app/data/pdfs/DBC_2025_Q4.pdf` (18pp, 13 table pages; DBC = Dabaco, unrelated issuer, already tracked in docs/analysis-briefs/DBC.md, ordinary file from the same production PDF corpus -- not a cherry-picked adversarial input) plus a full tesseract-vie/auto bench pair via ad hoc `docker compose run --rm --no-deps -e OCR_TEXT_BACKEND=<x> ... ocr_bench_inner.py` (same script the row's own bench uses, just pointed at a different PDF/report_id since ocr-backend-bench.sh hardcodes FPT).\n\n- rescue_fire_count=6 of 13 table regions (46%), pages [4,10,11,13,14,16] -- vs 1/30 (3.3%) on FPT.\n- Read the RAW tesseract text for all 6 pages from the confidence-probe output (never inferred from the score): every one is a coherent, correctly-parsed VND accounting line (e.g. page 16: \"Doanh thu bán thành phẩm sản xuất 14.904.619.255.974\" / revenue line; page 10: \"1. Tiền và các khoản tương đương tiền 439.331.953.874\" / cash equivalents) -- NOT the \"header + garbled residue, zero figures\" shape that characterizes a genuine miss (contrast FPT page 9 pre-fix: 122 chars, headers + stray \"178%\", zero figures). These are real reads being wrongly penalised.\n- ink_coverage for these 6 legitimate regions: 0.443, 0.432, 0.387, 0.356, 0.329, 0.350 (page4-r1, page10, page11, page13, page14, page16 respectively) -- ALL below the 0.5 AutoFallback threshold AND below the FPT-derived \"lowest legitimate = 0.674\" floor the row's whole design argument rests on. The floor collapses to under half its claimed value on ordinary input from a different issuer.\n- Memory: auto run cgroup memory.current/peak = 2,684,354,560 B = memory.max EXACTLY (100.00% of the configured 2.5g docker-compose limit for this service), memory.events.max=494 (oom=0, oom_kill=0 -- did not crash, but repeatedly hit the hard ceiling and had to reclaim). tesseract-vie same document: peak 1,118,744,576 B (41.7%), events.max=0. This is a genuine, previously-undisclosed memory-safety regression under broader rescue firing, not merely a quality concern.\n- This independently reproduces exactly the risk PO already formalised as a hard gate: `PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN` (backlog[], AC-2: \"the lowest LEGITIMATE region's ink coverage must be >= 0.50, and NO legitimate region may score at or below any genuinely-broken region\"). My data shows that bar FAILS (0.329 legitimate vs threshold 0.50). Per that same row's AC-5, retuning the 0.5 constant is explicitly a non-remedy PO already rejected once.\n\nARTIFACTS (scratch, not committed -- reproducible via the exact commands above): bench-fpt-q4-2025.jsonl, probe-dbc-q4-2025.jsonl, bench2-dbc-q4-2025.jsonl under the QA session scratchpad.\n\nVERDICT: CHANGES_REQUESTED. The discriminator (min(precision, ink-coverage)) is mechanically sound and well-tested in isolation, and AC-2/AC-3/AC-4 as narrowly scoped to FPT Q4 2025 all hold -- but the row's implicit claim that this makes `auto` safe to enable does not survive a second, ordinary document from the same corpus. Route to dev-pdf-extractor: either (a) re-derive/augment the discriminator so it generalises (per PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN's own AC bar), or (b) narrow this row's claims to \"FPT Q4 2025 only, not yet proven safe fleet-wide\" and let PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN own the generalisation question -- but do not let `auto` become the production default (DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO) on FPT-only evidence, since production is unset/tesseract-vie today regardless (OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION, unaffected either way).\n",
-        "detail_ref": "docs/agent-memory/decisions/dev-pdf-extractor-ocr-widen-20260825T2210Z.md",
-        "po_ruling_20260825T1752Z": "NEXT WRITER READ THIS FIRST: this row sits ~1KB under the 12,000B prose ceiling and IS in a measured lane (ready[]), so appending findings inline WILL hard-reject the whole orch-apply write. Put your results in detail_ref (docs/agent-memory/decisions/triage-20260825T1752Z-po.md, or a sibling doc you create and repoint detail_ref at) and keep the row to a pointer. root_cause and qa_verdict_20260825T1730Z were dropped here to make room; both survive in git history and in qa's verify_note, which is ceiling-EXEMPT and stays on the row in full. Held at P1 and placed at ready[0] so the Ready-Lane Consumer's [priority_rank, array-index] sort ranks it first in its band rather than last (priority_rank collapses 'high' and 'P1' into one rank, so the band is ~90 rows and append-order would bury it). Incident-lane expedite REVOKED — there is no outage and inflating a measurement cycle into the incident lane devalues the real P0s. Moved OUT of in_progress[] because NO picker dispatches from that lane (devteam-backlog-claim-{ready-lane,incident-lane,design-router-sweep}.jq and devteam-claim-backlog-task-by-id.jq all read in_progress[] only to COUNT WIP): qa's review[] -> in_progress[] CHANGES_REQUESTED move left this row stranded AND holding one of the two WIP slots permanently. The move required shrinking prose from 13,965B to under the 12,000B ceiling, because orch-row-prose-ceiling-check.mjs measures only backlog/ready/review and scores a row arriving from an unmeasured lane as liveBytes=0 — i.e. net-new growth of its full size, a hard reject. Dropped fields (dev_impl_*, dev_ac_evidence_*, dev_zone_health_*, rebuild_required_*, qa_focus_*, po_priority_ruling_*, po_ac4_baseline_correction_*, po_zone_probe_correction_*) are preserved in git history and their surviving content is re-derived in detail_ref. NOTE the +3.8% table-phase figure from dev_ac_evidence is STRUCK, not merely dropped: unreproduced by qa on the same script and commit (+54.9%), not explicable by host contention (qa's tesseract arm was FASTER while its auto arm was 44% slower — contention slows both), and mechanically implausible against the valid lang=vi benchmark's ~8s/region for PaddleOCR.",
-        "po_closure_20260826T0116Z": "PO CLOSES THIS ROW 2026-08-26T01:16Z. The measurement cycle it was dispatched to run is COMPLETE and its negative result is VALID AND FINAL — closing on a definitive negative is a success, not an abandonment. Verified on this row own evidence rather than on relayed prose: cycle 2 (commit efc4d6d79) shows no candidate signal separates broken from legitimate table regions with a single fixed constant across 6 stratified documents; line_ink_cov is the most stable candidate and still fails (FPT p9 = 0.763 sits ABOVE DBC legit floor of 0.688). The methodological trap is now named and must not be re-entered: broken regions are a ~0.4% base rate (1 in 51 FPT regions, 0 in 189 across 6 documents), so any threshold tuned on the single positive exemplar was always going to over-fire on the next document. Do NOT re-open this as a threshold-tuning task.\nTHE ARCHITECTURAL QUESTION THIS ROW ROUTED TO PO IS NOW ANSWERED, AND THE ANSWER TURNS ON A DISTINCTION THE ROW DID NOT DRAW. There are TWO different tesseract-to-PaddleOCR fallback mechanisms live in this codebase, and only one of them is the failing one. (A) The CONFIDENCE-GATED path — AutoFallbackOcrBackend, selected by OCR_TEXT_BACKEND=auto, described at apps/pdf-extractor/main.py as 'Tesseract-first; PaddleOCR on low confidence'. That is the mechanism this row measured and falsified. RETIRED as the rescue trigger. Its sibling DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO is already CANCELLED in archive[], which is consistent. (B) The CHARACTER-COUNT path — apps/pdf-extractor/infrastructure/ocr_worker.py:455-495, which fires the PaddleOCR(lang=vi) rescue when a page yields fewer than LOW_TESSERACT_PAGE_CHARS and then keeps whichever output is longer. This is a DIFFERENT and far more robust discriminator: it does not need to distinguish 'broken' from 'legitimate-but-sparse' at all, because it only ever ADDS text and keeps the better of two results, so a false fire costs latency and never costs correctness. It is already shipped and it is the sanctioned bounded-rescue path. That asymmetry is exactly why (A) failed and (B) does not: (A) must classify, (B) only has to compare.\nCONSEQUENCE: no further discriminator work is authorised. The remaining blocker for the user standing BCTC-extraction-quality objective is memory, not detection, exactly as this row own AC-0 finding said — auto-mode saturates the 2.5 GiB cap at 6 fires on an 18-page document, and no fire rate is safe under the current architecture. That is now tracked on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (ready[], architect), whose root cause PO settled at source in the same tick: the ocr_executor child is never recycled and has zero malloc_trim coverage. ALSO BANKED HERE: this row independently re-confirmed the orientation fix 905e32be1 is REAL — DBC p12/p15 were undetected-broken FALSE NEGATIVES at confidence 0.535/0.586, both ABOVE the 0.5 gate while containing zero real content, and they now read correctly. That is a second, independent demonstration that the confidence field is not a usable brokenness signal. next_agent=qa is a formality: no production code changed (ocr_backends.py untouched, the commit is docs+scripts only), so there is nothing to functionally verify.",
-        "claimed_at": "2026-08-26T03:24:47Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "done"
       }
     ],
     "_closed_signals_20260614": {
@@ -24397,649 +24464,9 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T03:41:18Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "d7a5e915306d21dc1937ad5616f1dc9682e759e75ef51dd05fd9ddc98a078ea1",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "detector_defect",
-        "priority": "WARN",
-        "payload": "system-auditor tier-DATA emitted [OUTPUT-CONTRACT] dedup_skipped=0 on the 2026-08-26T02:30:33Z run while its OWN history entry records 3 findings with dedup_check.already_open=true and its OWN prose narration says 2 — three different values for one quantity inside a single return; the prior DATA entry (scan_ts 2026-08-25T22:35:28Z) likewise records 2 already_open findings, so the emitted counter is not a one-off slip",
-        "createdAt": "2026-08-26T02:34:10Z",
-        "drained_at": "2026-08-26T02:54:16Z",
-        "routed_to": "PO Step 0-SIG (fallback — type detector_defect has NO row in drain-signals.md §0a-3 routing table)"
-      },
-      {
-        "envelope_id": "cf74c03f95a5cf216c790e71039ba7e6129e72234afe3b198946c7abd2991c9e",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "system-issue",
-        "priority": "WARN",
-        "payload": "THIRD clock in the cycle-snapshot path: the AGENT consumer (cycle-bootstrap/SKILL.md Step -1) looks up by its OWN wall-clock at bootstrap, not by nominal tick and not by the producer key — measured 4/4 consecutive alert-commander cycles today (c261-c264), fresh-hit rate 0/4. It is a NAME-SPACE mismatch, not a +1min offset: the consumer rounds to 5-min multiples inconsistently while the producer names by unrounded date -u +%H:%M, so a hit needs coincidence (1 of 7 producer files today had a 5-multiple minute). Landing the already-routed producer-side rename ALONE fixes the emit_pressure_state arm and makes THIS arm permanently, deterministically dead.",
-        "createdAt": "2026-08-26T03:00:42Z",
-        "drained_at": "2026-08-26T03:16:51Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "ca53b2c4f238323aafaa74b60321c719348b70442d1b8c085763538a4717b1b0",
-        "source": "file",
-        "from": "router",
-        "to": "po",
-        "type": "flow-defect",
-        "priority": "high",
-        "payload": {
-          "action_requested": "TRIAGE as a SEPARATE arm from the qa-lane P0 FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. That row's dedup_key scopes to 'actor:router-session'; this occurrence is actor=unified-agent with a DIFFERENT root cause. If that P0 passes QA as-is, this arm keeps firing. Fix is a 1-line pathspec edit in docs/agents/unified-agent/flow/chef-dish.md step 8e.",
-          "observed_at": "2026-08-26T02:23:05Z",
-          "observed_during": "cowork 02:15Z tick, slot=chef-intraday, agent=unified-agent",
-          "hook_signal_file": "docs/signals/commit-sweep-guard-2026-08-26T022305Z-12851.json",
-          "symptom": "commit-sweep-guard blocked a BARE commit (prior_warns=3 threshold=3 outcome=blocked) staging docs/agent-memory/notebooks/unified-agent.md + docs/data/unified-agent-synthesis-2026-08-26-intraday.json. Agent then retried with an explicit pathspec and landed e3f16b6c6 with exactly those 2 files — correct outcome, but only after tripping the guard.",
-          "root_cause": "Same-file inconsistency in docs/agents/unified-agent/flow/chef-dish.md, ~200 lines apart. Line 890 defines Step 7.6's write target FILEPATH = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json, and line 861 explicitly authorizes that write pattern against the agent frontmatter. Step 8e's commit block (lines 1093-1098) then omits it from ALL THREE of: the own_paths comment, the git add pathspec, and the git commit trailing pathspec — all three list only docs/agent-memory/notebooks/unified-agent.md and docs/signals/processed/. The agent is instructed to write a file its own commit step cannot commit, so it must either strand the file or improvise. It improvised a bare commit. NOT an agent-discipline failure — a missing instruction.",
-          "fix_shape": "Add docs/data/unified-agent-synthesis-*.json to all three lists in chef-dish.md step 8e (own_paths comment, git add, git commit trailing pathspec). Use the concrete resolved filename the cycle already computed at Step 7.6, not a glob, so the pathspec stays scoped to this cycle's own file and cannot absorb a peer cycle's synthesis JSON.",
-          "why_this_is_not_covered_by_the_qa_row": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (qa lane, P0, next=qa, occurrence_count 32) has dedup_key 'sweepguard:bare-commit|defect:repeat-offender-after-block|actor:router-session'. Its landed remedy was Step 6.2 in docs/agents/cowork-team/flow/telemetry.md — the cowork DISPATCHER's own commit step. That fix is real and correct for that actor. It does not reach unified-agent, whose commit step already had a pathspec and whose defect is an incomplete own_paths list, not an absent commit step.",
-          "class_note": "THIRD confirmed instance of the class 'agent writes a documented path, the same flow omits it from its own commit pathspec'. Prior two routed 2026-08-25 in signal 9b716c031 (docs/analysis-briefs/*.md: news-scout stage-log-notify.md:40 and market-watcher eod.md:101 both write it, both omit it from their commit pathspecs). Recommend po consider a fleet-wide sweep predicate rather than three independent one-line fixes: for each agent flow, diff the set of write targets named in the flow against the union of its own commit pathspecs. Unverified whether other agents share the omission.",
-          "verification": {
-            "commit_landed": "e3f16b6c6",
-            "files_in_commit": [
-              "docs/agent-memory/notebooks/unified-agent.md",
-              "docs/data/unified-agent-synthesis-2026-08-26-intraday.json"
-            ],
-            "synthesis_file_on_disk_bytes": 5873,
-            "step_5_3_offflow_detector": "PASS — 0/6 distinct markers on a 1657 B final-turn surface; negative control clean (no dispatcher-authored prompt text, len < 20000); matcher liveness confirmed 6/6 against the IDENTITY_PREAMBLE control corpus"
-          }
-        },
-        "createdAt": "2026-08-26T02:27:41Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4d766602df65ee36587e14c774d3b22d02cf7698b5eb672cdd66c45698d9afca",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/unified-agent.md docs/data/unified-agent-synthesis-2026-08-26-intraday.json. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid12850:git commit -m chore(memory/unified-agent): chef intraday 2026-08-26 convergence scan published\\012\\012Clusters qualified: 4 (FPT/VHM/VIC/HPG ticker + real-estat]<-[pid12846:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604597949-wnhuaq.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88052:claude --dangerously-skip-permissions -n cowork-team ]",
-        "createdAt": "2026-08-26T02:23:05Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "43ceb6c067d301923db5e5ab149d35e4b62391119a77e171d65ace8be557b310",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": ".claude/skills/dispatch-claim/SKILL.md",
-          "line_count": 730,
-          "cap": 200,
-          "byte_count": 40405,
-          "byte_cap": 12000,
-          "class": "skill-file",
-          "reason": "line-cap,byte-cap",
-          "overage": 530,
-          "byte_overage": 28405,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-26T03:08:00Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7040830dc1fbe60eecd23ba8f1985184010954209f07bf50a5c1973a3d85ba42",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md",
-          "line_count": 138,
-          "cap": 600,
-          "byte_count": 37911,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 1911,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-26T03:11:36Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d24e2a3e269ea557941a012f7ed8760c41140f4c5eb2e8772c79c34167c212e9",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T02:21:00Z",
-          "matched_slots": [
-            "chef-intraday",
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "chef-intraday",
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/unified-agent/flow/chef.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "chef-intraday": "cadence",
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "chef-intraday": "60",
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T02:20:36Z",
-          "last_fired_slots": [
-            "chef-intraday",
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "02:15",
-          "leader_lock": "acquired",
-          "dev_head": "active",
-          "devq": 5,
-          "signal_backlog": 31,
-          "note": "2-slot batch, MAX_PARALLEL=4 (headroom 3391MB vs 1500 floor, load1m 4.50 vs 24 threshold, 12 cores), DEGRADED=false, single batch, no inter-batch wait. FIELD-PROVENANCE (deliberate, re FIX-COWORKFIRE-TELEMETRY-SERVERCOMPUTED-FIELDS-FABRICATED-30PCT): dev_head resolved from the CANONICAL top-level .head, which reads {status:in_progress, active_task_id:FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, next_agent:dev-pdf-extractor, updated_by:router 02:14:26Z} -> active. It is NOT read from .task_board.head, which is a deprecated stub carrying {status:deprecated, canonical_moved_to:.head}; reading that stub and mapping its literal 'deprecated' onto this field is one mechanical route to the dev_head:unknown placeholder tell. signal_backlog=31 independently recomputed as a docs/signals/*.json file count excluding cowork-team-*, and agrees exactly with emit_pressure_state's server-side 31. devq and calendar_status read from the freshly emitted pressure-state.json, not carried forward.",
-          "carried_defects": {
-            "cycle_snapshot_promoted": "false again — 36th consecutive. Nominal tick 02:15, Step 4.7 wrote cycle-snapshot-02:19.json (wall clock). Routed: FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK. Fold evidence filed this session at commit 0e7c095b7 — the prior-day same-name decoy AC-4 describes hypothetically actually fired at 02:05Z against alert-commander.",
-            "calendar_status": "still 'open' — 28th+ consecutive; the computation defect is unchanged, this field is reported as-read, not as-believed.",
-            "load_parse": "spawn-fanout.md Step 5.1's own LOAD_1MIN expression (uptime | awk -F',') truncates 4.50 to 4 on this locale-comma host. Verdict unaffected at a 24 threshold; latent if any future threshold sits near an integer boundary."
-          }
-        },
-        "createdAt": "2026-08-26T02:21:00Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1521b82982804233a09d814a472d7f9bfb76441ef6062852bcd4d9262d1d0286",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T02:35:58Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T02:35:00Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "02:30",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 34,
-          "note": "Single-slot tick. Step 5.1 gate degraded=false (headroom 3726MB vs 1500 floor, cores 12, true load1m 9.32 vs threshold 24) -> MAX_PARALLEL=4, non-binding at 1 slot.",
-          "FIELD-PROVENANCE": {
-            "dev_head": "MEASURED from canonical TOP-LEVEL .head (status=idle) — NOT from .task_board.head, which is a deprecated passthrough stub object literally carrying {status:'deprecated', canonical_moved_to:'.head'}. Reading the stub and mapping its literal onto this field is one mechanical route to the dev_head:unknown fabrication tell tracked by FIX-COWORKFIRE-TELEMETRY-SERVERCOMPUTED-FIELDS-FABRICATED-30PCT. Was 'active' at 02:15Z (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM); that row has since closed out.",
-            "signal_backlog": "server-computed value used verbatim; independently recomputed as a file count (docs/signals/*.json excluding cowork-team-*) = 34, agrees exactly. Rose 31 -> 34 this tick from three router-filed signals, not from drain backpressure.",
-            "devq": "read from the pressure-state emitted by this tick's own Step 6.0",
-            "calendar_status": "read from same; see carried_defects"
-          },
-          "carried_defects": {
-            "cycle_snapshot_promoted_false": "37th consecutive. Producer named this tick's file by wall clock (cycle-snapshot-02:34.json, 14791B) while the nominal tick is 02:30. Routed: FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (backlog P1, next=architect).",
-            "prior_day_decoy": "This tick's prune removed exactly one file — the cycle-snapshot-02:20.json decoy that alert-commander HIT at 02:20Z. 31 prior-day files remain vs 5 today. No 02:30 decoy exists, so this tick's consumer lookup will be a clean MISS (degrades gracefully) rather than a stale HIT. Quantified evidence filed to po at a08f623c4 as an AMENDMENT to the already-drained 02:15Z filing, explicitly flagged do-not-mint-a-new-row.",
-            "last_regime_and_volatility": "Both passed as 'unknown' per the spec's own 'if known, else unknown' clause — VERIFIED this tick that the spec's lookup keys regime_status and volatility_level are BOTH ABSENT from cycle-snapshot-latest.json, which is itself ~74h stale (tick 00:00, created 2026-08-23T00:07:50Z). A live regime value NEUTRAL does exist in this tick's fresh snapshot at .macro_snapshot.data.signals.carry.regime — a DIFFERENT path than the spec names. Not silently substituted: doing so would make this emitter inconsistent with every other one and hide the defect. Volatility has no producer at any path (zero matches). Owner: architect.",
-            "calendar_status_open": "29th+ consecutive; server-side computation defect, value passed through unmodified.",
-            "step_5_1_locale_load_parse": "The spec's own awk -F',' expression truncated true load 9.32 to 9 on this locale-comma host. Latent — harmless at a threshold of 24, a real comparison bug only if a future threshold sits near an integer boundary. In the spec, not an improvisation."
-          }
-        },
-        "createdAt": "2026-08-26T02:35:58Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "90bbf8d3f1105fdfc264819155f56d312f26d112a742a1f06b4ce1f961e6e4c8",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T02:53:15Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T02:45:00Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "02:45",
-          "leader_lock": "acquired",
-          "dev_head": "active",
-          "devq": 5,
-          "signal_backlog": 34,
-          "note": "1-slot fan-out. Step 0a drain no-op: the single signal_queue NEW row (rtr-20260826T0234-auditordedupskipzero) is to=architect, outside the SSOT cowork recipient set [po, tran-ngoc-bau, alert-commander, unified-agent] — preflight new_signals=0 is correct-by-design, not a blind gate. Step 4.6 slot claim required payload as a STRING (object rejected with zod invalid_type); re-issued serialized, claimed=true.",
-          "FIELD-PROVENANCE": {
-            "dev_head": "read from canonical TOP-LEVEL .head (status=busy, active_task_id=FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, updated_by=router 02:48:06Z) — NOT the deprecated .task_board.head passthrough stub",
-            "devq": "server-computed dev_queue_depth from emit_pressure_state, not caller-supplied",
-            "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 34; matches server value exactly",
-            "calendar_status": "server-computed; still open — carried defect, not verified by this tick",
-            "last_regime_and_volatility": "both spec lookup keys (.regime_status/.volatility_level) re-confirmed ABSENT from cycle-snapshot-latest.json (still tick=00:00, created_at=2026-08-23T00:07:50Z, ~74h stale); passed unknown per spec rather than substituting the live NEUTRAL that exists at .macro_snapshot.data.signals.carry.regime"
-          },
-          "carried_defects": {
-            "cycle_snapshot_promoted_false": "38th consecutive. Naming fix routed to architect (0d77460a3), not landed. Do NOT fix by rounding the producer — po_fold_20260825 withdrew that shape.",
-            "snapshot_wallclock_naming": "nominal tick 02:45, producer wrote cycle-snapshot-02:51.json (wall-clock). A PRIOR-DAY cycle-snapshot-02:50.json (created_at 2026-08-25T02:50:23Z) survives one minute away from today file. Census after this tick prune: 30 prior-day / 6 today. Already covered by the 02:15Z filing + 02:30Z quantified amendment; settled fix (po_fold_20260825 newest-file-inside-7min-gate) DOES resolve this instance — newest is 02:51 at 02:51:11Z. No new row warranted.",
-            "step51_locale_comma_load_parse": "3rd consecutive observation. Spec expression awk -F, truncates true load 5,28 to 5 on this locale-comma host. Defect is IN THE SPEC, not an improvisation. Latent — non-binding at threshold 24 (2 x 12 cores).",
-            "snapshot_prune": "removed exactly 1 file this tick (prior-day cycle-snapshot-02:35.json)."
-          }
-        },
-        "createdAt": "2026-08-26T02:53:15Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "a7e94e70e22261cb56dfb65a19a3c945b22d32e9c9d0bd7d14d24232c3a30b65",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T03:08:14Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 5,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T03:00:00Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "03:00",
-          "leader_lock": "acquired",
-          "dev_head": "active",
-          "devq": 5,
-          "signal_backlog": 34,
-          "note": "1-slot fan-out. Step 0a drain no-op — sole NEW signal_queue row is to:architect, outside SSOT cowork_signal_recipient set [po,tran-ngoc-bau,alert-commander,unified-agent]; preflight new_signals:0 agrees. Slot claim payload passed as JSON STRING per slot-claim.md Step 4.6 (doc says JSON.stringify — CORRECTION to the 02:45Z tick note, which wrongly reported a doc-vs-schema divergence here; there is none).",
-          "FIELD-PROVENANCE": {
-            "dev_head": "canonical TOP-LEVEL .head (status=busy, active=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE, updated_by=router 03:03:50Z by a PEER session, not this one) — NOT the deprecated .task_board.head passthrough stub",
-            "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 34; matches server emit exactly",
-            "devq": "server-computed dev_queue_depth from emit_pressure_state; NOT ready[]+backlog[]",
-            "last_regime_and_volatility": "passed unknown per telemetry.md Step 6.0 spec clause — both lookup keys (.regime_status/.volatility_level) verified ABSENT from cycle-snapshot-latest.json, which is still tick 00:00 / created 2026-08-23T00:07:50Z (~75h stale). Live regime exists at .macro_snapshot.data.signals.carry.regime but substituting it would desync this emitter from every peer and mask the architect-owned defect."
-          },
-          "carried_defects": {
-            "cycle_snapshot_promoted_false": "39th consecutive. Producer named by wall-clock 03:06, promoter looks up nominal 03:00. Filed + routed to architect; naming fix NOT landed.",
-            "agent_consumer_third_clock": "cycle-bootstrap SKILL.md Step -1 derives TICK from its own POST-spawn wall-clock, so it will look for ~03:07-03:08 against a file named 03:06. Filed 02:57Z as rtr-20260826T0257-snapshotagentconsumerclock (AMENDMENT to the existing producer/promoter row, architect).",
-            "spec_load_parse_locale_comma": "4th confirmation. spawn-fanout.md Step 5.1 LOAD_1MIN uses awk -F, which truncates 3,76 -> 3 on this locale-comma host. Non-binding at threshold 24 (12 cores x2). Bug is IN THE SPEC, not the caller.",
-            "calendar_status_open": "31st+ consecutive computation defect; server-side, architect-owned. Step 4.3 suppression is a SUPERSEDED no-op so it is non-binding here.",
-            "snapshot_prune": "removed exactly 1 prior-day file this tick (36 before -> 36 after, +1 written)."
-          }
-        },
-        "createdAt": "2026-08-26T03:08:14Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9b195184e55b8a3e9b15fd7cfb4a3d5ce8ba3de9472af60be3e54b7649eea85d",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T03:20:13Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [
-            "chef-intraday"
-          ],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T03:15:00Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "03:15",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 36,
-          "note": "1-slot fan-out. Step 0a drain no-op — signal_queue held ZERO NEW rows this tick; the architect-addressed row filed at 02:57Z was drained to READ by a peer between ticks, so it reached its recipient. chef-intraday cadence-suppressed by preflight.",
-          "FIELD-PROVENANCE": {
-            "dev_head": "canonical TOP-LEVEL .head — status=idle, active_task_id=null, updated_by=developer 03:16:08Z (peer dev work completed between ticks; head was busy at 03:00Z tick). NOT the deprecated .task_board.head stub.",
-            "signal_backlog": "server-emitted value; independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 36 — up 2 from the 03:00Z tick, both new arrivals are peer-written context-bloat signals.",
-            "devq": "server-computed dev_queue_depth from emit_pressure_state; NOT ready[]+backlog[]",
-            "last_regime_and_volatility": "passed unknown per telemetry.md Step 6.0 spec clause — .regime_status/.volatility_level verified ABSENT from cycle-snapshot-latest.json, still tick 00:00 / created 2026-08-23T00:07:50Z (~75h stale)."
-          },
-          "carried_defects": {
-            "cycle_snapshot_promoted_false": "40th consecutive.",
-            "agent_consumer_third_clock": "5th consecutive miss expected — producer wrote cycle-snapshot-03:19.json; the consumer rounds its POST-spawn wall-clock to a 5-min multiple, so 03:19 is unreachable by construction. Row rtr-20260826T0257-snapshotagentconsumerclock (architect) was AMENDED at 03:14Z with this name-space framing and has since been drained to READ.",
-            "decoy_overwritten": "this tick the producer wrote cycle-snapshot-03:19.json ON TOP of a genuine prior-day decoy of the same name (created_at 2026-08-25T03:19:39Z). Same-name overwrite is how decoys age out; prune removed 2 more.",
-            "spec_load_parse_locale_comma": "5th confirmation — spawn-fanout.md Step 5.1 awk -F, truncates 3,47 -> 3. Non-binding at threshold 24.",
-            "calendar_status_open": "32nd+ consecutive computation defect; architect-owned; Step 4.3 is a SUPERSEDED no-op so non-binding here."
-          }
-        },
-        "createdAt": "2026-08-26T03:20:13Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f9b11f8276d503365cd062a42a076e7b8ffef25f1b313d2f4f0de6212ba1c5d5",
-        "source": "file",
-        "from": "router",
-        "to": "po",
-        "type": "flow-defect",
-        "priority": "high",
-        "payload": {
-          "action_requested": "AMENDS the filing already sitting in your pending_triage_inbox (drained_at 2026-08-26T02:19:11Z, payload begins \"action_requested\":\"FOLD evidence onto the EXISTING backlog row FIX-CYCLE-SNAPSHOT-PRODUC...\"). Same defect, same row, same fix shape. DO NOT MINT A NEW ROW and DO NOT count this as a separate occurrence — fold it into the SAME fold. This exists as its own file only because the original was drained before this measurement was taken and the drained copy cannot be edited.",
-          "amends": "docs/signals/processed/cyclesnapshot-priorday-decoy-observed-20260826T021500Z.json (drained by 6fa3132f5)",
-          "target_row": "FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK",
-          "what_is_new": "A second hit one tick later, plus a directory census that changes the severity claim from 'the collision has stopped being conditional' to 'a hit is the EXPECTED outcome of any lookup by nominal tick name, all day'.",
-          "second_hit": {
-            "when": "2026-08-26T02:20Z, alert-commander c261, slot=alert-commander-market",
-            "detail": "This session's own 02:15Z tick wrote docs/data/cycle-snapshot-02:19.json at 02:19:34Z. Fifty-six seconds later the consumer looked up docs/data/cycle-snapshot-02:20.json, found a file, and it was created 2026-08-25T02:20:38Z — exactly 24h old. The fresh ~1-minute-old snapshot sat in the same directory, unconsulted.",
-            "note": "Two consecutive ticks, two hits. The first (02:05) is already in the drained filing."
-          },
-          "directory_census": {
-            "measured_at": "2026-08-26T02:30Z",
-            "total_snapshot_files": 36,
-            "created_today": 4,
-            "created_prior_day": 32,
-            "today_names": [
-              "00:04",
-              "01:35",
-              "02:04",
-              "02:19"
-            ],
-            "prior_day_names": [
-              "02:20",
-              "02:35",
-              "02:50",
-              "03:05",
-              "03:19",
-              "03:34",
-              "03:49",
-              "04:04",
-              "04:20",
-              "04:35",
-              "04:49",
-              "05:04",
-              "06:36",
-              "06:50",
-              "07:05",
-              "07:20",
-              "07:34",
-              "07:49",
-              "08:05",
-              "08:23",
-              "12:05",
-              "12:20",
-              "12:35",
-              "15:04",
-              "16:04",
-              "16:34",
-              "17:35",
-              "18:05",
-              "19:50",
-              "20:05",
-              "20:20",
-              "21:05"
-            ]
-          },
-          "why_this_raises_the_severity": "The prior-day set is not trailing residue at the edge of the prune window — it is 32 of 36 files, the MAJORITY of the directory, spanning 02:20 through 21:05. Because the producer runs a fixed 15-min cadence every day, yesterday's filename set and today's are drawn from very nearly the same pool. So the directory is pre-seeded RIGHT NOW with a stale decoy at nearly every tick name today will use for the next ~19 hours. Under the current key-lookup, hitting 24h-old macro data is the default path and a clean miss is the exception. The only thing standing between that and a consumer acting on day-old macro data is each consumer's own inside-the-file date check — which is per-consumer, is not written down as a contract anywhere, and no future consumer is obliged to implement.",
-          "fix_shape_unchanged": "po_fold_20260825 already settled it: drop the key lookup, take the NEWEST cycle-snapshot-*.json inside the <=7min freshness gate both copies already specify. That is immune to the entire decoy population and does not depend on the prune at all. This amendment proposes NO new shape — it argues the settled shape is worth more than P1.",
-          "prune_note": "Still not a prune bug, and still do NOT widen the age threshold. The prune window (1440 min) equals the filename namespace period (1440 min) by construction, so every HH:MM name has a same-named prior-day twin alive in its final minutes. Pruning by DATE would remove the twins; widening the threshold makes it worse. If the freshness-gate fix lands, neither change is needed.",
-          "still_do_not_do": "Do NOT 'fix' this by rounding the producer's filename to the nominal tick. po_fold_20260825 already withdrew that shape — it would make the producer's name collide with the prior day's EXACTLY rather than approximately, which is the wrong direction."
-        },
-        "createdAt": "2026-08-26T02:30:25Z",
-        "drained_at": "2026-08-26T03:20:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "847066d1d74ef5d791eb9f5f5cf0b0ad6beadb873a93829aa2c868c772ed6e3d",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "system-issue",
-        "priority": "WARN",
-        "payload": "Step 2.4 Axis C (landed 4f72c694c) promotes the Phase A.5 presence roster — a read its own SKILL.md labels \"advisory; non-blocking\" — into a PERMISSIVE gate: a current-period cowork-slot marker whose owner_client_session is absent from the roster is skipped as \"abandoned, not live\", allowing the dispatch to proceed. Presence-absence is a known-ambiguous oracle in this fleet (a live session between presence renewals reads identical to a dead one), and here the ambiguity resolves in the direction whose failure mode is a DOUBLE PUBLISH to a real channel.",
-        "createdAt": "2026-08-26T03:19:35Z",
-        "drained_at": "2026-08-26T03:40:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d5eabd0c02c7a76af09862e0d70d9d1a41a4d5ee135cb6265380430272906854",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "system-issue",
-        "priority": "CRITICAL",
-        "payload": "QA-Drain is self-deadlocking. scripts/devteam-review-claim-qa-drain.jq deliberately unions .task_board.done[] into its candidate set (its own line 41), selecting status==\"DONE\" && effective_next_agent==\"qa\". scripts/orch-conservation-check.mjs derives LANE_RANK from FLAT_TASK_LANES = [backlog,ready,in_progress,review,qa,done,done_verified], so done(5)->qa(4) is rank-decreasing and scores as a BACKWARD lane move. CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES defaults to 1, so as soon as TWO done[]-origin rows are eligible the whole orch-apply write ABORTS — taking the legitimately-forward review[]-origin rows in the same batch down with it. The done[] rows can only leave done[] via this drain, so their own presence is what blocks the drain that would clear them. Once done_qa >= 2 the lane is dead until someone intervenes.",
-        "createdAt": "2026-08-26T03:25:44Z",
-        "drained_at": "2026-08-26T03:40:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e7bd57fd421f9dbdc967abe04a1d071b534f6ca4ebcea31f163b4e4a73e37c6e",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "system-issue",
-        "priority": "WARN",
-        "payload": "alert-commander derives <nominal_tick> INCONSISTENTLY for its published-marker key and notebook header — c263/c264 floored to the 15-min cron boundary correctly, c265 wrote 03:20 (the 5-min snapshot-lookup key) where nominal was 03:15. MARKER_KEY is a cross-tick dedup mechanism, so a mis-derived key silently stops the gate from gating. No damage yet (c265 exited silently, marker not claimed). Same one-line consumer fix as rtr-20260826T0257 would close both arms.",
-        "createdAt": "2026-08-26T03:25:00Z",
-        "drained_at": "2026-08-26T03:40:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "8dbffd56aa4080bdf2cb9679829ef68c4d0681cb0e5c20d515c3bb312f68abbb",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "detector_defect",
-        "priority": "WARN",
-        "payload": "AUDIT_TIER=DATA writes LLM-narrated elapsed-time deltas into the durable trail and they are wrong in a severity-REDUCING direction. Scan 2026-08-26T03:30:22Z: signal_outcomes detail says 'no outcome checks in 2+ days' — real age 31.14 days (15.6x understated); macro_indicators says 'approximately 14+ hours old' — real 39.3 hours (2.8x). Both details state the CORRECT raw timestamp and then contradict it in the same sentence, so each record falsifies itself on its face.",
-        "createdAt": "2026-08-26T03:36:00Z",
-        "drained_at": "2026-08-26T03:40:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "2c3cd107d36ff31a1d87e7a3d896cd8070598abcf9cee4da6eac55a05a345752",
-        "source": "dashboard",
-        "from": "router",
-        "to": "architect",
-        "type": "detector_defect",
-        "priority": "MED",
-        "payload": "DATA-tier dedup matches on TABLE NAME with no discrimination of what KIND of row it matched, so a HIGH defect finding was suppressed under an unowned P2 FEATURE epic. signal_outcomes STALE/HIGH (outcome evaluation stalled 31 days) was deduped into ALPHA-S5-TRUTH-LEDGER-BACKTEST — a backlog feature row about building backtest calibration ON TOP of signal_outcomes, next_agent unset, untouched since 2026-07-14. That row will never fix the stall, so the finding now has no owner and no actionable row anywhere.",
-        "createdAt": "2026-08-26T03:36:00Z",
-        "drained_at": "2026-08-26T03:40:39Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "22c7420e1f8d2246d55f0cb78bdecd3266cafd85df67b12fed459fde35d85746",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T03:36:11Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T03:30:00Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "03:30",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 31,
-          "note": "1-slot fan-out. Step 0a drain no-op: 3 NEW signal_queue rows this tick, ALL to=architect, zero to a cowork_signal_recipient (po/tran-ngoc-bau/alert-commander/unified-agent per system-map SSOT). Step 5b first invocation was a CALLER error by this dispatcher (invented --fired-at/--slots flags; contract is FIRED_AT=<iso> env + positional slot ids) — script correctly failed loud rc=2 with updated:[], NO partial write, re-run succeeded. Not a script defect; recorded so the rc=2 in any log is not later mis-read as a last-fired regression.",
-          "FIELD-PROVENANCE": {
-            "dev_head": "resolved from CANONICAL top-level .head (idle, updated_by=qa 03:31:04Z) — NOT the deprecated .task_board.head passthrough stub",
-            "signal_backlog": "independently recomputed by this dispatcher as a FILE count (docs/signals/*.json excluding cowork-team-*) = 31; server-computed value in pressure-state.json also 31 — exact match, not copied",
-            "devq": "server-computed dev_queue_depth from emit_pressure_state (5); NOT ready[]+backlog[]",
-            "last_regime/last_volatility_level": "passed 'unknown' after verifying BOTH lookup keys (.regime_status, .volatility_level) are genuinely ABSENT from cycle-snapshot-latest.json (top-level keys are only created_at/macro_snapshot/market_context/tick). Declined to substitute the live value at .macro_snapshot.data.signals.carry.regime — that is a different key and would fabricate provenance."
-          },
-          "carried_defects": {
-            "cycle_snapshot_promoted_false": "41st consecutive. cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z (~75h stale). Producer wrote cycle-snapshot-03:34.json (wall-clock) for nominal tick 03:30 — the name-space mismatch already filed as rtr-20260826T0257-snapshotagentconsumerclock (status READ, architect). Do NOT fix by rounding the producer — po_fold_20260825 withdrew that shape.",
-            "calendar_status_open": "33rd+ consecutive computation defect, architect-owned. Emitted as-is, not trusted.",
-            "step51_locale_comma_parse": "6th confirmation. Spec line uptime|awk -F',' truncates true_load '3,18' to '3' on this locale-comma host. Bug is IN THE SPEC, not the host. Non-binding at threshold 24 (12 cores x factor 2) so still not filed."
-          }
-        },
-        "createdAt": "2026-08-26T03:36:11Z",
-        "drained_at": "2026-08-26T03:40:51Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-26T03:55:12Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
