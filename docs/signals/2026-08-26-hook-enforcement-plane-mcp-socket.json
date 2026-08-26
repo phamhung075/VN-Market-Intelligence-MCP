@@ -1,0 +1,46 @@
+{
+  "from": "agents-architect",
+  "to": "pm",
+  "type": "task_batch_ready",
+  "priority": "P1",
+  "summary": "User-requested honor-system→capability-system shift (hook + local MCP socket). Brief scopes 3 rule classes, one already ~90% built (do not re-mint), two new and zoned. Decompose per §10 — do NOT route the whole thing to agent-father (scripts/ + apps/ are outside its commit_zone; identical misrouting orphaned the 2026-08-06 precedent brief 20 days, see brief §5).",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-08-26-hook-enforcement-plane-mcp-socket.md",
+    "candidate_rows": [
+      {
+        "title": "New PreToolUse Bash heuristic guard for direct-bypass orch-state.json writes (staged observe-only first)",
+        "zone": "scripts/agents-flow/",
+        "owner": "developer",
+        "ref": "brief §6.2, §8 Stage 0/1",
+        "priority": "P1",
+        "note": "Stage 0 (instrumentation + agent_type/agent_id live smoke test) and Stage 1 (observe-only, would-block log, zero-false-positive criterion over >=20 real events) MUST land before any Stage 2 decision:block change. Kill switch env var per §8. Do not skip staging."
+      },
+      {
+        "title": "Append fail-open degradation log to existing orch-state hooks + new hook-degradation-log.jsonl SSOT",
+        "zone": "scripts/agents-flow/ + docs/data/",
+        "owner": "developer",
+        "ref": "brief §7",
+        "priority": "P2",
+        "note": "Only fires on the degraded branch (rare) — bounded cost, not a hot-path write. Git-tracked (unlike settings.local.json), durable record answering 'how long has this gate been dark'."
+      },
+      {
+        "title": "New read-only GET /internal/coordination-status route on mcp-server's existing pathname dispatcher, backed by coordinationStore.ts",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "ref": "brief §6.3",
+        "priority": "P1",
+        "note": "Loopback-only (127.0.0.1:3000), read path only — reuses existing coordinationStore.ts lock-read functions, no new DB/store. Does NOT touch .mcp.json or the gateway; task_claim/task_release/task_heartbeat remain the only mutation path, unchanged."
+      }
+    ],
+    "not_a_new_row": {
+      "hasValidBehaviorPredicate_hard_reject": "Already filed and unclaimed: docs/signals/2026-08-26-fix-behavioral-verification-gate-schema-handoff-dev-mcp-server.json. Referenced, not duplicated — brief §1/§4/§10 explain why it is rule-class-1 and already ~90% built via orch-apply.sh's existing internal Zod validation."
+    },
+    "config_admin_flag": {
+      "what": "Register the new Bash matcher block (once past Stage 1) in .claude/settings.local.json (single-machine, fast-iterate) OR .claude/settings.json (git-tracked, fleet-wide, durable). ALSO surface the pre-existing 20-day-old gap: every currently-shipped load-bearing hook (orch-state-hook-prewrite.mjs, orch-state-hook-bash-backstop.sh, context-bloat-backstop.sh, notebook-auto-prune.sh, branch-hygiene-stop.sh) lives ONLY in the gitignored settings.local.json today — invisible to git history/CI/other clones.",
+      "who": "user (config-admin) — no agent may edit .claude/settings*.json per this fleet's boundary. Flagged, not blocking the rest of the batch.",
+      "ref": "brief §9"
+    },
+    "orch_sentinel_recommendation_not_a_row": "brief §7 names two cheap live primitives (VALIDATOR_PATH existence boolean + degradation-log most-recent-entry) for a future darkness check; deliberately not specced as a new OH-N.M row here — orch-sentinel's own zone/design call, per brief §4's discipline against duplicating ownership."
+  },
+  "createdAt": "2026-08-26T20:29:58Z"
+}

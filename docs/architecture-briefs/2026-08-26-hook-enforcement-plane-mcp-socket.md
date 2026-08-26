@@ -1,0 +1,152 @@
+# Architecture Brief — Hook Enforcement Plane + Local MCP Socket (Honor System → Capability System)
+
+**Author:** agents-architect | **Date:** 2026-08-26T20:27:38Z | **HEAD:** `f44e4bc04`
+**Trigger:** direct user request (via router), verbatim: *"chúng ta có thể thiết kế một hệ thống sử dụng hook để kiểm tra để khiến agent tuân thủ quy trình không? hiện giờ đều là agent tự giác, tôi muốn biến thành agent được phép, hook liên kết với mcp bằng socket để có thể capture kịp thời các thay đổi."*
+**Status:** DESIGN ONLY — zero code, zero `.md` edits outside this brief. No `.claude/settings*.json` touched.
+
+---
+
+## 0. The answer
+
+**Yes, but only for two rule classes, and structurally never for a third.**
+
+1. **Shape/schema rules on `docs/data/orch/orch-state.json`** (e.g. the pending `behavior_predicate` hard-reject) are **already mechanically enforced today**, on both sanctioned write paths, once dev-mcp-server ships the pending `checkVerificationGate()` change — this is a widening of an existing choke point, not a new mechanism (§2).
+2. **Direct-bypass writes and cross-session coordination-state checks** — an agent skipping `orch-apply.sh` and writing the file directly, or writing without holding a claim it needs — are **not mechanically blocked today** and genuinely need what the user asked for: a new PreToolUse gate plus a fast local channel into the MCP server's coordination store. Buildable, scoped in §6.
+3. **Whether the work itself is correct, valuable, or well-judged** — the user's actual root complaint — is **structurally unreachable by any hook**, on this fleet or any other. A hook can check that a predicate exists and was probed; it cannot check that the predicate was the right one to write. This is not a gap to close later — it is the same LANE-C boundary this fleet already adopted for self-improvement (`docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §1: *"the system must not rewrite the terms by which it judges its own improvements"*) and the same boundary orch-sentinel's OH-2.4 design hit yesterday (`docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md`): a predicate turns "did anyone check" into a mechanical fact, but authoring a *good* predicate stays human/PO-judged forever. **Name it plainly: mechanization moves the goalposts from "trust the agent's narration" to "trust the agent's predicate authorship" — it does not remove the trust boundary, it relocates it one level down, where it is cheaper to audit.**
+
+One more honest ceiling, not named by the router's grounding and load-bearing for calibrating expectations: **every agent session on this host runs as the same OS user (`admin`) with unmediated filesystem write access.** There is no process boundary, no setuid wrapper, no sandboxed writer — a hook is the Claude Code harness *voluntarily* asking a registered command "should I let this through," and the command's answer is *voluntarily* honored by the harness. This is real, load-bearing, and far stronger than an LLM choosing to follow prose — but it is not OS-level capability revocation, and its integrity depends entirely on the harness continuing to invoke the hook and honor its exit code, and on the hook itself being correctly registered (§7 shows this trust root is not currently intact even for the mechanism that already ships).
+
+---
+
+## 1. Re-verified grounding (corrections to the pre-verified brief, not blind restatement)
+
+**HOLE 1, corrected — narrower than framed, and the narrow part is real.** Re-read `scripts/orch-apply.sh` end-to-end (not assumed from its header): line 240 runs `bun scripts/orch-validate.mjs "${TMP}"` and **aborts before the atomic rename** (`exit 1`, live file untouched) on any Zod/dup-key/lane-coherence/ref-integrity failure; line 291 runs the conservation check the same way. **The officially mandated path (`jq '<transform>' | bash scripts/orch-apply.sh`) already has pre-write mechanical validation — it is just not a Claude Code hook, it is validation baked into the wrapper script itself, and it is not bypassable by a compliant caller.** The router's "zero pre-block" framing is true only for the narrower, real case: **an agent that skips `orch-apply.sh` entirely** and writes/`mv`/`tee`/redirects straight to `docs/data/orch/orch-state.json` via Bash. That case genuinely has zero pre-write check anywhere — `orch-state-hook-prewrite.mjs` only matches `Write|Edit`, and `orch-state-hook-bash-backstop.sh` fires *after* the write, non-blocking by construction (`docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md` §2 FR-1, citing Claude Code's own hook contract: *"PostToolUse/Stop cannot retroactively block an already-completed action"*). Confirmed the backstop's own header comment says exactly this (`orch-state-hook-bash-backstop.sh:26-36`, "NON-BLOCKING: exit code never undoes the Bash call that already happened"). **This is the real Hole 1: direct-bypass writes, not the mandated path.**
+
+**HOLE 2, confirmed as-is.** `orch-state-hook-prewrite.mjs:96-116` — missing validator or conservation-check → `process.exit(0)`, allow-through, `stderr`-only warning. Re-read verbatim, unchanged from the router's citation.
+
+**HOLE 3, confirmed and sharpened.** The state a hook cannot see — Phase-B claims, `task:<id>` locks, `owner_client_session` ownership — lives in `apps/mcp-server/src/infrastructure/db/coordinationStore.ts`, a **separate SQLite database** (`coordination.db`, distinct from `market.db` and from `orch-state.json`). A hook that only inspects `tool_input` for a Write/Edit/Bash call structurally cannot know this without a live query to that store. This is the socket's actual, non-redundant justification (§6.3) — it is not needed for orch-state.json *shape* rules (§2 already covers those via `orch-apply.sh`'s own internal validation).
+
+**Layer B and the hook plane are not two systems — they are one schema, two trigger points.** `scripts/orch-validate.mjs` imports `OrchStateSchema` (same file, same `checkVerificationGate()`) directly from `apps/mcp-server/src/infrastructure/orchStateSchema.ts`. It is invoked by *both* `orch-state-hook-prewrite.mjs` (PreToolUse) *and* `orch-apply.sh` (the mandated Bash wrapper). **Consequence: once dev-mcp-server lands the pending `hasValidBehaviorPredicate` hard-reject** (signal already filed, `docs/signals/2026-08-26-fix-behavioral-verification-gate-schema-handoff-dev-mcp-server.json`, unclaimed as of this cycle — grepped, `hasValidBehaviorPredicate` absent from `orchStateSchema.ts` today) **it is automatically enforced on both sanctioned write paths with zero hook-side code.** This is rule class 1 from §0 — already 90% built, the remaining 10% is one PO-mint-side field + one dev-mcp-server conditional, both already scoped and signaled. **Do not re-signal this row.**
+
+---
+
+## 2. Transport reality — measured, not assumed
+
+Live-probed this cycle (`docker ps`, `curl`):
+- `mcp-server` container publishes `0.0.0.0:3000->3000` on the host. `curl -m3 http://127.0.0.1:3000/health` returns `200` with `{"status":"ok","toolCount":184,"sessions":71,...}` — this is **already a running local HTTP listener with a REST-style route table** (`apps/mcp-server/src/interface/mcp/server.ts:432-590`: `/mcp`, `/sse`, `/messages`, `/health`, and ~8 more `/api/*` paths dispatched by plain `pathname ===` matching, no framework). Adding one more local-only route is in-pattern, not novel infrastructure.
+- `mcp-gateway` container publishes `0.0.0.0:4040`, the same port `socat` bridges 443→127.0.0.1:4040 for `https://zenmidi.com/gateway/mcp`. A bare GET against either the local gateway or the public URL returned in ~65ms in this environment — **but that measures a bare GET, not a real `call_tool`.** The gateway's own tool description (visible in this session's system context) states: *"downstream connections are dialed on demand and dropped after each call"* — meaning every `call_tool(server="vn-market",...)` pays a **fresh dial to the vn-market MCP session** on top of the WAN hop, on every single invocation. A hook that fires synchronously on every Write/Edit/Bash and blocks the harness until it exits cannot pay that cost per call without becoming the dominant latency source of every tool use in the fleet.
+- **Resolution:** the hook's own network call goes to `127.0.0.1:3000` (the mcp-server container's already-published, already-fast local port), calling a **new, purpose-built, unauthenticated-by-network-scope-only local route** (e.g. `GET /internal/coordination-status?key=<lock-key>&session=<id>`) that calls `coordinationStore.ts`'s existing read functions directly — no MCP JSON-RPC envelope, no SSE session handshake, no gateway hop. **This does not touch `.mcp.json` and does not repoint the gateway** — `.mcp.json` stays exactly as CLAUDE.md mandates (`https://zenmidi.com/gateway/mcp`); this is a hook script's own internal implementation detail, invisible to and independent of every agent's tool-calling surface.
+- **"Socket," literally.** No AF_UNIX socket infrastructure exists in this repo for MCP purposes (grepped, confirmed absent) — the harness's own `CLAUDE_CODE_MESSAGING_SOCKET=/tmp/cc-socks/<pid>.sock` (confirmed live, owned by this session's Claude Code process) is a **private, undocumented, per-process implementation detail of the CLI's own subagent-bridge messaging** — not a public API, not stable across CLI versions, and semantically for a different purpose (cross-session agent messaging, not data queries). Building on it would be relying on internals nobody has committed to keep. **Recommendation: use the already-published loopback TCP port (127.0.0.1:3000), not a new AF_UNIX socket file.** A real Unix domain socket would need an explicit bind-mount volume across the Docker boundary for zero latency benefit over what's already there (loopback TCP round-trips are sub-millisecond on this host) — the only reason to prefer AF_UNIX is filesystem-permission-scoped access control (only local processes with fs access to the socket path can connect) versus an open TCP port any local process can reach. **This is a real open decision, not a foregone one — flagging it rather than silently picking loopback TCP because the user asked for "socket" specifically.** If access-control-by-filesystem-permission matters more than the (currently theoretical, unmeasured) marginal latency difference, AF_UNIX is the right call; dev-mcp-server should make this call with a one-line rationale, not agents-architect by default.
+
+---
+
+## 3. Identity — measured, not assumed, and this is the section most likely to be wrong if guessed
+
+Two structurally different mechanisms exist, empirically distinguished, not conflated:
+
+**`$CLAUDE_CODE_SESSION_ID` (env var).** Confirmed live in this very session's process (`env | grep -i session` → `CLAUDE_CODE_SESSION_ID=ca9c65e5-4659-4425-8f3a-551ff43907de`, exactly the coordination parameter the router passed). **But it is pooled at the router-coordination-session level, not per-agent.** This is not a guess — it is a documented, production-incident-derived finding: `docs/policies/dev-standards.md:1476-1494` (CANONICAL note on the sweep-guard git-hook actuator) records that a fix originally labelled "per-actor" had to be renamed "per-session" after `FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR` (2026-08-01) discovered every subagent spawned from one router **shares the same** `$CLAUDE_CODE_SESSION_ID`, and — verified there, not assumed — **no narrower per-agent identifier is reachable inside a git-hook subprocess**: `CLAUDE_CODE_BRIDGE_SESSION_ID` is coarser still (one top-level CLI session spanning many router-coordination-sessions over calendar time), `CLAUDE_PID` is constant fleet-wide within a session tree, `$$` changes every invocation. **Usable for:** exactly the granularity the coordination store itself uses (`owner_client_session`) — so a socket-based lock check keyed on this env var is coherent with existing MCP semantics. **Not usable for:** telling *which specific agent role* (qa vs dev-mcp-server vs pm) made a given write when several are active under one router dispatch.
+
+**`agent_type` / `agent_id` (Claude Code PreToolUse/PostToolUse hook JSON payload, not env var).** A separate, finer-grained mechanism, first documented in `docs/architecture-briefs/2026-08-06-guard-cowork-notebook-agent-write-boundary.md` §3: *"every hook event base object includes `agent_id` (subagent instance id) and `agent_type` (equals the `name:` field a Task-tool subagent was spawned with)."* **Re-verified live this cycle, not trusted from a 20-day-old citation:** grepped the currently-running CLI binary (`/Users/admin/.local/share/claude/versions/2.1.241`, the exact binary this session's `CLAUDE_CODE_EXECPATH` points at) and found, verbatim, `agent_type:O().optional().describe('Agent type name (e.g., ... to distinguish subagent calls from main-thread calls.')` (a live Zod schema field), plus `matcherMetadata:{fieldToMatch:"agent_type",values:[]}` on the `SubagentStop`/`PreCompact` hook-matcher config, plus `setAttribute("agent_id",t.agentId)` / `setAttribute("parent_agent_id",...)` in the telemetry layer. **This is confirmed present in the harness today, at a finer grain than the env var.** If real, this closes most of what the sweep-guard incident proved unreachable.
+
+**The honest caveat, inherited from the same brief rather than re-discovered:** this mechanism has **never been relied upon in a shipped, blocking hook in this repo.** The one design that specified using it (`GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC`, the same 2026-08-06 brief) is **0-of-10 files implemented, 20 days later** — its own follow-up ticket (`FIX-COWORK-WRITE-BOUNDARY-ENFORCEMENT-BRIEF-ORPHANED-NEVER-IMPLEMENTED`, P1, minted 2026-08-15 specifically to fix the orphaning) is **itself still sitting untouched in `backlog[]` 11 days after that**, live-checked this cycle. That same brief's own §4.2 flags: *"Verify before relying on it... smoke-test with a synthetic blocking hook before trusting it in production. Do not silently assume."* **This brief inherits that exact caveat rather than re-committing the error: Stage 0 of the rollout (§8) is a live smoke test of `agent_type`/`agent_id` presence, before any rule depends on it.**
+
+**What is structurally not reachable by either mechanism:** attribution finer than "which coordination-session" or "which named agent type," e.g. "which of 3 concurrently-active `dev-mcp-server` instances under one PM dispatch wrote this specific line." Nothing in the harness exposes that. Name it as unreachable rather than working around it with a convention an agent could fabricate.
+
+---
+
+## 4. Reconciliation — three layers, one owner per rule, stated explicitly
+
+| Layer | What it owns | Enforcement strength | Owner |
+|---|---|---|---|
+| **A — prose/flow-doc convention** (`2026-08-26-behavioral-verification-gate...md`) | "qa/ops/orch-sentinel *should* demand `behavior_predicate`" | Advisory — an LLM executor can skip a step | qa/ops/orch-sentinel flow docs |
+| **B — Zod schema** (`checkVerificationGate()` in `orchStateSchema.ts`) | The *shape* of what may reach `DONE_VERIFIED` in `orch-state.json` | Mechanical, on both sanctioned write paths (§1) | dev-mcp-server (pending row already filed) |
+| **C — hook plane (this brief)** | (i) delivery mechanism that makes B fire pre-write on the Write/Edit path (already true today — no new work) (ii) direct-bypass Bash detection (new, §6.2) (iii) cross-session coordination-state checks unreachable by B because they live in a different store (new, §6.3) | Mechanical where it fires; degrades to advisory on infra failure (§7) | developer (scripts/agents-flow/) + dev-mcp-server (new mcp-server route) |
+
+**A rule enforced in three places is three places to drift — restated per the router's own constraint, and honored by construction here:** Layer C does not re-implement Layer B's schema logic anywhere; it either rides Layer B verbatim (rule class 1) or covers a genuinely disjoint surface Layer B cannot see by definition (rule classes 2 and 3). No rule in this brief duplicates a check that already exists in `orchStateSchema.ts`.
+
+---
+
+## 5. Precedent — what already went dark, and why this brief's own routing is built to not repeat it
+
+Read all four cited precedent briefs. The load-bearing failure mode is not "a hook shipped and later degraded silently" (though HOLE 2 is exactly that, live, today) — it is worse: **a brief can be marked DESIGN COMPLETE, its `RETURN` can say `NEXT: agent-father | implement §4.1-4.4`, and nothing mechanically forces that into a committed change.** `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC` (2026-08-06) is the direct instance: the origin task carried `plan_only:true`, closed `DONE` on brief delivery, and the routing to a successor implementation row simply never produced one — for 9 days, until an unrelated agent-father escalation surfaced it by accident. The PO-minted fix for *that* (`FIX-COWORK-WRITE-BOUNDARY-ENFORCEMENT-BRIEF-ORPHANED-NEVER-IMPLEMENTED`) has now **itself** sat untouched for 11 more days. Two consecutive orphanings of the same governance gap, both unforced by any mechanism — the same "tự giác" pattern the user is naming, one layer up the stack, applied to the fleet's own brief→implementation pipeline instead of to code correctness.
+
+**Two concrete lessons applied to this brief, not just cited:**
+1. The 2026-08-06 brief routed everything to `agent-father` even though `scripts/agents-flow/*.mjs` is outside agent-father's commit zone — "as written the brief was undeliverable by its named owner," per the PO ruling that eventually caught it. **This brief does not repeat that:** §9's handoff table is pre-split by zone and routed via `pm` (task-batch decomposition), matching this agent's own documented `send` capability (`docs/agents/agents-architect/init.md` `inter_agent.send: {to: pm, via: signal_bus, on: task_batch_ready}`), not a single "agent-father, implement everything" instruction.
+2. `plan_only:true` closing `DONE` with no successor guarantee is the actual root cause. **This brief's signal (§10) is filed as a task-batch request, not a fire-and-forget notification**, and explicitly names the orphaning risk so `pm` treats successor-row minting as part of the deliverable, not a follow-on nicety.
+
+---
+
+## 6. Design
+
+### 6.1 Rule class 1 — orch-state.json shape (already ~90% built)
+No new hook. Confirm via §8 Stage 0 that the pending dev-mcp-server row (`hasValidBehaviorPredicate`) lands; it is automatically live on both paths per §1. **Zero new work assigned here beyond what is already signaled and unclaimed.**
+
+### 6.2 Rule class 2 — direct-bypass Bash writes (new, no socket needed)
+**New file:** `scripts/agents-flow/orch-bash-direct-write-guard.mjs` (spec, not code — architect does not write production code, matching this fleet's own convention: see the 2026-08-06 brief's own §4.2 "Spec, not code" framing). Registered as an **additional** `PreToolUse` `Bash` matcher block — confirmed additive-safe: `.claude/settings.local.json` already runs two independent `PreToolUse` blocks on different matchers (`Write|Edit` and `Bash`) side by side; a third block on `Bash` needs no new plumbing, though same-matcher multi-block fan-out (this + the existing cosmetic tmux-status Bash hook) should be smoke-tested once, per the still-open caveat the 2026-08-06 brief itself flagged and never closed.
+
+**Logic:** parse `tool_input.command`. If the command contains a write-verb (`>`, `>>`, `tee`, `mv`, `cp`, `sed -i`) targeting a path resolving to `docs/data/orch/orch-state.json` **and** the command does not also contain `orch-apply.sh` → block (`decision:"block"`, `exit 2`). This is a **heuristic**, honestly scoped: it raises the bar against the realistic failure mode (an agent forgetting the wrapper mandate and writing an obvious `jq ... > orch-state.json` one-liner — the exact class CLAUDE.md's mandate exists to prevent) and does **not** claim to defeat deliberate string obfuscation (`X="docs/data/orch/orch-state.json"; ... > "$X"`). State this limit in the hook's own code comment so nobody later cites it as airtight.
+
+### 6.3 Rule class 3 — cross-session coordination state (new, this is the actual socket)
+**New route on the already-running mcp-server:** `GET /internal/coordination-status?key=<lock_key>&session=<CLAUDE_CODE_SESSION_ID>` on `apps/mcp-server/src/interface/mcp/server.ts`'s existing pathname dispatcher, calling `coordinationStore.ts`'s existing lock-read function directly (no new DB, no new store, no MCP JSON-RPC envelope). Bind to `127.0.0.1` only (already true — the container only needs to answer loopback callers on the host running the hook; it is separately reachable on `0.0.0.0` for the Docker network today, which is out of scope for this brief to narrow).
+
+**What a hook can do with it, concretely:** before a P0/P1 sprint-lane mint or a task-lock-adjacent write, the hook calls this route with the session env var it already has (§3) and gets back `{holder_session, expires_at}` for the relevant `task:<id>`/`intent:<key>` lock — the same fact `task_list_held` would return, but in single-digit milliseconds over loopback instead of a gateway round-trip. **This does not replace `task_claim`/`task_release`/`task_heartbeat`** — those remain the only way to *mutate* lock state (write path unchanged, MCP tool calls as today). The new route is **read-only**, used exclusively to let a synchronous hook answer "does the caller already hold what it's about to act as if it holds" before allowing a write through.
+
+---
+
+## 7. Fail-open observability (constraint: every degradation must be answerable "how long has this been dark")
+
+**New, small, append-only SSOT:** `docs/data/hook-degradation-log.jsonl`, git-tracked (unlike `.claude/settings.local.json` — this file needs to be committed history, since its entire purpose is a durable record). **Every fail-open branch** in `orch-state-hook-prewrite.mjs`, `orch-state-hook-bash-backstop.sh`, and the new `orch-bash-direct-write-guard.mjs` appends exactly one line — `{ts, hook, reason, session_id}` (`session_id` from `$CLAUDE_CODE_SESSION_ID`, confirmed reachable §3) — **only on the degraded branch**, never on the clean-pass hot path (bounded cost by construction: it only writes when something is actually broken).
+
+**"How long has this been dark" is then a two-part, cheap answer, not new heavy infra:** (a) a live boolean — does `VALIDATOR_PATH`/`CONSERVATION_CHECK_PATH` currently exist on disk (`[ -f ... ]`, same primitive already used throughout this fleet's probes) — and (b) the degradation log's most recent entry for that hook, giving the duration since first-observed. **Recommend, do not mandate here** (out of this brief's zone — orch-sentinel owns its own checks): a daily OH-family addition that cross-references (a) and (b), mirroring the exact "docker image inspect + wall-clock age, MED>3d/HIGH>7d" discipline the OH-2.4 design shipped yesterday. This brief names the requirement and the cheap primitive; it does not spec a new OH-N.M sub-check, to avoid duplicating orch-sentinel's own ownership the way §4 already disciplines against duplicating `checkVerificationGate()`.
+
+---
+
+## 8. Staged rollout — promotion criteria stated, kill switch named, decision-maker named
+
+**Stage 0 — Instrumentation only, zero new blocking behavior.**
+Ship: degradation log (§7) wired into the 2 existing hooks; new mcp-server route (§6.3), unused by any hook yet; **live smoke test of `agent_type`/`agent_id` payload presence** (§3's inherited caveat — a synthetic PreToolUse hook that only logs the payload it receives, never blocks, confirmed against a real Task-tool-spawned subagent before anything depends on the field). Exit criterion: smoke test result recorded (pass or fail — a fail changes rule-class-2/3 identity design, does not block Stage 0 from closing).
+
+**Stage 1 — Observe-only new gate.** `orch-bash-direct-write-guard.mjs` (§6.2) registered but never returns `decision:"block"` — every command it *would* flag is appended to a sibling `would-block` log instead. Promotion criterion, borrowed verbatim from this fleet's own already-adopted discipline (`gated-self-improvement-loop.md` §1: *"the gate can be DEMONSTRATED to go red on a deliberate violation"*, and the size-lint fleet-gate lesson in MEMORY.md: *"fleet gate validated on 1 file"* is not validation): (i) a deliberate direct-bypass write injected in a scratch file/branch fires the would-block log — proves the gate is not a false-green; (ii) **zero false positives** against real legitimate `orch-apply.sh`-piped traffic over a named window (minimum: 20 real orch-state-touching Bash invocations observed clean, matching the "N chosen against live distribution, not guessed" discipline OH-2.4 used yesterday for its own staleness thresholds — do not promote on a 1-day/1-event sample).
+
+**Stage 2 — Block.** `decision:"block"`, `exit 2`. Only after Stage 1's both criteria are met.
+
+**Kill switch:** an env-var read inside the hook itself (`ORCH_BASH_GUARD_DISABLE=1`), same idiom already live in this codebase (`ORCH_APPLY_ALLOW_SHRINK`, `ORCH_HOOK_VALIDATOR` overrides in `orch-state-hook-prewrite.mjs`) — any session can locally disable without editing `.claude/settings.local.json` under time pressure. Hard kill: commenting out the settings entry, which per §9 is a **user/config-admin action**, not an agent action.
+
+**Decision-maker for every promotion:** **PO** — not agents-architect, not developer, not dev-mcp-server. This matches every comparable precedent found this cycle without exception: Lane-B promotion in the self-improve loop, OH-2.4's Rung-2 remediation menu, and the dev-mcp-server behavioral-verification-gate signal itself, all PO-gated. No new decision-maker invented here.
+
+---
+
+## 9. Config-admin flag — the one thing only the user can do
+
+`.claude/settings.local.json` is where every load-bearing hook in this repo lives today (`orch-state-hook-prewrite.mjs`, `orch-state-hook-bash-backstop.sh`, `context-bloat-backstop.sh`, `notebook-auto-prune.sh`, `branch-hygiene-stop.sh`) — and it is **globally gitignored** (`git check-ignore -v` confirms: `/Users/admin/.config/git/ignore:1: **/.claude/settings.local.json`), confirmed live this cycle, unchanged from when the 2026-08-06 brief flagged it as "a latent portability gap... flagged for a separate follow-up, not remediated" 20 days ago. **This means every enforcement claim in this brief and every hook that already exists is a single-machine artifact today — invisible to git history, to code review, and to any other clone or CI runner.** `.claude/settings.json` (the tracked file) currently holds only the cosmetic graphify `Glob|Grep` hint hook. **Only the user can decide and apply**: (a) whether the new `orch-bash-direct-write-guard.mjs` entry (§6.2) is added to `settings.local.json` (stays single-machine, faster to iterate) or `settings.json` (git-tracked, durable, fleet-wide, requires the same portability fix this repo has owed for 20 days); (b) whether that pre-existing 20-day gap gets closed in the same pass. Agents cannot edit `.claude/settings*.json` per this task's own constraint and per this fleet's config-admin boundary — this is flagged, not silently assumed either way.
+
+---
+
+## 10. Implementation handoff (routed via `pm` — task-batch decomposition, per §5's lesson)
+
+| File | Change | Zone → owner |
+|---|---|---|
+| `scripts/agents-flow/orch-bash-direct-write-guard.mjs` (+ `.test.mjs`) | New PreToolUse Bash heuristic guard, §6.2, staged per §8 | `scripts/agents-flow/` → developer |
+| `scripts/agents-flow/orch-state-hook-prewrite.mjs`, `orch-state-hook-bash-backstop.sh` | Append degradation-log write on existing fail-open branches, §7 | `scripts/agents-flow/` → developer |
+| `docs/data/hook-degradation-log.jsonl` | New git-tracked append-only SSOT, §7 | `docs/data/` → developer (creates empty + schema comment) |
+| `apps/mcp-server/src/interface/mcp/server.ts` | New `GET /internal/coordination-status` route, read-only, §6.3 | `apps/mcp-server/` → dev-mcp-server |
+| `apps/mcp-server/src/infrastructure/orchStateSchema.ts` `hasValidBehaviorPredicate` | **Not this brief's row** — already filed, unclaimed: `docs/signals/2026-08-26-fix-behavioral-verification-gate-schema-handoff-dev-mcp-server.json`. Do not re-mint. | dev-mcp-server (existing signal) |
+| `.claude/settings.local.json` **or** `.claude/settings.json` | Register the new Bash matcher block (§6.2), Stage 0/1 observe-only first | **config-admin (user)** — §9, agents cannot apply |
+| orch-sentinel darkness check (name TBD by orch-sentinel's own owner) | Recommended, not specced: cross-reference §7's two cheap primitives | orch-sentinel (own zone, own design call) |
+
+---
+
+## RETURN
+```
+DONE: Architecture brief complete — docs/architecture-briefs/2026-08-26-hook-enforcement-plane-mcp-socket.md
+ANSWER: YES for rule classes 1-2 (orch-state.json shape — already ~90% built via existing orch-apply.sh
+  validation; direct-bypass Bash writes — new PreToolUse heuristic, staged). YES for rule class 3
+  (cross-session coordination-state checks) via a new local (loopback, not gateway-WAN) read-only
+  route on the already-running mcp-server. STRUCTURALLY NO for "is the work itself correct/valuable" —
+  named as Z, same LANE-C boundary this fleet already adopted, human/PO-judged forever.
+ZONE: multi (scripts/agents-flow/, apps/mcp-server/, docs/data/, .claude/settings*.json config-admin)
+NEXT: pm | decompose into zoned task-batch per §10 — do NOT route to agent-father (scripts/ and apps/
+  are outside its commit_zone; this exact misrouting orphaned the 2026-08-06 precedent brief for 20 days,
+  see §5). Config-admin (user) item in §9 flagged separately, not blocking pm's decomposition of the rest.
+PIPELINE: continue
+```

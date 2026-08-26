@@ -1,21 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-23T14:15:51Z
-
-**Brief:** `docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md`
-
-Row `FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT` (P0, review[], qa CHANGES_REQUESTED retracting its own DONE_VERIFIED 25min earlier). qa's blocker is real and it is **my own 08-14 brief's illustrative jq** that shipped it, not agent-father's implementation (`e6a4858ae` is faithful to §5 verbatim). Reproduced end-to-end on synthetic fixtures via `ORCH_APPLY_LIVE_FILE_OVERRIDE`: on a `ready[]` parent the closeout branch's `null + {...}` yields an id-less ghost row (validator string reproduced exactly) **and** the `|| echo` tail swallows it to shell exit 0; the partial branch is a schema-valid identity write that still resets `.head`, so it applies, exits 0, and leaves the parent stale — worse than the closeout branch, and byte-for-byte the occ-1/2/3 symptom. Live census matches qa's: children[]-bearing rows backlog 10 / done 9 / ready 6 / in_progress 1.
-
-Root cause named one level up from the lane list: **a hand-enumerated lane subset substituted for the schema's lane set — in the transform AND in the 08-14 acceptance fixture that was supposed to catch it** (§8 enumerated the branch matrix, never the lane matrix; the commit's own AC says "replayed manually", and `scripts/audits/` has no pm-decompose or reachability verifier at all). So I explicitly **rejected qa's proposed fix list** (`backlog/ready/in_progress/active_sprints`) as another hand-list — it still omits `review`/`qa`/`done_verified`/`archive`/`closed_sprints`. Adopted invariant LANE-SET-DERIVATION: discover lanes structurally from `.task_board`, hand-name only the TERMINAL set, apply it as an exclusion from a live default so a future lane is searched, not skipped.
-
-Did NOT re-open the `next_agent: null` claim — independently re-verified qa's non-confirmation (`HeadSchema:324` is `.nullable()`). Separately ruled `del(.next_agent)` on the terminal row shape, and said in the brief why that is a different thing, so nobody reads it as re-litigating.
-
-Beyond the lane fix, five things the live pm cycle proved that the shipped binary cannot express: the disposition is **3-way not 2-way** (pm wrote both open states today — B DELEGATED-HELD vs C PARTIAL differ only by `hold_reason`, and C without it gets its pm re-entry hop stolen by `devteam-wrapper-autoclose.jq`, which is armed on 8 live rows incl. `IVC-PM-DECOMPOSE`); `children[]` must be the **union** with pre-existing children (4 of pm's 10 rows needed only that); closing a decomposed parent to `DONE` **strands its dependents forever** because `deps_satisfied` demands `DONE_VERIFIED`; an in-place disposition on an over-ceiling guarded-lane row hard-rejects at **+34 bytes** (21 such rows live); and the fail-loud needs 3 layers because an LLM executor ignores exit codes. Ruled the transform out of the flow doc into `scripts/pm-decompose-closeout.jq` — an inline heredoc cannot be unit-tested, which is exactly why the ACs were only ever replayed by hand and why pm hand-rolled two variants in one day. All replacement jq is fixture-executed, copy-runnable. 4 rows specified, zone-split, sequenced (agent-father XS hotfix ships now, independent of the developer script row).
-
-**Signal dropped:** `docs/signals/fix-pm-3e-closeout-lane-resolution-2026-08-23T14:15:51Z.json` → agent-father
-
----
-
 ## 2026-08-23T14:28:14Z
 
 **Brief:** `docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md`
@@ -53,3 +37,17 @@ Found and explicitly routed around two more dead substrates rather than dependin
 Design: mint-time `behavior_predicate{cmd,expect}` (P0/P1 `apps/` rows only — the ~6.9%-of-commits population that ships in a built image) + deploy-time `behavior_probe` riding ops's already-mandatory Post-Rebuild Health Verification (timestamp-gated against the row's commit, since the SHA label is dead — not a new gate on every commit, sampled once per rebuild batch) + new orch-sentinel check OH-2.4 (a genuinely new 5th axis — "does the product behave," not a duplicate of OH-2's existing 4 policy/architecture/tool/file axes — promoted to FULL+LITE so it gets real data from the cron that actually runs) + a PO-gated 3-rung remediation ladder reusing the existing `oh2_2/oh4_2/oh4_3`-style OH-STATE consecutive-failure counter, no new infra. Explicit removals: qa's per-behavioral-AC free-text re-derivation is replaced by a probe citation; Close Gate Step 5's unstructured prose gets the same machine-checked predicate; zero new crons/agents — rides two already-unconditional steps. 7 files scoped for agent-father in brief §9.
 
 **Signal dropped:** `docs/signals/behavioral-verification-gate-deploy-aware-ordering-2026-08-26T18:04:48Z.json` → agent-father
+
+---
+
+## 2026-08-26T20:29:58Z
+
+**Brief:** `docs/architecture-briefs/2026-08-26-hook-enforcement-plane-mcp-socket.md`
+
+User ask (Vietnamese, verbatim): shift the fleet from "agent tự giác" (honor system) to "agent được phép" (capability system), hook↔MCP over a socket. Answer given up front, not rounded up: YES for orch-state.json shape rules (found already ~90% built — `orch-apply.sh:240` runs the SAME `orch-validate.mjs`/`checkVerificationGate()` the hook uses, so the mandated Bash path already has pre-write validation; router's "zero pre-block" framing was too strong — the real Hole-1 gap is narrower: direct-bypass writes that skip `orch-apply.sh` entirely) and for cross-session coordination-state checks (new: read-only `GET /internal/coordination-status` on mcp-server's already-running local port 3000, NOT the WAN gateway — its own tool description says downstream connections are "dialed on demand and dropped after each call," unusable per-hook-call latency). STRUCTURALLY NO for "is the work good" — same LANE-C boundary the fleet already adopted.
+
+Identity, re-verified not assumed: `$CLAUDE_CODE_SESSION_ID` is pooled per router-coordination-session (proven by a real incident, `dev-standards.md:1476`, sweep-guard's per-actor→per-session rename). Finer-grained `agent_type`/`agent_id` DOES exist in the Claude Code hook JSON payload — re-confirmed live against the actually-running 2.1.241 binary (`agent_type:O().optional().describe(...)`, `matcherMetadata:{fieldToMatch:"agent_type"}`), first documented in the 2026-08-06 write-boundary brief — but that exact brief is **0-of-10 files shipped 20 days later**, and its own orphan-fix ticket has sat untouched 11 more days: two consecutive brief→no-implementation failures, the same "tự giác" pattern one layer up the stack. Routed this brief's own signal to `pm` (task-batch decomposition, zone-split) specifically to not repeat that misrouting (agent-father cannot touch `scripts/`/`apps/`, which is exactly why the 08-06 brief stalled).
+
+Also surfaced: every load-bearing hook in this repo (incl. the proven Write/Edit prewrite gate) lives only in gitignored `.claude/settings.local.json` — single-machine, invisible to git/CI — a pre-existing 20-day-old gap, flagged for the user (config-admin) in brief §9, not silently assumed either way.
+
+**Signal dropped:** `docs/signals/2026-08-26-hook-enforcement-plane-mcp-socket.json` → pm
