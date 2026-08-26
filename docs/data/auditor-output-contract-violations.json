@@ -520,5 +520,17 @@
     "cycle_tag": "cron:auditor-t2:2026-08-25T20:00Z",
     "from": "system-auditor",
     "detail": "V1 signal_queue_rows_written mismatch narrated=18 independent=16"
+  },
+  {
+    "ts": "2026-08-26T06:29:03Z",
+    "cycle_tag": "cron:auditor-tdata:2026-08-26T06:28:13Z",
+    "from": "system-auditor",
+    "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
+  },
+  {
+    "ts": "2026-08-26T06:29:07Z",
+    "cycle_tag": "cron:auditor-tdata:2026-08-26T06:28:13Z",
+    "from": "system-auditor",
+    "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
   }
 ]

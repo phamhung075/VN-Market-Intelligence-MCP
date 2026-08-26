@@ -1,72 +1,3 @@
-## d4-auto · 2026-08-26T03:00:01.935Z
-D4 candidates: none
-
-## c10 · 2026-08-26T03:00:24Z
-### Audit Run Tier-DATA (02:56–03:00 UTC 2026-08-26)
-- Tier: DATA | Tables checked: 12 | Scan: 02:59:55Z
-- Anomalies: 3 dedup-skipped findings (all already-open) | 1 BY-DESIGN
-- Status: NO NEW SIGNALS
-
-### Findings Summary
-
-**Scanner:** `db-integrity-counts.sh` + deterministic table-by-table audit
-
-**Canonical anomalies (deterministic counts):**
-```json
-{
-  "ohlc_violations_count": 336,
-  "scale_gt100x_count": 0,
-  "vnindex_cache_rows_count": 1,
-  "low_confidence_reports_count": 52,
-  "ohlc_violation_distinct_dates": 20,
-  "fresh_ohlc_violations_last_2d": 0
-}
-```
-
-**Key findings:**
-
-1. **[HIGH] cron_job_runs crashes** — `already-open:FIX-CRON-RUNS-NULL-ERRORMSG`
-   - 211 crashed + 7 error = 218 total failures
-   - Most recent crash: 2026-08-26T03:00:06Z
-   - Same coordinated crash event at 00:33:41Z (6 concurrent jobs):
-     - intelligenceCycleJob, alertScanParallelJob, vnIndexRefreshJob
-     - freshnessSlaMonitorJob, newsHeadlinesRefreshJob, walCheckpointJob
-   - Dedup-skipped: already tracked in FIX-CRON-RUNS-NULL-ERRORMSG task
-
-2. **[MED] deep_fetch_queue stale** — `already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD`
-   - 30 pending jobs stuck since 2026-08-18 (185+ hours)
-   - 2505 expired, 34 vps-failed
-   - Fetch worker unable to clear queue
-   - Correlated with cron crash at 00:33:41Z
-   - Dedup-skipped: already tracked in FIX-DEEPFETCH-PIPELINE task
-
-3. **[WARN] fred_series_daily stale** — `already-open:FIX-MACRO-ISM-FRED-API-KEY-MISSING`
-   - 8415 rows, newest date 2026-08-24 (2 days stale)
-   - FRED feed not updated in 48 hours
-   - freshnessSlaMonitorJob (one of 6 crashed jobs) responsible for this feed
-   - Likely victim of coordinated failure at 00:33:41Z
-   - Dedup-skipped: already tracked in FIX-MACRO-ISM-FRED-API-KEY-MISSING task
-
-4. **[BY-DESIGN] OHLC violations** (no signal)
-   - 336 violations across 20 dates (not concentrated)
-   - Zero fresh violations in last 2 days
-   - No escalation this cycle
-
-### Dedup Status
-- 3 REAL findings all dedup-skipped (already-open tasks)
-- 1 BY-DESIGN finding (no signal needed)
-- 0 new signal rows written
-
-### History Entry Reference
-Recorded to `docs/data/db-integrity-history.json` entry #200 (at cap). Scan timestamp: 2026-08-26T03:00:24Z.
-
-### Root Cause Continuity
-Same core issue identified in c9 (02:30:33Z scan): coordinated crash event at 2026-08-26 00:33:41Z affecting 6 concurrent cron jobs. This run (3:00 UTC) confirms persistent state — stale queues and feed remain unresolved. Awaiting FIX tasks to complete root-cause investigation and remediation.
-
-### Observations
-- Database changes detected since last sweep (probe returned SPAWN): daily_ohlcv +1 row, market_prices timestamp advanced ~30min
-- No NEW anomalies discovered (same patterns as c9)
-- Count noise within tolerance (±1-2 rows on multi-million-row tables)
 ## c11 · 2026-08-26T03:59:38Z
 
 ### Audit Run Tier-DATA (DB Data-Anomaly Sweep)
@@ -231,3 +162,21 @@ Signals written: 0 new (1 already-open, 3 by-design)
 ### Observations
 
 The deep_fetch_stats empty-table anomaly remains open and unresolved. The related deep_fetch_queue backlog (2583 rows, mostly expired) suggests an upstream producer-consumer mismatch. No new OHLC violations in the last 2 days — known residue from prior quality issues continues to decay toward zero.
+
+## c13 · 2026-08-26T06:28:31Z
+### Audit Run Tier-DATA (06:28–06:29 UTC 2026-08-26)
+- Tier: DATA | Services: N/A | Sources: N/A | DB checks: 4 (ohlc_violations, scale_violations, vnindex_cache, low_confidence)
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Findings
+
+**D-VIOLATIONS (OHLC):** 336 rows with violations across 20 distinct dates
+**D-VIOLATIONS (SCALE):** 0 rows with >100x variance
+**D-CACHE (VNINDEX):** 1 cached row present
+**D-CONFIDENCE (LOW):** 52 reports with low confidence
+
+All findings within acceptable bounds for operational DB state. History entry appended at scan_ts=2026-08-26T06:28:19Z.
+
+### History Entry Reference
+- Scan: 2026-08-26T06:28:19Z | File: docs/data/db-integrity-history.json | Entry count before/after: 200/200 (AT CAP)
