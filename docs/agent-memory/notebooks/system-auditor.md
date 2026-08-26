@@ -1,21 +1,3 @@
-## c13 · 2026-08-26T06:28:31Z
-### Audit Run Tier-DATA (06:28–06:29 UTC 2026-08-26)
-- Tier: DATA | Services: N/A | Sources: N/A | DB checks: 4 (ohlc_violations, scale_violations, vnindex_cache, low_confidence)
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Findings
-
-**D-VIOLATIONS (OHLC):** 336 rows with violations across 20 distinct dates
-**D-VIOLATIONS (SCALE):** 0 rows with >100x variance
-**D-CACHE (VNINDEX):** 1 cached row present
-**D-CONFIDENCE (LOW):** 52 reports with low confidence
-
-All findings within acceptable bounds for operational DB state. History entry appended at scan_ts=2026-08-26T06:28:19Z.
-
-### History Entry Reference
-- Scan: 2026-08-26T06:28:19Z | File: docs/data/db-integrity-history.json | Entry count before/after: 200/200 (AT CAP)
-
 ## c13 · 2026-08-26T06:58:59Z
 
 ### Audit Run Tier-DATA (DB Data-Anomaly Sweep, Scan 06:58:59 UTC)
@@ -133,3 +115,19 @@ No stale markers or schedule gaps detected.
 
 #### Key Observation
 Fresh OHLC violations (last 2 days) = 0. All 336 violations span historical data across 20 dates. Persistent issue, not a regression this cycle.
+
+## Tier-DATA 2026-08-26T08:29:59Z
+
+**Scope:** DB Data Anomaly Sweep (detection only — signal write deferred via dedup)
+
+**Tables checked:** daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, price_alerts, alert_engine_records, agent_signals, signal_outcomes, financial_reports, macro_indicators, sbv_rates, fred_series_daily, deep_fetch_queue, deep_fetch_stats, cron_job_runs, scheduler_locks (all 17 checked)
+
+**Canonical counts (db-integrity-counts.sh):**
+- ohlc_violations_count: 336 (across 20 distinct dates)
+- scale_gt100x_count: 0
+- vnindex_cache_rows_count: 1
+- low_confidence_reports_count: 52
+
+**Findings:** deep_fetch_stats CRITICAL (0 rows, already-open); deep_fetch_queue CRITICAL (64 stuck); price_alerts INFO (by-design); alert_engine_records INFO (by-design); macro_indicators INFO (by-design); cron_job_runs HIGH (13 failures, already-open)
+
+**Verdict:** Detection complete. All CRITICAL/HIGH findings already tracked via dedup gate. No NEW findings this cycle.
