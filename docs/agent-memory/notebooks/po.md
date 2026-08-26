@@ -327,3 +327,17 @@ rotation of this namespace. The real root cause is that the catch-all routes an 
   the very deliverable the checkpoint gates. Self-heals when the brief lands. Do not re-derive.
 - TNB c136 outage findings deferred a 3rd tick. Dedup says covered; no fresh ACK block appended.
 - Push backstop skipped: standing disarm, and `FIX-PO-PUSHBACKSTOP-FLOWDOC-INSTRUCTS-PUSH-AGAINST-STANDING-DISARM` is open.
+
+### Correction to the carry-over above, same tick (02:03Z)
+I wrote that the supervised hold "self-heals when the brief lands" as though that were future. It is not —
+the brief landed **during** this tick: `docs/architecture-briefs/2026-08-26-fix-pdfx-parent-process-memory-
+burst-headroom-worker-recycling.md`, 19445B, commit `bc68809ba` at 01:53Z. The row then moved
+`in_progress[]` → `ready[]` (router, 01:56Z), owner/next_agent now `dev-pdf-extractor`, and `.head` went
+idle. I did **not** stamp `po_goahead` even though the deliverable now exists and is verifiable, because
+`supervised-goahead.md` Step 1 is explicit that WF-2 evaluates only the row `.head.active_task_id` names,
+and its own note forbids pre-emptively stamping rows that are not currently head. Next PO tick: this row
+is ratifiable on sight — the artifact exists, the commit is real, and the implementability claim
+(`main.py:154` builds `ProcessPoolExecutor(max_workers=1)` with no `max_tasks_per_child`; in-container
+`python3 -V` = 3.12.3 so the kwarg exists) was already verified at source on the 01:16Z tick. Do not
+          re-derive it; just confirm the brief still matches and stamp.
+Note it is also now a READY-XOR manual-dispatch candidate (`supervised=true`, `plan_only=false` — exactly one).
