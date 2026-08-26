@@ -211,6 +211,14 @@ if (import.meta.main) {
     process.exit(1);
   }
 
+  // NOTE: journal_mode is NOT set here (FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT,
+  // 2026-07-30) — market.db's journal_mode is DELETE (schema.ts's getDb(), FIX-SQLITE-
+  // JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION mitigation for recurring Docker-virt
+  // WAL/SHM corruption, project_sqlite_corruption_fix.md). This is a one-shot migration
+  // script — it must not re-arm WAL and silently undo that mitigation for the duration of
+  // its run. Added 2026-08-26 after a live corruption incident during a --pages sweep (see
+  // docs/signals/20260826T001719Z-marketdb-corruption-during-pdfocr-sweep-writes-now-failing.json)
+  // surfaced that this script — unlike its scripts/migrations/ siblings — never carried this note.
   const db = new Database(DB_PATH, { readwrite: isApply, readonly: !isApply });
 
   const beforeCount = (

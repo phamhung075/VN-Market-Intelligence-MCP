@@ -192,7 +192,7 @@ Fixing the constructor recovers nothing that is already persisted.
 |---|---|---|---|
 | `/data/bctc-page-images/{report_id}/page_NNNN.png` | `get_bctc_page_image` | `POST /api/rasterize {"force": true}` (new field) | **WIRED** — `rasterize_page(..., force=True)` re-renders and corrects |
 | `bctc_layout_units.stitched_markdown` | `get_bctc_pending_refine` | re-run `/extract-md-tables` for the report_id (upsert on `(report_id, unit_id)`) | available |
-| `pdf_extracted_text` (market.db) | `get_bctc_page_text` (`source: sqlite_ocr`) | `DELETE FROM pdf_extracted_text WHERE filename = ?` then re-run `extractAndStorePdfPages` | **CODE FIX LANDED, invalidation NOT YET RUN** — see below |
+| `pdf_extracted_text` (market.db) | `get_bctc_page_text` (`source: sqlite_ocr`) | `DELETE FROM pdf_extracted_text WHERE filename = ?` then re-run `extractAndStorePdfPages` | **CODE FIX LANDED, invalidation PARTIAL — see 2026-08-26 update below** |
 
 > **FOURTH OCR construction site, outside `apps/pdf-extractor/` — CODE FIX LANDED
 > (FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE, 2026-08-26).**
@@ -237,6 +237,51 @@ Fixing the constructor recovers nothing that is already persisted.
 > separate agentic re-refine pass (`get_bctc_pending_refine` →
 > `push_bctc_refined_unit` → `finalize_bctc_refine`, host-level fleet cron) —
 > out of this fix's scope.
+
+> **2026-08-26 UPDATE — corpus scope was 79 files/312 pages, not 1; `--pages`
+> targeted mode added; sweep PARTIAL, halted on a live DB-corruption
+> incident.** Router's independent scan found the true stored-corpus scope:
+> 79 files / 312 pages across 25 tickers still garbled (superseded the
+> single-`VIC_2026_Q1.pdf` estimate above) — full list in
+> `docs/signals/20260825T235317Z-pdfocr-orientation-corpus-scope-79-files-supersedes-qa-estimate.json`.
+> The whole-file re-extract above would have cost ~7.4h (3786 pages) to fix
+> 312 actually-broken ones, so `reextract-pdf-ocr-orientation.ts` gained a
+> `--pages <comma-list>` targeted mode (delete+reinsert only the named
+> `page_number`s — 12x cheaper; whole-file remains the default when `--pages`
+> is absent). Calibrated discriminator + detector persisted at
+> `scripts/audits/detect-pdf-ocr-orientation-garble.ts`; sweep runner at
+> `scripts/migrations/sweep-pdf-ocr-orientation-garble.sh`.
+>
+> **Result: 5 files / 12 pages fixed and verified clean** (`DIG_2024_Q4.pdf`
+> p33; `HSG_2026_Q1.pdf` p4,p25; `20250324-DBC-CBTT-...-2024_signed.pdf` 4pp;
+> `20250326-DIG-BCTC-hop-nhat-kiem-toan-nam-2024-cks.pdf` 4pp;
+> `20260420-DHG-BCTC-Quy-1.2026.pdf` p26). **17 files / 28 pages regressed**
+> — the sweep's DELETE committed but the re-insert crashed before completing,
+> so those pages now have **no row at all** (worse than garbled-but-present).
+> **57 files / ~272 pages untouched**, unchanged. Full per-page list and the
+> live incident writeup:
+> `docs/signals/20260826T001719Z-marketdb-corruption-during-pdfocr-sweep-writes-now-failing.json`.
+>
+> **Root cause of the halt: `data/live/market.db` hit `SQLITE_CORRUPT`
+> ("database disk image is malformed") mid-sweep** — confirmed NOT scoped to
+> this table alone (the live `mcp-server` container hit the identical error
+> on an unrelated `agent_signals` insert in the same window) and confirmed
+> as the 6th documented occurrence of the already-escalated recurring-bug
+> `FIX-SQLITE-DOCKER-VIRT-CORRUPTION` (see agent-memory
+> `project_sqlite_corruption_fix.md` — `pdf_extracted_text` was one of the
+> corrupted trees in the 07-30 recurrence too). journal_mode is confirmed
+> `delete` (not the 08-06 recurrence's WAL-rearm mechanism) — this instance's
+> proximate trigger is unconfirmed but most likely the sweep's many
+> back-to-back write transactions colliding with the container's own
+> concurrent writes across the host/container bind-mount boundary. **DO NOT
+> resume the sweep or write to `data/live/market.db` until db-data-integrity/
+> ops has run the established recovery pattern** (stop writer → back up the
+> corrupt copy → restore from a `quick_check`-verified-clean copy → restart →
+> verify by serving value, never the health badge alone). A candidate clean
+> copy was already identified and left for ops to evaluate:
+> `data/live/market.db.backup` (`quick_check = ok`, ~20h stale) — using it
+> would need the 5 fixed files above (and this window's other live writes)
+> replayed afterward.
 
 ---
 

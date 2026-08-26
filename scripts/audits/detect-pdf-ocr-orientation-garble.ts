@@ -97,6 +97,9 @@ if (import.meta.main) {
     process.exit(1);
   }
 
+  // readonly:true — never sets journal_mode, no WAL-rearm risk
+  // (FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT convention; see
+  // reextract-pdf-ocr-orientation.ts for the full note on why this matters here).
   const db = new Database(DB_PATH, { readonly: true });
   const rows = db
     .query<{ filename: string; page_number: number; text_content: unknown }, []>(
