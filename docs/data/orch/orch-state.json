@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-26T10:55:46Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "TASK-COWORK-CATCHUP-9",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TASK-COWORK-CATCHUP-9 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-26T11:51:08Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8721,27 +8722,6 @@
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
         "updated_by": "pm/correction-S4"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-9",
-        "title": "FR-10: Documentation updates and flow clarifications",
-        "type": "SPRINT-S",
-        "size": "S",
-        "priority": "P0",
-        "zone": "docs/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": null,
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-26T05:41:13Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po (triage-20260826T0536Z)",
-        "blocked_by": null,
-        "blocked_at": "2026-08-23T10:33:27Z",
-        "blocked_reason": "DEPENDENCY REPOINTED + CONTENT CONTRADICTED. Same CANCELLED-satisfies-dep hazard as TASK-COWORK-CATCHUP-6 (depends_on named CATCHUP-3, cancelled this tick). ON THE MERITS: this row is FR-10 doc updates, and its handoff docs/handoffs/TASK-COWORK-CATCHUP-9.md Step (4) instructs the writer to record, as shipped, 'per-caller wiring (dispatcher catchup-check.md, tick-preflight.sh Step 6.5, firer.sh; FR-9)'. Two of those three consumers are now BLOCKED pending re-spec and the third is CANCELLED, so executing this row as written would publish a durability-brief addendum asserting a design that was measured not to work — the exact doc-truth failure mode brief S1 documents, where a two-month-stale sentence in cron-cowork-team/SKILL.md manufactured a wrong incident diagnosis that was then quoted verbatim into a live P0 row's status_note. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief item 5, agent-father) now owns match-slots.md and the cron runbook; re-scope whatever residue remains here against that row's outcome. po 2026-08-23T10:33Z.",
-        "po_unfreeze_20260826T0536Z": "UNFROZEN by po 2026-08-26T05:36Z. Sole blocker TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY is DONE_VERIFIED in done_verified[]; deps_satisfied() already agreed. The freeze was the status flag alone, which no consumer allowlist admits. depends_on cleared alongside blocked_by so the two gates cannot disagree again."
       },
       {
         "id": "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
@@ -18827,8 +18807,8 @@
           "FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES"
         ],
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION",
-        "updated_at": "2026-08-24T17:59:13Z",
-        "secondary_claimed_at": "2026-08-24T17:50:55Z",
+        "updated_at": "2026-08-26T11:47:46Z",
+        "secondary_claimed_at": "2026-08-26T11:47:45Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "pm",
         "closed_at": "2026-08-24T17:59:12Z",
@@ -24706,8 +24686,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T11:32:15Z",
-    "last_triaged_by": "po",
+    "last_triaged_at": "2026-08-26T11:51:05Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -24762,6 +24742,32 @@
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128.",
         "po_lanefix_20260826T0536Z": "LANE MOVE ATTEMPTED AND REFUSED, po 2026-08-26T05:36Z — recorded so this is not re-attempted blindly. The row is BLOCKED while parked in the WIP lane, the STATUSFLIP-LANEMOVE straggler shape that docs/agents/dev-team/flow/execute-tier.md CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) says must move out. Moving it in_progress[] -> backlog[] made orch-apply's row-prose-ceiling check abort the entire write: 'live=0B -> candidate=18774B'. The 0B is false — PROSE_CEILING_LANES omits in_progress[], so the pre-move baseline reads zero and the move looks like 18.7KB of brand-new prose. Owning row already exists and is already dispatchable: TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES (ready[], READY, P1, developer). Re-attempt the move only AFTER that lands. Harmless meanwhile: BLOCKED rows are excluded from wip_in_progress (devteam-eligibility.jq:117) and claimed_by/claimed_at/owner_client_session are all null, so it holds no claim and consumes no dispatch budget. Its BLOCKED status is CORRECT, not stale: blocker TASK-COWORK-MUTEX-001 is genuinely still at REVIEW."
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-9",
+        "title": "FR-10: Documentation updates and flow clarifications",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "P0",
+        "zone": "docs/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "IN_PROGRESS",
+        "depends_on": null,
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-26T11:51:08Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po (triage-20260826T0536Z)",
+        "blocked_by": null,
+        "blocked_at": "2026-08-23T10:33:27Z",
+        "blocked_reason": "DEPENDENCY REPOINTED + CONTENT CONTRADICTED. Same CANCELLED-satisfies-dep hazard as TASK-COWORK-CATCHUP-6 (depends_on named CATCHUP-3, cancelled this tick). ON THE MERITS: this row is FR-10 doc updates, and its handoff docs/handoffs/TASK-COWORK-CATCHUP-9.md Step (4) instructs the writer to record, as shipped, 'per-caller wiring (dispatcher catchup-check.md, tick-preflight.sh Step 6.5, firer.sh; FR-9)'. Two of those three consumers are now BLOCKED pending re-spec and the third is CANCELLED, so executing this row as written would publish a durability-brief addendum asserting a design that was measured not to work — the exact doc-truth failure mode brief S1 documents, where a two-month-stale sentence in cron-cowork-team/SKILL.md manufactured a wrong incident diagnosis that was then quoted verbatim into a live P0 row's status_note. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief item 5, agent-father) now owns match-slots.md and the cron runbook; re-scope whatever residue remains here against that row's outcome. po 2026-08-23T10:33Z.",
+        "po_unfreeze_20260826T0536Z": "UNFROZEN by po 2026-08-26T05:36Z. Sole blocker TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY is DONE_VERIFIED in done_verified[]; deps_satisfied() already agreed. The freeze was the status flag alone, which no consumer allowlist admits. depends_on cleared alongside blocked_by so the two gates cannot disagree again.",
+        "promoted_at": "2026-08-26T11:51:05Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-26T11:51:05Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -24777,7 +24783,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-26T04:10:12Z"
+        "last_served_tick": "2026-08-26T11:51:05Z"
       },
       "sls": {
         "last_served_tick": "2026-08-26T04:42:49Z"
@@ -24795,9 +24801,75 @@
         "last_served_tick": "2026-08-26T11:19:21Z"
       }
     },
-    "_updated_at": "2026-08-26T11:33:32Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-26T12:12:14Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "b204d1f2bb96332a22ff82ffa63fec9572c14b7ed49c383e3f6785c85b3a5ae8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T12:06:51Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": "30",
+            "market-watcher-offhours": "30",
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-26T12:06:03Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "12:00",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 114,
+          "signal_backlog": 31,
+          "note": "Step 4.7 tick-snapshot RAN this tick (first non-silent fan-out in a long drain-only run) — wrote docs/data/cycle-snapshot-12:05.json (17547B, carry.regime=NEUTRAL), resetting a 165-min snapshot staleness. emit_pressure_state returned cycle_snapshot_promoted=false one minute later: direct same-tick confirmation of FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (producer named 12:05 by wall clock, promoter looked up nominal 12:00). calendar_status=open is false — VN market closed 08:59Z. dev_head/devq/signal_backlog measured, not placeholders; note .task_board.head is a deprecated stub, canonical is .head."
+        },
+        "createdAt": "2026-08-26T12:06:51Z",
+        "drained_at": "2026-08-26T12:12:14Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
