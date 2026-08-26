@@ -20801,52 +20801,6 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
-      },
-      {
-        "status": "DONE_VERIFIED",
-        "size": "S",
-        "depends": [],
-        "created_at": "2026-08-24T13:16:43Z",
-        "created_by": "po/triage-20260824T1310Z",
-        "updated_at": "2026-08-26T17:19:02Z",
-        "updated_by": "developer",
-        "id": "FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS",
-        "type": "FIX",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "files": [
-          "scripts/install-launchd-plist.sh",
-          "scripts/install-launchd-plist.test.sh",
-          "docs/standards/cron-jobs.md"
-        ],
-        "dedup_key": "fleetpush-disarm-not-durable",
-        "title": "The user's explicit fleet-push disarm lives ONLY in the untracked installed plist — the version-controlled repo copy still says RunAtLoad=1/StartInterval=1800 with no Disabled key, so any re-install from source silently re-arms an unattended push of 224 commits",
-        "acceptance": "AC-1 make the disarm durable in the tracked plane, or make re-installation refuse to silently re-arm a job the user disarmed. AC-2 MEASURED 2026-08-24T13:0xZ, and this is the whole finding: `diff <(plutil -p launchd/com.vn-market.fleet-push.plist) <(plutil -p ~/Library/LaunchAgents/com.vn-market.fleet-push.plist)` yields EXACTLY ONE line of difference — `> \"Disabled\" => 1`. Every other key is identical. The user's decision is one untracked key deep. AC-3 do NOT resolve this by committing Disabled=1 into the repo plist without a ruling: that makes the disarm the permanent default for every future install/host, which is a different policy decision than 'disarmed today'. Architect must choose between (a) tracked Disabled=1 plus an explicit re-arm procedure, (b) an install-time guard that refuses to overwrite a locally-disabled label, or (c) moving the arm/disarm decision out of the plist into a checked-in policy file the installer reads. AC-4 whatever ships must be verified by re-reading the INSTALLED plist with plutil -p (it is a BINARY plist; grep reads the Disabled key as absent — this exact false negative was hit live during triage). AC-5 do NOT re-arm fleet-push as part of this work, and do NOT push. origin/main stays ab5087296; PUSH-AUTONOMY-1 is unsatisfied; the user pushes personally.",
-        "evidence": "Found by PO 2026-08-24T13:0xZ while adjudicating the router's ack-ledger question; NOT reported by the router, which stated the disarm as 'plist Disabled=1' without distinguishing the tracked repo copy from the installed copy. 224 commits unpushed (git rev-list --count origin/main..HEAD, live). Both pre-push gates (tsc, size-lint) are now GREEN, so the ONLY thing standing between a re-install and an unattended 224-commit push is that one untracked key.",
-        "po_note": "P0 because it protects an explicit standing user decision and both technical brakes have just been released.",
-        "promoted_at": "2026-08-24T15:46:41Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": null,
-        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
-        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)",
-        "claimed_at": "2026-08-26T17:15:25Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "architect_review_note": "[architect 2026-08-26T01:17Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Re-verified the 1-line Disabled=>1 diff live (plutil -p; every other key byte-identical). New finding: of 5 tracked launchd/*.plist, 3 (cowork-guaranteed-slot-firer, socat-bridge, socat-tls-bridge) install as SYMLINKS to the repo file (drift-immune by construction); fleet-push (and docker-events) install as independent COPIES — the actual mechanism behind this row. No install script exists anywhere in-repo today; cron-jobs.md's documented \"install/re-arm\" step assumes the installed copy already exists, so the silent-rearm vector only fires on a genuine reinstall-from-source (disaster recovery / fresh host — this fleet has had several such events). PUSH-AUTONOMY-1 (dev-standards.md, unmodified, still canonical) frames autonomous push as the standing design default; the current Disabled=1 is a live host-level override tied to the present CI-red/224-backlog situation, not a stated permanent policy change — so the tracked plist's armed-by-design shape is still correct and should NOT be inverted.\n\nCHOSE (b): new scripts/install-launchd-plist.sh — refuses to overwrite an installed plist whose Disabled key reads true (plutil -extract Disabled raw, never grep; live-verified against fleet-push=present/rc0 vs docker-events=absent/rc1 as a working/non-working control pair) — becomes the sole documented install/re-arm path (cron-jobs.md repoint). REJECTED (a) tracked Disabled=1+doc: inverts the checked-in default to disabled-by-design for every future clone/host, forever, for what the row's own AC-5 frames as a temporary override tied to the current incident — and fixes only fleet-push's value, not a mechanism (docker-events gets nothing). REJECTED (c) checked-in policy file the installer reads: needs the SAME install-time enforcer as (b) to have any effect at all, so it pays (b)'s full cost plus a new registry/schema to maintain, for a reasoned-record benefit this brief + the row's own po_note/evidence already supply — not worth a parallel ledger for a problem confined to 1 label today.\n\nCOST (named, not waved at): the new script + fixture-only test is unbuilt as of this cycle — the exact gap this row exists to close stays open until developer lands it and the doc repoint ships; even after, this is a discipline control (bypassable by a manual cp outside the script), same category and same acceptance this fleet already gives orch-apply.sh, not an OS-level lock.\n\nFull brief (design detail, pseudocode, AC mapping, test strategy): docs/architecture-briefs/2026-08-26-fix-fleetpush-disarm-durable-install-guard.md. Journal STEP architect-S48 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-7.md).",
-        "branch": null,
-        "developer_review_note": "[developer 2026-08-26] Implemented architect option (b) per docs/architecture-briefs/2026-08-26-fix-fleetpush-disarm-durable-install-guard.md §2/§6: new scripts/install-launchd-plist.sh (refuses to overwrite an installed launchd plist whose Disabled key reads true, plutil -extract never grep) + scripts/install-launchd-plist.test.sh (19 fixture-only assertions, PASS, zero real-host touch) + docs/standards/cron-jobs.md fleet-push Install/re-arm line repointed at the guard script (docker-events noted as also-covered, no dedicated doc block exists for it today). Committed ced606a22. AC-4 re-verified live before/after: installed fleet-push Disabled=>true rc=0 unchanged; docker-events Disabled absent rc=1 unchanged. AC-5: fleet-push NOT re-armed, NOT pushed (origin ci-red, 983 commits unpushed per live git rev-list --count origin/main..HEAD, up from the row's stale 224-commit measurement two days ago). Named cost per architect: this is a discipline/documentation control (bypassable by a manual cp), not an OS-level lock — same category as scripts/orch-apply.sh. Ready for QA verification.",
-        "drain_source_lane": "review",
-        "qa_verified_at": "2026-08-26T17:19:01Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bash install-launchd-plist.test.sh + bash -n + mock-guard.sh + plutil -extract Disabled raw (real installed plist) + launchctl list + git rev-list --count",
-            "args": "commit=ced606a22; files=scripts/install-launchd-plist.sh, scripts/install-launchd-plist.test.sh, docs/standards/cron-jobs.md",
-            "live_value_observed": "ancestor=yes; stat touches 3/3 claimed files; install-launchd-plist.test.sh 19 pass 0 fail; bash -n clean; mock-guard PASS (no prod files, bash zone); installed fleet-push Disabled=>true rc=0 (unarmed); launchctl list: fleet-push absent (not loaded); origin/main..HEAD=996 (no push); repo plist byte-unchanged (git diff HEAD empty); installed plist mtime unchanged Aug 24 14:33:42 2026 pre/post verify",
-            "observed_at": "2026-08-26T17:19:01Z"
-          }
-        },
-        "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Review Record (direct-commit verify, qa-S247): commit ced606a22 verified on main ancestry, touches all 3 claimed files. install-launchd-plist.test.sh 19/19 pass (live re-run). bash -n clean both scripts. mock-guard PASS (no production files, bash zone). Not OOM/crash-durability class. AC-3 confirmed: git show --stat + git diff HEAD on launchd/com.vn-market.fleet-push.plist both empty -- fix lives entirely in the new install-time guard, tracked plist untouched (RunAtLoad=1, no Disabled key). AC-4 confirmed: script uses plutil -extract Disabled raw (line 110), never grep; independently reproduced the grep false-negative live on the real installed plist (grep -c Disabled = 0 matches, file = Apple binary plist). AC-5 confirmed: real installed fleet-push plist Disabled=true rc=0 (still disarmed); launchctl list shows fleet-push NOT loaded; git rev-list --count origin/main..HEAD = 996, no push; installed plist mtime unchanged (Aug 24 14:33:42 2026) before/after my own fixture-only test run. Verdict: vc-approved."
       }
     ],
     "head": {
