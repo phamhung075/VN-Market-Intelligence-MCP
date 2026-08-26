@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-08-26T04:56:05Z",
+  "checked_at": "2026-08-26T05:26:05Z",
   "tables": {
     "daily_ohlcv": {
       "rowcount": 790021
@@ -8,7 +8,7 @@
       "rowcount": 116
     },
     "market_prices_history": {
-      "rowcount": 16211
+      "rowcount": 18903
     },
     "vn_index_cache": {
       "rowcount": 1
@@ -41,13 +41,13 @@
       "rowcount": 8415
     },
     "deep_fetch_queue": {
-      "rowcount": 2579
+      "rowcount": 2582
     },
     "deep_fetch_stats": {
       "rowcount": 0
     },
     "cron_job_runs": {
-      "rowcount": 217961
+      "rowcount": 218053
     },
     "scheduler_locks": {
       "rowcount": 1
