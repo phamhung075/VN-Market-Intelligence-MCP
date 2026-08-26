@@ -69,3 +69,12 @@
 - Treat the two live-gated rows' current next_agent=po as proof the gate works — rejected: that's coincidental (both were already manually parked pre-fix); built an isolated fixture instead so the gate itself, not an unrelated field, is what's under test.
 **why-decision:** All AC-1..AC-7 fixture proofs pass, mutation test proves non-vacuous, live-isolate proves the gate (not a side-effect) causes exclusion, malformed-value probe closes the one case (§2 of spawn brief) the shipped suite didn't cover. vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S234 · qa · 2026-08-26T06:17:25Z
+**task-id:** FIX-QADRAIN-DONE-TO-QA-SCORES-BACKWARD-CONSERVATION-ABORTS-WHOLE-DRAIN
+**what-done:** Direct-Commit Verify on commit fe013f22f (ancestor of main, confirmed): re-read LANE_RANK diff, ran shipped scripts/test-orch-conservation-lane-rank.sh (12/12) + scripts/test-devteam-donelane-drain.sh (60/60) + scripts/test/orch-apply-wrapper-tests.sh (109/109); built 3 independently-authored fixtures (not copied from the diff) confirming AC1 (3 done + 1 review batch lands clean) and 2 negative controls (done_verified->qa, review->backlog stale reverts still abort); mutation-checked by re-running the shipped suite against the pre-fix (parent-commit) file copy in scratch -- 8/12 flip red, scoped to AC1/AC2/AC3, confirming the harness discriminates and PASS is not vacuous.
+**what-considered:**
+- Trust the row's own review_note claims vs re-derive independently -- chose full re-derivation per verify-committed mandate.
+- Run only the shipped test file vs also build fresh fixtures -- chose both, since a shipped negative control could itself be miswired.
+**why-decision:** LANE_RANK has exactly 1 code call-site (grep-verified), fix is narrowly scoped, negative control (illegal backward move) independently reproduced as still-rejected on 3 different lane pairs, blast-radius restored (single-row false-positive no longer discards the whole batch).
+**why-change:** no change from architect brief direction; verdict APPROVED.
