@@ -1,0 +1,50 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T02:35:58Z",
+    "matched_slots": ["alert-commander-market"],
+    "won_slots": ["alert-commander-market"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": { "alert-commander-market": "cron" },
+    "cadence_minutes": { "alert-commander-market": null },
+    "last_fired_timestamp": "2026-08-26T02:35:00Z",
+    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 34,
+    "note": "Single-slot tick. Step 5.1 gate degraded=false (headroom 3726MB vs 1500 floor, cores 12, true load1m 9.32 vs threshold 24) -> MAX_PARALLEL=4, non-binding at 1 slot.",
+    "FIELD-PROVENANCE": {
+      "dev_head": "MEASURED from canonical TOP-LEVEL .head (status=idle) — NOT from .task_board.head, which is a deprecated passthrough stub object literally carrying {status:'deprecated', canonical_moved_to:'.head'}. Reading the stub and mapping its literal onto this field is one mechanical route to the dev_head:unknown fabrication tell tracked by FIX-COWORKFIRE-TELEMETRY-SERVERCOMPUTED-FIELDS-FABRICATED-30PCT. Was 'active' at 02:15Z (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM); that row has since closed out.",
+      "signal_backlog": "server-computed value used verbatim; independently recomputed as a file count (docs/signals/*.json excluding cowork-team-*) = 34, agrees exactly. Rose 31 -> 34 this tick from three router-filed signals, not from drain backpressure.",
+      "devq": "read from the pressure-state emitted by this tick's own Step 6.0",
+      "calendar_status": "read from same; see carried_defects"
+    },
+    "carried_defects": {
+      "cycle_snapshot_promoted_false": "37th consecutive. Producer named this tick's file by wall clock (cycle-snapshot-02:34.json, 14791B) while the nominal tick is 02:30. Routed: FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (backlog P1, next=architect).",
+      "prior_day_decoy": "This tick's prune removed exactly one file — the cycle-snapshot-02:20.json decoy that alert-commander HIT at 02:20Z. 31 prior-day files remain vs 5 today. No 02:30 decoy exists, so this tick's consumer lookup will be a clean MISS (degrades gracefully) rather than a stale HIT. Quantified evidence filed to po at a08f623c4 as an AMENDMENT to the already-drained 02:15Z filing, explicitly flagged do-not-mint-a-new-row.",
+      "last_regime_and_volatility": "Both passed as 'unknown' per the spec's own 'if known, else unknown' clause — VERIFIED this tick that the spec's lookup keys regime_status and volatility_level are BOTH ABSENT from cycle-snapshot-latest.json, which is itself ~74h stale (tick 00:00, created 2026-08-23T00:07:50Z). A live regime value NEUTRAL does exist in this tick's fresh snapshot at .macro_snapshot.data.signals.carry.regime — a DIFFERENT path than the spec names. Not silently substituted: doing so would make this emitter inconsistent with every other one and hide the defect. Volatility has no producer at any path (zero matches). Owner: architect.",
+      "calendar_status_open": "29th+ consecutive; server-side computation defect, value passed through unmodified.",
+      "step_5_1_locale_load_parse": "The spec's own awk -F',' expression truncated true load 9.32 to 9 on this locale-comma host. Latent — harmless at a threshold of 24, a real comparison bug only if a future threshold sits near an integer boundary. In the spec, not an improvisation."
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T02:35:58Z"
+}
