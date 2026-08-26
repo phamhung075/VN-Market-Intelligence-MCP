@@ -1,23 +1,53 @@
 {
-  "from": "cowork-team", "to": "dev-team", "type": "cowork-fire",
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-26T08:50:49Z",
-    "matched_slots": ["chef-eod","alert-commander-market"],
-    "won_slots": ["chef-eod","alert-commander-market"],
-    "held_by_other": [], "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md","docs/agents/alert-commander/flow/main.md"],
-    "silent": false, "drift_min": 3, "errors": [],
-    "pressure_mode": "adaptive", "calendar_status": "open",
-    "suppressed_calendar": [], "suppressed_cadence": [], "downgraded": [],
+    "matched_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "chef-eod": "cron", "alert-commander-market": "cron" },
-    "cadence_minutes": { "chef-eod": null, "alert-commander-market": null },
+    "due_reasons": {
+      "chef-eod": "cron",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null,
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-26T08:50:15Z",
-    "last_fired_slots": ["chef-eod","alert-commander-market"],
+    "last_fired_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
-    "classification": "FIRE", "reason": "spawned",
-    "nominal_tick": "08:45", "leader_lock": "acquired",
-    "dev_head": "unknown", "devq": 5, "signal_backlog": 31,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
     "note": [
       "chef-eod FIRED via the cowork dispatcher path with last_fired frozen at 2026-08-13T08:55:52Z — 13 days stale. This is the guaranteed-slot-firer/last_fired divergence already on record; the dispatcher path passed scheduled_utc=2026-08-26T08:45:00.000Z EXPLICITLY, which is the field the launchd firer omits (the omission that made chef fall back to `date -u` and commit 48 files instead of 2).",
       "OBSERVER-EFFECT REMEDY APPLIED AND MEASURED. Last tick's Step 4.7->Step 5 gap was 67s, inflated by the dispatcher's own investigative doc-reads between snapshot write and spawn. This tick every read (published-marker ownership, 5.1 gate, 5.2 consistency, 4.6 claims) was FRONT-LOADED before Step 4.7. Result: gap 08:49:46 -> 08:50:15 = 29s, a 2.3x reduction.",
@@ -32,5 +62,12 @@
       "container_vm_headroom_mb 2997 -> 3308 across the tick."
     ]
   },
-  "priority": "low", "createdAt": "2026-08-26T08:50:49Z"
+  "priority": "low",
+  "createdAt": "2026-08-26T08:50:49Z",
+  "_processed": {
+    "fingerprint": "d51de08024a8bf05747ab66874ef07faf9c4c67a662feb432e4d5b1990b43526",
+    "processedAt": "2026-08-26T08:57:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

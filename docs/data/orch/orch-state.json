@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T07:15:24Z",
+    "_updated_at": "2026-08-26T08:58:25Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1278,7 +1278,7 @@
         "type": "preserved_bug_no_tracking_row",
         "summary": "RC-VERIF grandfather bypass closed for FU-RAG-DEPLOY-MEMORY only — the other 50 grandfathered ids remain marker-blind, no tracking row",
         "severity": "WARN",
-        "status": "new",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null,
@@ -1296,7 +1296,7 @@
         "type": "observability_defect",
         "summary": "deliberate evidence-preservation in docs/agent-memory/notebooks/ holds test 1839b-notebook-protocol deterministically RED; not recorded in any baseline, so every verifier re-derives it from scratch",
         "severity": "WARN",
-        "status": "new",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null,
@@ -1314,7 +1314,7 @@
         "type": "data_stale",
         "summary": "chef off-canonical synthesis write RECURRED 2026-08-26 on a FULL-quality cycle to a THIRD path, UNTRACKED — refutes the degraded-floor root-cause hypothesis recorded on the owning row",
         "severity": "HIGH",
-        "status": "new",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null,
@@ -1323,6 +1323,20 @@
         "related": [
           "FIX-CHEF-DEGRADED-FLOOR-RECOVERY-WRITES-OFF-CANONICAL-PATHS"
         ]
+      },
+      {
+        "id": "sys-20260826T085921-7abd",
+        "ts": "2026-08-26T08:59:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 10h (cadence 4h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-26T08:00Z"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
@@ -24652,9 +24666,261 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T08:28:20Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-26T08:58:25Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "b2d0e3cad65d0090b5e394ecd4c2ff31d7f099dc1eb8fbcb5d2877ebf5502ece",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/unified-agent.md docs/data/unified-agent-synthesis-2026-08-26-chef-eod.json. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid66689:git commit -m feat(unified-agent): EOD dish 2026-08-26 08:45Z — 4-cluster convergence, FPT accumulate, breadth divergence warning\\012\\012- Convergence: DBC, FPT]<-[pid66685:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604597949-wnhuaq.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88052:claude --dangerously-skip-permissions -n cowork-team ]",
+        "createdAt": "2026-08-26T08:53:33Z",
+        "drained_at": "2026-08-26T08:57:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5469bf95e8b25cbea653d4e6ed4ef4c05680f4fd53241cd0967d00f493b4e33a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T08:22:38Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [
+            "chef-intraday"
+          ],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T08:21:36Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": [
+            "Step 0a: 1 NEW row sys-20260826T080003-2786 (from=system-auditor, to=po) HELD at NEW, not marked READ — po has 0 slots in cowork-schedule.json so the route-to-slot branch is structurally unreachable, and PO selects on status==NEW; marking READ would strand it. Second consecutive tick holding this same row.",
+            "Step 4.7: FILE_TICK=08:19, 16368B, no pre-existing file at that key. Prune removed docs/data/cycle-snapshot-08:05.json — the 2026-08-25 decoy flagged prospectively at the 08:00Z tick. Count 42 -> 42 (+1 new, -1 pruned).",
+            "STRUCTURAL FINDING (new this tick): the 24h-decoy exposure is PER-TICK, not a rare alignment. cycle-snapshot-08:23.json (2026-08-25T08:23:44Z, age 1436min) was alive during this tick and only became prune-eligible at 08:24:44Z — inside the predicted consumer window. Because the producer writes at a stable HH:MM+4..5 offset every tick, yesterday file for the same nominal tick always sits ~4min short of prune-eligibility exactly while today consumer is keying minutes in that neighbourhood. The <=7min freshness gate is therefore the SOLE guard on EVERY tick, not occasionally.",
+            "Sample #12 RESULT (4 replicates, premise verified not assumed: news-scout/market-watcher/alert-commander all load the same .claude/skills/step-0-cowork/SKILL.md, whose Step -1 has no nearest/newest/glob language). Outcomes: news-scout key 08:04 HIT; alert-commander-critical key 08:04 HIT; alert-commander-market key 08:06 MISS explicitly rejecting 08:04 as nearest-treated-as-absent; market-watcher key 08:05 = the decoy path, fell through. Hit rate 2/4 within one tick.",
+            "Sample #12 DECOY TEST PASSED: market-watcher keyed 08:05 where the 08-25 decoy existed. Payload discriminator settles it — decoy carries yield FAIRLY_VALUED/1.7pp, today 08:04 carries CHEAP/3.2pp; market-watcher notebook records yield cheap, so it did NOT consume 24h-old data. Freshness gate rejected under live conditions. Pre-registered failure signature did not fire.",
+            "UNRESOLVED, deliberately not scored as refutation: alert-commander-critical reported HIT at 08:04 described as ~2min old, implying a ~08:06 read which under own-clock exact match would have keyed 08:06 and missed. One imprecise prose number against three clean observations. Reading it as newest-file semantics would recreate the retracted sample-#10 error, so the own-clock hypothesis stands with one unexplained observation.",
+            "SPEC DIVERGENCE: .claude/skills/cycle-bootstrap/SKILL.md:57 specifies round to nearest 5-min slot; the actually-loaded .claude/skills/step-0-cowork/SKILL.md:38 specifies plain current-UTC HH:MM with no rounding. The rounding variant would have keyed 08:05 — straight onto the decoy, with the freshness gate as sole guard.",
+            "Step 4b collision logged WARNING-only at 08:00Z MATERIALIZED as real contention: the two alert-commander slots collided on notebook section numbering (c285 taken between peer read and write, critical self-corrected to c286) and on commit-mutex, where critical backed off 5s then 10s then reclaimed a stale lock (stolen:true) past the 90s TTL. R3 multi-slot policy produced genuine write contention, not just a theoretical warning.",
+            "BLOCKER for architect dispatch: P0 row FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK now serializes to 12071B, over the 12000B orch-row-prose-ceiling. Any further write to it aborts, including the architect own on dispatch. Sanctioned remedy is detail_ref cold store via scripts/orch-backlog-stub.sh (backlog is an eligible lane). NOT written this tick.",
+            "Sample #13 PRE-REGISTERED BEFORE SPAWN: producer wrote key 08:19 at 08:19:59Z for nominal tick 08:15; single agent alert-commander-market, which runs Step 0-GW gateway probe BEFORE bootstrap so its key lags spawn by ~1-2min. Predicted consumer key 08:22-08:24 -> MISS. If it keys 08:23 the decoy exists and the freshness gate must reject it; payload discriminator FAIRLY_VALUED/1.7pp appearing in the notebook would mean the gate FAILED and 24h-old data was consumed. A HIT reported at 08:19 from a bootstrap minute != 08:19 would refute own-clock exact match.",
+            "Counters: signal_backlog 31 == independent file recount (20th consecutive match); cycle_snapshot_promoted false (60th consecutive); calendar_status open (53rd+); cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z with regime_status AND volatility_level both absent (18th verification); locale-comma parse 25th confirmation (raw load average s: 2,46 2,83 3,20 -> spec gsub parse yields 2 vs threshold 24, latent non-binding); container_vm_headroom_mb recovered 2459 -> 3203 as the four 08:00Z agents exited."
+          ]
+        },
+        "createdAt": "2026-08-26T08:22:38Z",
+        "drained_at": "2026-08-26T08:57:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "21605335e50d75ae044a11db3ea543e57c1544fcaae56b81f2517f8da697b975",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T08:36:52Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T08:36:12Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": [
+            "CORRECTION to the 08:15Z tick note: '24h-decoy exposure is per-tick by construction' was an OVERSTATEMENT. Decoy exposure is proportional to the PRIOR day's snapshot fire density, not structural. Measured this tick: 08-26 has 29 files (continuous, 00:04-08:34, every ~15min); 08-25 has 12 surviving files, all >=12:05, sparse (12:05/12:20/12:35, gap, 15:04/16:04/16:34/17:35/18:05, 19:50/20:05/20:20/21:05). No 08-25 file exists in the 08:3x band, so THIS tick had zero decoy exposure and the decoy discriminator was not exercised.",
+            "Forward prediction (falsifiable): because 08-26 coverage IS continuous, 08-27 ticks should face a 24h decoy at nearly every tick. If 08-27 shows intermittent decoy presence despite today's continuous coverage, the prune-timing model is wrong.",
+            "Step 4.7 prune removed cycle-snapshot-08:23.json (08-25, eligible 08:24:44Z) exactly as predicted at the 08:15Z tick. Snapshot count 42 -> 42 (one written, one pruned).",
+            "SAMPLE #14 PRE-REGISTERED BEFORE SPAWN (decisive test of the ~28s hit-window corollary): snapshot 08:34 write completed ~08:34:50; spawn issued 08:35:57, i.e. AFTER the producer's write-minute had already elapsed. If the corollary holds, the hit window closed at 08:34:59 before dispatch and MISS is structurally forced, not merely probable. Predicted consumer key 08:36-08:39; predicted phrasing 'no cycle-snapshot exact-match for tick 08:3X (nearest 08:34, treated as absent)'. REFUTING: any HIT, or a key of 08:34.",
+            "po-drain trap: the sys-20260826T080003-2786 row held at NEW for 2 consecutive ticks was consumed by PO at 08:21Z (docs/agent-memory/decisions/triage-20260826T0821Z-po.md, status now 'triaged'). 3rd confirmation that holding to=po rows at NEW is the correct remedy - marking them READ would have starved PO, which selects on status==NEW.",
+            "Step 6.0 signal_backlog=31 matched an independent file recount (21st consecutive match).",
+            "cycle_snapshot_promoted=false — 61st consecutive. cycle-snapshot-latest.json still tick 00:00 / created 2026-08-23T00:07:50Z.",
+            "regime_status and volatility_level both ABSENT from cycle-snapshot-latest.json — 19th verification. Note .macro_snapshot.data.signals.carry.regime reads 'UNKNOWN' in that stale file, so it is not a usable substitute source there.",
+            "calendar_status='open' — 54th+ consecutive; architect-owned computation defect, in-domain so no suppression applied.",
+            "Step 5.1 load parse: raw '2,64 3,16 3,23' -> spec 2 (26th locale-comma confirmation; the gsub remains load-bearing). headroom 3203 >= 1500, cores 12, threshold 24 -> max_parallel=4, non-binding at 1 slot.",
+            "container_vm_headroom_mb 3203 -> 2997 across the tick."
+          ]
+        },
+        "createdAt": "2026-08-26T08:36:52Z",
+        "drained_at": "2026-08-26T08:57:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d51de08024a8bf05747ab66874ef07faf9c4c67a662feb432e4d5b1990b43526",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T08:50:49Z",
+          "matched_slots": [
+            "chef-eod",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-eod",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-eod": "cron",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-eod": null,
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T08:50:15Z",
+          "last_fired_slots": [
+            "chef-eod",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": [
+            "chef-eod FIRED via the cowork dispatcher path with last_fired frozen at 2026-08-13T08:55:52Z — 13 days stale. This is the guaranteed-slot-firer/last_fired divergence already on record; the dispatcher path passed scheduled_utc=2026-08-26T08:45:00.000Z EXPLICITLY, which is the field the launchd firer omits (the omission that made chef fall back to `date -u` and commit 48 files instead of 2).",
+            "OBSERVER-EFFECT REMEDY APPLIED AND MEASURED. Last tick's Step 4.7->Step 5 gap was 67s, inflated by the dispatcher's own investigative doc-reads between snapshot write and spawn. This tick every read (published-marker ownership, 5.1 gate, 5.2 consistency, 4.6 claims) was FRONT-LOADED before Step 4.7. Result: gap 08:49:46 -> 08:50:15 = 29s, a 2.3x reduction.",
+            "BUT THE MISS IS STILL FORCED, and this quantifies the corollary's variance term: the snapshot landed at :46 seconds past the minute, leaving only 14s of hit window. A 29s dispatcher gap cannot fit inside 14s. The hit window is not a fixed ~28s budget — it is (60 - write_second), which this tick was 14s and can be as low as ~0s.",
+            "SAMPLES #15/#16 PRE-REGISTERED BEFORE SPAWN: both chef-eod and alert-commander-market predicted to key 08:50+ and MISS with phrasing 'nearest 08:49, treated as absent'. REFUTING: any HIT, or a key of 08:49.",
+            "Step 4.7 prune removed NOTHING this tick; count 42 -> 43. Consistent with the 08:30Z tick's correction — there is no 08-25 file in the 08:4x band either, so decoy exposure remains absent through this whole band, tracking the prior day's sparse coverage rather than being structural.",
+            "Step 6.0 signal_backlog=31 matched an independent file recount (22nd consecutive match).",
+            "cycle_snapshot_promoted=false — 62nd consecutive. cycle-snapshot-latest.json still tick 00:00 / created 2026-08-23T00:07:50Z; regime_status and volatility_level both ABSENT (20th verification).",
+            "calendar_status='open' — 55th+ consecutive architect-owned computation defect; in-domain so no suppression.",
+            "Step 5.1: raw load '1,25 2,24 2,69' -> spec 1 (27th locale-comma confirmation). headroom 2997 >= 1500, cores 12, thr 24 -> max_parallel=4; both slots fit ONE batch, cap non-binding.",
+            "Step 4b collision guard: 2 slots, distinct agents (unified-agent vs alert-commander) -> no collision.",
+            "container_vm_headroom_mb 2997 -> 3308 across the tick."
+          ]
+        },
+        "createdAt": "2026-08-26T08:50:49Z",
+        "drained_at": "2026-08-26T08:57:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "89a61e5339314b659151d69aeb7276ccfb6b269c1d8f28a847ca1eb72abff0e7",
+        "source": "dashboard",
+        "from": "router",
+        "to": "po",
+        "type": "preserved_bug_no_tracking_row",
+        "priority": "WARN",
+        "payload": "RC-VERIF grandfather bypass closed for FU-RAG-DEPLOY-MEMORY only — the other 50 grandfathered ids remain marker-blind, no tracking row",
+        "createdAt": "2026-08-26T08:37:58Z",
+        "drained_at": "2026-08-26T08:58:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c7a0bc477d9bddd68d5d3bdcf137716e54f9d28190325d82f59b748ebee8f88e",
+        "source": "dashboard",
+        "from": "router",
+        "to": "po",
+        "type": "observability_defect",
+        "priority": "WARN",
+        "payload": "deliberate evidence-preservation in docs/agent-memory/notebooks/ holds test 1839b-notebook-protocol deterministically RED; not recorded in any baseline, so every verifier re-derives it from scratch",
+        "createdAt": "2026-08-26T08:37:58Z",
+        "drained_at": "2026-08-26T08:58:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "652f2497cd257b6470a2a4121d5779fbf2f1ad3d4b22148876485f1ff6e70a56",
+        "source": "dashboard",
+        "from": "router",
+        "to": "po",
+        "type": "data_stale",
+        "priority": "HIGH",
+        "payload": "chef off-canonical synthesis write RECURRED 2026-08-26 on a FULL-quality cycle to a THIRD path, UNTRACKED — refutes the degraded-floor root-cause hypothesis recorded on the owning row",
+        "createdAt": "2026-08-26T08:42:42Z",
+        "drained_at": "2026-08-26T08:58:25Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
