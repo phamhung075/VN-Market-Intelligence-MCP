@@ -126,3 +126,35 @@ window while it believes it is clear. Always `date -u`.
 - evidence_fragments: 673 rows, max_id 1563 (restored from 619/1509)
 
 Next: Resume AC-2 after 09:00Z weekday market close.
+
+
+## 2026-08-26T07:02Z — Market.DB Restore AC-2 (HALF 1 COMPLETE, HALF 2 DEFERRED)
+
+**Current time**: 2026-08-26T07:02:15Z UTC (market closes 08:00Z, 58 minutes remaining)
+
+**HALF 1 — EXTRACTION COMPLETE**
+- Source: data/live/market.db.corrupt-2026-08-26T0031Z (435 MB, sequential scan)
+- Target scope: intraday_foreign_flow_5m on 2026-08-25 only (per router correction)
+- Corrupt DB count on 2026-08-25: 15,028 rows total (6,851 distinct keys)
+- Live DB count on 2026-08-25: 2,934 distinct keys
+- **Missing: 3,917 distinct (code, bucket_ts) keys** ✓
+- Method: Sequential scan (no index access), deduped by MAX(compacted_at) per key
+- Staging artifact: `scratchpad/ff5m_rows_to_restore.csv` (3,917 rows + header, 412 KB)
+- Verification: All 3,917 rows confirmed missing from live before 08:00Z market data cutoff
+- **Status: Ready for HALF 2 insertion**
+
+**HALF 2 — DEFERRED UNTIL AFTER 08:00Z (MARKET CLOSE)**
+- Hold duration: ~58 minutes (until 08:00Z UTC)
+- Reason: VN market active until 08:00Z; live market-watcher writes to this table during 02:00-08:59Z
+- Risk of writing during market hours: potential data race with concurrent market updates
+- Plan: After 08:00Z, verify peer session (cron-db-data-integrity-jobA-0656Z) is complete, then INSERT staging data
+- Expected post-write state: live ff5m count = 143,861 + 3,917 = 147,778 rows, 0 duplicates, quick_check=ok
+
+**NOTES**
+- Corrupt file preserved per standing constraint (AC-3)
+- No corruption observed in sequential scan (rowid out-of-order errors affect indexed lookups only)
+- All 3,917 rows extracted from bucket_ts window 2026-08-25 04:30Z to 08:55Z
+- Zero payload divergence detected within duplicates (only compacted_at differs)
+- Data loss is recoverable and bounded to confirmed window
+
+**Next**: Resume after 08:00Z for HALF 2 write + verification.
