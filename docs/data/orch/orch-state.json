@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787728575,
-    "last_linecount": 74
+    "last_mtime": 1787764353,
+    "last_linecount": 67
   },
   "decision_journal": [
     {
@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T16:46:54Z",
+    "_updated_at": "2026-08-26T17:12:02Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1201,7 +1201,7 @@
         "type": "system-issue",
         "summary": "DRS claim auto-claimed a contraindicated row: FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY carries po_consolidation_ruling_20260728 (do NOT route until epic BA-COWORK-GUARANTEED-SLOT-CATCHUP closes; close all 6 together per AC-9) and subsumed_by pointing at that epic, which is still BACKLOG. is_design_router_eligible reads status_note (null here) but not bespoke prose keys, so the ruling is invisible to both promote and claim. Caught pre-spawn at the 16:37Z tick and reverted unspawned (row back in backlog[], DRS stamps cleared, head reset idle); it had been DRS-stamped since 2026-08-24T03:02Z, so it was re-claimable on every DRS rotation turn. 3 sibling rows carry the same ruling and are currently unstamped but equally invisible to the predicate. Recurrence of the known picker-blind-to-prose class. Suggested direction (PO to rule): a generic contraindication predicate keyed on subsumed_by-still-open plus any po_*_ruling_* key, applied at BOTH promote and claim like the allowlist gate already is.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -24585,7 +24585,7 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T16:42:54Z",
+    "_updated_at": "2026-08-26T17:12:02Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24947,6 +24947,18 @@
         "createdAt": "2026-08-26T16:30:03Z",
         "drained_at": "2026-08-26T16:41:32Z",
         "routed_to": "po"
+      },
+      {
+        "envelope_id": "01972cbd3bec7c378a531a5f2ac917ce043c575c8ce1e61e621ab74fc5732c4b",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "HIGH",
+        "payload": "DRS claim auto-claimed a contraindicated row: FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY carries po_consolidation_ruling_20260728 (do NOT route until epic BA-COWORK-GUARANTEED-SLOT-CATCHUP closes; close all 6 together per AC-9) and subsumed_by pointing at that epic, which is still BACKLOG. is_design_router_eligible reads status_note (null here) but not bespoke prose keys, so the ruling is invisible to both promote and claim. Caught pre-spawn at the 16:37Z tick and reverted unspawned (row back in backlog[], DRS stamps cleared, head reset idle); it had been DRS-stamped since 2026-08-24T03:02Z, so it was re-claimable on every DRS rotation turn. 3 sibling rows carry the same ruling and are currently unstamped but equally invisible to the predicate. Recurrence of the known picker-blind-to-prose class. Suggested direction (PO to rule): a generic contraindication predicate keyed on subsumed_by-still-open plus any po_*_ruling_* key, applied at BOTH promote and claim like the allowlist gate already is.",
+        "createdAt": "2026-08-26T16:46:54Z",
+        "drained_at": "2026-08-26T17:12:02Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-26T15:08:05Z",
