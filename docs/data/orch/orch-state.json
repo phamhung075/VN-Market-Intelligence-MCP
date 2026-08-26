@@ -18716,6 +18716,36 @@
         "created_at": "2026-08-25T17:00:23Z",
         "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=preserved_bug_no_tracking_row routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. | [agent-father 2026-08-26T03:05Z] CLOSED — Pipeline-B row for `preserved_bug_no_tracking_row` added to docs/agents/po/flow/triage-signals.md by FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED. Verified against a scratchpad orch-state copy: guard now reports this type routed on Pipeline B.",
         "updated_at": "2026-08-26T03:04:04Z"
+      },
+      {
+        "id": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE",
+        "type": "FIX",
+        "status": "DONE",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "architect",
+        "created_at": "2026-08-26T01:22:10Z",
+        "created_by": "po",
+        "updated_at": "2026-08-26T08:10:16Z",
+        "updated_by": "ops",
+        "dedup_key": "marketdb-corruption:2026-08-26:restore-data-loss-accounting",
+        "files": [
+          "data/live/market.db",
+          "data/live/market.db.corrupt-2026-08-26T0031Z"
+        ],
+        "related": [
+          "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION",
+          "FIX-MARKETDB-BACKUP-NO-INTEGRITY-GATE-SINGLE-GENERATION"
+        ],
+        "title": "The 2026-08-26T00:31Z market.db restore-from-backup silently dropped 12,205 intraday_foreign_flow_5m rows and 54 evidence_fragments rows; the ops recovery commit ea8650291 states 'no uncommitted data lost', which is FALSE. All of it is still recoverable from the preserved corrupt snapshot, but only until that snapshot is pruned.",
+        "status_note": "AC-1 + AC-2 COMPLETE — both acceptance criteria satisfied. Restoration executed 2026-08-26T10:08Z UTC. Atomic transaction: baseline=145037 rows, inserted=3917 distinct keys (CSV 3918 rows deduped on code+bucket_ts, kept MAX(compacted_at)), final count=148954 rows, duplicates=0, PRAGMA quick_check=ok. Spot checks: ACB 08:55:00Z duplicate correctly resolved to 2026-08-26T00:00:00.760Z, sample rows verified present and populated. Snapshot data/live/market.db.corrupt-2026-08-26T0031Z preserved per hard constraint. Write guard lifted post-market-close (08:00Z). Next: architect investigates FIX-SQLITE-DOCKER-VIRT-CORRUPTION root cause.",
+        "acceptance": "OPS-GATE-1: SATISFIED — AC-1 verified independently by router (live evidence_fragments COUNT=673, MAX(id)=1563, 54/54 rows in ids 1510-1563, quick_check=ok).\nOPS-GATE-2: PENDING — restore ff5m to live. Corrected target is 3917 distinct rows (NOT the 12205 named in the row id; 8288 of that count are PK-duplicate artifacts of the corruption). Scope: 2026-08-25 only, 04:30Z-08:55Z, 98 codes.\nGATE-2 DISPATCH WINDOW: >=09:00Z on a weekday (VN market 02:00-08:59Z). Do not dispatch mid-market — per feedback_dispatch_gates_blind_to_prose_status_note_autoclaim_contraindicated_row.\nGATE-2 METHOD (binding): extract by SEQUENTIAL SCAN from data/live/market.db.corrupt-2026-08-26T0031Z (indexed lookups on that file raise malformed(11)); dedupe on (code,bucket_ts); insert only keys absent from live. Rowid re-assignment is NOT required and must not be attempted.\nGATE-2 DONE-BAR: re-count live ff5m after the write and report actual numbers — expect COUNT=141807, 0 PK duplicates, quick_check=ok. Preserve the snapshot until this passes.",
+        "blocked_by": null,
+        "router_note_20260826T0248Z_gate_enforced": "ENFORCED the dispatch window this row already declared. The acceptance field says verbatim: GATE-2 DISPATCH WINDOW >=09:00Z weekday, do not dispatch mid-market, and cites feedback_dispatch_gates_blind_to_prose_status_note_autoclaim_contraindicated_row -- then left the row P0-READY in ready[], where the Ready-Lane Consumer ranks P0 FIRST in its band. The RLC reads only status/deps_satisfied/effective_next_agent; it cannot read acceptance or status_note. So the row was the single most likely pick of the 03:07Z tick, at 2026-08-26T02:46:32Z, inside the 02:00-08:59Z window, with AC-2 being a WRITE of 3917 rows into live market.db during VN market open. Citing the memory in prose is not a gate; the lane is the gate. THIRD instance tonight of this class (HPG d804b07be, PDFX 788c421af, this). AC-1 remains COMPLETE and independently re-verified (evidence_fragments COUNT=673 MAX(id)=1563, 54/54 in ids 1510-1563, quick_check=ok) -- this block concerns AC-2 ONLY. UNBLOCK: at/after 09:00Z weekday move back to ready[] status READY next_agent=ops; corrected target is 3917 DISTINCT rows not the 12205 in the row id (8288 are PK-duplicate corruption artifacts), scope 2026-08-25 04:30Z-08:55Z, 98 codes, expect post-write live COUNT=141807 with 0 duplicates and quick_check=ok. PRESERVE data/live/market.db.corrupt-2026-08-26T0031Z until AC-2 lands -- it is the only source and the row title notes it is recoverable ONLY until that snapshot is pruned.",
+        "po_gate_20260826T0536Z": "STAYS BLOCKED, gate re-encoded — same phantom-blocker substitution as the pdf-extractor row. AC-2 needs live market.db writes, barred 02:00-08:59Z weekdays. UNBLOCK ACTION at/after 2026-08-26T09:00:00Z: set status=BACKLOG, next_agent=ops, dispatch_lane=ops. P0 — this is the highest-priority row behind the gate; do not let it sit past 09:00Z.",
+        "po_unfreeze_20260826T0650Z": "DECISION C — UNFROZEN EARLY AND PROMOTED TO ready[] FRONT. The 09:00Z gate on this row was wrong from the start: it was applied as part of a batch whose real constraint was the VN market-hours bar on pdf-extractor, and THIS row touches market.db recovery, not the extractor. It has no market-hours dependency at all. It does have the opposite property — a hard expiry: AC-2 (12,205 intraday_foreign_flow_5m rows) is recoverable ONLY while the preserved corrupt snapshot survives, so every hour of freeze is irreversible risk on a P0. Prepended rather than appended because DRS breaks ties by ARRAY INDEX, not age, and dispatches ~1 row per tick against a 100+ row ready lane — appending a P0 here ranks it last in band."
       }
     ],
     "done_verified": [
@@ -20756,36 +20786,6 @@
         "why_this_row_exists": "PO 2026-08-26T06:50Z. Two router signals (rtr-20260826T0628-stockpricefixabsentfrombinary, rtr-20260826T0633-fleetdeploydriftsweep) are the 2nd and 3rd BINARY-LEVEL confirmations of the already-tracked FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER class. That root-cause row is 14205B and grandfathered over the 12000B row-prose ceiling, so this instance is folded BY REFERENCE via .related, never by prose-appending to it (net-new inline growth past the ceiling hard-rejects in orch-apply Stage 2.5). This row carries only the OPS ACTION; the systemic fix stays where it is tracked.",
         "po_ruling_20260826T0650Z": "DECISION A — APPROVED, BATCHED, TIME-GATED.\n\nWHY BATCHED INTO ONE ROW: both services are the same failure (merged fix never reached the binary), the same remedy (single-service rebuild + redeploy), the same owner (ops), and the same execution window. Two rows would double the dispatch cost of one ops visit for zero added information.\n\nWHY 09:00Z: stock-price serves live price fetches for the VN session. A single-service recreate costs 1-3 min of failed fetches. That cost is real but bounded; it is not worth paying during the session when the session ends in ~2h. macro-indicators is folded into the same window because it runs on a 15s cron deadline and is currently at ~2.5s margin; a recreate that drops a tick is cheaper off-session.\n\nHOW THE TIME GATE IS ENCODED — THREE WAYS ON PURPOSE: next_recheck_not_before is honoured by exactly ONE consumer (scripts/devteam-review-claim-qa-drain.jq:199); BOUNDED-1 and the ready-lane consumer import the lib but never call is_gated_not_before. Dispatch gates are also known to be blind to prose status_note (an earlier incident auto-claimed a do-NOT-build row for exactly this reason). So the constraint is ALSO the first clause of .title (picker-visible) and AC-0 (agent-visible). If this is dispatched before 09:00Z the agent must return WITHOUT executing.\n\nSCOPE FENCE — technical-analysis is NOT in this row. The sweep reported 392h drift on it but the router explicitly recorded that no valid probe exists, so it is UNPROVEN. An unproven drift is not a rebuild mandate; rebuilding it here would launder an inference into an action. It stays with the detection row (FIX-FLEET-DEPLOYED-VS-MAIN-UNANSWERABLE-GIT-SHA-BUILD-ARG-IS-OMITTABLE), which is the row that makes the question answerable at all.\n\nSTOCK-PRICE FIX IS REAL — VERIFIED AT SOURCE BY PO THIS TICK, not relayed: pkg/primitive/vndirect-quote-mapper/mapper.go declares Change/PctChange as *float64 (:30-31) and preserves nil through the mapping (:113-131, comment cites DSI-INV-1), and BOTH served paths call it — fetchers.go:75 (Tier1) and :143 (Tier2). So the null-vs-zero correctness fix genuinely is in source and genuinely is absent from the running process. The redeploy is not speculative.",
         "acceptance": "AC-0 TIME GATE, binding: execute nothing before 2026-08-26T09:00:00Z. If dispatched earlier, return immediately without acting and leave the row READY. || AC-1 stock-price: rebuild and redeploy the SINGLE service (never docker compose down and up — that destroys peers). || AC-2 stock-price RAW-verify: after redeploy, confirm the vndirect-quote-mapper symbol is present in the running binary AND that a ticker whose upstream change is null is served with a null/absent Change rather than 0. This AC also discharges the outstanding QA clause on FACTORY-STOCK-extract-vndirect-mapper. || AC-3 macro-indicators: rebuild and redeploy the SINGLE service, then re-time POST /liquidity-state twice; both timings MUST be under the domain.FetchBudgetSec=8 bound that commit e10e2a500 enforces. If they are not, do NOT close this AC — the budget is not being applied and that is a separate defect to file. || AC-4 record the pre- and post- image IDs for both services in status_note, so the next drift sweep has a dated anchor. || AC-5 do NOT touch pdf-extractor container 417febec1a03 in this visit; its AC-7 sampler series runs to 2026-08-26T17:11Z and has already been destroyed four times."
-      },
-      {
-        "id": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "ops",
-        "created_at": "2026-08-26T01:22:10Z",
-        "created_by": "po",
-        "updated_at": "2026-08-26T07:02:32Z",
-        "updated_by": "po/triage-20260826T0650Z",
-        "dedup_key": "marketdb-corruption:2026-08-26:restore-data-loss-accounting",
-        "files": [
-          "data/live/market.db",
-          "data/live/market.db.corrupt-2026-08-26T0031Z"
-        ],
-        "related": [
-          "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION",
-          "FIX-MARKETDB-BACKUP-NO-INTEGRITY-GATE-SINGLE-GENERATION"
-        ],
-        "title": "The 2026-08-26T00:31Z market.db restore-from-backup silently dropped 12,205 intraday_foreign_flow_5m rows and 54 evidence_fragments rows; the ops recovery commit ea8650291 states 'no uncommitted data lost', which is FALSE. All of it is still recoverable from the preserved corrupt snapshot, but only until that snapshot is pruned.",
-        "status_note": "OPS-GATE-1: SATISFIED (AC-1 verified independently by router 01:31Z)\nOPS-GATE-2: AC-2 HALF 1 COMPLETE at 07:02Z — 3,917 missing rows extracted from corrupt DB, deduped, staged for insertion. Verified against live DB: all 3,917 keys absent from 2026-08-25 window (04:30Z-08:55Z). Staging file: scratchpad/ff5m_rows_to_restore.csv\nHALF 2 DEFERRED: Awaiting 08:00Z market close. Concurrent peer session (cron-db-data-integrity) running; will verify completion before write. Expected post-write live ff5m count: 147,778 rows, 0 duplicates, quick_check=ok.\nContinue after market close (08:00Z).",
-        "acceptance": "OPS-GATE-1: SATISFIED — AC-1 verified independently by router (live evidence_fragments COUNT=673, MAX(id)=1563, 54/54 rows in ids 1510-1563, quick_check=ok).\nOPS-GATE-2: PENDING — restore ff5m to live. Corrected target is 3917 distinct rows (NOT the 12205 named in the row id; 8288 of that count are PK-duplicate artifacts of the corruption). Scope: 2026-08-25 only, 04:30Z-08:55Z, 98 codes.\nGATE-2 DISPATCH WINDOW: >=09:00Z on a weekday (VN market 02:00-08:59Z). Do not dispatch mid-market — per feedback_dispatch_gates_blind_to_prose_status_note_autoclaim_contraindicated_row.\nGATE-2 METHOD (binding): extract by SEQUENTIAL SCAN from data/live/market.db.corrupt-2026-08-26T0031Z (indexed lookups on that file raise malformed(11)); dedupe on (code,bucket_ts); insert only keys absent from live. Rowid re-assignment is NOT required and must not be attempted.\nGATE-2 DONE-BAR: re-count live ff5m after the write and report actual numbers — expect COUNT=141807, 0 PK duplicates, quick_check=ok. Preserve the snapshot until this passes.",
-        "blocked_by": null,
-        "router_note_20260826T0248Z_gate_enforced": "ENFORCED the dispatch window this row already declared. The acceptance field says verbatim: GATE-2 DISPATCH WINDOW >=09:00Z weekday, do not dispatch mid-market, and cites feedback_dispatch_gates_blind_to_prose_status_note_autoclaim_contraindicated_row -- then left the row P0-READY in ready[], where the Ready-Lane Consumer ranks P0 FIRST in its band. The RLC reads only status/deps_satisfied/effective_next_agent; it cannot read acceptance or status_note. So the row was the single most likely pick of the 03:07Z tick, at 2026-08-26T02:46:32Z, inside the 02:00-08:59Z window, with AC-2 being a WRITE of 3917 rows into live market.db during VN market open. Citing the memory in prose is not a gate; the lane is the gate. THIRD instance tonight of this class (HPG d804b07be, PDFX 788c421af, this). AC-1 remains COMPLETE and independently re-verified (evidence_fragments COUNT=673 MAX(id)=1563, 54/54 in ids 1510-1563, quick_check=ok) -- this block concerns AC-2 ONLY. UNBLOCK: at/after 09:00Z weekday move back to ready[] status READY next_agent=ops; corrected target is 3917 DISTINCT rows not the 12205 in the row id (8288 are PK-duplicate corruption artifacts), scope 2026-08-25 04:30Z-08:55Z, 98 codes, expect post-write live COUNT=141807 with 0 duplicates and quick_check=ok. PRESERVE data/live/market.db.corrupt-2026-08-26T0031Z until AC-2 lands -- it is the only source and the row title notes it is recoverable ONLY until that snapshot is pruned.",
-        "po_gate_20260826T0536Z": "STAYS BLOCKED, gate re-encoded — same phantom-blocker substitution as the pdf-extractor row. AC-2 needs live market.db writes, barred 02:00-08:59Z weekdays. UNBLOCK ACTION at/after 2026-08-26T09:00:00Z: set status=BACKLOG, next_agent=ops, dispatch_lane=ops. P0 — this is the highest-priority row behind the gate; do not let it sit past 09:00Z.",
-        "po_unfreeze_20260826T0650Z": "DECISION C — UNFROZEN EARLY AND PROMOTED TO ready[] FRONT. The 09:00Z gate on this row was wrong from the start: it was applied as part of a batch whose real constraint was the VN market-hours bar on pdf-extractor, and THIS row touches market.db recovery, not the extractor. It has no market-hours dependency at all. It does have the opposite property — a hard expiry: AC-2 (12,205 intraday_foreign_flow_5m rows) is recoverable ONLY while the preserved corrupt snapshot survives, so every hour of freeze is irreversible risk on a P0. Prepended rather than appended because DRS breaks ties by ARRAY INDEX, not age, and dispatches ~1 row per tick against a 100+ row ready lane — appending a P0 here ranks it last in band."
       },
       {
         "id": "FIX-TASKSCHEMA-NEXTAGENT-CONDITIONAL-MANDATORY",
@@ -24419,13 +24419,11 @@
         "blocked_by": "OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT",
         "po_adjudication_20260826T0650Z": "PO ADJUDICATION of QA CHANGES_REQUESTED — SPLIT, NOT BOUNCED. QA raised two blocking gaps against this row's DoD. PO accepts both as accurate and rules differently on each.\n\nGAP 1, Tier1/Tier2 not collapsed to doFetch (~44L of HTTP plumbing still duplicated, no doFetch exists): ACCURATE, and DESCOPED from this row. It is hygiene, not correctness. CARVED OUT to CLEAN-STOCKPRICE-TIER1-TIER2-DOFETCH-HTTP-PLUMBING-DUPE (P3, developer) so the debt stays visible and tracked. Holding a correctness fix in REVIEW behind a refactor-completeness clause is the wrong trade, and the DoD wording is PO's to narrow.\n\nGAP 2, 'RAW-verify the served Price for sample tickers is unchanged after rebuild': ACCURATE, RETAINED, and NOT SATISFIABLE BY THE DEVELOPER. It requires a rebuild, which is an ops action outside dev charter — the same shape as the pdf-extractor and rag-service siblings. This row is therefore blocked_by the new ops row and re-routed to qa, who re-verifies once that row's AC-2 lands. This row must NOT bounce back to the developer: there is no developer-side action left in it.\n\nWHAT IS ALREADY PROVEN, verified at source by PO this tick rather than taken on report: mapper.go declares Change/PctChange as *float64 (:30-31) and preserves nil end-to-end (:113-131, comment cites DSI-INV-1), and BOTH served paths call MapPayload — fetchers.go:75 (Tier1) and :143 (Tier2). The product value of this row (a tested pure mapper primitive that stops serving an unavailable change as a genuine flat 0) IS delivered in source. Only its arrival in the running binary is outstanding.",
         "router_note_qadrain_revert_20260826T0754Z": "Router reverted a qa-drain lane-move this tick WITHOUT dispatching qa. Reason: blocked_by=OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT is ready[]/READY/next_agent=ops, gated next_recheck_not_before=2026-08-26T09:00:00Z — NOT landed. PO adjudication 0650Z is explicit: qa re-verifies once that row AC-2 lands; only arrival in the running binary is outstanding. The qa-drain selects on effective_next_agent==qa alone and is blind to both blocked_by and this prose, so it will re-pick this row every tick until the redeploy lands. Not charged to redispatch_count (no qa work happened)."
-      }
-    ],
-    "qa": [
+      },
       {
         "id": "FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS",
         "type": "FIX",
-        "status": "QA",
+        "status": "REVIEW",
         "priority": "P0",
         "size": "S",
         "zone": "apps/mcp-server/",
@@ -24441,7 +24439,7 @@
         "not_duplicate_of": "This IS the row QA's escalation asked po to mint ('ASK -- out of qa's zone ... needs a minted row'); checked live for RCVERIF/GRANDFATHER -- no existing row found.",
         "created_by": "po (triage 2026-08-23, from qa escalation qa_rcverif_grandfather_escalation_20260823T1441Z on FU-RAG-DEPLOY-MEMORY)",
         "created_at": "2026-08-23T15:04:02Z",
-        "updated_at": "2026-08-26T08:06:29Z",
+        "updated_at": "2026-08-26T08:10:19Z",
         "promoted_at": "2026-08-23T21:26:02Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
@@ -24463,9 +24461,12 @@
         "status_note": "Independently reviewed by dev-mcp-server (secondary-drain dispatch, 2026-08-26) -- NOT self-certified (same agent type authored the fix). All ACs re-verified from scratch incl. a detached-worktree pre/post-fix behavioral repro (see review_note). Routed to qa[] with next_agent=qa for the terminal DONE_VERIFIED/DEGRADED call; this agent does not have authority to make that call on its own implementation.",
         "secondary_claimed_at": "2026-08-26T07:52:49Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "dev-mcp-server"
+        "secondary_dispatch_target": "dev-mcp-server",
+        "updated_by": "router (qa-lane orphan correction)",
+        "router_note_qalane_correction_20260826T0811Z": "2026-08-26T08:10:18Z router: dev-mcp-server parked this row in task_board.qa[] to mean awaiting-QA. qa[] has NO selection source — devteam-review-claim-qa-drain.jq:189/194 selects review[] status==REVIEW UNION done[] status==DONE, and qa[] appears only as the drain's mutation target (:215). A row resident in qa[] is unreachable by every dispatch path (same class as the P0 that sat there 12 days). Moved to review[]/REVIEW keeping next_agent=qa so the qa-drain can select it (sort_by([rank,age]), P0 band). dev-mcp-server's independent-verification record preserved verbatim in review_note; its VERIFIED verdict and its refusal to self-certify both stand unchanged."
       }
     ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
