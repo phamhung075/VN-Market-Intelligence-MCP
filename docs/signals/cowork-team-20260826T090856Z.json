@@ -1,0 +1,59 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T09:08:56Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-08-26T09:07:39Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": [
+      "SELF-CORRECTION: I reported the preflight verdict as unparseable JSON and started diagnosing it as an emitter defect. WRONG - the script emitted VALID JSON. My own capture corrupted it: echo \"$VERDICT_JSON\" on this shell interprets backslash escapes, expanding the \\n inside refine-bctc-slot-1 multi-line trigger_prompt into a RAW newline, illegal inside a JSON string. Control proved it: jq -n --argjson round-trip of the same SSOT slot is valid, and printf %s vs echo on {\"a\":\"x\\ny\"} gives VALID vs INVALID. Use printf %s to capture JSON, never echo. Only surfaces on slots with a multi-line trigger_prompt - refine-bctc-slot-* are the only ones and fire once daily at 09:00Z, which is why 100+ prior ticks never hit it.",
+      "SNAPSHOT CONSUMER CENSUS - changes the shape of the cycle-snapshot P0: grepped all 8 cowork agents, EXACTLY ONE consumes cycle-snapshot (alert-commander, 1 file). unified-agent/chef zero. refine_bctc_md zero. The Step 4.7 producer runs on EVERY work tick (44 files today) to serve a single consumer that misses nearly every lookup and then re-issues get_cycle_bootstrap+get_macro_snapshot itself anyway - verbatim in both c288 and c289. Net effect: the snapshot is a near-pure DUPLICATE COST (dispatcher pays 2 MCP calls + write + prune, sole consumer pays the same 2 calls again). The DESIGN-COWORK-FANOUT-T1 amortisation premise (many agents share one snapshot) never materialised at a fan-out of 1-2.",
+      "NO SAMPLE PRE-REGISTERED THIS TICK - deliberate. refine_bctc_md has zero snapshot consumption so it cannot produce the hit/miss observable. Corrected practice after sample #15 (chef-eod) was RETRACTED last tick for exactly this error: an alert-commander-specific observable extended to an agent with no such step. Verify the observable exists in the agent flow BEFORE pre-registering.",
+      "Step 4.7 write->spawn gap 25s (snapshot 09:07:14Z, spawn 09:07:39Z) - best measured yet; 67s two ticks ago, 29s last tick. Front-loading every read before 4.7 is holding. Irrelevant to hit-rate this tick: zero possible consumers, alert-commander not in slots.",
+      "CALENDAR_STATUS same-day falsification, sharper than the usual weekend case: emit at 09:07Z returned calendar_status=open, but VN market hours are 02:00-08:59 UTC (alert-commander c289, same day) - the market had closed 8 minutes earlier. Prior evidence for this architect-owned row was mostly weekend/holiday; this is an intraday miss on a normal trading day. ~56th consecutive.",
+      "refine-bctc-slot-1 last_fired was 2026-08-24T09:02:30Z on a 0 9 * * * cron, so the 2026-08-25T09:00Z fire was MISSED entirely (one full day skipped). Consistent with the host-sleep/no-session gap class, not yet attributed.",
+      "Step 0a: 1 NEW row sys-20260826T085921-7abd (system-auditor -> po, auditor_cycle_missing, tier-2 no completion evidence in 10h vs 4h cadence, dedup_key present). HELD AT NEW, not marked READ - 4th application of the po-drain rule (po has 0 cowork-schedule slots so route-to-slot is unreachable, and PO selects on status==NEW; marking READ makes PO never see it).",
+      "signal_backlog 31 matched independent file recount (23rd consecutive). cycle_snapshot_promoted still false - latest still tick=00:00 created 2026-08-23T00:07:50Z (63rd consecutive). Do NOT fix by rounding the producer.",
+      "Preflight is a MUTATING script (presence + election + claim_due_scheduled_tasks) - captured once, never re-run to confirm the verdict, per the R2 orphaning hazard."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T09:08:56Z"
+}
