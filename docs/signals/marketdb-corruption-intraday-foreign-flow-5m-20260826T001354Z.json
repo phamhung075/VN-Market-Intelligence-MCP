@@ -1,0 +1,41 @@
+{
+  "id": "mdbc-20260826T001354Z",
+  "ts": "2026-08-26T00:13:54Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "severity": "HIGH",
+  "status": "NEW",
+  "summary": "LIVE market.db B-tree corruption CONFINED to intraday_foreign_flow_5m (rootpage 180) — writer-side rowid defect, NOT whole-DB disk corruption. CORRECTS docs/signals/news-scout-20260826T000500Z.json, which reported it as fleet-wide 'infrastructure corruption'. Backup IS CLEAN. Suggested owner: dev-mcp-server.",
+  "payload_ref": null,
+  "payload": {
+    "detected_by": "cowork-team 00:00Z tick — 2 of 4 spawned agents (news-scout, market-watcher) blocked; router verified at runtime layer",
+    "measured": {
+      "quick_check_via_runtime_bun_sqlite": "101 lines, 100 error lines, ALL Tree 180 — no other tree damaged",
+      "tree_180_maps_to": "table intraday_foreign_flow_5m (sqlite_master.rootpage=180)",
+      "error_class": "Rowid 62841915 out of order (repeated across pages 110926-111130)",
+      "table_state": "COUNT(*)=150095, MAX(rowid)=62841915 — every error line names the MAX rowid",
+      "journal_mode": "delete (rollback journal, NOT wal)",
+      "backup_integrity": "/app/data/market.db.backup (Aug 25 04:30, 444563456B) quick_check=ok, daily_ohlcv=789926 — CLEAN and restorable",
+      "error_window": "2026-08-25T23:47:43Z (disk I/O error) through 2026-08-26T00:06:08Z (SQLITE_CORRUPT); none logged after 00:06",
+      "sqlite_codes_seen": [
+        "SQLITE_CORRUPT",
+        "SQLITE_IOERR_DELETE_NOENT"
+      ],
+      "recurrence": "4th+ occurrence — /app/data holds corrupt snapshots dated 2026-07-19, 2026-07-30, 2026-08-06",
+      "blast_radius_evidence": "bctc-analyst: 9 of 9 record_evidence_fragment writes failed, CONFIRMED NON-TRANSIENT ON RETRY within the cycle. market-watcher: 2 succeeded (ids 1562,1563) then 4 failed in the same run. quick_check shows evidence_fragments b-tree is INTACT — so the failures are not that table being damaged."
+    },
+    "why_writer_not_disk": "Disk/bind-mount corruption scatters across trees at random. Here 100/100 error lines are one tree, one error class, on the single MAX rowid, while the 04:30 backup is clean — i.e. damage arose during live writes after 04:30 and is concentrated in one writer's ordering invariant. Strongly indicated, not proven: owner should confirm before acting.",
+    "blast_radius_note": "Unrelated write paths (post_agent_signal, record_evidence_fragment, fetch_and_analyze inserts, push-news, pushBctcLayout) ALSO returned SQLITE_CORRUPT despite their own tables being intact. market-watcher wrote evidence fragments 1562,1563 then had 4 more rejected in the same run — intermittent, not total. Mechanism for that spillover is NOT established; do not assume those tables are damaged.",
+    "investigation_lead": "intraday_foreign_flow_5m is fed by the foreign-flow VPS path, which has a documented clock-drift recheck harness. Non-monotonic rowids derived from a drifting clock would produce exactly this out-of-order signature. Unverified lead, offered so the owner does not rediscover it.",
+    "do_not": "Do NOT run VACUUM, REINDEX, .recover, or a backup restore without owner sign-off — destructive and the live file currently holds writes newer than the 04:30 backup. Router made READ-ONLY probes only; no repair attempted.",
+    "adjacent_open_rows": [
+      "FIX-MARKETDB-BACKUP-NO-INTEGRITY-GATE-SINGLE-GENERATION (backlog, P2, dev-mcp-server) — this signal supplies its missing datum: the single generation is clean AS OF NOW",
+      "FIX-WATCHLIST-ROSTER-RESTORE-23-LOST-TO-CORRUPTION-RESEED (backlog, P1, architect) — downstream cleanup of a PRIOR corruption event"
+    ],
+    "dedup": "THREE files report this ONE incident: docs/signals/news-scout-20260826T000500Z.json (wrong scope: calls it fleet-wide), docs/signals/bctc-analyst-20260826T001800Z.json (bug-escalation, 9/9 evidence writes failed), and this file (carries the measurements). Triage as ONE — do NOT mint three rows.",
+    "poisoned_connection_hypothesis": "SQLite poisons a connection once it returns SQLITE_CORRUPT; mcp-server holds long-lived connections (uptime 57m at detection). That would explain all three observations at once: intermittent across agents (which pooled connection you draw), non-transient within one agent cycle (same poisoned connection), and intact-but-unwritable unrelated tables. TESTABLE PREDICTION AND TRAP: restarting mcp-server will make the symptom disappear while leaving tree 180 corrupt — that is almost certainly how the 07-19 / 07-30 / 08-06 occurrences were each closed, which is why this is now the 4th+. Verify with quick_check AFTER any restart, not with a clean error log."
+  },
+  "priority": "high",
+  "createdAt": "2026-08-26T00:13:54Z"
+}
