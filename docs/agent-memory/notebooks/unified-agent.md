@@ -146,3 +146,55 @@ Marker claimed: published:chef-intraday:2026-08-26:14 (TTL 3600s)
 - DXG not included (AVOID valuation verdict + 1/4 pillars)
 
 **Exit status:** DONE: publication complete | PIPELINE: full | QUALITY: full
+
+## Cycle 2026-08-26 Evening (chef-evening)
+
+**Time:** 19:54 UTC | **Session:** 7a47f7c6-8c8b-4939-929d-461d20cd32da  
+**Marker:** published:chef-evening:2026-08-26 (claimed, TTL 100800s)
+
+### Gate Status
+- **Phase 1 probe:** NOT HELD (2026-08-25 marker expired)
+- **Phase 2 claim:** CLAIMED successfully
+- **Convergence:** ✓ FIRED (3 ticker + 1 sector clusters qualify)
+- **Guaranteed publish:** ✓ EVENING slot (proceed regardless)
+
+### Signals Gathered (24h)
+- **Files:** 5 primary (price_anomaly_20260826, 4x bctc_signal_*)
+- **Tickers:** 8 analyzed (VIC, FPT, VCB, HPG, DXG, DIG, VJC, others)
+- **Anomalies:** 3 volume spikes (VIC +184%, FPT +239%, DIG +157%)
+
+### Clusters Qualified
+1. **Ticker convergence (FPT):** price_anomaly + bctc_signal [+2.69%, vol 239%]
+2. **Ticker convergence (VCB):** price_anomaly + bctc_signal [+1.52%, sector rally]
+3. **Ticker convergence (HPG):** price_anomaly + bctc_signal [+1.15%, China risk]
+4. **Sector convergence (real_estate):** DXG + VIC + DIG [3 signals, sector +1.25%]
+
+### TNB Layers Walked
+1. **Layer 1 (data):** Volume convergence + state transitions confirmed
+2. **Layer 2 (US macro):** Carry 1.37pp NEUTRAL, gold $4646 (risk-off), oil $86.69 NEUTRAL
+3. **Layer 3 (VN stack):** USD/VND 25920 BEARISH (>25k threshold), valuation FAIRLY_VALUED
+4. **Layer 4 (valuation):** FPT/VCB/HPG 2-pillar floor [single-pillar gap recorded]
+5. **Layer 5 (Kinh Dich):** Kien (39) reversal (FPT, VIC, DXG), Thang (46) positive (VCB)
+6. **Layer 6 (gaps):** Gold >$4300 regime-drift flag, 2-pillar thesis floor, DXG AVOID gate honored
+
+### Market & Work Channels Published
+- **MARKET:** Plain Vietnamese narrative (1821.32 +0.76%, real estate lead, FII flow context)
+- **WORK:** [CHEF-DETAIL] TNB layer walk, convergence detail, gap tokens, quality verdict
+
+### Synthesis JSON Persisted
+`docs/data/unified-agent-synthesis-2026-08-26-chef-evening.json` — 1 file, 17KB  
+Conviction calls (3 tickers), known_gaps (2 entries), quality=degraded
+
+### Quality Verdict
+**DEGRADED** (not FULL):
+- Gold >$4300 active (regime-drift flag)
+- Pillars aligned: FPT 2/4, VCB 2/4, HPG 2/4 (single-pillar floor)
+- DXG AVOID gate respected (no bullish direction)
+- Kinh Dich reversal signals recorded
+- All layers nominally walked but data floor applied
+
+### Status: ✓ COMPLETE
+- Marker TTL: 28h (expires 2026-08-27 12:52 UTC)
+- Next cycle: chef-morning 2026-08-27 05:23 UTC (morning)
+
+---

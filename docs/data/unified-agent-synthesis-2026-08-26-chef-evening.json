@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "agent": "unified-agent",
+    "slot": "chef-evening",
+    "date_utc": "2026-08-26",
+    "date_vn": "2026-08-27",
+    "timestamp": "2026-08-26T19:54:00.000Z",
+    "cycle_id": "evening-2026-08-26",
+    "dish_type": "evening"
+  },
+  "convergence": {
+    "clusters_qualified": 4,
+    "ticker_convergence": [
+      {"ticker": "FPT", "types": ["bctc_signal", "price_anomaly"], "count": 2},
+      {"ticker": "VCB", "types": ["bctc_signal", "price_anomaly"], "count": 2},
+      {"ticker": "HPG", "types": ["bctc_signal", "price_anomaly"], "count": 2}
+    ],
+    "sector_convergence": [
+      {"sector": "real_estate", "tickers": ["DXG", "VIC", "DIG"], "signal_count": 3}
+    ]
+  },
+  "signals_consumed": {
+    "price_anomaly": ["price_anomaly_20260826T1607Z"],
+    "bctc_signal": ["bctc_signal_DXG_20260826_routine", "bctc_signal_FPT_20260826_routine", "bctc_signal_VCB_20260826_routine", "bctc_signal_HPG_20260826_routine"],
+    "total_files": 5,
+    "total_tickers": 8
+  },
+  "tnb_synthesis": {
+    "us_macro_layer": "Fed carry spread 1.37pp maintains moderate premium with no immediate tightening signal. Gold at $4646 USD exceeds risk-off threshold. Oil neutral at $86.69 USD.",
+    "vn_macro_layer": "USD/VND at 25920 exceeds 25000 threshold (BEARISH), creating import cost pressure. Valuation FAIRLY_VALUED with earnings yield 6.70% exceeding deposit rate 5.00%.",
+    "valuation_layer": "Real estate cluster (DXG, VIC, DIG) showing 3-ticker sector convergence. Tech (FPT) and banking (VCB) showing 2-signal convergence each. HPG steel sector also converged.",
+    "kinh_dich_layer": "FPT/VIC/DXG show Kien (39) hexagram - reversal caution warranted. VCB shows Thang (46) - positive accumulation signal. Mixed sentiment across clusters."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "FPT",
+      "sector": "tech",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "signal_sources": ["price_anomaly_20260826T1607Z", "bctc_signal_FPT_20260826_routine"],
+      "rationale": "Volume spike 239% vs average with foreign buying (+200B), strong sector momentum. However, Kien (39) reversal signal and portfolio position at -9.59% loss vs cost basis suggests consolidation period.",
+      "business_context_cited": null,
+      "valuation_gate": null,
+      "kinhdich_signal": "Kien (39) BAN - tiêu cực, confidence 48%"
+    },
+    {
+      "ticker": "VCB",
+      "sector": "banking",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "signal_sources": ["price_anomaly_20260826T1607Z", "bctc_signal_VCB_20260826_routine"],
+      "rationale": "Sector momentum +1.47% with VCB +1.52% on SOE inflow despite security fraud warning (proactive disclosure manageable). Thang (46) hexagram shows accumulation potential.",
+      "business_context_cited": null,
+      "valuation_gate": null,
+      "kinhdich_signal": "Thang (46) THAN TRONG - tích cực, confidence 74%"
+    },
+    {
+      "ticker": "HPG",
+      "sector": "steel",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "signal_sources": ["price_anomaly_20260826T1607Z", "bctc_signal_HPG_20260826_routine"],
+      "rationale": "Price +1.15% amid sector headwind (-0.95%). Geopolitical risk flag: China trade tensions (5% revenue exposure) offset by domestic demand support.",
+      "business_context_cited": null,
+      "valuation_gate": null,
+      "kinhdich_signal": "Kien (39) GIU - tiêu cực, confidence 48%"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L6_single_pillar_thesis - FPT 2/4 pillars aligned; VCB 2/4 pillars; HPG 2/4 pillars]",
+    "[gap:gold_>_4300_regime_drift - macro regime drift risk via safe-haven signal >$4600 threshold]"
+  ],
+  "quality_verdict": "degraded",
+  "quality_notes": "All layers walked. Valuation pillars show 2-pillar alignment floor (single-pillar gap entries recorded). Gold >$4300 active regime-drift signal. DXG AVOID gate honored (no bullish direction). Kinh Dich provides reversal caution context across real estate and tech clusters. VCB positive signal retained with caution on security disclosure.",
+  "published_market": true,
+  "published_work": true,
+  "marker_key": "published:chef-evening:2026-08-26",
+  "marker_ttl_seconds": 100800
+}
