@@ -95,3 +95,15 @@ task_id: UC-CDC-P1
 **what-considered:** (a) move out of in_progress[] to backlog/ready — rejected as mechanically impossible; (b) move to done[] — rejected, would falsely assert delivery; (c) leave in place, assessed — chosen.
 **why-change:** no change from po_wip_ruling_20260823, but independently re-verified rather than relayed. WP-A children TASK_2008a/b/c are all DONE_VERIFIED in archive/2026-08.json; WP-B is genuinely blocked on UC-SDF-P2 (still backlog/plan_only/next_agent=ba). Read `scripts/orch-row-prose-ceiling-check.mjs` directly: PROSE_CEILING_LANES=['backlog','ready','review'], so any move from unguarded in_progress[] into a guarded lane sets liveBytes=0 and a >12000B row hard-rejects even byte-identical. No legal truth-preserving destination exists until D3 of FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS ships. next_agent=pm is correct, not stale — WP-B needs a pm hop once unblocked.
 **WIP impact:** none. status=BLOCKED is excluded from wip_in_progress (devteam-eligibility.jq:115-118).
+
+### STEP pm-S4 · pm · 2026-08-26T19:51:50Z
+task_id: UC-MDH-P2
+**what-done:** decomposed BA+architect design into 6 per-owner children per the carried B2 ruling and NFR-1/NFR-2 sequencing; parent row closed done[] with children[] written; DECOMPOSITION_COMPLETE=true (all scope now delegated, no residual pm work on this row).
+**what-considered:**
+- one combined FR-5 task — rejected: 3 files (digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md) sit in agent-father's exclusive `docs/agents/` commit_zone per the architect's B2 ruling; a single task would cross owners.
+- FR-1 minted parallel/unblocked — rejected: NFR-2 requires re-verifying 0 remaining instructive `append_session_record` hits AFTER FR-5, so FR-1 must `depends_on` both FR-5 halves, not run alongside them.
+- FR-3/FR-4/FR-6 split into 3 tasks by FR number — rejected: NFR-1 mandates ONE commit in ONE off-market window; splitting the board rows would misrepresent 3 independently-completable units when they are not.
+- chosen: 6 children — `UC-MDH-P2-FR5-DEV` (developer, 7 files) ∥ `UC-MDH-P2-FR5-AGENTFATHER` (agent-father, 3 files) ∥ `UC-MDH-P2-FR2-CATALOG` (developer) ∥ `UC-MDH-P2-FR7-STUBCLEANUP` (developer) both independent-parallel; `UC-MDH-P2-FR1-SKILLDIR-DELETE` (developer, depends_on both FR-5 halves); `UC-MDH-P2-FR346-DEPLOYGATED-BUNDLE` (developer, deploy_gate=user-approved-off-market, independent file set, not gated on siblings).
+**why-decision:** encodes the architect's atomic-bundle and B2 ownership rulings as real `depends_on` edges rather than prose, per this row's own dispatch mandate.
+**why-change:** no change from the architect's design; this is the direct decomposition of it. B1 (PO, parallel) left unresolved by design — either answer is compatible with the deploy-gated bundle as scoped.
+**parent:** in_progress[] → done[], children=[UC-MDH-P2-FR5-DEV, UC-MDH-P2-FR5-AGENTFATHER, UC-MDH-P2-FR2-CATALOG, UC-MDH-P2-FR7-STUBCLEANUP, UC-MDH-P2-FR1-SKILLDIR-DELETE, UC-MDH-P2-FR346-DEPLOYGATED-BUNDLE]. `.head` reset to idle (was pinned to UC-MDH-P2).
