@@ -1230,6 +1230,17 @@
           "pdf_extractor_memory_pressure_investigation:A-30",
           "FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE"
         ]
+      },
+      {
+        "id": "cj-20260826T163003",
+        "ts": "2026-08-26T16:30:03Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer is operational (migrated to agent-father's local keep-cycle) — 30d memory-prune rule continues as routine hygiene",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-26.json"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
