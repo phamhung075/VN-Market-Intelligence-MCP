@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T10:45:50Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-26T11:05:00Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -1393,6 +1393,45 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "auditor-cycle-missing:tier2:2026-08-26T08:00Z"
+      },
+      {
+        "id": "rtr-20260826T1105-qadrainignoresblockedby",
+        "ts": "2026-08-26T11:03:51Z",
+        "from": "router",
+        "to": "po",
+        "type": "detector_defect",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router verification of the qa return on FACTORY-STOCK-extract-vndirect-mapper, dispatched by this session's 10:37Z idle-tick qa-drain",
+        "summary": "The QA-drain candidate predicate consults the wall-clock qa_not_before field but never consults blocked_by. A row whose blocked_by names a still-READY row is dispatched the moment the clock elapses, burning a full QA dispatch on work that cannot advance. Observed once today (~136k subagent tokens, 9.5min) and armed to recur at 14:00Z on the same row.",
+        "dedup_key": "detector_defect:qadrain_candidate_predicate_ignores_blocked_by",
+        "related": [
+          "FACTORY-STOCK-extract-vndirect-mapper",
+          "FIX-NOTBEFORE-DEFERRAL-GATE-ENFORCED-BY-ONE-OF-FOUR-DISPATCH-PICKERS",
+          "FIX-DEVTEAM-SECONDARY-DRAIN-CANDIDATE-SET-NO-NOT-ACTIONABLE-PREDICATE"
+        ],
+        "action_requested": "ADJUDICATE FOLD-vs-MINT. This is deliberately routed rather than minted because it sits between two existing rows without being covered by either. If MINT: the fix is a blocked_by-resolution clause in the QA-drain candidate predicate (scripts/devteam-review-claim-qa-drain.jq), excluding any row whose blocked_by names a row not in a terminal lane.",
+        "detail": "ROUTER-VERIFIED, and specifically NOT the defect it first resembles.\n\nDedup was run against the whole board by subject before filing. Three adjacent rows exist; none covers this:\n\n1. FIX-NOTBEFORE-DEFERRAL-GATE-ENFORCED-BY-ONE-OF-FOUR-DISPATCH-PICKERS (ready, P1) says the not-before gate is decorative on 3 of 4 pickers because only the QA-drain calls is_gated_not_before(). That row is about the OTHER three pickers. On this incident the QA-drain honored qa_not_before correctly -- it waited out the 09:30Z stamp and fired at 10:37Z. The drain is the one picker that gets not-before RIGHT, which is exactly why this second gap was invisible.\n\n2. FIX-DEVTEAM-SECONDARY-DRAIN-CANDIDATE-SET-NO-NOT-ACTIONABLE-PREDICATE (backlog, P1, architect) is the same CLASS -- candidate set lacks an actionability filter -- but scoped to the SECONDARY drain lane, with a secondary-specific premise (throttle-by-design is false for held rows). Different lane, different script.\n\n3. FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (backlog) is PLAN-ONLY and superseded: it argues the drain does not exist. It does, and it ran.\n\nTHE MECHANISM. FACTORY-STOCK-extract-vndirect-mapper carries a populated blocked_by field naming OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT, which is still status=READY / next_agent=ops in ready[]. PO had already adjudicated (po_adjudication_20260826T0650Z) that the row's one outstanding QA clause is discharged only when that ops row's AC-2 lands. The dependency was therefore recorded correctly, in a structured field, on the row itself. The drain simply never read it.\n\nThe qa_not_before stamp was set by the router at 07:54Z as a wall-clock churn-brake after an earlier revert of this same claim, and its own note at the time flagged that the gate does not track the real dependency. That note was correct and is now confirmed empirically: a time-based proxy standing in for a dependency check does not defer, it merely delays -- it converts a permanent block into a recurring one.\n\nEVIDENCE THE BLOCK IS REAL, re-derived by qa rather than assumed from the gate: the live stock-price container is still image sha256:663e258b50de created 2026-08-06T15:59:04Z, identical to the prior QA cycle, so no rebuild occurred; and git log 912a4bf79..main -- fetchers.go mapper.go is empty, so nothing changed since the last QA cycle. Re-running the suite could only reproduce the already-recorded PASS and could not touch the one unmet clause.\n\nCOST AND RECURRENCE. One full QA dispatch consumed (~136k subagent tokens, 45 tool calls, 9m30s) to reach a conclusion already recorded on the row. qa correctly declined to charge a redispatch and bumped qa_not_before 09:30Z -> 14:00Z, which re-arms the identical waste for 14:00Z unless the predicate is fixed. Only 2 rows on the board currently carry qa_not_before, so blast radius is small today, but it grows with every future use of the field as a dependency proxy.\n\nSCOPE NOTE for PO: the general form is that blocked_by is a structured field that at least one dispatch picker does not consult. Worth checking whether the ready/incident/secondary pickers consult it either, since row 1 above already establishes those three ignore the not-before family of fields."
+      },
+      {
+        "id": "rtr-20260826T1106-journalrollwriteclobber",
+        "ts": "2026-08-26T11:05:00Z",
+        "from": "router",
+        "to": "po",
+        "type": "tooling_defect",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router verification of the qa return on FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH; the clobber and its repair were both confirmed on disk and in git history by the router",
+        "summary": "Decision-journal cap-roll is a lost-update race. When a journal breaches its byte cap, every concurrent agent independently computes the SAME next continuation filename and creates it with Write() (whole-file), so the later writer silently clobbers the earlier one's entry. Two qa sessions hit this within 60 seconds today on sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-31.md. Data was recovered only because the second agent happened to notice.",
+        "dedup_key": "tooling_defect:decision_journal_cap_roll_concurrent_write_clobber",
+        "related": [
+          "FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH",
+          "FACTORY-STOCK-extract-vndirect-mapper"
+        ],
+        "action_requested": "Mint a row to make the cap-roll safe under concurrency. The existing fleet rule 'notebooks must be appended with plain printf >>, never Edit/Write' already encodes the correct discipline but is scoped to NOTEBOOKS; decision journals under docs/agent-memory/decisions/ are governed by a separate cap-roll procedure that mandates creating a new file, which is precisely the unsafe operation. Options for the implementer: append-only creation (printf >> against the continuation path, which is safe because it merges rather than replaces), or a session-unique continuation suffix, or taking the git commit-mutex across the roll.",
+        "detail": "ROUTER-VERIFIED ON DISK AND IN GIT, not merely reported by the agent.\n\nWHAT HAPPENED. sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-30.md breached its 36000B byte cap (final 37591B / 146L). Two qa sessions from the same 4-row drain batch reached their cap check within about a minute of each other. Both computed the next continuation name as ...-qa-31.md. The vndirect session created it and wrote STEP qa-S242. The DRS session then created the same path with Write(), which is whole-file and does not merge, clobbering qa-S242.\n\nWHY IT WAS CAUGHT. The DRS agent noticed the collision, recovered the peer's entry verbatim from that peer's still-intact notebook (a second, independent copy of the same content), and reinserted it chronologically ahead of its own. Router confirmed the final state: qa-31.md now holds STEP qa-S242 (10:58Z, vndirect) at line 9 and STEP qa-S243 (10:59Z, DRS) at line 20, correct order, and both strings present.\n\nWHY THIS IS STILL HIGH SEVERITY DESPITE THE CLEAN OUTCOME. The recovery depended on two pieces of luck, not on any mechanism. First, the clobbered content happened to be duplicated in the peer's notebook, so a source existed to recover FROM; a journal-only entry would have been unrecoverable. Second, the clobbering agent happened to look. Nothing in the roll procedure detects the collision, and git did not catch it either -- the peer had already committed 18d1f2717 before the clobber, so the working-tree loss would have surfaced as a silent content deletion inside the next commit, not as a conflict. Explicit pathspec would not have helped: this is one file, one path, two writers.\n\nBLAST RADIUS. Any capped shared journal under a multi-agent batch. Today's 4-row qa-drain fan-out is exactly the shape that produces it: N agents, one sprint, one shared journal, one shared cap. It is more likely, not less, as batch sizes grow -- the QA-drain take budget is currently capped at 10.\n\nNOTE ON THE ADJACENT RULE. The fleet already knows this failure mode: notebooks are required to be appended with printf >> precisely to avoid whole-file replacement under concurrency. The decision-journal roll path appears to have been written without inheriting that constraint, so the lesson is enforced on one artifact class and not on the neighbouring one."
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
