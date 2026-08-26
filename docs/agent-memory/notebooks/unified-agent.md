@@ -127,3 +127,10 @@
 **Verdict:** 0 clusters qualify → Silent exit per Step 1 intraday gate
 
 **PIPELINE:** complete | **QUALITY:** silent-intraday
+
+### Cycle 2026-08-26T06:21Z (intraday) — SILENT
+- Status: SILENT (intraday gate: 0 convergence clusters)
+- Signals collected: 13 (5 price_anomaly with anomaly=true, 8 bctc_signal)
+- Tickers: FPT(6), HPG(5), VCB(5), DXG(5), BSR(1), DBC(1), HUT(1), VIC(1)
+- Convergence check: NO (0 clusters qualify — no ticker-level multi-type convergence)
+- Exit: DONE: intraday-silent | PIPELINE: complete
