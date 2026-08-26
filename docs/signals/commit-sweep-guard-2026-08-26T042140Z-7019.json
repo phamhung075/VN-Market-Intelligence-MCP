@@ -1,0 +1,8 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-26T04:21:40Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/unified-agent.md. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid7018:git commit -m chef-intraday 2026-08-26 04:13Z — silent cycle (0 convergence clusters)\\012\\012No cross-ticker or cross-sector convergence detected despite 5 sign]<-[pid7014:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604597949-wnhuaq.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88052:claude --dangerously-skip-permissions -n cowork-team ]"
+}
