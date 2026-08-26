@@ -1,0 +1,3 @@
+ts,container_id,memory_current_bytes,memory_stat_anon,memory_stat_file,memory_stat_inactive_file,memory_stat_pgscan,memory_stat_pgsteal,memory_stat_workingset_refault_anon,memory_events_max,memory_events_oom,memory_events_oom_kill,vmrss_kib,vmhwm_kib
+2026-08-26T05:11:30Z,417febec1a033ead2cf85ff29219d956617ba8fb839ba6853f29d7203a223021,1689071616,1559920640,21848064,9281536,398846,208006,59654,1645,0,0,1858760,2842976
+2026-08-26T05:11:50Z,417febec1a033ead2cf85ff29219d956617ba8fb839ba6853f29d7203a223021,1689042944,1559924736,21848064,9281536,398846,208006,59654,1645,0,0,1858760,2842976

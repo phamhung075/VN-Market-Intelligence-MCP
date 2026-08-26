@@ -120,3 +120,36 @@ Do NOT skip on the grounds that "only one rebuild was done today" — the heuris
 **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+---
+
+## AC-7 Cgroup Memory Sampler (pdf-extractor)
+
+**Script:** `scripts/pdf-extractor-cgroup-sampler.sh`
+
+**Purpose:** Collect longitudinal cgroup memory metrics for pdf-extractor container AC-7 (>=12h passive sampling window, one sample per 5 min).
+
+**Metrics:** ts, container_id, memory.current, memory.stat{anon,file,inactive_file,pgscan,pgsteal,workingset_refault_anon}, memory.events{max,oom,oom_kill}, /proc/1/status{VmRSS,VmHWM}
+
+**Output:** CSV at `docs/incidents/data/pdf-extractor-ac7-sampler.csv`
+
+**Key design element:** Container ID is stamped on every row to detect silent recreation and invalidate the series loudly.
+
+**Start command:**
+```bash
+nohup bash scripts/pdf-extractor-cgroup-sampler.sh > /tmp/pdf-extractor-sampler.log 2>&1 &
+```
+
+**Verify running:**
+```bash
+ps aux | grep pdf-extractor-cgroup-sampler | grep -v grep
+wc -l docs/incidents/data/pdf-extractor-ac7-sampler.csv   # should increase every 5 min
+```
+
+**Stop (if needed):**
+```bash
+pkill -f pdf-extractor-cgroup-sampler
+```
+
+For complete AC-7/AC-8 closure criteria, see task UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT, field po_ac4_bar_ruling_20260824T0850Z (B1-B4 definitions).
+
