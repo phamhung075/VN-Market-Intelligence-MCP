@@ -276,3 +276,54 @@ was minted at 21:53:13Z, ~1h20m AFTER that audit cycle ended. Folded the c136 ev
 reproduction fixture; ACK written into the handoff naming the grep failure mode and pointing at
 `po-board-dedup-search.sh`. Second time today a `grep` on orch-state.json produced a wrong dedup
 verdict — this one would have cost a duplicate P1.
+
+## 2026-08-26T01:48-02:00Z — The dirty worktree was never dirty, and the correction was already answered
+
+Journal: `docs/agent-memory/decisions/triage-20260826T0137Z-po.md`.
+**0 minted · 5 folded · 1 row consolidated 34450B→4949B · 1 refuted · inbox 2→0 read back off disk.**
+
+### `git status` in an orphaned worktree cannot answer "was this salvaged?"
+`RECOVER-ORPHANED-WORKTREE-AGENT-AE9ED2CD6F04B3686` carried a fold from 08-24 saying, in bold, that the
+sibling `CLEAN-SALVAGE-...` row reads DONE_VERIFIED but the work is *not* drained — 8 dirty paths still
+in `git status --porcelain`. That premise is false and the error is mechanical: a worktree computes
+status against **its own HEAD** (4a6d2174c, 08-12). The salvage copied the content into main and
+committed it there without touching the worktree index, so it reports dirty forever, whether or not the
+work landed. `cmp` on all 6 work-product paths: every one byte-identical to main. The untracked test file
+is git-tracked in main. Landing commit `28f8509fc` names both row ids in its own message. The
+DONE_VERIFIED verdict was right; the row that was minted 11h *before* that commit went stale in silence.
+Same shape as trusting a clean `git show --stat`: outcome-blind. The discriminator is a content diff.
+
+### And the row whose code already shipped was queued for a requirements spec
+That same salvage implements `FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG`, which sits in
+`ready[]` with `next_agent=ba`. Its AC-1..AC-4 are all runtime-verification criteria. I did not flip it to
+qa — qa is off the DRS allowlist and the flip would have stranded it with no picker. Told ba instead.
+
+### The correction was honest, stale, and already answered
+The peer withdrew two of its own claims about the market.db corruption — both withdrawals are right, and
+the writer-defect steer it retracts is *my own* fold item (1) from 01:16Z, now superseded. But the
+envelope re-asserts −12205 as real lost rows; it is 3917, the other 8288 are PK-duplicates and *are* the
+corruption. And its one open test — is the damage tail-localised, in-flight fault or bit-rot — was
+answered by the architect brief committed at 00:56Z, **42 minutes before the envelope was filed**:
+non-atomic multi-page-commit fingerprint, explicitly not disk scatter. Corroborated, not open. No dispatch.
+
+### The load-bearing item was the third bullet, not the correction
+`CLEAN-MARKETDB-FORENSIC-COPIES` is P1 on a 95%-full volume, so it can fire any time. Its AC-3 says do not
+delete a copy a still-open row cites — but it was written 08-24, names no file, and the snapshot two open
+rows depend on did not exist yet. A generic "check first" is only as good as the agent remembering to.
+Named the file, named both dependents, named the release condition.
+
+### A P0 that could not be stamped because it was too fat to touch
+Top of 145 manual-dispatch candidates, and `orch-row-prose-ceiling-check` rejects net-new growth on an
+over-ceiling row — 34450B vs a 12000B ceiling, so the stamp itself was unappliable. Consolidating was not
+a workaround, it was the fix: of its 6 ACs, one type had shipped, two were dead, AC-2 was obsolete (no
+`$routed` array exists any more, the guard parses the tables) and AC-4 had shipped (wired at
+`.github/workflows/ci.yml:556-602`). Re-measured: 4 different types unrouted now, 6 live rows. Third
+rotation of this namespace. The real root cause is that the catch-all routes an unknown type to its own
+`to` field — for `to=po` that hands the signal back to the step that could not route it.
+
+### Carry-over
+- `FIX-PO-TRIAGE-SIGNALS-...-UNROUTED` → P0, agent-father, stamped + folded into BATCH. Scope is now 4 ACs.
+- Supervised-hold `should_hold=true` on `FIX-PDFX-...-HEADROOM`: **not** ratified — architect is producing
+  the very deliverable the checkpoint gates. Self-heals when the brief lands. Do not re-derive.
+- TNB c136 outage findings deferred a 3rd tick. Dedup says covered; no fresh ACK block appended.
+- Push backstop skipped: standing disarm, and `FIX-PO-PUSHBACKSTOP-FLOWDOC-INSTRUCTS-PUSH-AGAINST-STANDING-DISARM` is open.
