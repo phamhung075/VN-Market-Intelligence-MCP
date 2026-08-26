@@ -1,0 +1,27 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "createdAt": "2026-08-26T06:16:12Z",
+  "payload": {
+    "module": ".claude/skills/dispatch-claim/CARD.md",
+    "summary": "Phase B intent PRE-CLAIM uses ttl=600 with NO heartbeat, so the intent mutex expires under a still-running agent and silently stops protecting.",
+    "evidence": {
+      "observed_at": "2026-08-26T06:16:12Z",
+      "claim": "intent:po:main + intent:po:triage claimed ttl_seconds=600 at ~2026-08-26T06:00:30Z",
+      "agent_runtime": "po ran 16m49s (1009293ms), returned ~06:17:20Z",
+      "release_result": "both task_release calls returned ok:true released:0 — already expired",
+      "unguarded_window_minutes": 7,
+      "concurrent_risk": "2 peer router sessions were live in session-presence during the window; either could have claimed the freed key and spawned a second concurrent po",
+      "card_line": "CARD.md:29 ttl=600",
+      "heartbeat_gap": "the only task_heartbeat in CARD.md is line 33, on the re-entrant SAME-SESSION collision branch — it never fires periodically during a spawn, so nothing renews the lock"
+    },
+    "why_it_matters": "This inverts the guard: a lock intended to prevent two sessions running the same agent becomes a duplicate-ENABLER partway through every long run. po runs 15-17min routinely (two samples today: 937s, 1009s), so its gate is expired for the tail of essentially every invocation. Same shape as the already-recorded resume-key ttl=3600 inversion, but far more frequent because 600s is well under normal agent runtime.",
+    "proposed_fix_directions": [
+      "raise Phase B ttl to exceed realistic agent runtime (>=3600), OR",
+      "heartbeat the intent lock from the router while the spawned agent is live, OR",
+      "release-on-return only and treat an expired-at-release (released:0) as a loud signal rather than a silent no-op"
+    ],
+    "negative_control": "a fix must NOT make a genuinely dead sessions lock un-reclaimable; orphan reclamation via the presence/force-release ladder must still work."
+  }
+}
