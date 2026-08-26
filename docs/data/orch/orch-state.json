@@ -20771,6 +20771,40 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
+        "type": "FIX",
+        "title": "system-auditor notebook-compose bypass has no mechanical forcing function -- add a NEW commit-msg git hook (not pre-commit, which cannot read the commit message) rejecting/warning any commit to docs/agent-memory/notebooks/system-auditor.md lacking a notebook-compose OK/WARN marker",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "scripts/git-hooks/",
+        "created_at": "2026-08-26T12:26:38Z",
+        "created_by": "architect (FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED split, child A)",
+        "dedup_key": "auditor-notebook-compose-commitmsg-marker-gate",
+        "files": [
+          "scripts/git-hooks/commit-msg",
+          "scripts/git-hooks/install.sh",
+          "scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "status_note": "Implemented per docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A. scripts/git-hooks/commit-msg (new, this repos first commit-msg hook) + install.sh wiring (4 hooks: pre-push/pre-commit/post-commit/commit-msg, verified re-run) + commit-msg-notebook-compose-marker.test.sh (5/5 pass) + dev-standards.md CANONICAL pointer. Committed 16e2096bb. DEVIATION FROM BRIEF (found+fixed): the briefs literal regex fails to match the real nested-bracket marker shape (live commit efe62d83d, double-bracket form) because the negated-bracket-class cannot cross the inner closing bracket. Widened to tolerate one level of nesting, re-verified against all 4 real observed shapes plus negative controls (bare [skip ci], OK-substring words TOKEN/BROKEN outside brackets). AC-1 (5 test cases) and AC-4 (install.sh links 4 hooks) both verified this cycle. AC-2 (live WARN observed on stderr for the next narrated notebook commit) NOT yet observable: no commit has touched docs/agent-memory/notebooks/system-auditor.md since hook install (2026-08-26T~15:16Z) -- the most recent such commit (56f41ab1c) predates install. Mechanism verified via isolated scratch-repo regression suite only; QA/next tick should confirm the live WARN fires on the next real system-auditor notebook commit lacking a marker. AC-3 (48h adoption-ratio trend) is explicitly out of this cycles scope per the briefs own Verification Gate #3.\n[QA] Review Record (direct-commit verify): QA verify-committed (session 036ceaf1). AC-1 5/5 + AC-4 4-hooks re-run green, ancestry+files-touched confirmed for 16e2096bb. AC-2 (live WARN on real notebook commit) genuinely NOT yet observed -- 0 commits touched the notebook since install; RULING: non-blocking, sign off now -- mechanism independently re-verified via realistic git-init/add/commit test harness + confirmed-live .git/hooks/commit-msg symlink, same precedent as FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED's AC-5 (trend AC left open post-DONE_VERIFIED). CORRECTION to dispatcher framing: nested-bracket commit efe62d83d touches the SAME pilot notebook (system-auditor.md), not a different one -- widened regex is load-bearing TODAY (DATA-tier caller), not only for the future fleet-wide rollout; verified live regex test, narrow brief regex fails on efe62d83d, shipped regex passes. Residual gaps non-blocking: (a) rename R100 bypasses ^[AM] path-gate, reproduced live -- but identical pre-existing blind spot shared by _check_auditor_heartbeat_shapes/_check_notebook_immutability in pre-commit, not unique to this hook, flag as fleet-wide follow-up; (b) ALL_GREEN SKIP empty-COMPOSE_MARKER path confirmed unreachable today (SKIP stages nothing, no commit created).",
+        "updated_at": "2026-08-26T15:55:33Z",
+        "reviewed_ready_at": "2026-08-26T15:21:12Z",
+        "implemented_by": "developer",
+        "claimed_at": "2026-08-26T15:48:41Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-26T15:55:32Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bash scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh + bash scripts/git-hooks/pre-commit.test.sh + bash -n + live regex repro against efe62d83d + live rename-bypass repro in scratch repo",
+            "args": "commit=16e2096bb; files=scripts/git-hooks/commit-msg,scripts/git-hooks/install.sh,scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh,docs/policies/dev-standards.md",
+            "live_value_observed": "ancestor=yes; stat touches 4/4 claimed files; commit-msg suite 5/5 pass; pre-commit suite 15/15 pass (no regression); bash -n clean x3; .git/hooks/commit-msg symlink confirmed -> scripts/git-hooks/commit-msg; narrow brief regex NO-MATCH vs efe62d83d nested marker, shipped widened regex MATCH; git-mv rename onto pilot notebook path confirmed to bypass ^[AM] gate in scratch repo",
+            "observed_at": "2026-08-26T15:55:32Z"
+          }
+        }
       }
     ],
     "head": {
@@ -24505,34 +24539,7 @@
         "router_note_qa_gate_20260826T0817Z": "2026-08-26T08:18:05Z router: qa_not_before set to 2026-08-26T09:30:00Z. This is a TIME PROXY for the real condition, which is blocker OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT reaching a terminal DONE state — that blocker is still ready[]/READY/next_agent=ops, itself gated next_recheck_not_before=2026-08-26T09:00:00Z. PO adjudication 0650Z: qa re-verifies only once the redeploy lands in the running binary. The qa-drain selects on effective_next_agent==qa alone and is blind to blocked_by and to prose, so without a gate key it re-picks this row EVERY tick (observed 07:37Z and 08:07Z, reverted both times). qa_not_before is one of the three keys is_gated_not_before() honors (scripts/lib/devteam-eligibility.jq:684/694) and the qa-drain is the ONE picker that calls it. If the redeploy slips past 09:30Z this row becomes eligible again and must be re-gated or reverted once more — the gate is a churn brake, not a dependency check."
       }
     ],
-    "qa": [
-      {
-        "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
-        "type": "FIX",
-        "title": "system-auditor notebook-compose bypass has no mechanical forcing function -- add a NEW commit-msg git hook (not pre-commit, which cannot read the commit message) rejecting/warning any commit to docs/agent-memory/notebooks/system-auditor.md lacking a notebook-compose OK/WARN marker",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "scripts/git-hooks/",
-        "next_agent": "qa",
-        "created_at": "2026-08-26T12:26:38Z",
-        "created_by": "architect (FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED split, child A)",
-        "dedup_key": "auditor-notebook-compose-commitmsg-marker-gate",
-        "files": [
-          "scripts/git-hooks/commit-msg",
-          "scripts/git-hooks/install.sh",
-          "scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh",
-          "docs/policies/dev-standards.md"
-        ],
-        "status_note": "Implemented per docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A. scripts/git-hooks/commit-msg (new, this repos first commit-msg hook) + install.sh wiring (4 hooks: pre-push/pre-commit/post-commit/commit-msg, verified re-run) + commit-msg-notebook-compose-marker.test.sh (5/5 pass) + dev-standards.md CANONICAL pointer. Committed 16e2096bb. DEVIATION FROM BRIEF (found+fixed): the briefs literal regex fails to match the real nested-bracket marker shape (live commit efe62d83d, double-bracket form) because the negated-bracket-class cannot cross the inner closing bracket. Widened to tolerate one level of nesting, re-verified against all 4 real observed shapes plus negative controls (bare [skip ci], OK-substring words TOKEN/BROKEN outside brackets). AC-1 (5 test cases) and AC-4 (install.sh links 4 hooks) both verified this cycle. AC-2 (live WARN observed on stderr for the next narrated notebook commit) NOT yet observable: no commit has touched docs/agent-memory/notebooks/system-auditor.md since hook install (2026-08-26T~15:16Z) -- the most recent such commit (56f41ab1c) predates install. Mechanism verified via isolated scratch-repo regression suite only; QA/next tick should confirm the live WARN fires on the next real system-auditor notebook commit lacking a marker. AC-3 (48h adoption-ratio trend) is explicitly out of this cycles scope per the briefs own Verification Gate #3.",
-        "updated_at": "2026-08-26T15:48:42Z",
-        "reviewed_ready_at": "2026-08-26T15:21:12Z",
-        "implemented_by": "developer",
-        "claimed_at": "2026-08-26T15:48:41Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
