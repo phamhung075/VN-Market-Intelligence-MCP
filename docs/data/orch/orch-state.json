@@ -24207,10 +24207,13 @@
         "promoted_at": "2026-08-26T05:15:38Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-26T05:21:50Z",
+        "updated_at": "2026-08-26T05:23:53Z",
         "next_agent": "qa",
         "updated_by": "dev-stock-price",
-        "developer_completed_at": "2026-08-26T05:21:49Z"
+        "developer_completed_at": "2026-08-26T05:21:49Z",
+        "commit": "912a4bf79",
+        "branch": null,
+        "router_note_verify": "router 2026-08-26T05:23:52Z — stamped commit for qa verify-committed mode. NULL-SEMANTICS DEVIATION verified NOT a regression: domain/models.go:22 already documents nil=unavailable/0=flat, and frontend dsi-s1-fe-type.test.ts asserts null and 0 as distinct cases. Old inline Tier1/Tier2 coerced null->0, violating that contract. Only raw deref (mapper.go:118) is nil-guarded at :117."
       }
     ],
     "qa": [
