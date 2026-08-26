@@ -1365,6 +1365,20 @@
         "provenance": "router-post-agent-return-verification",
         "audit_cycle_tag": null,
         "dedup_key": "backlog-row-already-satisfied:CLEAN-CTXBLOAT-CRON-COWORK-TEAM-SKILL-242L-OVER-200L-CAP"
+      },
+      {
+        "id": "rtr-20260826T0943-cbstale",
+        "ts": "2026-08-26T09:41:39Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "TRIAGE-CLOSE, do NOT dispatch: the 3 context-bloat signals drained into pending_triage_inbox this tick (09:37Z) all describe breaches ALREADY FIXED by 98f20610b before the drain ran. Signals were emitted 09:14-09:20Z while agent-father was mid-edit on TASK-CRON-SKILLMD-PROBE-WIRING; the fix landed after they fired, so they were stale on arrival. Measured from disk 09:43Z against caps 200L/12000B: cron-cowork-team/SKILL.md 199L/11432B COMPLIANT; cron-cowork-team/register.md 167L/11555B COMPLIANT; cron-standalone-team/SKILL.md 200L/11728B COMPLIANT (200L is AT cap, not over). All three clear BOTH axes. Related and NOT closed by this: CLEAN-CTXBLOAT-CRON-DETECT-LOOP-REGISTER-12349B-OVER-12000B-BYTECAP is a REAL open breach (detect-loop/register.md, verified 12349B, untouched by 98f20610b). Root pattern worth noting: the context-bloat emitter fires against a file an agent is actively editing, so its signals can be obsolete by the time they drain — three wasted dispatches here if taken at face value.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router-drain-staleness-verification",
+        "audit_cycle_tag": null,
+        "dedup_key": "drained-signals-already-resolved:context-bloat-cron-skills:2026-08-26"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
