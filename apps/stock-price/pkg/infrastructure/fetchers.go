@@ -5,7 +5,6 @@ package infrastructure
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
+	vndirectquotemapper "github.com/vn-market-intelligence/stock-price/pkg/primitive/vndirect-quote-mapper"
 )
 
 // ── Tier 1: VnDirect api-finfo stock_prices ──────────────────────────────────
@@ -65,57 +65,21 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 		return nil, nil //nolint:nilerr
 	}
 
-	// stock_prices endpoint returns OHLCV data with these fields:
-	// code, date, time, floor, type, close, open, high, low, nmVolume, change, pctChange
-	// type: "STOCK" for VN stocks (price in thousands VND), "INDEX" for indices (actual value)
-	var payload struct {
-		Data []struct {
-			Code      string  `json:"code"`
-			Floor     string  `json:"floor"`
-			Type      string  `json:"type"`
-			Close     float64 `json:"close"`
-			NmVolume  float64 `json:"nmVolume"`
-			Change    float64 `json:"change"`
-			PctChange float64 `json:"pctChange"`
-			Date      string  `json:"date"`
-			Time      string  `json:"time"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(body, &payload); err != nil || len(payload.Data) == 0 {
+	// Delegate JSON parsing and mapping to the vndirect-quote-mapper primitive.
+	// The primitive handles:
+	//   - price scaling (*1000 for VN STOCK on HOSE/HNX/UPCOM)
+	//   - source determination (HOSE/HNX/UPCOM from floor field)
+	//   - DSI-INV-1 compliant null/0 handling for change/pctChange
+	latencyMs := time.Since(start).Milliseconds()
+	fetchedAt := time.Now().UTC().Format(time.RFC3339)
+	result := vndirectquotemapper.MapPayload(body, fetchedAt, latencyMs)
+
+	// Empty data or malformed JSON returns nil (fail-safe for tier waterfall)
+	if result.Err != nil || result.Quote == nil {
 		return nil, nil
 	}
-	item := payload.Data[0]
-	// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)
-	change := item.Change
-	pctChange := item.PctChange
 
-	// Determine source from floor field (HOSE, HNX, UPCOM)
-	source := domain.SourceHOSE
-	switch item.Floor {
-	case "HNX":
-		source = domain.SourceHNX
-	case "UPCOM":
-		source = domain.SourceUPCOM
-	}
-
-	// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL: Scale price based on asset type.
-	// VN stocks (type="STOCK", floor in HOSE/HNX/UPCOM) return prices in thousands VND.
-	// Indices and other assets (type="INDEX", non-VN floors like BLOOMBERG) return actual values.
-	price := item.Close
-	if item.Type == "STOCK" && (item.Floor == "HOSE" || item.Floor == "HNX" || item.Floor == "UPCOM") {
-		price = item.Close * 1000
-	}
-
-	return &domain.PriceQuote{
-		Code:          item.Code,
-		Price:         price,
-		Volume:        item.NmVolume,
-		Change:        &change,
-		ChangePercent: &pctChange,
-		Source:        source,
-		LatencyMs:     time.Since(start).Milliseconds(),
-		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
-	}, nil
+	return result.Quote, nil
 }
 
 // ── Tier 2: VnDirect api-finfo stock_prices (historical fallback) ───────────
@@ -169,57 +133,21 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 		return nil, nil //nolint:nilerr
 	}
 
-	// stock_prices endpoint returns OHLCV data with these fields:
-	// code, date, time, floor, type, close, open, high, low, nmVolume, change, pctChange
-	// type: "STOCK" for VN stocks (price in thousands VND), "INDEX" for indices (actual value)
-	var payload struct {
-		Data []struct {
-			Code      string  `json:"code"`
-			Floor     string  `json:"floor"`
-			Type      string  `json:"type"`
-			Close     float64 `json:"close"`
-			NmVolume  float64 `json:"nmVolume"`
-			Change    float64 `json:"change"`
-			PctChange float64 `json:"pctChange"`
-			Date      string  `json:"date"`
-			Time      string  `json:"time"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(body, &payload); err != nil || len(payload.Data) == 0 {
+	// Delegate JSON parsing and mapping to the vndirect-quote-mapper primitive.
+	// The primitive handles:
+	//   - price scaling (*1000 for VN STOCK on HOSE/HNX/UPCOM)
+	//   - source determination (HOSE/HNX/UPCOM from floor field)
+	//   - DSI-INV-1 compliant null/0 handling for change/pctChange
+	latencyMs := time.Since(start).Milliseconds()
+	fetchedAt := time.Now().UTC().Format(time.RFC3339)
+	result := vndirectquotemapper.MapPayload(body, fetchedAt, latencyMs)
+
+	// Empty data or malformed JSON returns nil (fail-safe for tier waterfall)
+	if result.Err != nil || result.Quote == nil {
 		return nil, nil
 	}
-	item := payload.Data[0]
-	// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)
-	change := item.Change
-	pctChange := item.PctChange
 
-	// Determine source from floor field (HOSE, HNX, UPCOM)
-	source := domain.SourceHOSE
-	switch item.Floor {
-	case "HNX":
-		source = domain.SourceHNX
-	case "UPCOM":
-		source = domain.SourceUPCOM
-	}
-
-	// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL: Scale price based on asset type.
-	// VN stocks (type="STOCK", floor in HOSE/HNX/UPCOM) return prices in thousands VND.
-	// Indices and other assets (type="INDEX", non-VN floors like BLOOMBERG) return actual values.
-	price := item.Close
-	if item.Type == "STOCK" && (item.Floor == "HOSE" || item.Floor == "HNX" || item.Floor == "UPCOM") {
-		price = item.Close * 1000
-	}
-
-	return &domain.PriceQuote{
-		Code:          item.Code,
-		Price:         price,
-		Volume:        item.NmVolume,
-		Change:        &change,
-		ChangePercent: &pctChange,
-		Source:        source,
-		LatencyMs:     time.Since(start).Milliseconds(),
-		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
-	}, nil
+	return result.Quote, nil
 }
 
 // ── Tier 3: SQLite cache (readonly market.db) ────────────────────────────────
