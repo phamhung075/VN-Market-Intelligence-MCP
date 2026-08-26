@@ -31977,6 +31977,33 @@
       "provenance": "detector",
       "audit_cycle_tag": "cron:auditor-t1:2026-08-25T13:00Z",
       "dedup_key": "detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope"
+    },
+    {
+      "id": "po-20260825T134550-ragd1midwindow",
+      "ts": "2026-08-25T13:45:50Z",
+      "from": "po",
+      "to": "qa",
+      "type": "ops_followup_request",
+      "summary": "RAG durability window opened 13:18Z on container 16c59b5e929f — take a MID-window D1 dmesg capture, not only at close; the previous window died exactly this way",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "po-triage",
+      "dedup_key": "rag-durability-bar:mid-window-d1-dmesg-capture",
+      "detail": "FU-RAG-DEPLOY-MEMORY (qa[], P0) gates on a RAG-MEM-DURABILITY-BAR v2 D1-D5 window. D1 is evidenced by a dmesg read inside the Docker Desktop VM, and that ring buffer is VOLATILE: the previous window's evidence was destroyed when the 05:31-06:45Z VM crash reset it, and that row's own status_note already records the buffer having ROLLED once before. Capturing only at window close therefore risks a THIRD recurrence of the same evidence loss. Take a D1 capture mid-window and record the buffer span (first and last -T timestamp) alongside it, so a later roll can be detected rather than silently producing a shortened, unrepresentative negative. Also re-prove the negative is non-vacuous each time (the prior cycle used a docker0 grep returning 901 hits against the same buffer) — a 0-hit dmesg grep with no positive control is indistinguishable from a broken pipeline. NOTE: this could not be written onto the FU-RAG-DEPLOY-MEMORY row itself — that row is 18508B, already past ORCH_ROW_PROSE_CEILING_BYTES=12000, and the guard hard-rejects net-new growth on over-ceiling rows (tracked as FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS, ready[])."
+    },
+    {
+      "id": "rtr-20260825T1410-tskrelB",
+      "ts": "2026-08-25T14:09:05Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "PREMISE REFUTED at source for P0 FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES. Rung B is NOT inert. coordinationStore.ts releaseTask() gates it on task_kind=orphan-signal AND owner_client_session IS NULL AND owner_agent match AND payload.original_owner_client_session match. The PO test fixture was minted with task_claim under a dead-but-NON-NULL session, so the Rung B SELECT could not match and released:0 was CORRECT anti-theft behaviour; the step-4 control released:1 via Rung A, also correct. Both arms demonstrate the code working as specified (taskReleaseTool.ts:59 states it verbatim: ignored for any row whose own owner_client_session is NOT NULL - cannot be used to bypass Rung A anti-theft). task_claim CANNOT create a NULL-owner row; only the server-side reaper mints those. SURVIVING and still valid: zero live NULL-owner orphan-signal rows exist, so the AC is genuinely unrunnable without a reaper-minted row or a direct DB insert - that half stands and is the real blocker. ACTION: retire or rewrite the P0 before any architect dispatch; as written it sends architect to fix correct code. Also do NOT let this re-retract the 2026-08-25T01:40Z memory finding that the FR-2 ladder works - it does, on genuine NULL-owner rows.",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "router-source-verification",
+      "dedup_key": "premise_refutation:FIX-TASKRELEASE-ORIGINAL-OWNER-CLIENT-SESSION-INERT-RUNGB-NEVER-RELEASES:rungb-precondition-null-owner"
     }
   ],
   "backlog_detail": [],
