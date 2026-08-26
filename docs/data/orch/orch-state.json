@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK-COWORK-CATCHUP-10",
-    "next_agent": "agent-father",
-    "next_action": "Ready-Lane Consumer claim of TASK-COWORK-CATCHUP-10 — spawn agent-father DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-26T13:13:38Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-26T13:20:49Z",
+    "updated_by": "agent-father",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4616,6 +4615,38 @@
           "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
           "FIX-AUDITOR-TIER1-PROBE-MISSING-RETURN-TO-NOTEBOOK-WRITE-POINTER"
         ]
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-10",
+        "title": "FR-10 doc-only: cron runbook update (route to agent-father)",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "P0",
+        "zone": "docs/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "CANCELLED",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-9"
+        ],
+        "next_agent": "agent-father",
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-26T13:20:49Z",
+        "po_lane_move_20260728": "MOVED backlog[] -> ready[] by PO. next_agent=agent-father is non-dev: backlog + non-dev next_agent + no plan_only is the documented NO-LANE hole (zone-routing.md Step A2) -- BOUNDED-1 gates it via is_non_dev_next_agent_unrouted and SLS needs supervised AND plan_only, neither of which apply. ready[] + status READY is the only lane with a consumer for a non-dev handler (Ready-Lane Consumer). depends_on [TASK-COWORK-CATCHUP-9] is still enforced there by RLC's deps_satisfied gate.",
+        "updated_by": "agent-father",
+        "status_note": "[po 2026-08-23T10:33Z] DUPLICATE TARGET + STALE PREMISE — do not dispatch without reading this. This row is FR-10 doc-only 'cron runbook update', owner agent-father, target docs/protocols/cowork-master-cron-runbook.md. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief 2026-08-23 item 5, ALSO agent-father) names that identical file in its own files[] alongside .claude/skills/cron-cowork-team/SKILL.md and docs/agents/cowork-team/flow/match-slots.md, and its AC-2/AC-4 are strictly stronger. Two rows, one owner, one file. Not cancelled here only because its dep chain already holds it (depends_on TASK-COWORK-CATCHUP-9, now BLOCKED) so it is not dispatchable today; fold it into DOC-TRUTH-LAYER-INVENTORY or cancel it when that row is worked. Its 2026-07-22 premise is also stale in the same way CATCHUP-9's is.",
+        "claimed_at": "2026-08-26T13:13:38Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "agent-father",
+        "disposition": "CANCELLED",
+        "disposition_reason_code": "TRUE_DUPLICATE_MISIDENTIFIED_PLUS_OUT_OF_AGENT_ZONE",
+        "disposition_by": "agent-father",
+        "disposition_at": "2026-08-26T13:20:49Z",
+        "do_not_reopen": true,
+        "superseded_by_rows": [
+          "FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS"
+        ],
+        "agent_father_disposition_20260826": "CANCELLED. Dispatched by router 2026-08-26T13:13Z (RLC claim, post TASK-COWORK-CATCHUP-9 dep clear); PO 2026-08-23T10:33Z status_note flagged it as a probable duplicate of TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY. PO's premise, written BEFORE that row was actually worked, is corrected here rather than just re-asserted: DOC-TRUTH-LAYER-INVENTORY (DONE_VERIFIED, commit f4e944454) touched only 2 of its 3 declared files (.claude/skills/cron-cowork-team/SKILL.md, docs/agents/cowork-team/flow/match-slots.md); its own AC-3/status_note (agent-father, 2026-08-23T16:20Z) states docs/protocols/cowork-master-cron-runbook.md was explicitly NOT shipped, because that file sits outside agent-father's commit_zone (allowed: docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/; docs/protocols/ is not listed), and split that exact scope into a new row the same day: FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS (po-created 2026-08-23T15:27Z, owner developer, BACKLOG, files=[docs/protocols/cowork-master-cron-runbook.md]). So the true duplicate of this row is that backlog row, not DOC-TRUTH-LAYER-INVENTORY. Real residual confirmed on disk (this is not a no-op close): docs/protocols/cowork-master-cron-runbook.md section 1, section 5 and section 8 test T5 still frame F1-LAUNCHD-COWORK-BACKSTOP as in-flight/not-yet-shipped (\"In flight, do not block on this\"; T5 \"NOT YET APPLICABLE, only test this once F1-LAUNCHD-COWORK-BACKSTOP ships\"), but that row is DONE_VERIFIED (commits 4df3d1545 + 02ba4a635 + e806bcda1) and its OPS-COWORK-GUARANTEED-SLOT-INSTALL companion is DONE_VERIFIED and live: launchctl list on this host right now shows com.vn-market.cowork-guaranteed-slot-firer loaded, LastExitStatus=0, plist symlinked into ~/Library/LaunchAgents since 10 jul, firer log shows real recent invocations. This is exactly the residual FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS already exists to fix. Checked separately per the dispatch prompt's specific pointer: no other stale claim found in the runbook -- the 9 RemoteTrigger/Layer-A mentions are all correctly marked RETIRED (fixed earlier by DOC-COWORK-CRON-RUNBOOK-FRESHEN, 2026-07-07, commit 05a8bffa6), so that half of FR-10's doc-honesty goal is already satisfied. Closing this row rather than editing the runbook myself for two independent reasons, either sufficient alone: (1) the file is outside agent-father's commit_zone, same reason DOC-TRUTH-LAYER-INVENTORY could not ship it either; (2) a correctly-owned (developer), correctly-scoped row already exists and would become a second writer to the same file/paragraphs if this row also proceeded. Zero repo files touched by this disposition. Note for the next picker of the surviving row: FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS's own AC (runbook status language matches live launchctl state) is sufficient to close both section 1 and section 8 T5; section 5's placeholder (once F1-LAUNCHD-COWORK-BACKSTOP lands, this section must be rewritten) is the same gap, same fix, same file -- no new row needed."
       }
     ],
     "backlog": [
@@ -14737,7 +14768,8 @@
         "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for this doc drift.",
         "created_by": "po (triage 2026-08-23, from agent-father, router item 7)",
         "created_at": "2026-08-23T15:20:00Z",
-        "updated_at": "2026-08-23T15:27:20Z"
+        "updated_at": "2026-08-26T13:20:49Z",
+        "related_cancelled_duplicate_20260826": "TASK-COWORK-CATCHUP-10 (FR-10 doc-only cron-runbook update, P0) was independently dispatched 2026-08-26 for this exact file/defect (stale F1-LAUNCHD-COWORK-BACKSTOP in-flight language) and CANCELLED as a duplicate of this row by agent-father -- see task_board.archive[] entry for its full evidence trail. This row is confirmed the correct, sole surviving home for the fix."
       },
       {
         "id": "FIX-CHEF-EVENING-SLOTID-FORM-CONFLICT-CHEFDASH-VS-EVENING",
@@ -24735,29 +24767,6 @@
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128.",
         "po_lanefix_20260826T0536Z": "LANE MOVE ATTEMPTED AND REFUSED, po 2026-08-26T05:36Z — recorded so this is not re-attempted blindly. The row is BLOCKED while parked in the WIP lane, the STATUSFLIP-LANEMOVE straggler shape that docs/agents/dev-team/flow/execute-tier.md CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) says must move out. Moving it in_progress[] -> backlog[] made orch-apply's row-prose-ceiling check abort the entire write: 'live=0B -> candidate=18774B'. The 0B is false — PROSE_CEILING_LANES omits in_progress[], so the pre-move baseline reads zero and the move looks like 18.7KB of brand-new prose. Owning row already exists and is already dispatchable: TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES (ready[], READY, P1, developer). Re-attempt the move only AFTER that lands. Harmless meanwhile: BLOCKED rows are excluded from wip_in_progress (devteam-eligibility.jq:117) and claimed_by/claimed_at/owner_client_session are all null, so it holds no claim and consumes no dispatch budget. Its BLOCKED status is CORRECT, not stale: blocker TASK-COWORK-MUTEX-001 is genuinely still at REVIEW."
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-10",
-        "title": "FR-10 doc-only: cron runbook update (route to agent-father)",
-        "type": "SPRINT-S",
-        "size": "S",
-        "priority": "P0",
-        "zone": "docs/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "IN_PROGRESS",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-9"
-        ],
-        "next_agent": "agent-father",
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-26T13:13:38Z",
-        "po_lane_move_20260728": "MOVED backlog[] -> ready[] by PO. next_agent=agent-father is non-dev: backlog + non-dev next_agent + no plan_only is the documented NO-LANE hole (zone-routing.md Step A2) -- BOUNDED-1 gates it via is_non_dev_next_agent_unrouted and SLS needs supervised AND plan_only, neither of which apply. ready[] + status READY is the only lane with a consumer for a non-dev handler (Ready-Lane Consumer). depends_on [TASK-COWORK-CATCHUP-9] is still enforced there by RLC's deps_satisfied gate.",
-        "updated_by": "po/catchup3-disposition-20260823T1033Z",
-        "status_note": "[po 2026-08-23T10:33Z] DUPLICATE TARGET + STALE PREMISE — do not dispatch without reading this. This row is FR-10 doc-only 'cron runbook update', owner agent-father, target docs/protocols/cowork-master-cron-runbook.md. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief 2026-08-23 item 5, ALSO agent-father) names that identical file in its own files[] alongside .claude/skills/cron-cowork-team/SKILL.md and docs/agents/cowork-team/flow/match-slots.md, and its AC-2/AC-4 are strictly stronger. Two rows, one owner, one file. Not cancelled here only because its dep chain already holds it (depends_on TASK-COWORK-CATCHUP-9, now BLOCKED) so it is not dispatchable today; fold it into DOC-TRUTH-LAYER-INVENTORY or cancel it when that row is worked. Its 2026-07-22 premise is also stale in the same way CATCHUP-9's is.",
-        "claimed_at": "2026-08-26T13:13:38Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "agent-father"
       }
     ]
   },
