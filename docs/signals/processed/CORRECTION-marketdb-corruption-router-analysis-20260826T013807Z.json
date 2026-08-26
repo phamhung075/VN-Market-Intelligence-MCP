@@ -32,5 +32,11 @@
     ]
   },
   "priority": "medium",
-  "createdAt": "2026-08-26T01:38:07Z"
+  "createdAt": "2026-08-26T01:38:07Z",
+  "_processed": {
+    "fingerprint": "09baf67a0c573edd20122e88bbb6af1fa16934a52c84ffc26a92c944d0b568a0",
+    "processedAt": "2026-08-26T01:44:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
