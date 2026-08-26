@@ -20873,41 +20873,6 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
-      },
-      {
-        "id": "CLEAN-CTXBLOAT-CRON-COWORK-TEAM-SKILL-242L-OVER-200L-CAP",
-        "title": "context-bloat: .claude/skills/cron-cowork-team/SKILL.md breaches BOTH caps (242L vs 200L, 14279B vs 12000B) — prune or split",
-        "type": "CLEAN",
-        "priority": "P3",
-        "status": "DONE_VERIFIED",
-        "zone": "cross-service/",
-        "size": "S",
-        "owner": "claude-manager-helper",
-        "next_agent": "claude-manager-helper",
-        "created_by": "po",
-        "created_at": "2026-08-11T21:00:00Z",
-        "updated_at": "2026-08-26T11:32:15Z",
-        "supervised": false,
-        "depends_on": null,
-        "blocks": null,
-        "dedup_key": "context_bloat_breach|file:.claude/skills/cron-cowork-team/SKILL.md",
-        "origin_signal_id": "bf10c02a68d72060acda797c04985b81479b99c40fbaa1be21502bb6eb29a458",
-        "root_cause": "context-bloat-backstop-hook fired 2026-08-11T17:27:31Z: class=skill-file reason='line-cap,byte-cap' overage=42L byte_overage=2279B. Same shape and same dedup_key convention as the already-open CLEAN-CTXBLOAT-NOTEBOOK-WRITE-SKILL-215L-OVER-200L-CAP; no existing row covers this file. This skill is re-armed after every session restart (CLAUDE.md /cron-cowork-team), so its size is paid repeatedly.",
-        "acceptance_criteria": "AC-1: file <=200L AND <=12000B, or split with a lazy-load pointer per the CLAUDE.md Lazy Load Pattern. AC-2: the /cron-cowork-team re-arm procedure still executes end-to-end from the trimmed file — verify by running it, not by reading it.",
-        "not_blocking": "P3 — hygiene. The other 3 context_bloat_breach signals this tick are already covered: 2x sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md by FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR, 1x digest-predict.md by CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT.",
-        "origin": "PO triage 2026-08-11T21:00Z, pendingSignals[] context_bloat_breach",
-        "occurrence_count": 2,
-        "po_triage_fold_20260815T1330": "[po/triage 2026-08-15T13:29:00Z] FOLD +1 fire, dedup_key context_bloat_breach|file:.claude/skills/cron-cowork-team/SKILL.md matched exactly. Envelope 6f0317cd (2026-08-15T11:28:02Z) reports 288L/17356B, overage 88L/5356B.\nTHE ROW'S TITLE AND ROOT_CAUSE NUMBERS ARE NOW STALE AND UNDERSTATE THE BREACH — refreshed here rather than re-minted. RAW-RE-VERIFIED LIVE with `wc -lc`, NOT read off the signal payload: 283L / 17050B at HEAD. Mint-time (2026-08-11T21:00Z) was 242L / 14279B. Growth while this row sat in backlog: +41L / +2771B in 4 days; byte overage 2279B -> 5050B (2.2x). Line overage 42 -> 83 (2.0x).\nATTRIBUTED CAUSE OF THE GROWTH (not speculation — traced to a commit): 0468c2821 `fix(cron-cowork-team): sibling-process fingerprint defer + fallback subsection` landed the cowork-cron sibling-process fix INTO this same file earlier today. So the file is being actively extended while flagged as over-cap, and the extension is legitimate work — meaning the AC-1 remedy should now be SPLIT (lazy-load pointer per the CLAUDE.md Lazy Load Pattern), not TRIM: there is no longer 88 lines of slack to trim without deleting the fix that just landed. AC-2 unchanged and still binding: the /cron-cowork-team re-arm must still execute end-to-end from the split file — verify by RUNNING it, not by reading it.\nStill P3 / owner claude-manager-helper, NOT folded into this tick's BATCH: it is hygiene, it blocks nothing, and the batch already carries 5 entries. Re-surface if it crosses 300L.",
-        "qa_verified_at": "2026-08-26T11:32:15Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash: wc -l / wc -c on .claude/skills/cron-cowork-team/SKILL.md",
-            "args": "wc -l < .claude/skills/cron-cowork-team/SKILL.md ; wc -c < .claude/skills/cron-cowork-team/SKILL.md",
-            "live_value_observed": "199 lines / 11432 bytes — under BOTH caps (200L / 12000B). Row claimed 242L/14279B.",
-            "observed_at": "2026-08-26T11:32:15Z"
-          }
-        },
-        "status_note": "[po/triage 2026-08-26T11:20Z] CLOSED — ALREADY SATISFIED by 98f20610b (TASK-CRON-SKILLMD-PROBE-WIRING, agent-father), which split the hot path into a sibling register.md. PO re-probed from disk independently of the reporting signal: SKILL.md 199L/11432B, register.md 167L/11555B, cron-standalone-team/SKILL.md 200L/11728B — all three clear both axes. Dispatching this row would have burned a full claude-manager-helper dispatch on finished work. NOT closed by this and still a REAL open breach: CLEAN-CTXBLOAT-CRON-DETECT-LOOP-REGISTER-12349B-OVER-12000B-BYTECAP (re-measured 173L/12349B this tick, untouched by 98f20610b). Also absorbs the 5 stale context_bloat_breach envelopes that drained after the fix landed (39ae4b72, cccecab6, 2337f535, 89a75436, 56edb01c) — stale-on-arrival, zero mints."
       }
     ],
     "head": {
