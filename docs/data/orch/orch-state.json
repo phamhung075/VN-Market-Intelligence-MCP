@@ -24220,10 +24220,10 @@
         "size": "M",
         "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "created_at": "2026-08-23T23:41:24Z",
         "created_by": "po (triage of dev-team CORRECTION envelope 68531dca, 2026-08-24)",
-        "updated_at": "2026-08-26T12:52:32Z",
+        "updated_at": "2026-08-26T13:12:26Z",
         "dedup_key": "orch-apply:cas-window-misses-caller-read-transform-gap",
         "origin_signal_id": "68531dca05f022a240858d2fc6ced44f863ba60e567587c38722304aa1e5d8dc",
         "title": "orch-apply.sh's CAS window opens AFTER the caller's jq already read the file, so a stale full-document candidate silently reverts a peer's lane-move — and nothing downstream catches it because conservation compares magnitudes, which a revert preserves",
@@ -24238,7 +24238,9 @@
         ],
         "files": [
           "scripts/orch-apply.sh",
-          "scripts/orch-conservation-check.mjs"
+          "scripts/orch-conservation-check.mjs",
+          "scripts/orch-cold-evict.sh",
+          "scripts/test/orch-cold-evict-tests.sh"
         ],
         "verification_gate": "qa sign-off against AC-1..AC-5; AC-2 and AC-5 require a failing-then-passing fixture, never an exit-code-only report.",
         "baseline_pass": true,
@@ -24248,14 +24250,15 @@
         "claimed_at": "2026-08-24T22:17:57Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "updated_by": "developer",
-        "implementation_note": "AC-1/AC-2/AC-3 implemented + AC-4 tracked as follow-up (no live caller migrated yet, mechanism additive/non-breaking) + AC-5 fixture proves the guard FIRES not just green — see scripts/test/orch-apply-wrapper-tests.sh CALLER-BASELINE-* / LANE-BACKWARD-* cases, 109/109 GREEN. Commit 894a6617e.",
+        "implementation_note": "AC-4: migrated scripts/orch-cold-evict.sh (real, always-executing caller — not a flow-doc) onto AC-1's caller-baseline mechanism. It already ran its own internal mtime-CAS retry loop (the exact residual-gap shape AC-1 exists to close); added get_hash(), captured HASH_BEFORE at loop-top (before compute_id_maps() reads the hot file), threaded through as ORCH_APPLY_CALLER_BASELINE_HASH on the orch-apply.sh invocation -- closes the window between this script's own mid-loop CAS check and orch-apply.sh's own (previously self-captured, i.e. late) baseline. AC-3 threshold=1: KEPT, defended rather than silently left or blindly lowered. Grep-verified exactly 3 live call sites depend on today's undeclared single-row-backward tolerance: docs/agents/qa/flow/main.md (CHANGES_REQUESTED qa->review) and 2 independent triggers in docs/agents/dev-team/flow/main.md (WF-1a BLOCKED self-heal + resume-attempt-bound-exceeded self-heal, both in_progress->backlog). Lowering CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES to 0 without migrating all 3 (multi-file, cross-agent-type, out of this row's bounded scope) would fail-close 3 live self-heal/QA paths -- worse than the residual gap. Documented the trade-off + named the 3 call sites directly in orch-conservation-check.mjs's own header comment. AC-5: new TEST 13 in scripts/test/orch-cold-evict-tests.sh proves the guard FIRES on a fault-injected peer write in the exact residual window (git-stash-reverted orch-cold-evict.sh alone, confirmed all 4 fires-assertions FAIL pre-fix -- guard genuinely vacuous, not just asserted) and still PASSES normally with none injected. orch-cold-evict-tests.sh 75/77 (baseline 67/69 + 8 new TEST-13 assertions all green; 2 remaining FAILs are pre-existing unrelated T7 poison-eviction, unchanged). orch-apply-wrapper-tests.sh 109/109 unchanged (orch-apply.sh untouched this pass). Commits: 0f1bf668e (code+tests, orch-cold-evict.sh + its test + orch-conservation-check.mjs header), e40629133 (decision journal), b418dc245 (notebook).",
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-24T22:24:11Z",
-        "status_note": "\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commits 894a6617e+4adbf5b1b): AC-1/2/3/5 verified live (109/109 wrapper tests re-run, orch-apply.sh:259 conservation call confirmed unconditional/non-bypassable, LANE-BACKWARD-SINGLE-TOLERATED fixture read at source). AC-3's threshold=1 + AC-1's caller-baseline being adopted by ZERO real callers (grep-verified repo-wide) means the ORIGINAL bug's 1-row stale-revert shape (not just the reproduced 5-row incident) still sails through undetected -- confirmed via the test file's own single-id fixture. AC-4 ('callers migrated OR a tracked follow-up per caller') is UNMET on both disjuncts: no caller migrated, and no tracked-follow-up artifact exists anywhere (board/archive/decisions/notebooks all grepped, zero hits) -- 'tracked as a follow-up' is prose-only in the commit msg/implementation_note/WORK.md, not a discoverable board row. Fix: (a) migrate >=1 real caller end-to-end, or (b) mint an actual findable follow-up board row naming every caller to migrate + correct the implementation_note. Full analysis: decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S202.",
+        "status_note": "\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commits 894a6617e+4adbf5b1b): AC-1/2/3/5 verified live (109/109 wrapper tests re-run, orch-apply.sh:259 conservation call confirmed unconditional/non-bypassable, LANE-BACKWARD-SINGLE-TOLERATED fixture read at source). AC-3's threshold=1 + AC-1's caller-baseline being adopted by ZERO real callers (grep-verified repo-wide) means the ORIGINAL bug's 1-row stale-revert shape (not just the reproduced 5-row incident) still sails through undetected -- confirmed via the test file's own single-id fixture. AC-4 ('callers migrated OR a tracked follow-up per caller') is UNMET on both disjuncts: no caller migrated, and no tracked-follow-up artifact exists anywhere (board/archive/decisions/notebooks all grepped, zero hits) -- 'tracked as a follow-up' is prose-only in the commit msg/implementation_note/WORK.md, not a discoverable board row. Fix: (a) migrate >=1 real caller end-to-end, or (b) mint an actual findable follow-up board row naming every caller to migrate + correct the implementation_note. Full analysis: decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S202.\n[Developer] Re-dispatch response 2026-08-26T13:10:00Z: AC-4 closed via real caller migration (scripts/orch-cold-evict.sh threaded onto ORCH_APPLY_CALLER_BASELINE_HASH end-to-end, TEST 13 proves fires-then-passes, git-stash-confirmed vacuous pre-fix) -- disjunct (a), not a prose follow-up. AC-3 threshold=1 KEPT as an explicitly examined, documented trade-off: 3 live call sites (qa/flow/main.md CHANGES_REQUESTED + dev-team/flow/main.md x2 self-heals) depend on the undeclared single-row tolerance today; lowering to 0 without migrating all 3 (out of this row's scope) would fail-close them. Rationale + call-site list now live in orch-conservation-check.mjs's own header, not just this row. Commit 0f1bf668e.",
         "secondary_claimed_at": "2026-08-26T12:52:31Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "developer"
+        "secondary_dispatch_target": "developer",
+        "redispatched_response_at": "2026-08-26T13:12:25Z"
       },
       {
         "id": "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION",
@@ -24771,7 +24774,7 @@
         "last_served_tick": "2026-08-26T12:49:55Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-26T09:44:06Z"
+        "last_served_tick": "2026-08-26T13:10:55Z"
       },
       "drs": {
         "last_served_tick": "2026-08-26T10:10:45Z"
@@ -24783,7 +24786,7 @@
         "last_served_tick": "2026-08-26T11:19:21Z"
       }
     },
-    "_updated_at": "2026-08-26T13:10:12Z",
+    "_updated_at": "2026-08-26T13:10:55Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
