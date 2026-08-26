@@ -117,3 +117,26 @@ reachable at most once per row and therefore has no repeating loop to bound in t
 must be EXECUTED against the real threshold check, not read off control flow: a scratch-fixture jq
 run 3x + a real `git log --grep` against this repo's own history (finding faf84a6f6's own `Task:`
 trailer) is what actually distinguishes "the bound fires" from "the code looks like it would."
+
+## FIX 2026-08-26T03:10Z — FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (P0, router hand-dispatch, off DRS allowlist)
+
+Added 5 signal-type routing rows to docs/agents/po/flow/triage-signals.md: Pipeline-A `flow-defect`/`flow_defect`
+alias, Pipeline-A bridge for `detector_defect`/`audit_finding`/`preserved_bug_no_tracking_row`/`tooling_defect`,
+Pipeline-B rows for the same 4. Fixed AC-3 circular to==po self-loop in the any-unknown-type fallback.
+
+Scope widened mid-task: router surfaced a live `detector_defect` (to=architect) envelope proving the
+Pipeline-A-bridge gap was real, not hypothetical — the guard genuinely scans BOTH planes (its own
+historical self-filed gap rows for flow_defect/auditor_cycle_missing/signal_feedback prove it), so
+PO's "guard scans only one plane" hypothesis is FALSE. Real gaps: (a) Pipeline-A/B rule sets are
+deliberately disjoint, any type needs a bridge row on both if it can arrive via either; (b) CI only
+ever inspects a git-committed snapshot, and Pipeline-A's pending_triage_inbox self-drains before
+commit, so CI structurally almost never observes a live Pipeline-A-only miss.
+
+Verified via a scratchpad COPY of orch-state.json (never live — guard mints a row on `--check` too):
+BEFORE/AFTER both reproduced for the real detector_defect live occurrence + a synthetic flow-defect
+pair. Closed 2 now-stale self-filed `signal-type-registry-gap:*` rows this fix directly resolves;
+filed a new P2 finding (FIX-GUARD-SIGNAL-TYPE-COVERAGE-PIPELINEA-CI-BLIND-AND-BROAD-BRIDGE-GAP,
+owner=developer) for the CI-blind mechanism and ~13 other unrelated stale gap rows found on the board.
+drain-signals.md §0a-3 out of scope — its routing column is informational-only by its own text.
+
+Commits: 579e7c685 (triage-signals.md), 0bac54347 (orch-state.json terminal-flip). Row -> review[].
