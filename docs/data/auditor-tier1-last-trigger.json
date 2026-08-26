@@ -1,6 +1,6 @@
 {
-  "written_at": "2026-08-26T02:17:43Z",
-  "fire_tick": "2026-08-26T02:00Z",
+  "written_at": "2026-08-26T02:51:48Z",
+  "fire_tick": "2026-08-26T02:30Z",
   "verdict": "ALL_GREEN",
   "detail": "all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents) — expected-disabled (deliberately disabled by user policy, self-expiring, no tracked_by/staleness): com.vn-market.fleet-push(disabled-by-plist) ",
   "checks": {
