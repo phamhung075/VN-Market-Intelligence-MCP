@@ -133,17 +133,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "cj-20260825T043249",
-        "ts": "2026-08-25T04:32:49Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-25.json"
-      },
-      {
         "id": "mdjg-20260825T053308",
         "ts": "2026-08-25T05:33:08Z",
         "from": "market-db-journal-guard",
