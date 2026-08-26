@@ -88,8 +88,8 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-26T17:23:30Z",
-    "updated_by": "dev-team (qa-drain closeout)",
+    "updated_at": "2026-08-26T18:15:07Z",
+    "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null
   },
@@ -1253,6 +1253,17 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "cow-20260826T181521",
+        "ts": "2026-08-26T18:15:21Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "preserved_bug_no_tracking_row",
+        "summary": "bctc-analyst notebook retention off-by-one recurred 11d after doc-only fix; real fix (Bash grant) never minted",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/SIGNAL-notebook-retention-doc-remedy-failed-20260826.md"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
@@ -8661,26 +8672,6 @@
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
         "updated_by": "pm/correction-S4"
-      },
-      {
-        "id": "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
-        "title": "Replace fixed BOUNDED-1→SLS→RLC→QA-Drain→Step1 with aged round-robin rotation in docs/agents/dev-team/flow/main.md",
-        "type": "TASK",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "L",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "dev-team",
-        "depends": [
-          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
-        ],
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "created_at": "2026-07-29T00:00:00Z",
-        "note": "AC-1 core. (1) Replace §496-686 (fixed BOUNDED-1→SLS→RLC→QA-Drain fall-through) with rotation-select. (2) Dispatch only selected consumer's existing block verbatim (zero changes to per-lane gates). (3) After consumer block runs, stamp-update via scripts/devteam-idle-chain-stamp.jq. (4) Revised Session Gate (§2.5) — keep truly-idle predicate but evaluate it. (5) Step 1 gains durable-inbox read/clear. Acceptance: git diff shows §496-686 replaced, Step 1 reads .dev_team_idle_chain.pending_triage_inbox, BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged.",
-        "updated_at": "2026-08-06T22:34:18Z",
-        "po_duplicate_flag_20260806T2230": "DUPLICATE-CANDIDATE of FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, created 2026-07-29T13:50:01Z by pm - roughly 14h after this row. Evidence is field-level, not title-similarity: both BACKLOG; both files=[docs/agents/dev-team/flow/main.md]; both depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES]; both size L; both zone docs/agents/dev-team/flow/; and both titles state the identical deliverable ('replace fixed-priority BOUNDED-1 -> SLS -> RLC -> QA-Drain -> Step1 with aged round-robin rotation'). Both evaluate is_bounded1_eligible=true independently, so whichever BOUNDED-1 reaches first wins and the loser becomes duplicated work on the same file - the two sit at ranks #1 and #6 of the same 39-row eligible queue, close enough that this is a live risk, not a theoretical one. PO did NOT close either row: choosing which decomposition survives - this five-row TASK-DEVTEAM-IDLE-CHAIN-2..5 family versus the five-row FIX-DEVTEAM-IDLE-CHAIN-P1A/P2A/MAIN-COMPLETION/TEST-FAIRNESS/TEST-DURABLE family - is a PM decomposition-ownership call, outside PO triage scope. PO dispatched P1A in the 2026-08-06T22:07Z tick BATCH on priority alone (P0 vs high). FLAGGED here so this one is not implemented a second time against the same file."
       },
       {
         "id": "TASK-DEVTEAM-IDLE-CHAIN-4-TESTS-AC1-AC2-AC4",
@@ -18223,6 +18214,27 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "status_note": "[po 2026-08-26T18:02Z] PO RULING + LANE FIX. Block is VALID and NOT cleared (TASK-COWORK-MUTEX-001 is live at review[10], REVIEW, non-terminal). The LANE was wrong: a dependency-blocked row is not in progress, so this moves in_progress[] -> backlog[] with status BLOCKED unchanged, freeing the only WIP slot. depends_on is ADDED because the eligibility gates key on depends_on while blocked_by is read by NO predicate in the repo, so this dependency was never enforced and status=BLOCKED was the only thing holding a P0. Release: when TASK-COWORK-MUTEX-001 goes terminal, flip BLOCKED -> BACKLOG and let deps_satisfied gate it. Full ruling + the row's prior 8671B note, both verbatim: docs/agent-memory/decisions/triage-20260826T1737Z-po.md#5 and #5a. Prose routed to cold store because this row is far past the 12000B inline ceiling."
+      },
+      {
+        "id": "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
+        "title": "Replace fixed BOUNDED-1→SLS→RLC→QA-Drain→Step1 with aged round-robin rotation in docs/agents/dev-team/flow/main.md",
+        "type": "TASK",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "L",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "dev-team",
+        "depends": [
+          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "created_at": "2026-07-29T00:00:00Z",
+        "note": "AC-1 core. (1) Replace §496-686 (fixed BOUNDED-1→SLS→RLC→QA-Drain fall-through) with rotation-select. (2) Dispatch only selected consumer's existing block verbatim (zero changes to per-lane gates). (3) After consumer block runs, stamp-update via scripts/devteam-idle-chain-stamp.jq. (4) Revised Session Gate (§2.5) — keep truly-idle predicate but evaluate it. (5) Step 1 gains durable-inbox read/clear. Acceptance: git diff shows §496-686 replaced, Step 1 reads .dev_team_idle_chain.pending_triage_inbox, BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged.",
+        "updated_at": "2026-08-26T18:15:07Z",
+        "po_duplicate_flag_20260806T2230": "DUPLICATE-CANDIDATE of FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, created 2026-07-29T13:50:01Z by pm - roughly 14h after this row. Evidence is field-level, not title-similarity: both BACKLOG; both files=[docs/agents/dev-team/flow/main.md]; both depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES]; both size L; both zone docs/agents/dev-team/flow/; and both titles state the identical deliverable ('replace fixed-priority BOUNDED-1 -> SLS -> RLC -> QA-Drain -> Step1 with aged round-robin rotation'). Both evaluate is_bounded1_eligible=true independently, so whichever BOUNDED-1 reaches first wins and the loser becomes duplicated work on the same file - the two sit at ranks #1 and #6 of the same 39-row eligible queue, close enough that this is a live risk, not a theoretical one. PO did NOT close either row: choosing which decomposition survives - this five-row TASK-DEVTEAM-IDLE-CHAIN-2..5 family versus the five-row FIX-DEVTEAM-IDLE-CHAIN-P1A/P2A/MAIN-COMPLETION/TEST-FAIRNESS/TEST-DURABLE family - is a PM decomposition-ownership call, outside PO triage scope. PO dispatched P1A in the 2026-08-06T22:07Z tick BATCH on priority alone (P0 vs high). FLAGGED here so this one is not implemented a second time against the same file.",
+        "bounded1_rollback_20260826T1813Z": "AUTO-CLAIM ROLLED BACK BY DISPATCHER, NOT DISPATCHED, NO WORK DONE. BOUNDED-1 promoted+claimed this row at 18:13:24Z as priority_rank=1. Measured before dispatch: (a) the row carries po_duplicate_flag_20260806T2230 naming FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION as the row PO dispatched instead, explicitly FLAGGED so this one is not implemented a second time against the same file; (b) that survivor is DONE_VERIFIED 2026-08-08T15:37:34Z in docs/data/orch/archive/2026-08.json, alongside P2A-DURABLE-DRAIN (15:33:13Z) and MAIN-COMPLETION; (c) all three of this row acceptance criteria are already satisfied in the live docs/agents/dev-team/flow/main.md — rotation-select block present, Step 1 reads .dev_team_idle_chain.pending_triage_inbox, scripts/devteam-idle-chain-stamp.jq referenced. Deliverable shipped 2026-08-08. NOT cancelled here: choosing which of the two decomposition families survives, and closing this row plus siblings 4/5, is a PO/PM ownership call per the duplicate flag own wording. Signal emitted to PO. DISPATCH HAZARD: every gate passed — the contraindication lives in a bespoke top-level key with status_note absent, the live instance of FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION as widened by PO at 18:0xZ this same tick."
       }
     ],
     "closed_sprints": [
@@ -24612,8 +24624,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T16:44:15Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-26T18:13:24Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
@@ -24628,7 +24640,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-26T15:12:10Z"
+        "last_served_tick": "2026-08-26T18:13:08Z"
       },
       "sls": {
         "last_served_tick": "2026-08-26T15:43:32Z"
@@ -24646,8 +24658,8 @@
         "last_served_tick": "2026-08-26T17:44:06Z"
       }
     },
-    "_updated_at": "2026-08-26T18:01:32Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-26T18:13:08Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-26T15:08:05Z",
     "last_po_triage_note": "secondary-drain-signoff-20260826T1500Z: 5 envelopes triaged (1 system-issue fold, 2 context_bloat_breach DEFER, 1 audit_finding fold+3-part ruling, 1 bug-escalation fold), 0 held back, inbox cleared to zero",

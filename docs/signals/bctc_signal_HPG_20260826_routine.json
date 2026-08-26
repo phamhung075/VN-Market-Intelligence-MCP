@@ -1,0 +1,32 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production (construction steel, HRC/hot-rolled coil), mining inputs, industrial park infrastructure",
+  "customer": "Construction contractors, industrial fabricators, export markets (steel products)",
+  "ops": "Gross margin 15.8%; EY_SPREAD +2.04pp (FAIR, PE 14.2x vs sector median 32.6x, -57% discount); operating_profit reported as 0 (DATA-QUALITY FLAG — corrupt/OCR extraction gap, 42nd+ consecutive cycle unresolved); validation warning: net profit (9,055.9bn) exceeds gross profit (8,365.1bn), consistent with non-operating income (associate JV gains) inflating NPAT",
+  "mgmt": "ROE 12.7% (sector-comp, above median 2.9%); foreign flow net +187K shares (stronger than sector); operating_profit=0 corruption not attributable to management — data-pipeline gap flagged to dev-team since 40th+ cycle, still pending fix",
+  "ey_spread_pp": 2.04,
+  "valuation_verdict": "FAIR",
+  "kd_reading": {"que": "Phong(55)", "trend": "THUAN LOI", "signal": "GIU", "confidence_pct": 100},
+  "esc_gate": {
+    "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.00%)",
+    "esc3": "DATA-COVERAGE-LIMITED (quarters_returned=3/4)",
+    "esc4": "DISCARDED (operating_profit=0, corrupt input — 42nd+ cycle)",
+    "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+  },
+  "escalation_status": "NONE",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+  "coverage_guard_held": true,
+  "quarters_returned": 3,
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "max_deposit_rate_pct": 5,
+  "cycle_id": "20260826-1800",
+  "slot": "bctc-analyst-slot-2",
+  "generated_at": "2026-08-26T18:15:00Z"
+}

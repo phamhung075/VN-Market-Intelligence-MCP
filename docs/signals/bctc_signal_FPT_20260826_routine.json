@@ -1,0 +1,33 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore, esp. Japan/Europe/US), SME telecom subscribers, students",
+  "ops": "Gross margin 34.0%, operating margin 22.0%; EY_SPREAD +2.25pp (FAIR, PE 13.8x vs sector median 17.3x, -20% discount); revenue -22.3% unadjusted YoY (FTEL deconsolidation to equity-method from 2026-01-01) but +8.7% on a like-for-like adjusted basis, NPAT +13.8% adjusted",
+  "mgmt": "ROE 28.3% (sector-comp, above median 10.6%) vs 6.2% raw single-quarter ratio (non-annualized); foreign flow net +282K shares (stronger than sector); D/E 0.40x conservative leverage",
+  "ey_spread_pp": 2.25,
+  "valuation_verdict": "FAIR",
+  "kd_reading": {"que": "Co(18)", "trend": "TRUNG TINH", "signal": "GIU", "confidence_pct": 37},
+  "esc_gate": {
+    "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.00%)",
+    "esc3": "DATA-COVERAGE-LIMITED (quarters_returned=3/4)",
+    "esc4": "FALSE (non_operating_share 2.00%)",
+    "esc5": "TRUE (7/15 refine units confidence<0.50, min=0.45, unit-0008..0014)"
+  },
+  "escalation_status": "GUARD-HELD",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+  "coverage_guard_held": true,
+  "quarters_returned": 3,
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "max_deposit_rate_pct": 5,
+  "cycle_id": "20260826-1800",
+  "slot": "bctc-analyst-slot-2",
+  "generated_at": "2026-08-26T18:15:00Z"
+}
