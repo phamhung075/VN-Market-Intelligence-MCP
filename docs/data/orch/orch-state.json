@@ -132,34 +132,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "router-20260825T131500-gatewindow",
-        "ts": "2026-08-25T13:15:00Z",
-        "from": "router",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "CADRAT-3 Pre-Check gate uses HEAD~3 (commit-count, ~2min at 266 commits/day) so agent-father orphan+roster scan + code-janitor DRY scan are effectively never reached — in-scope file missed live this tick",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/agentfather-precheck-gate-window-2026-08-25.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": "precheck-gate-window:HEAD3-commit-count:2026-08-25"
-      },
-      {
-        "id": "sys-20260825T133632-2f9d",
-        "ts": "2026-08-25T13:36:32Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 mem_creep pre-gate has no ephemeral-container discriminator - 3 test harnesses paged the auditor in 13 min",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-25T13:00Z",
-        "dedup_key": "detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope"
-      },
-      {
         "id": "po-20260825T134550-ragd1midwindow",
         "ts": "2026-08-25T13:45:50Z",
         "from": "po",
@@ -20868,44 +20840,6 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-9",
-        "title": "FR-10: Documentation updates and flow clarifications",
-        "type": "SPRINT-S",
-        "size": "S",
-        "priority": "P0",
-        "zone": "docs/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "DONE_VERIFIED",
-        "depends_on": null,
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-26T12:58:52Z",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "developer",
-        "blocked_by": null,
-        "blocked_at": "2026-08-23T10:33:27Z",
-        "blocked_reason": "DEPENDENCY REPOINTED + CONTENT CONTRADICTED. Same CANCELLED-satisfies-dep hazard as TASK-COWORK-CATCHUP-6 (depends_on named CATCHUP-3, cancelled this tick). ON THE MERITS: this row is FR-10 doc updates, and its handoff docs/handoffs/TASK-COWORK-CATCHUP-9.md Step (4) instructs the writer to record, as shipped, 'per-caller wiring (dispatcher catchup-check.md, tick-preflight.sh Step 6.5, firer.sh; FR-9)'. Two of those three consumers are now BLOCKED pending re-spec and the third is CANCELLED, so executing this row as written would publish a durability-brief addendum asserting a design that was measured not to work — the exact doc-truth failure mode brief S1 documents, where a two-month-stale sentence in cron-cowork-team/SKILL.md manufactured a wrong incident diagnosis that was then quoted verbatim into a live P0 row's status_note. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief item 5, agent-father) now owns match-slots.md and the cron runbook; re-scope whatever residue remains here against that row's outcome. po 2026-08-23T10:33Z.",
-        "po_unfreeze_20260826T0536Z": "UNFROZEN by po 2026-08-26T05:36Z. Sole blocker TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY is DONE_VERIFIED in done_verified[]; deps_satisfied() already agreed. The freeze was the status flag alone, which no consumer allowlist admits. depends_on cleared alongside blocked_by so the two gates cannot disagree again.",
-        "promoted_at": "2026-08-26T11:51:05Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "dispatch_lane": "qa",
-        "review_note": "[developer 2026-08-26T12:25Z] RE-SCOPED per router's on-the-merits freeze (po 2026-08-23) — did NOT execute the handoff verbatim. Verdicts per touch point, all disk-verified: (1) cowork-schedule.json `guaranteed` semantics comment — STILL-VALID + unowned (no overlap with FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA's delivery_proof field nor TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE's on_miss/catchup_scope fields), but wrote a CORRECTED version (handoff's proposed text overclaimed live catch-up delivery) — landed via `_notes.guaranteed_field_semantics` inside a peer cowork-team tick's own commit d6144f64c (its Step 5b last_fired writer re-serialized the whole document and picked up my uncommitted Edit-tool change before I could commit it myself; content verified byte-identical+correct at HEAD, no data lost, no separate commit possible). (2) match-slots.md catchup_raw contract — ALREADY DONE by TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (DONE_VERIFIED, commit f4e944454, 2026-08-23) — wrote nothing. (3) spawn-fanout.md is_catchup:true note — NO-LONGER-TRUE (grep-confirmed: no is_catchup tag emitted anywhere in the codebase; its producer row TASK-COWORK-CATCHUP-3 is CANCELLED) and a materially-equivalent accurate note already shipped there (agent-father, commit df08ec793) — wrote nothing. (4) durability-brief addendum — wrote the ACCURATE version: FR-1 (cowork-catchup-predicate.js, CATCHUP-1 DONE_VERIFIED)/FR-2+FR-8 (_dish_type_catchup_config present)/publish_date_basis all confirmed SHIPPED; FR-3 (task_list_held delivery check)/FR-5 (structured miss record)/FR-7 (reconciliation-based last_fired)/FR-9 (per-caller wiring) all confirmed NOT shipped — catchup-check.md absent, cowork-tick-preflight.sh has no Step 6.5, cowork-guaranteed-slot-firer.sh never reads catchup_raw or sources mcp-call.sh, last-fired.md Step 5b is still the original post-spawn stamp not a claimed_at reconciler — instead of the false \"per-caller wiring shipped\" narrative the frozen handoff specified. Historical brief body untouched, addendum appended at end (commit cdd159a49). (5) cron-runbook — this row's own handoff never assigned it under Files to modify (TLDR mentions it only to defer to TASK-COWORK-CATCHUP-10/agent-father) — wrote nothing.\nVerification: jq empty docs/data/cowork-schedule.json valid; node scripts/agents-flow/cowork-schedule-consistency.test.js 13/13 pass; node scripts/agents-flow/cowork-match-slots.js exit 0, catchup_raw still 8 candidates (no regression). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S130 (§ STEP dev-T9). Notebook: docs/agent-memory/notebooks/developer.md session 2026-08-26T12:20:00Z.\nFiles changed: docs/data/cowork-schedule.json (via peer commit d6144f64c), docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md (commit cdd159a49). No apps/mcp-server code touched (docs-only row) -- bun test/tsc N/A. -> qa.\n",
-        "claimed_at": "2026-08-26T12:54:31Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review",
-        "qa_verified_at": "2026-08-26T12:58:52Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "find+grep(catchup-check.md absent; tick-preflight.sh Step-list; firer.sh catchup_raw|mcp-call.sh grep; last-fired.md read; grep -rn is_catchup)+git show(d6144f64c,f4e944454,df08ec793,cdd159a49 --stat)+jq empty+node cowork-schedule-consistency.test.js+node cowork-match-slots.js",
-            "args": "commit_set=d6144f64c,f4e944454,df08ec793,cdd159a49; files=docs/data/cowork-schedule.json,docs/agents/cowork-team/flow/match-slots.md,docs/agents/cowork-team/flow/spawn-fanout.md,docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
-            "live_value_observed": "catchup-check.md: 0 results; tick-preflight.sh steps=1,2,2.5,3,4,4.5,5,6,7,8 (no 6.5); firer.sh grep catchup_raw|mcp-call.sh exit=1 (0 hits); last-fired.md Step5b=WON_SLOTS post-spawn stamp; grep -rn is_catchup=0 code hits; jq empty=valid; consistency test=13/13 pass; match-slots.js exit=0 catchup_raw.length=8; cdd159a49 diffstat=+21/-0 append-only",
-            "observed_at": "2026-08-26T12:58:52Z"
-          }
-        },
-        "status_note": "\n[QA] Review Record (direct-commit verify): [QA] Direct-commit verify — reproduced developer's re-scope independently, did not trust prose. Shipped (verified live): FR-1 predicate.js exists; FR-2/FR-8 _dish_type_catchup_config + publish_date_basis present in cowork-schedule.json. NOT shipped (verified live, matching developer's claim): catchup-check.md absent; cowork-tick-preflight.sh has no Step 6.5 (step list 1,2,2.5,3,4,4.5,5,6,7,8); cowork-guaranteed-slot-firer.sh has 0 grep hits for catchup_raw|mcp-call.sh; last-fired.md Step 5b confirmed still WON_SLOTS post-spawn stamp, not a claimed_at reconciler; grep -rn is_catchup fleet-wide = 0 code hits. Touch point (1) content confirmed present+correct at HEAD via git show d6144f64c (peer tick absorbed the uncommitted edit, no data lost). Touch points (2)/(3) 'wrote nothing' confirmed correct (already shipped in f4e944454 and df08ec793 respectively). Touch point (5) cron-runbook confirmed never assigned under this row's own handoff Files-to-modify. Touch point (4) addendum cdd159a49 confirmed +21L pure append, historical body untouched. Re-ran jq empty (valid), cowork-schedule-consistency.test.js (13/13 pass, matches claim), cowork-match-slots.js (exit 0, catchup_raw length=8, matches claim). apps/mcp-server untouched in all 4 relevant commits -- bun test/tsc N/A, not skipped-and-hidden. No ISSUE."
       }
     ],
     "head": {
