@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T12:47:54Z",
+    "_updated_at": "2026-08-26T14:44:06Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1247,7 +1247,7 @@
         "to": "po",
         "type": "audit_finding",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "provenance": "router-verified",
         "dedup_key": "pdf_extractor_a30_dedup_overturned_evidence_worsened",
         "summary": "pdf-extractor A-30 dedup suppression OVERTURNED — corrected cgroup evidence is materially worse than the 2026-08-23 entry it was deduping against",
@@ -24628,7 +24628,7 @@
         "last_served_tick": "2026-08-26T11:19:21Z"
       }
     },
-    "_updated_at": "2026-08-26T14:13:20Z",
+    "_updated_at": "2026-08-26T14:44:34Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24687,6 +24687,30 @@
         },
         "createdAt": "2026-08-26T13:08:06Z",
         "drained_at": "2026-08-26T13:10:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ab2cb52efd0d931e83ee26a79fb85d49c9720f626b854b16a3532880b9f5759e",
+        "source": "dashboard",
+        "from": "router",
+        "to": "po",
+        "type": "audit_finding",
+        "priority": "HIGH",
+        "payload": "pdf-extractor A-30 dedup suppression OVERTURNED — corrected cgroup evidence is materially worse than the 2026-08-23 entry it was deduping against",
+        "createdAt": "2026-08-26T14:35:04Z",
+        "drained_at": "2026-08-26T14:44:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "266f77fef7ee1a29572aae6cf137f31c38f32a8998e2c3954f9eb6919c39b69d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/data/auditor-tier1-last-healthy.json docs/data/auditor-tier1-last-trigger.json docs/data/auditor-tier1-spawn-debounce.json. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid15453:git commit -F - ]<-[pid15451:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
+        "createdAt": "2026-08-26T14:25:31Z",
+        "drained_at": "2026-08-26T14:44:34Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

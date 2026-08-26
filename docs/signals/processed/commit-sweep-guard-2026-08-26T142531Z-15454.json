@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-26T14:25:31Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/data/auditor-tier1-last-healthy.json docs/data/auditor-tier1-last-trigger.json docs/data/auditor-tier1-spawn-debounce.json. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid15453:git commit -F - ]<-[pid15451:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
+  "_processed": {
+    "fingerprint": "266f77fef7ee1a29572aae6cf137f31c38f32a8998e2c3954f9eb6919c39b69d",
+    "processedAt": "2026-08-26T14:44:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
