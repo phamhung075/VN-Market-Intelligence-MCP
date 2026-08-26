@@ -23969,9 +23969,12 @@
         "zone": "cross-service/",
         "title": "notebook-uuid-provenance guard has sat in default mode=warn since 2026-08-05 — it fires, escalates to PO's inbox, and the UUID commits anyway: session 632721c2-... is live in HEAD across 3 notebooks (agent-father.md, dev-team.md, qa.md). Promote to reject, but scrub BEFORE flipping or the flip hard-blocks those 3 agents' next notebook commit",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
-        "updated_at": "2026-08-24T23:02:19Z",
+        "updated_at": "2026-08-26T14:48:03Z",
         "po_fold_20260824T2258Z": "FOLD 2x bug-escalation, 4th notebook. docs/agent-memory/notebooks/tran-ngoc-bau.md heading '## c134 - 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)' embeds a full session UUID; the guard fired twice, mode=warn, and the commit proceeded — exactly this row's thesis, now at HEAD on a 4th notebook. This row is in review[]: whoever signs it off should flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject as part of the close, because warn-mode has now demonstrably failed to prevent the leak it detects.",
-        "updated_by": "po"
+        "updated_by": "po",
+        "secondary_claimed_at": "2026-08-26T14:48:02Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
@@ -24625,10 +24628,10 @@
         "last_served_tick": "2026-08-26T14:13:20Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-26T11:19:21Z"
+        "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T14:44:34Z",
+    "_updated_at": "2026-08-26T14:50:22Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
