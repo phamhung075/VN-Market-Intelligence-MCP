@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T05:07:31Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T05:00:00Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "Tick 05:00Z, 1-slot fan-out (alert-commander-market). (1) STEP 0a DEVIATION, OCCURRENCE 3 — all 4 NEW signal_queue rows are to=po, unchanged from the 04:30Z and 04:45Z ticks (rtr-20260826T0429-staleblockedstatusfreezesrows HIGH, rtr-20260826T0431-invarianttestmissedretainedgoliterals MED, cj-20260826T043200 LOW, rtr-20260826T0435-datatiercyclewrotenorecord HIGH). This dispatcher must never spawn po, so all 4 fall in the log-for-PO branch, which is not processing; marking them READ would bury them because po/flow/main.md:66 selects NEW. Both halves re-verified at source on the two prior ticks; not re-verified a third time within the hour. Left NEW, nothing minted. (2) POST-RETURN VERIFICATION OF THE 04:45Z SPAWN PRODUCED A ROW AMENDMENT, commit b71afee08. alert-commander c272 recorded its snapshot miss as \"all cached files stale, prior-day\". Both clauses false: cycle-snapshot-04:50.json was present, valid JSON, 4 canonical keys, in-file created_at 2026-08-26T04:50:54Z (same day), and 181s old at its 04:53:56Z bootstrap against a 7-minute gate; the consumer floors to 04:50, the identical string. Amended rtr-20260826T0257-snapshotagentconsumerclock .detail: its conclusion \"the only thing missing is a correct key\" is falsified — the consumer HAD the correct key and discarded a valid fresh file, so a key-only landing (reading the shipped scheduled_utc line) derives the same key and yields the same miss. Also refuted its 0-of-N framing: c269 HIT cycle-snapshot-04:05.json. Today reads HIT(c269)/correct-MISS(c271)/incorrect-MISS(c272) — nondeterministic, not structurally zero. NEW doc-truth defect (c) recorded on that row: the lookup rule exists in two contradicting copies, step-0-cowork/SKILL.md:38 (no rounding) vs cycle-bootstrap/SKILL.md:57 (round to nearest 5-min), the former naming the latter \"Full protocol\" two lines above its own divergent restatement; its example 02:05 -> \"02:05\" is degenerate and never settles floor-vs-nearest. (3) REPLICATION TEST SET UP THIS TICK, not asserted: Step 4.7 wrote cycle-snapshot-05:05.json (15412 B, 5-multiple) at 05:05:48Z. Consumer bootstrap ~3min later floors to 05:05, the identical string — same configuration that produced the c272 false-premise miss. Verify against the returning agent notebook c273. (4) PROBE-FILTER TRAP, recorded so it is not rediscovered: the cowork election lock cron:cowork:2026-08-26T05:00Z is task_kind=\"cowork-slot\", NOT \"sprint-task\". A task_list_held probe filtered on sprint-task returns nothing and reads as \"no election lock held\" — a false-negative on the exact oracle the fire-election depends on. Same class as the .locks-vs-.rows shape trap. (5) CORRECTION to a suspicion raised this tick: the preflight verdict has no tick_id key at all (the field is .tick); an earlier probe asked for .tick_id, got null, and briefly read as a script contract gap. No script defect — probe error. (6) signal_backlog 31 matched an independent recount of docs/signals/*.json excluding cowork-team-* exactly, 7th consecutive match. (7) cycle_snapshot_promoted false, 47th consecutive; cycle-snapshot-latest.json still tick 00:00 / 2026-08-23T00:07:50Z (~77h stale); regime_status and volatility_level re-verified absent from it, so unknown was passed honestly rather than fabricated. (8) Step 5.1 locale-comma spec parse, 12th confirmation: true_load 2,76 parsed to 2 by the spec-mandated -F comma split. Non-binding at threshold 24 (12 cores x factor 2). Latent, still unfiled. (9) Slot lock released explicitly per spawn-fanout.md:349/411 — 2nd consecutive correct tick after the 04:30Z miss."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T05:07:31Z"
+}
