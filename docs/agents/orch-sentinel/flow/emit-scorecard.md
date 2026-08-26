@@ -15,15 +15,26 @@ The prior scorecard content + its trailing `<!-- OH-STATE: {json} -->` block wer
 
 1. For OH-2.2/OH-4.2/OH-4.3's "N consecutive runs" counters — compute against the prior OH-STATE
    values (increment if still flagging, reset to 0 if resolved this run).
+1b. For OH-2.4's `oh2_4_owner_fail_streak` (`docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md`
+    §7, self-referential diff — same technique as OH-4.3, NOT `docs/agent-memory/modules/tool-usage-stats.json`,
+    which holds unrelated per-tool call counts and has no OH-STATE key at all; the brief's §9 handoff
+    table named the wrong file, corrected here 2026-08-26 by agent-father): for each `owner` with a
+    `match:false` behavior_probe this cycle (from OH-2.4's findings), `new[owner] = prior[owner] + 1`;
+    for every owner with zero `match:false` this cycle, drop it from the map (streak resets to 0, key
+    omitted rather than carried at 0). Rung-1/Rung-2 thresholds (§7) read this post-update map, not the
+    prior one.
 2. For any finding that is a re-check of a PRIOR CRITICAL/HIGH row that now reads clean — mark
    `RESOLVED-OBSERVED` in the scorecard table (never touch the original signal_queue row's status).
 3. Build the human-readable scorecard body: one table per dimension that ran this cycle (OH-1 always;
    OH-2/OH-3/OH-4 only on MODE=FULL — on MODE=LITE, carry the OH-2/OH-3/OH-4 tables FORWARD unchanged
    from the prior scorecard, do not blank them).
 4. Build the new `<!-- OH-STATE: {json} -->` block: `{run_mode, run_ts, oh1_1_mint_rate, oh1_5_pct_of_cap,
-   oh2_2_pilot_runs, oh2_2_pilot_stale_since, oh4_1_snapshot: {...}, oh4_2_flat_streak, oh4_3_zero_streaks:
+   oh2_2_pilot_runs, oh2_2_pilot_stale_since, oh2_4_owner_fail_streak: {owner: streak_count, ...},
+   oh4_1_snapshot: {...}, oh4_2_flat_streak, oh4_3_zero_streaks:
    {tool: streak_count, ...}, oh3_4_logged_once: true|false}` — compact JSON, this run's values only
-   (not a growing history array).
+   (not a growing history array). `oh2_4_owner_fail_streak` is written on EVERY run (FULL and LITE) —
+   OH-2.4 runs in both modes (`docs/agents/orch-sentinel/flow/dim-oh2-verification-coverage.md`), unlike
+   OH-2.2/OH-4.1-4.3 which stay FULL-only and hold their prior FULL-run value forward on LITE runs.
 
 Compose the ENTIRE file body in memory before any write (same settled-write discipline as
 `.claude/skills/notebook-write/SKILL.md` AC-3 — never a two-write append-then-trim pattern).

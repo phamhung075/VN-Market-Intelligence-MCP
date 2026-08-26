@@ -83,8 +83,8 @@ Release convention: `task_release(task_id=FIRE_TASK_ID, owner_client_session=$CL
 
 ## Mode Dispatch
 
-- **MODE=LITE** → run `docs/agents/orch-sentinel/flow/dim-oh1-feedback-loop.md` only → `docs/agents/orch-sentinel/flow/emit-scorecard.md` (label: LITE) → RETURN
-- **MODE=FULL** → run `docs/agents/orch-sentinel/flow/dim-oh1-feedback-loop.md` + `docs/agents/orch-sentinel/flow/dim-oh2-verification-coverage.md` + `docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md` + `docs/agents/orch-sentinel/flow/dim-oh4-capability-utilization.md` (in that order) → `docs/agents/orch-sentinel/flow/emit-scorecard.md` (label: FULL) → RETURN
+- **MODE=LITE** → run `docs/agents/orch-sentinel/flow/dim-oh1-feedback-loop.md` + `docs/agents/orch-sentinel/flow/dim-oh2-verification-coverage.md` (§ OH-2.4 section ONLY — skip OH-2.1–2.3, still FULL-only; FIX-BEHAVIORAL-VERIFICATION-GATE-OH24-CADENCE 2026-08-26, `docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md` §6 "Cadence") → `docs/agents/orch-sentinel/flow/emit-scorecard.md` (label: LITE) → RETURN
+- **MODE=FULL** → run `docs/agents/orch-sentinel/flow/dim-oh1-feedback-loop.md` + `docs/agents/orch-sentinel/flow/dim-oh2-verification-coverage.md` (full — OH-2.1 through OH-2.4) + `docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md` + `docs/agents/orch-sentinel/flow/dim-oh4-capability-utilization.md` (in that order) → `docs/agents/orch-sentinel/flow/emit-scorecard.md` (label: FULL) → RETURN
 
 Each dimension sub-flow returns its findings as an in-memory list of `{check_id, severity, metric, summary}` rows — no dimension sub-flow writes to disk itself. `emit-scorecard.md` is the sole writer (notebook + scorecard + signal_queue), collecting all dimension outputs from this cycle.
 

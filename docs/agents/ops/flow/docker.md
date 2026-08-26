@@ -1,4 +1,4 @@
-<!-- size-justification: 121L — FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE 2026-08-05: added the mandatory Deploy-Evidence Capture block (raw `date -u`/`docker inspect` output + SHA-gate pointer) to § Post-Rebuild Health Verification and tightened its Pass/Fail criteria (+9L over the prior 113L) — a fail-loud instrument with no factoring seam from the verification procedure it gates. -->
+<!-- size-justification: 121L — FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE 2026-08-05: added the mandatory Deploy-Evidence Capture block (raw `date -u`/`docker inspect` output + SHA-gate pointer) to § Post-Rebuild Health Verification and tightened its Pass/Fail criteria (+9L over the prior 113L) — a fail-loud instrument with no factoring seam from the verification procedure it gates. FIX-BEHAVIORAL-VERIFICATION-GATE-OPS-SIDE 2026-08-26 (agent-father, `docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md` §5b): +28L — new mandatory Behavioral-Predicate Probe loop, riding the already-mandatory Post-Rebuild Health Verification (timestamp-gated against the row's own commit, NOT the confirmed-dead `vn.market.git_sha` label), positioned after Pass/Fail, before builder-prune. Zero new cron/step — same "ride an already-unconditional mechanism" design as brief §8.3. -->
 # Ops — Docker Flow
 
 **Tools:** `docs/agents/tools/package/ops.md`
@@ -109,6 +109,31 @@ Code-change deploy in scope (e.g. `UNBLOCK-DEPLOY-*` / `FIX-*-RESTART-LOOP` rede
 - Report the gap exactly as observed (e.g. "build succeeded, swap did not take — StartedAt predates dispatch") via `send_telegram(channel="bug")` — an honest partial-failure report is the required output; never substitute a cleaner-looking invented result.
 - `docker compose up -d --no-deps --no-build <degraded-service>` → re-verify
 - If still failing after 1 restart → escalate. Do NOT mark rebuild as successful in signal/notebook, and do NOT claim a task_board update you did not execute via `scripts/orch-apply.sh` (ops has no other write path into `orch-state.json`).
+
+**Behavioral-Predicate Probe (MANDATORY, after Pass/Fail above, before builder-prune below — `docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md` §5b, the "actual teeth" of the gate):**
+
+1. Find open predicates for the just-rebuilt `<svc>`: `done_verified[]` + this-month's `docs/data/orch/archive/*.json` rows where `zone` maps to `<svc>`, `verification.behavior_predicate` is present, `verification.behavior_probe` is absent, AND the row's `created_at`/`qa_verified_at` is `>= BEHAVIOR_PREDICATE_CUTOFF = "2026-08-26T19:57:54Z"` — rows minted before that instant never got a predicate to probe; skip them, that is not a gap.
+```bash
+jq --arg svc "<svc>" '(.task_board.done_verified // []) | map(select((.zone // "") | test("apps/" + $svc)) | select(.verification.behavior_predicate != null and .verification.behavior_probe == null))' docs/data/orch/orch-state.json
+```
+2. Ordering check — do **NOT** use the `vn.market.git_sha` Docker label (confirmed dead, `"unknown"` on 9/11 running services, `docker-compose.yml` never wires `GIT_SHA` — brief §3). Reuse the Deploy-Evidence Capture timestamps captured above instead: confirm `docker inspect <svc> --format '{{.State.StartedAt}}'` postdates `git show -s --format=%cI <row's commit>`. Not yet postdated → skip this row this cycle, the commit is not in this build.
+3. Run the predicate's `cmd` against the now-healthy service; capture raw stdout verbatim (same "paste literal raw output, never a narrated conclusion" discipline as Deploy-Evidence Capture above).
+4. Write the result — reuses `RawProbeSchema`'s shape (`.passthrough()`, schema-legal today, zero code change required):
+```bash
+jq --arg id "<row id>" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg tool "<predicate cmd, verbatim>" \
+   --arg args "svc=<svc>; commit=<commit>" --arg obs "<literal raw stdout captured in step 3>" --argjson match <true|false> '
+  (.task_board.done_verified // []) as $dv
+  | ([$dv[] | select(.id == $id)][0]) as $t
+  | if $t == null then error("id not in done_verified[] -- refuse") else . end
+  | .task_board.done_verified = ([$dv[] | select(.id != $id)] + [
+      ($t + {verification: (($t.verification // {}) + {
+        behavior_probe: {tool:$tool, args:$args, live_value_observed:$obs, observed_at:$now, observed_by:"ops", match:$match}
+      })})
+    ])
+' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+```
+5. On `match:false` — do NOT silently continue: move the row `done_verified[]` (or the matching archive month) → `.task_board.review[]` via the same `orch-apply.sh` mechanism (mirror `docs/agents/qa/flow/main.md`'s `vc-changes` lane-move jq shape — pop from source array, push `{status:"REVIEW", next_agent: (row's owner // "po"), status_note: (...+"\n[ops] behavior_probe match:false — deploy-time observation contradicts DONE_VERIFIED")}` into `.task_board.review[]`), then `send_telegram(channel="bug", message="[ops] behavior_probe match:false — <id> reopened to review[] (predicate: <cmd>, expected <expect>, observed <live_value_observed>)")`. This is the mechanism that makes DONE_VERIFIED provisional and mechanically revocable instead of a terminal unfalsifiable claim (anchor case: `FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL`, `DONE_VERIFIED` landed 13 minutes before its own image was built — this loop is what would have caught it).
+6. Rung-0 remediation (§7 of the brief) rides this same `match:false` write — no separate step needed here; `orch-sentinel`'s OH-2.4 (`docs/agents/orch-sentinel/flow/dim-oh2-verification-coverage.md`) reads the `behavior_probe` field this step just wrote, it does not need ops to also touch `signal_queue` directly.
 
 **Final step — builder cache prune (MANDATORY, run AFTER health checks pass, BEFORE notebook write):**
 ```bash
