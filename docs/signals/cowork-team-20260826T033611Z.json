@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T03:36:11Z",
+    "matched_slots": ["alert-commander-market"],
+    "won_slots": ["alert-commander-market"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": { "alert-commander-market": "cron" },
+    "cadence_minutes": { "alert-commander-market": null },
+    "last_fired_timestamp": "2026-08-26T03:30:00Z",
+    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "03:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "1-slot fan-out. Step 0a drain no-op: 3 NEW signal_queue rows this tick, ALL to=architect, zero to a cowork_signal_recipient (po/tran-ngoc-bau/alert-commander/unified-agent per system-map SSOT). Step 5b first invocation was a CALLER error by this dispatcher (invented --fired-at/--slots flags; contract is FIRED_AT=<iso> env + positional slot ids) — script correctly failed loud rc=2 with updated:[], NO partial write, re-run succeeded. Not a script defect; recorded so the rc=2 in any log is not later mis-read as a last-fired regression.",
+    "FIELD-PROVENANCE": {
+      "dev_head": "resolved from CANONICAL top-level .head (idle, updated_by=qa 03:31:04Z) — NOT the deprecated .task_board.head passthrough stub",
+      "signal_backlog": "independently recomputed by this dispatcher as a FILE count (docs/signals/*.json excluding cowork-team-*) = 31; server-computed value in pressure-state.json also 31 — exact match, not copied",
+      "devq": "server-computed dev_queue_depth from emit_pressure_state (5); NOT ready[]+backlog[]",
+      "last_regime/last_volatility_level": "passed 'unknown' after verifying BOTH lookup keys (.regime_status, .volatility_level) are genuinely ABSENT from cycle-snapshot-latest.json (top-level keys are only created_at/macro_snapshot/market_context/tick). Declined to substitute the live value at .macro_snapshot.data.signals.carry.regime — that is a different key and would fabricate provenance."
+    },
+    "carried_defects": {
+      "cycle_snapshot_promoted_false": "41st consecutive. cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z (~75h stale). Producer wrote cycle-snapshot-03:34.json (wall-clock) for nominal tick 03:30 — the name-space mismatch already filed as rtr-20260826T0257-snapshotagentconsumerclock (status READ, architect). Do NOT fix by rounding the producer — po_fold_20260825 withdrew that shape.",
+      "calendar_status_open": "33rd+ consecutive computation defect, architect-owned. Emitted as-is, not trusted.",
+      "step51_locale_comma_parse": "6th confirmation. Spec line uptime|awk -F',' truncates true_load '3,18' to '3' on this locale-comma host. Bug is IN THE SPEC, not the host. Non-binding at threshold 24 (12 cores x factor 2) so still not filed."
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T03:36:11Z"
+}
