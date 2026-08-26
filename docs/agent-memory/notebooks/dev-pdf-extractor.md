@@ -6,90 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-08-25 — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
-
-**Zone:** apps/pdf-extractor/ | **Size:** S | P1 (incident lane, `po_expedited_at`)
-
-### Defect
-`TesseractVieBackend.recognize_text()` reported confidence as
-`mean(conf)` over `valid_rows = data[(conf > 0) & (text != '')]`. The
-denominator was the rows it MANAGED to read, not the rows it should have —
-recall was invisible by construction. A table region where Tesseract caught a
-header band and lost every data row still self-reported 0.708, so
-`AutoFallbackOcrBackend`'s 0.5 gate never fired and `auto` was byte-identical
-to tesseract-vie on 30/30 FPT Q4 2025 units.
-
-### Fix
-`confidence = min(precision, recall)` in BOTH backends.
-`recall = _ink_coverage()` — fraction of the crop's Otsu foreground pixels
-inside a box the engine emitted text for. Threshold constant untouched at 0.5.
-Paddle got the same treatment because `AutoFallback` picks with
-`paddle_conf >= tess_conf`, which is meaningless across two different metrics.
-
-### Measured before choosing (all 51 real table regions, FPT Q4 2025)
-Built `scripts/audits/ocr-confidence-probe.sh` first and computed every AC-1
-candidate side by side rather than arguing from the armchair:
-
-| metric | pg9 (the miss) | lowest legit | verdict |
-|---|---|---|---|
-| mean(conf) — today | 0.7084 | 0.7122 pg34 | 0.5% apart — dead |
-| char-weighted mean | 0.7121 | 0.6876 pg34 | **INVERTED** |
-| recognised-area/crop-area | 0.1183 | 0.0896 pg16 | **INVERTED** |
-| recognised-lines/detected | 1.0000 | 1.0000 all | **inert** |
-| **ink coverage** | **0.1740** | **0.6739 pg40** | **3.9x, no overlap** |
-
-### Verify
-AC-2 page 9: 122 → 452 chars, 9/9 figures, read by readonly bun:sqlite on
-`market.db` (never push echo). AC-3: rescue fired 1x in 51 regions (page 9
-only) AND 29/30 units byte-identical by sha256 to a tesseract-vie run of the
-same commit. AC-4 (cgroup only): table phase 117.26s vs 112.97s same-session
-(+3.8%), peak 1274.9 MiB = 49.8% of the 2560 MiB cap, 0 hard-limit hits.
-pytest 1086 pass / 1 pre-existing fail; import-linter 3/3 KEPT; G12 30 green /
-6 negative fixtures correctly red; PEK zero-diff.
-
-### Learned
-1. **Two of the three candidates the task itself named rank a GOOD region
-   BELOW the broken one.** Had I implemented any named candidate on trust, it
-   would have passed a synthetic unit test and failed the corpus. Measuring all
-   four before writing production code cost one 7-minute probe run and was the
-   whole cycle.
-2. **`min()` over product/harmonic is a semantic choice, not a numeric one.**
-   Both alternatives separated page 9 too. But under an F1 a region read
-   perfectly and only 34% covered scores 0.507 and clears a 0.5 gate — high
-   precision buying back collapsed recall is the exact defect being fixed, so
-   the combinator must forbid it structurally, not just on today's numbers.
-3. **My own instrument lied first.** The first `auto` run reported
-   `rescue_fire_count = 0` while page 9 was visibly fixed — I had added the
-   `RESCUE FIRED` log AFTER the image build, so the counter was measuring a
-   binary that never contained it. Caught by `docker run --entrypoint sh ...
-   grep -c 'RESCUE FIRED' /app/...` = 0 while `_recall_adjusted_confidence` = 4.
-   **Grep the built image for the instrument before trusting the instrument.**
-4. **Meter mismatch nearly produced a false AC-4 regression.** The row's 174.5s
-   baseline is TABLE-PHASE; the harness reported a whole-run wall (~350s, most
-   of it DocLayout-YOLO). Reported as-is it would have read as 2x slower.
-   Harness now times the table phase explicitly.
-5. **`python3 -m importlinter.cli lint-imports` exits 0, prints nothing and
-   evaluates nothing** — a false green. Only the `lint-imports` entrypoint runs
-   the contracts (3 kept, 0 broken). Same class as `feedback_fence_false_green`.
-6. Ink-ratio measurement was already an idiom here — `page_zoning.py` computes
-   `row_density` as a dark-pixel ratio. The new cell score is now dimensionally
-   consistent with the row-bands it sits beside.
-
-### Commit
-`e9144ea75` fix(pdf-extractor): make OCR confidence recall-aware so a missed page can fail
-
-Zone health: HEALTHY. **NOT DEPLOYED** — image rebuilt for the ephemeral
-verification containers only; the live container was deliberately not recreated
-(ops zone). Inert in production twice over: the container is pre-fix, and prod
-runs `OCR_TEXT_BACKEND` unset = `tesseract-vie`, so the rescue does not engage
-until someone sets `auto`. Debt tracked by
-`OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION`.
-
-### Status
-REVIEW → next_agent=qa (head reset to idle in the same orch-apply write)
-
----
-
 ## Cycle 2026-08-26 — FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE... corpus sweep follow-up — PARTIAL, HALTED on live DB corruption
 
 Router's corpus scan found 79 files/312 pages still stored-garbled (not
@@ -165,3 +81,48 @@ ends on the critical-incident signal. Sweep resumption is blocked on
 external DB recovery, out of this agent's hands.
 
 AC-0 memory sweep FAILS (rising, not flat: 42.99%→56.42%→90.11%→100.00%→100.00% of 2.5GiB cap for N=0/1/3/6/14 fires on DBC_2025_Q4). Mid-cycle PO ruling (`2826b101f`) minted an orientation P0 ahead of this row; stopped before AC-1..AC-6 (frozen sample would risk contamination + AC-0 alone is dispositive). Full methodology, raw numbers, code-change note, and a notebook-corruption incident write-up: `docs/agent-memory/decisions/dev-pdf-extractor-ac0-findings-20260825T1830Z.md`. Row untouched by me, sits in `ready[2]`, not a WIP lane.
+
+---
+
+## Cycle 2026-08-26 — FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S
+
+AC-2 REPRODUCE FIRST, done before any fix: 2 concurrent extractions, 1
+slot, wait bound shortened to 0.15-0.2s (test-only override of
+`_SEMAPHORE_WAIT_SECONDS`, not the forbidden "raise the wait" non-fix) —
+`__tests__/unit/test_pek_extract_silent_drop_durable_record.py` pins the
+loser's `SemaphoreContendedError` landing as a silent drop pre-fix.
+
+AC-1 fix chose the "durable record" branch of the row's OR, not
+"acquire-before-202": new `infrastructure/pek_extraction_status_
+repository.py` (SQLite table in the existing isolated `pdf_extractor.db`)
+records accepted/done/failed per `report_id`. `routes_pek.py` writes
+"accepted" pre-202; `pek_run_helper.py`'s except-branch (previously ONLY
+`logger.error()`) now also writes `mark_failed`. New `GET /pek-extract/
+{report_id}` (`interface/routes_pek_status.py`) makes it queryable.
+Deliberately left `pek_engine_adapter.py` untouched — already 1298L vs
+1291L size-lint upper, pre-existing offender; no semaphore-timing code
+moved. `__tests__/unit/test_pek_extract_status_route.py` covers the full
+HTTP chain (POST accepted → background → GET reflects done/failed).
+
+AC-5 doc-drift fixed: `routes_pek.py`/`schemas.py` docstrings no longer
+restate the market-hours window (was wrongly 08:59) — now point at
+`domain.primitives.market_hours.primitive.is_vn_market_open_utc()` as SSOT.
+
+AC-3 answered, not fixed: `Semaphore(1)` was DELIBERATE (REQ-PEK-9d,
+architecture-briefs/2026-05-26-pek-integrate-design.md — prevents 2
+concurrent model instances doubling RSS against the 2.5GB Docker cap;
+measured +845MiB/extraction). The 43-req/hr-vs-1-slot mismatch is a
+CALLER problem (mcp-server's `bctcExtractReconcileJob.ts` re-fires
+DEFAULT_BATCH_SIZE=20 every 30min, no pacing) — out of zone, so AC-3's
+follow-up + AC-4 (client-side market-hours gate / honor `retry_after`)
+both filed as one signal to po for a new dev-mcp-server row:
+`docs/signals/20260826T072721Z-pek-reconcile-batch-no-pacing-vs-single-
+slot.json`.
+
+Full suite: 1131 passed, 5 pre-existing failures (missing `pandas` in
+`.venv`, 1 integration test needs a real local PDF fixture) — confirmed
+unrelated, none touch a file this row changed. size-lint: 0 new
+offenders (`pek_run_helper.py` grew 135L→159L, header re-baselined
+in-file). Row moved `ready[]`→`qa[]`, `next_agent: qa`, full status_note
+on the row itself. AC-6 (no container touch) / AC-7 (no run) held
+throughout — container `417febec1a03` verified healthy, untouched.
