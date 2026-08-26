@@ -1,55 +1,50 @@
 # PO Notebook
 
-## 2026-08-26T07:34Z — 10 envelopes cleared, 1 mint, 3 promotions, 2 caller findings confirmed 1 declined
+## 2026-08-26T08:21Z — 9 envelopes cleared, 3 mints, 2 promotions, 6 folds, 1 signal triaged
 
-Journal: `docs/agent-memory/decisions/triage-20260826T0707Z-po.md`.
-**Inbox 10→0 · 1 row minted · 3 backlog→ready · 2 note-only edits · 3 signal rows closed.**
-Three `orch-apply` pipes (07:29Z board, 07:32:41Z CLEAR, 07:34Z signal_queue). Conservation clean on all
-three, prose-ceiling `0 net-new-growth violations`. `.head` untouched, idle. Peer session moved `ready[]`
-109→108 mid-tick — every transform selects BY ID, never by array index.
+Journal: `docs/agent-memory/decisions/triage-20260826T0821Z-po.md`. **Inbox 9→0 · 3 mints · 2 backlog→ready
+· 6 folds · 1 `.signal_queue` row `NEW→triaged`.** ONE `orch-apply` pipe (`scripts/po-triage-20260826T0821Z-
+devteam-tick-6folds-3mints-2promotes-clear.jq`); conservation clean (task_total 888→891), prose-ceiling `0
+net-new-growth violations`, `.head` untouched. Peer moved `review[]` 30→29 and `qa[]` 1→0 mid-tick — every
+transform selects BY ID, never by array index.
 
-### 1. Tier-2 auditor: the spawn gate and the alarm are the SAME number
-`auditor-durability-sweep.sh:310` alarms when `gap > cadence*2` = **480min**. `auditor-tier1-probe.sh:1188`
-returns **480** for tier 2, and `:1269` does `age -le threshold → SKIP-SPAWN`. So a tier-2 cycle is forbidden
-to run for exactly as long as the WARN stays silent, and both become eligible on the same instant. The 4h
-cadence is unreachable by construction and a WARN precedes **every** cycle. Measured, not inferred — 8
-consecutive intervals from `git log docs/data/auditor-tier2-last-healthy.json`: 13h25 / 6h46 / 12h01 / 11h09 /
-4h39 / 8h07 / 9h37 / 10h31. Median ~10.5h. The one sub-8h is the escape hatch (`checks != ALL_GREEN` forces
-SPAWN past the gate). Root-caused onto the existing `-11h` row: P2→P1, `agent-father`→`developer` (the fix is
-in `scripts/`, outside agent-father's zone — it was unroutable to its own owner), re-keyed off the bespoke
-per-window `dedup_key`, promoted to `ready[]`.
+### 1. The string payload is silent data loss, not a jq annoyance
+`jq -r '.[] | "\(.type) :: \(.payload.title // "-")"'` printed **6 of 9 rows to stdout**, then errored to
+stderr with **exit 5**. `// "-"` does not rescue it — the type error fires on the index op before the
+alternative is evaluated. A caller that pipes stdout and skips `$?` sees a plausible, well-formed, SHORT
+inbox; order is arbitrary, so a string at index 0 hides all nine. Minted `FIX-TRIAGE-INBOX-PAYLOAD-
+POLYMORPHIC-STRING-ABORTS-JQ-ITERATION-HIDES-TAIL` (ready[], P1, developer) — NOT a dup of
+`FIX-DURABLE-INBOX-INLINES-FULL-SIGNAL-PAYLOAD-...` (that is payload SIZE, this is TYPE).
 
-### 2. The near-miss that would have filed a true positive as noise
-The obvious fold target was `FIX-AUDITOR-DCYCLE2-...-CANNOT-SEE-COMPLETED-CYCLES` — "D-CYCLE-2 alarms for
-tiers that ARE running". True for the tier-1 arm, **false here**: the tier-2 heartbeat file is present,
-parseable, and genuinely 8h42m stale; the 02:33Z tick is on record as SKIP-SPAWN (`664ae9ee9`). Left that row
-untouched and wrote a discriminator note on it, because its natural fix — give tier-2/3 a notebook fallback so
-they stop alarming — would make a real 8-13h cadence miss permanently unobservable.
+### 2. First REPRODUCIBLE `[notebook-immutability-guard]` fire in this class's history
+Every prior fire was INCONCLUSIVE (index-vs-HEAD is unreconstructable post-commit). This one survived into a
+commit: `git show ad48ac043 -- .../alert-commander.md` deletes `" and newsSentiment not <-0.5"` from the
+already-committed `## c284`. Dropping `## c282` in the same diff **is** authorized; the in-place edit is not.
+Post-edit c284's line is byte-identical to c285's → compose **regenerates** retained sections from the
+current template. Folded onto review[] with a real fixture (`a22866d88`→`ad48ac043`). Fold, not mint.
 
-### 3. Same class ≠ same mechanism: measured before folding
-`[notebook-immutability-guard]` on `unified-agent.md` looked like the P0 `FIX-NOTEBOOK-COMPOSE-REWRITES-
-RETAINED-PRIOR-SECTIONS`. Extracted the section from all 4 of today's commits: 2375B → 3261B → 3261B → 3657B,
-every diff **pure addition, zero deletions**. That row is *rewrite*; this is *append*. Folded to
-`FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH` (occ 2, +AC-5) instead — bumping the P0 would have contaminated
-its evidence base. Real defect: chef appends new cycles as `###` **inside** a retained `##`, so the heading
-misdates its content (which is what `_t1_latest_notebook_ts()` reads) and drop-oldest will take 3 welded
-cycles — including same-day — in one authorized-looking prune. Behaviour alternates; sample repeatedly.
-
-### 4. Caller findings: #2 confirmed, #3 declined
-#2 re-measured, counts reproduced: `is_gated_not_before` called **2 / 0 / 0 / 0** across qa-drain / incident /
-ready / secondary, while all four carry `devteam-eligibility` imports. Importing is not enforcing — an
-import-only audit scores this GREEN. Minted P1 ahead of its envelope; it has a live instance (the marketdb
-P0 needed an out-of-band lock precisely because a gate field on `ready[]` is ignored).
-#3 **no write.** `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` BLOCKED is *correct* — blocker
-`TASK-COWORK-MUTEX-001` is genuinely at REVIEW, the row holds no claim, and BLOCKED already excludes it from
-`wip_in_progress`. Prior PO ruling 05:36Z says the same. Re-attempting the lane move **aborts the whole
-write**: `PROSE_CEILING_LANES` omits `in_progress[]` → false `live=0B` vs ~18.7KB. Lever is
-`TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES` (ready[], P1, developer).
+### 3. Archive check flipped the acceptance criteria, not just the dedup verdict
+Envelope `[1]`: `FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD` (DONE_VERIFIED) added this exact guard — to
+`bctcPdfPullJob.ts`, a **different job**; `bctcExtractReconcileJob.ts` has zero `isVnMarketHours`/`retry_after`.
+Genuine second call site, minted P3. But its module comment adopted *unconditional* re-fire **because** the DB
+folds 202/503/502/unreachable into one `pek_triggered` status, so a 503'd row converges ONLY via active re-fire
+→ AC-4: a gated skip must NOT consume a `reconcile_attempt`. Gate demoted to AC-3 (43 req/h landed in **01Z**,
+outside the block window — it would have stopped none). Pacing is the fix.
 
 ### Carry-over
-- 3 identical `auditor-cycle-missing:tier2` dedup_keys fired in 29min (06:59:52 / 07:00:16 / 07:28:29) with no
-  suppression — emitter defect or concurrent sweeps. Recorded on the row, NOT investigated, NOT minted.
-- `FIX-NOTEBOOK-COMPOSE-...` P0 sat 28d in `review[]` with owner/next_agent/dispatch_lane **absent as keys**;
-  its `blocked_by` is DONE_VERIFIED. Gave it `developer`. Found only by dedup-checking something else.
-- Deliberately untouched: marketdb P0 (router lock), PDFX row (agent in flight), the 15 `FIX-SIGNAL-TYPE-
-  ROUTING-GAP-*` siblings. PUSH-BACKSTOP skipped — push DISARMED, CI RED.
+- **Same work stated twice.** Envelope `[0]` was a true dup of the 07:29:40Z row (identical `source_signal`),
+  but `FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-...` **AC-2** is verbatim "make `is_gated_not_before` binding in all
+  six backlog/ready consumers" — a superset of the whole not-before row. DOUBLE-COVERAGE WARNING on both.
+- **P1→P0 + promoted:** that same row — the frozen 17:11Z cohort is the standing PaddleOCR goal's whole dep
+  chain and its only actuator is a session-mortal cron. A 2nd gate cohort exists (≥8 rows / 2 cohorts) ⇒
+  AC-6's "select by `next_recheck_not_before`, not by id" is proven. Did **not** treat the ~38 blocker-less
+  BLOCKED rows as 38 defects — only the 4-row 06:51:41Z batch was read. Live AC-3 instance: `UC-CDC-P1` is
+  BLOCKED with `blocked_by`+`depends_on` both null while owning the `calendar_status` defect the dispatcher
+  has reported 52+ ticks running.
+- Sweep skipped its P0 top candidate `TASK-COWORK-CATCHUP-10` (prose `status_note` = "do not dispatch";
+  pickers are blind to prose) → fell to `TASK-CRON-SKILLMD-PROBE-WIRING`. Declined: `spawn-fanout.md:191`
+  locale-comma, 24 fires, no row — `gsub` drops only the fraction, cannot flip DEGRADED at 24. P3 later.
+- Tier-2/3 `*-last-healthy` are 9.6h / 29.7h stale, but last-HEALTHY cannot discriminate "never ran" from "ran
+  unhealthy" — folded, NOT closed as clean FP. Tier-1 probe not re-run (it mutates its own verdict). My
+  orch-state writes were swept into peer commit `9dc224dc3`; verified in HEAD by content, not my own `--stat`.
+  PUSH-BACKSTOP skipped — push DISARMED, CI RED.

@@ -1280,6 +1280,42 @@
         "triaged_at": "2026-08-26T08:28:20Z",
         "triaged_by": "po",
         "disposition": "FOLD onto FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES (backlog[], P1, developer) — that row already indicts the tier-2/3 arms for having no notebook fallback. Not minted per-window. Corroborating-marker ambiguity recorded on the row: tier2-last-healthy is 9.6h stale and tier3-last-healthy 29.7h, but last-HEALTHY cannot discriminate 'never ran' from 'ran unhealthy', so this is NOT closed as a clean false positive."
+      },
+      {
+        "id": "rtr-20260826T0837-rcverif-residual-50-grandfathered",
+        "ts": "2026-08-26T08:37:58Z",
+        "from": "router",
+        "to": "po",
+        "type": "preserved_bug_no_tracking_row",
+        "summary": "RC-VERIF grandfather bypass closed for FU-RAG-DEPLOY-MEMORY only — the other 50 grandfathered ids remain marker-blind, no tracking row",
+        "severity": "WARN",
+        "status": "new",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": null,
+        "dedup_key": "rcverif-grandfather-residual:remaining-50-ids-marker-blind",
+        "detail": "Raised by qa during verify of FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS (DONE_VERIFIED, e83761c6c) and explicitly ruled NON-BLOCKING for that row per its own AC-1 text, which pre-authorised the (b)-alone fix contingent on a code comment (comment confirmed present). Router files it so the residual is not lost with the closed row. MECHANISM, re-read at source by qa: checkVerificationGate() at apps/mcp-server/src/infrastructure/orchStateSchema.ts:627 is still a bare !RC_VERIF_GRANDFATHERED_IDS.has(id) with ZERO marker-awareness. The shipped fix removed ONE id from the array; it did not teach the gate about retraction/void markers. So the identical bypass silently reproduces the moment a retraction or void marker appears on any of the remaining 50 ids. RC_VERIF_GRANDFATHERED_IDS count independently parsed by qa (comments stripped) = 50 exactly. No code outside orchStateSchema.ts and its own test file references the constant or the gate (repo-wide grep, .ts/.tsx/.mjs/.js). PO to decide: mint a follow-up row for marker-awareness in the gate itself, or fold onto an existing RC-VERIF row. Router does not mint.",
+        "related": [
+          "FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS"
+        ]
+      },
+      {
+        "id": "rtr-20260826T0837-chefpath-holds-notebook-test-red",
+        "ts": "2026-08-26T08:37:58Z",
+        "from": "router",
+        "to": "po",
+        "type": "observability_defect",
+        "summary": "deliberate evidence-preservation in docs/agent-memory/notebooks/ holds test 1839b-notebook-protocol deterministically RED; not recorded in any baseline, so every verifier re-derives it from scratch",
+        "severity": "WARN",
+        "status": "new",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": null,
+        "dedup_key": "chefpath-evidence-preservation:holds-1839b-notebook-protocol-red",
+        "detail": "NOT a stray file and MUST NOT be swept — router checked before acting. docs/agent-memory/notebooks/unified-agent-synthesis-2026-08-25-chef-intraday.json was committed AS-IS, in that wrong location, DELIBERATELY by 455e3299c for evidence preservation: it is the sole surviving record of the 04:13Z degraded-floor chef-intraday dish that went out to MARKET with zero canonical record. It is NOT a duplicate of docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json — that file is a DIFFERENT cycle (02:13Z, 3 clusters, quality_verdict=full); the preserved one is 1 cluster, degraded. 455e3299c states the git mv belongs to the owning dev, and the owning row exists: FIX-CHEF-DEGRADED-FLOOR-RECOVERY-WRITES-OFF-CANONICAL-PATHS (backlog[], next_agent=agent-father). THE UNRECORDED PART: a test asserts docs/agent-memory/notebooks/ is .md-only, so while the evidence correctly sits there, 1839b-notebook-protocol fails deterministically — it is the one genuine non-flake failure in the mcp-server full suite. Confirmed today in TWO independent full-suite runs (dev-mcp-server and qa, 52 fail / 1287 files, 16 of 17 failing files identical). Because the known cause is written down nowhere, qa spent two separate investigation rounds re-deriving it during one verification, and every future verifier pays the same cost or, worse, mis-attributes it to their own change. ASK: record it as an expected-baseline entry keyed to the owning row so it self-clears when that row lands. Do NOT resolve by moving or deleting the file.",
+        "related": [
+          "FIX-CHEF-DEGRADED-FLOOR-RECOVERY-WRITES-OFF-CANONICAL-PATHS"
+        ]
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
