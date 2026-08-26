@@ -6,84 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-08-25 — OCR-PADDLE-VI-LANG-FIX-AND-REBENCH
-
-**Zone:** apps/pdf-extractor/ | P0 (invalid-benchmark redo)
-
-### Defect
-`ocr_adapter.py:577`/`ocr_worker.py:215` instantiated PaddleOCR text-fallback
-with `lang="en"` — no Vietnamese diacritics in that rec dict. Same class
-already fixed on the table path (`pek_engine_adapter.py:410`, `lang="vi"`)
-but never propagated here. The 2026-08-25 4-run benchmark that measured
-"PaddleOCR regresses Vietnamese" ran under this bug and was retracted
-(`project_paddleocr_vietnamese_bctc_measured_regression.md`).
-
-### Fix
-`lang="en"->"vi"` at both sites, stale "handles basic diacritics" comment
-corrected. PDF-Extract-Kit/ untouched (verified zero-diff).
-
-### Re-benchmark (FPT Q4 2025, e71f845d, 46p; rebuilt image; ephemeral
-`docker compose run --rm --no-deps`; verified via readonly bun:sqlite
-`bctc_layout_units`, not push echo — count held at 46 across all 3 runs)
-
-| Backend | Table-phase wall | cgroup peak / cap | hard-limit hits |
-|---|---|---|---|
-| tesseract-vie | 174.5s | 1631.6 MiB (63.7%) | 0 |
-| paddleocr(vi) | 414.5s | 2684.4 MiB (100%, pinned at memory.max) | 1444 |
-| auto | 117.2s | 1302.4 MiB (50.9%) | 0 |
-
-Diacritic verdict: `vi` is a REAL improvement over `en` (now emits
-Vietnamese-attempted diacritics at all) but NOT parity with tesseract —
-page 5 sample still garbles many words ("Tai sán cö dinh" vs tesseract's
-correct "Tài sản cố định"). Root cause found in installed
-`paddleocr==2.10.0` source: `"vi"` is bucketed into the generic
-multi-language `"latin"` rec model (30+ languages sharing one model), NOT a
-dedicated Vietnamese model — so the config fix is correct but cannot reach
-tesseract's accuracy by itself. `auto` reproduced byte-identical output to
-tesseract-vie on page 9 (the separately-tracked, out-of-scope
-`TesseractVieBackend` mean-of-nonempty-rows confidence defect — rescue
-never fires — re-confirmed, not touched). PaddleOCR(vi) DID recover page 9's
-real revenue/profit numbers where tesseract loses them, but at 2.4x latency
-and pinned at the memory cap with 1444 hard-limit hits (kernel reclaim, 0
-OOM).
-
-**Ruling: do NOT swap.** Fails both the quality bar and the cap-headroom
-bar even with `vi` fixed — per the task's own decision rule. Default text
-backend stays `tesseract-vie` (unchanged; `OCR_TEXT_BACKEND` remains unset
-in compose/env, matching prod today).
-
-### Meter conflict resolved
-Empirically confirmed the ephemeral container DOES inherit `mem_limit`
-(HostConfig.Memory + cgroup memory.max both read 2684354560 on a live probe
-container). `ru_maxrss` is the inflated meter: `RUSAGE_SELF` alone tracked
-the cgroup peak closely (e.g. paddleocr self=2615.7 MiB vs cgroup
-peak=2684.4 MiB) but `RUSAGE_CHILDREN` came back numerically ~equal to
-`RUSAGE_SELF` in every run (self+children ≈ 2x self) — `TesseractVieBackend`
-shells out to the `tesseract` binary once per cell via pytesseract, and each
-reaped child's `ru_maxrss` reflects its post-fork/pre-exec RSS snapshot off
-an already ~1.5 GiB-resident Python parent (torch+paddle+doclayout-yolo
-loaded unconditionally for layout+table-structure detection, regardless of
-text backend) — a double-count of the same physical pages, not real extra
-memory. Quote cgroup `memory.current`/`memory.peak`, never `ru_maxrss`, for
-this service; same fix applies wherever else this service reports memory
-(A-30 `mem_creep`, `PERF-PEK-PER-PAGE-LATENCY` — flagged, not fixed here).
-
-### Commit
-`d584d4db2` fix(pdf-extractor) lang=en->vi / `9d6ee40f6` chore(scripts) bench harness persisted (`scripts/audits/ocr_bench_inner.py` + `ocr-backend-bench.sh`)
-
-Zone health: 48/50 relevant OCR tests pass (2 pre-existing local-venv
-`pandas` import gaps, confirmed identical before/after via `git stash`,
-unrelated to this change — not run in container). Live
-`vn-market-intelligence-mcp-pdf-extractor-1` NOT redeployed with this fix —
-Docker rebuild/redeploy of the persistent service is ops's zone per this
-agent's own `not_my_job` list; image was rebuilt locally only, for the
-ephemeral benchmark containers.
-
-### Status
-DONE — no swap performed, code fix committed, redeploy flagged to ops.
-
----
-
 ## Cycle 2026-08-25 — FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS
 
 **Zone:** apps/pdf-extractor/ | **Size:** S | P1 (incident lane, `po_expedited_at`)
@@ -168,6 +90,78 @@ REVIEW → next_agent=qa (head reset to idle in the same orch-apply write)
 
 ---
 
-## Cycle 2026-08-25 (2) — FIX-PDFX-TESSERACT-CONFIDENCE (dispatch #2) — STOPPED AT AC-0
+## Cycle 2026-08-26 — FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE... corpus sweep follow-up — PARTIAL, HALTED on live DB corruption
+
+Router's corpus scan found 79 files/312 pages still stored-garbled (not
+1 file — see `docs/signals/20260825T235317Z-pdfocr-orientation-corpus-
+scope-79-files-supersedes-qa-estimate.json`). Whole-file re-extract would
+cost ~7.4h to fix 312 real pages; added `--pages <comma-list>` targeted
+mode to `scripts/migrations/reextract-pdf-ocr-orientation.ts` (12x
+cheaper, default whole-file behavior unchanged). Persisted the
+discriminator as `scripts/audits/detect-pdf-ocr-orientation-garble.ts`
+(reproduced the router's 79/312 exactly) and a runner,
+`scripts/migrations/sweep-pdf-ocr-orientation-garble.sh`.
+
+Validated on 2 real rows before the bulk sweep (DIG_2024_Q4.pdf p33,
+HSG_2026_Q1.pdf p4+p25) — both recovered clean, upright Vietnamese.
+Committed (`f33aa338f`).
+
+**Bulk sweep (`--apply`, 00:03:09Z) hit `SQLITE_CORRUPT` on
+`data/live/market.db` at file #3, page 46** ("database disk image is
+malformed"). Confirmed NOT scoped to my write: the live `mcp-server`
+container hit the identical error on an unrelated `agent_signals` insert
+in the same window (docker logs, 00:07:52Z). `PRAGMA integrity_check`
+(direct file, capped at SQLite's own 100-error default) showed a
+`Freelist: size is 0 but should be 1` header defect plus hundreds of
+rowid-out-of-order errors spanning TWO b-trees by rootpage:
+`pdf_extracted_text` (96) and `intraday_foreign_flow_5m` (180) — a
+double-referenced-page signature. Cross-checked agent-memory
+`project_sqlite_corruption_fix.md`: this is (at least) the 6th
+documented occurrence of the already-escalated recurring-bug
+`FIX-SQLITE-DOCKER-VIRT-CORRUPTION` — `pdf_extracted_text` was ALSO one
+of the corrupted trees in the 07-30 recurrence. Ruled out the 08-06
+recurrence's specific mechanism (Go stock-price re-arming WAL):
+`journal_mode` reads `delete` right now, no `-shm`/`-wal` present.
+
+Attempted a narrow, low-risk repair — re-inserting the 28 now-missing
+rows verbatim from `data/live/market.db.backup` (independent, quick_check
+`ok`, ~20h stale) to at least undo the regression back to pre-sweep
+(garbled-but-present). **All 28 attempts failed, same SQLITE_CORRUPT** —
+100%, not intermittent like the sweep itself (which had ~3/77 succeed).
+Made no further write attempts after that.
+
+**Net result:** 5 files/12 pages fixed+verified clean (2 pre-sweep +
+3 sweep survivors: `20250324-DBC-CBTT-...`, `20250326-DIG-BCTC-hop-nhat-
+kiem-toan-nam-2024-cks.pdf`, `20260420-DHG-BCTC-Quy-1.2026.pdf`). 17
+files/28 pages now REGRESSED — row deleted, re-insert crashed, page now
+has NO row at all (worse than garbled-but-present); full list in the
+incident signal. 57 files/~272 pages untouched. Sweep code itself is
+correct in isolation; the corruption is an environmental hazard it
+exposed, not a defect in `--pages` targeting.
+
+Filed `docs/signals/20260826T001719Z-marketdb-corruption-during-pdfocr-
+sweep-writes-now-failing.json` (priority critical, to po) with full
+timeline/evidence + a pre-identified `quick_check`-clean restore
+candidate (`data/live/market.db.backup`) for db-data-integrity/ops, so
+their triage starts from evidence instead of zero. Added the fleet-
+standard "journal_mode not set here" comment
+(FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT convention) to
+both new/touched scripts — every sibling `scripts/migrations/*.ts`
+already carried it, these two didn't. Runbook updated
+(`docs/protocols/bctc-extraction-runbook.md`) with the honest partial
+outcome and an explicit DO-NOT-resume-sweep note. Committed `d90c45997`.
+
+**DID NOT:** attempt any DB-wide repair (VACUUM/.recover/restore) — that
+call belongs to db-data-integrity/ops, not this zone. Did not mint a
+board row (per dispatch instruction, PO owns minting off the existing
+corpus-scope signal). Did not touch `apps/pdf-extractor/` — this entire
+cycle was scripts/migrations + scripts/audits + docs, explicitly
+dispatched to this agent by the router for this exact file (see task
+brief), not a self-initiated zone excursion.
+
+### Status
+Not a task-board row — signal-routed to po. No next_agent; this cycle
+ends on the critical-incident signal. Sweep resumption is blocked on
+external DB recovery, out of this agent's hands.
 
 AC-0 memory sweep FAILS (rising, not flat: 42.99%→56.42%→90.11%→100.00%→100.00% of 2.5GiB cap for N=0/1/3/6/14 fires on DBC_2025_Q4). Mid-cycle PO ruling (`2826b101f`) minted an orientation P0 ahead of this row; stopped before AC-1..AC-6 (frozen sample would risk contamination + AC-0 alone is dispositive). Full methodology, raw numbers, code-change note, and a notebook-corruption incident write-up: `docs/agent-memory/decisions/dev-pdf-extractor-ac0-findings-20260825T1830Z.md`. Row untouched by me, sits in `ready[2]`, not a WIP lane.
