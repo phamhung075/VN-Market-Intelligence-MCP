@@ -42,3 +42,21 @@
 - post_metrics: word_count≈1016, sections=3_complete (Tóm_tắt_nhanh + Phân_tích + Dự_đoán), disclaimer=verbatim_present, hashtag_block=5_mandatory_plus_dynamic (added #bds #vic #vhm #kdh #ssh)
 - dedup: Phase-1 probe showed no prior lock; Phase-2 task_claim(published:fb-daily:2026-08-24) = claimed:true, first run for this date (TTL 100800s); no re-spin required
 - Status: published (full live spine, all hard-required-tier tools executed, dedup marker secured, markers NOT released per protocol)
+## c288 · 2026-08-26T09:21Z DAILY Post
+
+- Date: 2026-08-26 | Mode: DAILY | Post file: docs/social/fb-post-2026-08-26.md
+- VN-Index: 1.821 (+1.67%)
+- Breadth: 173 up / 125 down / 68 unchanged | 9 ceiling / 0 floor
+- Sources read: unified-agent=YES (Chef Morning + Morning Intraday), news-scout=YES (c287), market-watcher=YES (18 alerts)
+- TNB synthesis: clock_phase=CORE_VN (mature cycle), regime=SELECTIVE/CAUTION (cheap equities, capital cautious), regime_confidence=MEDIUM
+- Conviction calls: 4 checked (VIC/FPT/VCB/HPG); 0 dropped; 0 softened — all HOLD due to macro caution
+- known_gaps: breadth=AVAILABLE (173/125), liquidity_tybillion=19882.52 (available), foreign_net=708.7k shares sell (available, watchlist-only)
+- Validation: passed 16/16 checks (section-order=PASS, earned-prediction=PASS, recap-not-dominant=PASS, hashtag-block=PASS, detail-floor=PASS)
+- Live data spine: per-ticker moves from live get_market_snapshot=YES; honest-gap tickers=NONE (all data available)
+- Jargon gate: PASS (0 violations)
+- Privacy gate: PASS (no personal portfolio leakage)
+- Data-integrity gate: PASS (all critical figures verified)
+- Claim-truth gate: PASS (no contradictions detected)
+- Phase-2 publish claim: CLAIMED (TTL 100800s)
+- Status: PUBLISHED
+
