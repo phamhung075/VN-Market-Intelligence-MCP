@@ -90,9 +90,10 @@
     "status": "in_progress",
     "active_task_id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
     "next_agent": "dev-pdf-extractor",
-    "updated_at": "2026-08-26T02:14:26Z",
+    "updated_at": "2026-08-26T02:21:22Z",
     "updated_by": "router",
-    "resume_attempts": 0
+    "resume_attempts": 1,
+    "last_resume_at": "2026-08-26T02:21:21Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
