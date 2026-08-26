@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T04:52:52Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T04:45:00Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:45",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "STEP-0a DEVIATION (occurrence 2, same tick-family as 04:30Z): all 4 NEW signal_queue rows are to=po. po/flow/main.md:66 selects NEW rows, so marking them READ buries them; po is a dev-team agent this dispatcher must never spawn, so all 4 fall in the log-for-PO branch which is not processing. Left all 4 NEW. Root cause already filed FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO (BACKLOG/P1/architect) — re-verified open at source this tick, and po/flow/main.md:66 re-verified to still select NEW. Nothing minted. Rows left NEW: rtr-20260826T0429-staleblockedstatusfreezesrows (HIGH, names a frozen P0/developer), rtr-20260826T0431-invarianttestmissedretainedgoliterals (MED), cj-20260826T043200 (LOW), rtr-20260826T0435-datatiercyclewrotenorecord (HIGH, new this tick — subject overlaps peer-minted board row FIX-AUDITOR-DATATIER-DURABLE-TRAIL-NARRATED-NUMBERS-CONTRADICT-OWN-EVIDENCE; po dedups on promote, not this dispatcher).  CORRECTION TO 04:30Z TELEMETRY: that tick flagged the 4 duplicate notebook-cap emissions as possibly undrainable because they carry NO status field, explicitly labelled UNVERIFIED pending a read of the file-plane drain predicate. REFUTED BY OBSERVATION this tick — all 8 files (both emissions of all 4 findings, 043008/043009 and 043137/043138/043139) are now in docs/signals/processed/. The drain does not gate on status==NEW. signal_backlog fell 43->31 accordingly. The duplicate emission itself is real but benign in effect: cost is 2x drain work and file churn, not a stuck backlog. Downgraded; still not filed (known do-not-re-file notebook-cap cluster).  SNAPSHOT CLOCK: Step 4.7 wrote cycle-snapshot-04:50.json (15435 B, pruned 1) — a 5-multiple minute for the 2nd consecutive tick, so the round-to-5 consumer precondition is satisfied again. Nominal tick is 04:45, so 04:50 != 04:45 and cycle_snapshot_promoted:false regardless (46th consecutive). New structural observation, not a prediction: the 04:30Z tick measured a ~3-minute producer->consumer lag (produced 04:35, alert-commander bootstrapped 04:40:20 and rounded to 04:40, naming and refusing the fresh 04:35 file per exact-match). A fixed ~3-min lag plus round-to-5 means the consumer lands in the NEXT bucket unless the producer writes inside the first ~2 min of a bucket — so the hit rate is structurally biased near zero, not 1-in-5 by chance. This tick is the same shape: produced 04:50, spawn at ~04:52, expected bootstrap ~04:53-54 -> rounds to 04:55 -> miss. Recorded to test the lag model, not asserted.  signal_backlog 31 matched an independent file recount exactly (6th consecutive server match). Step 5.1 locale-comma spec parse: true_load=2,47 -> spec_parsed=2 (11th confirmation, latent, non-binding at threshold 24). Slot policy alert-commander-market resolves _cron_fallback:true on ALL five calendar_status rows (verified via the real evaluateCadence), so cron */15 2-8 * * 1-5 governs unconditionally — the 15-min gap since the 04:30Z fire is correct, not premature."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T04:52:52Z"
+}
