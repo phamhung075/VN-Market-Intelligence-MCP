@@ -1,0 +1,24 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "flow-defect",
+  "priority": "high",
+  "createdAt": "2026-08-26T02:27:41Z",
+  "payload": {
+    "action_requested": "TRIAGE as a SEPARATE arm from the qa-lane P0 FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. That row's dedup_key scopes to 'actor:router-session'; this occurrence is actor=unified-agent with a DIFFERENT root cause. If that P0 passes QA as-is, this arm keeps firing. Fix is a 1-line pathspec edit in docs/agents/unified-agent/flow/chef-dish.md step 8e.",
+    "observed_at": "2026-08-26T02:23:05Z",
+    "observed_during": "cowork 02:15Z tick, slot=chef-intraday, agent=unified-agent",
+    "hook_signal_file": "docs/signals/commit-sweep-guard-2026-08-26T022305Z-12851.json",
+    "symptom": "commit-sweep-guard blocked a BARE commit (prior_warns=3 threshold=3 outcome=blocked) staging docs/agent-memory/notebooks/unified-agent.md + docs/data/unified-agent-synthesis-2026-08-26-intraday.json. Agent then retried with an explicit pathspec and landed e3f16b6c6 with exactly those 2 files — correct outcome, but only after tripping the guard.",
+    "root_cause": "Same-file inconsistency in docs/agents/unified-agent/flow/chef-dish.md, ~200 lines apart. Line 890 defines Step 7.6's write target FILEPATH = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json, and line 861 explicitly authorizes that write pattern against the agent frontmatter. Step 8e's commit block (lines 1093-1098) then omits it from ALL THREE of: the own_paths comment, the git add pathspec, and the git commit trailing pathspec — all three list only docs/agent-memory/notebooks/unified-agent.md and docs/signals/processed/. The agent is instructed to write a file its own commit step cannot commit, so it must either strand the file or improvise. It improvised a bare commit. NOT an agent-discipline failure — a missing instruction.",
+    "fix_shape": "Add docs/data/unified-agent-synthesis-*.json to all three lists in chef-dish.md step 8e (own_paths comment, git add, git commit trailing pathspec). Use the concrete resolved filename the cycle already computed at Step 7.6, not a glob, so the pathspec stays scoped to this cycle's own file and cannot absorb a peer cycle's synthesis JSON.",
+    "why_this_is_not_covered_by_the_qa_row": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (qa lane, P0, next=qa, occurrence_count 32) has dedup_key 'sweepguard:bare-commit|defect:repeat-offender-after-block|actor:router-session'. Its landed remedy was Step 6.2 in docs/agents/cowork-team/flow/telemetry.md — the cowork DISPATCHER's own commit step. That fix is real and correct for that actor. It does not reach unified-agent, whose commit step already had a pathspec and whose defect is an incomplete own_paths list, not an absent commit step.",
+    "class_note": "THIRD confirmed instance of the class 'agent writes a documented path, the same flow omits it from its own commit pathspec'. Prior two routed 2026-08-25 in signal 9b716c031 (docs/analysis-briefs/*.md: news-scout stage-log-notify.md:40 and market-watcher eod.md:101 both write it, both omit it from their commit pathspecs). Recommend po consider a fleet-wide sweep predicate rather than three independent one-line fixes: for each agent flow, diff the set of write targets named in the flow against the union of its own commit pathspecs. Unverified whether other agents share the omission.",
+    "verification": {
+      "commit_landed": "e3f16b6c6",
+      "files_in_commit": ["docs/agent-memory/notebooks/unified-agent.md", "docs/data/unified-agent-synthesis-2026-08-26-intraday.json"],
+      "synthesis_file_on_disk_bytes": 5873,
+      "step_5_3_offflow_detector": "PASS — 0/6 distinct markers on a 1657 B final-turn surface; negative control clean (no dispatcher-authored prompt text, len < 20000); matcher liveness confirmed 6/6 against the IDENTITY_PREAMBLE control corpus"
+    }
+  }
+}
