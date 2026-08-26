@@ -90,8 +90,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-08-26T16:24:56Z",
-    "updated_by": "dev-team (router post-return head reset after developer lane-move to review)"
+    "updated_at": "2026-08-26T16:45:54Z",
+    "updated_by": "dev-team (DRS claim reverted — contraindicated row, nothing spawned)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T16:41:32Z",
+    "_updated_at": "2026-08-26T16:46:54Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1224,6 +1224,17 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-26.json"
+      },
+      {
+        "id": "rtr-20260826T1646-drsproseblindautoclaim",
+        "ts": "2026-08-26T16:46:54Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "DRS claim auto-claimed a contraindicated row: FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY carries po_consolidation_ruling_20260728 (do NOT route until epic BA-COWORK-GUARANTEED-SLOT-CATCHUP closes; close all 6 together per AC-9) and subsumed_by pointing at that epic, which is still BACKLOG. is_design_router_eligible reads status_note (null here) but not bespoke prose keys, so the ruling is invisible to both promote and claim. Caught pre-spawn at the 16:37Z tick and reverted unspawned (row back in backlog[], DRS stamps cleared, head reset idle); it had been DRS-stamped since 2026-08-24T03:02Z, so it was re-claimable on every DRS rotation turn. 3 sibling rows carry the same ruling and are currently unstamped but equally invisible to the predicate. Recurrence of the known picker-blind-to-prose class. Suggested direction (PO to rule): a generic contraindication predicate keyed on subsumed_by-still-open plus any po_*_ruling_* key, applied at BOTH promote and claim like the allowlist gate already is.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
@@ -6428,16 +6439,6 @@
         "next_agent": "developer",
         "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
         "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED developer. Stale-check: live scripts/auditor-notebook-commit.sh has zero hits for 'Claude-Session'/'trailer' — the commit-trailer append is UNFIXED. Small, fully-specified doc+script task (detail-ref status_note already carries the 2-clause AC); implementation-only, no architecture decision needed."
-      },
-      {
-        "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
-        "type": "FEATURE",
-        "priority": "HIGH",
-        "status": "BACKLOG",
-        "zone": "multi",
-        "size": "M",
-        "title": "Severity-override surfacing path (surface if watchlist OR SEVERITY_OVERRIDE) so market-moving non-watchlist events (PNJ #8371 legal_risk conf0.95) reach the user via CHEF/fb. Robustness layer paired with FIX-ALERT-COMMANDER-DEAD-NO-SLOT.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FEAT-SEVERITY-OVERRIDE-SURFACING"
       },
       {
         "id": "FIX-BCTC-FULL-BATCH-CONTAMINATION",
@@ -18083,6 +18084,29 @@
         "created_at": "2026-08-26T15:50:28Z",
         "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=observability_defect routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
         "updated_at": "2026-08-26T15:50:29Z"
+      },
+      {
+        "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
+        "type": "SPRINT-M",
+        "priority": "P1",
+        "size": "M",
+        "status": "BACKLOG",
+        "title": "cowork last_fired is bumped on spawn DISPATCH-success, not delivery proof -> a spawn that dies before writing its notebook still satisfies the cadence gate -> genuine slot misses are MASKED (matcher never re-offers)",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
+        "note": "Maps to FR-7: reconciler reads task_list_held claimed_at, not post-spawn stamp. Path-agnostic by construction.",
+        "source_findings": [
+          "tnb-c115-F-COWORK-SCHEDULE-CHEFEVENING-LASTFIRED-STALE"
+        ],
+        "updated_at": "2026-08-26T16:45:54Z",
+        "owner": "developer",
+        "next_agent": "pm",
+        "architect_ruling": "Implemented via FR-7 ruling: Option (b) reconciler reads task_list_held claimed_at and backfills last_fired — NOT per-flow self-write (would reintroduce lost-update race + break path-agnostic requirement already on this row's own note).",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "dev-team (DRS claim reverted — PO do-not-route ruling)",
+        "drs_ineligible_note": "DRS-claimed 2026-08-26T16:44Z and REVERTED unspawned. Row carries po_consolidation_ruling_20260728 (do NOT route until the epic closes; then close all 6 together per AC-9) and subsumed_by=BA-COWORK-GUARANTEED-SLOT-CATCHUP, still BACKLOG (CATCHUP-4/5/6 BLOCKED, 7/8 BACKLOG, 10 CANCELLED) so the release condition is unmet. The ruling lives in a bespoke prose key, not status_note, so is_design_router_eligible cannot see it. DRS promote/claim stamps cleared to stop re-claim on every rotation turn. Re-promotion is PO decision once the epic closes."
       }
     ],
     "closed_sprints": [
@@ -23182,34 +23206,6 @@
         "status_note": "PO Step 0-SIG 2026-08-24T00:12:36Z: RETARGETED OUT OF qa[]. qa already refused this row on the merits (commit 6163fecee, 2026-08-23T22:08:36Z) and it was re-picked by the review-lane QA-drain 81 minutes later (claimed_at 2026-08-23T23:29:49Z) — so re-dispatching qa reproduces the same refusal indefinitely. PO RE-VERIFIED THE REFUSAL AT SOURCE, not from the handoff prose: `docker image inspect vn-market-intelligence-mcp-mcp-server --format {{.Created}}` = 2026-08-23T13:52:50Z (container created 2026-08-23 15:53:58 +0200 = 13:53:58Z), while the dev commit ce1f52127 landed at 2026-08-23 17:11:08 +0200 = 15:11:08Z. The running image PREDATES the code by 1h18m, so AC-7 (docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md:65,126,148 — bind-mount round-trip via a real add_to_watchlist call from OUTSIDE the container) is not merely unverified, it is structurally unrunnable. NEXT ACTION IS A DEPLOY, NOT A VERIFY: single-service rebuild of mcp-server only. NEVER `docker compose down` (feedback_rebuild_recreate_destroys_peers — it kills every peer container) and verify the new image ID actually changed before claiming the deploy landed (feedback_docker_rebuild_race_pgrep_deadlock). After the rebuild, hand back to qa for AC-5/AC-7. WHY THE LANE MOVED AND NOT JUST THIS NOTE: the QA-drain picker selects on lane + next_agent and is blind to prose it cannot read (feedback_pickers_blind_to_prose_status_note_autoclaim_contraindicated_row) — leaving the row in qa[] with a note would have changed nothing. next_agent=ops is off the DRS-ratified auto-dispatch allowlist, so this row is reachable by manual/PO dispatch; that is deliberate and is the same class as the 10 other live next_agent=ops rows."
       },
       {
-        "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
-        "type": "SPRINT-M",
-        "priority": "P1",
-        "size": "M",
-        "status": "READY",
-        "title": "cowork last_fired is bumped on spawn DISPATCH-success, not delivery proof -> a spawn that dies before writing its notebook still satisfies the cadence gate -> genuine slot misses are MASKED (matcher never re-offers)",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
-        "note": "Maps to FR-7: reconciler reads task_list_held claimed_at, not post-spawn stamp. Path-agnostic by construction.",
-        "source_findings": [
-          "tnb-c115-F-COWORK-SCHEDULE-CHEFEVENING-LASTFIRED-STALE"
-        ],
-        "updated_at": "2026-08-25T22:30:08Z",
-        "owner": "developer",
-        "next_agent": "pm",
-        "architect_ruling": "Implemented via FR-7 ruling: Option (b) reconciler reads task_list_held claimed_at and backfills last_fired — NOT per-flow self-write (would reintroduce lost-update race + break path-agnostic requirement already on this row's own note).",
-        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
-        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
-        "updated_by": "po/triage-20260728T13",
-        "promoted_at": "2026-08-24T03:02:19Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect",
-        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
-        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
-      },
-      {
         "id": "UC-MDH-P2",
         "type": "SPRINT-S",
         "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
@@ -23710,6 +23706,21 @@
           "UC-CDC-P1",
           "UC-SDF-P2"
         ]
+      },
+      {
+        "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+        "type": "FEATURE",
+        "priority": "HIGH",
+        "status": "READY",
+        "zone": "multi",
+        "size": "M",
+        "title": "Severity-override surfacing path (surface if watchlist OR SEVERITY_OVERRIDE) so market-moving non-watchlist events (PNJ #8371 legal_risk conf0.95) reach the user via CHEF/fb. Robustness layer paired with FIX-ALERT-COMMANDER-DEAD-NO-SLOT.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FEAT-SEVERITY-OVERRIDE-SURFACING",
+        "promoted_at": "2026-08-26T16:44:15Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "updated_at": "2026-08-26T16:44:16Z"
       }
     ],
     "review": [
@@ -24517,8 +24528,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T15:12:59Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-26T16:44:15Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -24597,7 +24608,7 @@
         "last_served_tick": "2026-08-26T16:13:14Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-26T13:44:44Z"
+        "last_served_tick": "2026-08-26T16:42:54Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-26T14:13:20Z"
@@ -24606,7 +24617,7 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T16:41:32Z",
+    "_updated_at": "2026-08-26T16:42:54Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
