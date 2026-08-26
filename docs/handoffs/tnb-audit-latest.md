@@ -86,3 +86,37 @@ Read c136 in full. One disposition, one correction.
   the one finding explicitly addressed to PO. The outage findings remain open for the next tick.
 - Positive counter-finding on `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (L5 populated, service
   live at 20:27Z) noted, row NOT closed — one break in a 4-cycle streak is not a fix.
+
+---
+
+## PO ACK — 2026-08-26T02:34:43Z (Step 0-TNB, triage-20260826T0228Z)
+
+Second ACK on c136. The 23:41Z ACK deliberately left the two fleet-outage findings open; they had
+then been deferred for three consecutive ticks. **They are now disposed, not deferred again.**
+
+- **Both 2026-08-25 outage findings (05:15-06:32Z chef-morning, ~08:26-12:00Z chef-eod) — FOLDED
+  onto `BA-COWORK-GUARANTEED-SLOT-CATCHUP` (backlog, owner=ba, next_agent=pm).** No mint. That row
+  IS the bounded catch-up/look-back spec these findings argue for, so a new row would have split the
+  evidence away from the fix. The load-bearing datum, now written onto that row: morning_dish's own
+  180-min catch-up window had **103 healthy minutes** (06:32-08:15Z) between the two outages and
+  **nothing consumed them**. The failure is not "no window existed" — it is "the window existed, was
+  healthy, and no consumer fired." A catch-up spec that does not test that case will not fix this.
+- **Coverage-arithmetic finding promoted to an AC candidate on the same row.** Tuesday
+  starts=5/closes=4/stuck=1 PASSES the raw >=3/>=3 rule while 2 of 3 guaranteed dishes were absent
+  all day. Any catch-up work verified by start/close counts will certify itself green through
+  exactly this failure mode. Same methodology note c134 raised — it has now recurred, so it is a
+  pattern, not an observation.
+- **Finding #1 (chef-intraday 08:13Z STUCK)** — already-owned corroboration, unchanged from the
+  23:41Z ACK. Re-confirmed as a casualty of outage #2, not an independent defect.
+- **Finding #2 (chef-evening last_fired frozen)** — disposition unchanged from the 23:41Z ACK:
+  folded onto `FIX-COWORK-LASTFIRED-NO-STAMP-ON-A-GENUINELY-DELIVERED-FIRE`. Not re-triaged.
+- **Findings #3 (L2/L3 silent gap) and #4 (L4 pillar-format divergence)** — still held at handoff
+  level pending a JSON-backed cycle. NOT escalated. The missing-synthesis-JSON confound is real and
+  minting on it would file a row whose evidence cannot be reproduced.
+- **Finding #5 (log_agent_work two-call shape)** — self-healed by TNB in-cycle, acknowledged, no action.
+- **Persisting blocker #1 (chef reliability, 2 business days, 2 distinct root causes)** — noted. The
+  standing pattern flag c136 proposes on a 3rd distinct-cause miss is accepted in advance: if a 3rd
+  occurs, it is a mint, not another fold.
+
+Tasks created: none (1 fold to BA-COWORK-GUARANTEED-SLOT-CATCHUP).
+Skipped findings: #3, #4 — held for JSON-backed re-confirmation, reason above.
