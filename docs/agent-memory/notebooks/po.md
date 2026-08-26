@@ -91,3 +91,43 @@ flipping `FACTORY-STOCK` `next_agent` qa→developer: that also MOVES it into th
   Needs `detail_ref` cold-store migration before the next fold. One fold rehosted this tick because of it.
 - `observability_defect` has no row in EITHER routing table; add alongside recurring-bug when that row ships.
 - `cron-detect-loop/register.md` 173L/12349B is a REAL open breach — do NOT close with the cron-skill family.
+
+## 2026-08-26T12:28Z — 1 envelope cleared, 0 mints, 2 folds, 1 duplicate found, 1 prose migration
+
+Journal: `docs/agent-memory/decisions/triage-20260826T1228Z-po.md`. **Inbox 1→0 · 0 mints · 2 folds.**
+ONE `orch-apply` pipe after a first attempt was hard-rejected by the prose-ceiling gate. `.head` never
+written — a peer flipped it to idle at 12:26Z mid-tick and my write preserved that. Every transform
+selects BY ID.
+
+### 1. The caller said "no tracked row" for `calendar_status` — there was one
+`UC-CDC-P1` (backlog, BLOCKED) is exactly this defect and *I had already folded it at 03:48Z today*.
+A keyword grep would have missed it; the path-resolved lane scan found it. **Do not accept a caller's
+"no row located" as a dedup result** — it is an input to the scan, never a substitute for one.
+
+### 2. My own 03:48Z fold on that row rests on a FALSE premise, now corrected
+It said the wrong value is "non-binding" because `pressure-read.md` Step 4.3 is a SUPERSEDED no-op. But
+Step 4.3's own banner says the logic MOVED into `cadence-policy.js` + `cadence-policy.json`, whose 29
+rules all branch on `calendar_status`. **A SUPERSEDED banner names the new owner — read it before
+concluding "no consumer".** Consumer-ness moved, it did not vanish.
+
+### 3. …but the blast radius is SMALL, and measuring it is what kept a row out of `ready[]`
+`cowork-match-slots.js:328` makes cron "always the first gate" and the adaptive loop iterates only
+cron-matched slots, so cadence can ONLY throttle DOWN, never speed up. 3 of 4 policies are cron-confined
+or `_cron_fallback`. Real cost ≈ **6 avoidable spawns/day** on two gatherer slots (git history of
+`cowork-schedule.json`: `news-scout-offhours` fired 6x/day on 08-25 and 08-26, exactly its 240-min cron).
+That does NOT outrank a 114-deep starving `ready[]` → folded, did not mint. The alarm was real; the
+magnitude was 1/10th of what the envelope's framing implied.
+
+### 4. Found a duplicate the 2026-08-24 mint missed
+`FIX-CYCLE-SNAPSHOT-...` (ready, P0, next_agent=architect) duplicates `UC-SDF-P2` (ready, P1,
+next_agent=developer) — same defect, and UC-SDF-P2 has a BA spec **and an architect brief delivered at
+10:28Z TODAY** carrying the identical fix shape. The P0 row would have burned a DRS dispatch redoing it.
+Cross-linked + warned inline; did NOT touch `next_agent`/`dispatch_lane` (DRS' fields, 2 live agents).
+
+### Carry-over
+- Prior carry-over's prescription WORKS: `FIX-CYCLE-SNAPSHOT-...` hit the same 12000B wall (11464→14658B).
+  Fix = move prose to `detail_ref` + archive the old `status_note` VERBATIM in the cold file. Row now 9.8KB.
+  `FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-...` at 11738B still needs the same treatment.
+- **Merge decision open for the caller:** re-point or close `FIX-CYCLE-SNAPSHOT-...` into `UC-SDF-P2` unit 1.
+- `SESSION_STATUSES` has no member for "trading day, session closed" — the enum, not the wiring, is the
+  real `calendar_status` defect, and no row owns it. Recorded on UC-CDC-P1 §(d) for whenever it unblocks.
