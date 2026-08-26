@@ -46,3 +46,38 @@ three history keys verbatim to the journal, set `detail_ref`, row now ~9.7KB wit
 - QA-Drain deadlock is **disarmed right now** (`done[]`=6, none `next_agent=qa`); it re-arms at 2. Not a fix.
 - `qa[]` still strands 3 rows against `QA_CAP=10`; every `done[]`-origin claim lands in that same lane.
 - Push backstop skipped: standing disarm, CI RED on `a73f0f2c7`.
+
+## 2026-08-26T05:36Z — Step 0-SIG triage, 23 envelopes + 6 signal rows (router-direct)
+
+Journal: `docs/agent-memory/decisions/triage-20260826T0536Z-po.md` · transform: `scripts/po-triage-20260826T0536Z-blocked-freeze-and-langvi-ruling.jq`.
+**3 minted · 5 unfrozen · 1 review row re-routed · 4 gates re-encoded · inbox 23→0 (readback PASS) · 3 premises corrected.**
+
+### 1. lang=vi is DORMANT in production — the P1 ask was rejected and replaced
+`OCR_TEXT_BACKEND` is **unset** in running container `417febec1a03` (5 env vars, verified by `docker exec`, no
+extractor run) → `TesseractVieBackend` (`__tests__/test_ocr_backends.py:77-78`). Two `lang="vi"` sites are on the
+paddle TEXT path (off); the third, `pek_engine_adapter.py:420`, is disclaimed by its own comment at `:412-418` —
+it *"supplies the table GRID, not the cell TEXT"*. The auto-flip that would switch the path on was CANCELLED
+08-25T17:52Z. So quality has **not** moved and there is no before/after. Minted the thing that is actually
+missing: `MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE` — a baseline for the engine that runs.
+
+### 2. BLOCKED is a permanent freeze, and the signal aimed the fix at the wrong lines
+`devteam-eligibility.jq:117/:160` are **not** the gate — they are `wip_in_progress`, which excludes BLOCKED from
+the WIP *budget* and therefore FREES capacity. The gate is **eight positive status allowlists** in the consumer
+scripts (`BACKLOG|TODO`, `READY|TODO`, `REVIEW|DONE`); `BLOCKED` is in none. 55 rows live at BLOCKED; 5 had every
+blocker DONE_VERIFIED. → `FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT`, with three
+named negative controls so the fix cannot be a blanket clear.
+
+### 3. Three "lost" rows were never lost — the dedup script cannot see cold archives
+`po-board-dedup-search.sh:30` `--all-lanes` expands to ten keys **inside the hot file**; `archive/2026-0*.json` is
+never opened, though `:18` calls it exhaustive. Both rows the signal reported missing are `DONE_VERIFIED` in
+`2026-08.json`; so is the blocker that made VERIFY-FIX-COVERAGE-SWEEP look permanently stuck.
+→ `FIX-PO-DEDUP-SEARCH-BLIND-TO-COLD-MONTHLY-ARCHIVE-FILES`.
+
+### Carry-over
+- **09:00Z today**: flip 4 rows BLOCKED→BACKLOG, P0 `FIX-MARKETDB-20260826-...` first. Disappears once AC-2 lands.
+- Lane move of `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` out of `in_progress[]` **attempted and refused**:
+  prose-ceiling read `live=0B → 18774B` because `PROSE_CEILING_LANES` omits `in_progress[]`. Owner already
+  dispatchable (`TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES`). Row holds no claim, consumes no budget.
+- 4 signals DEFERRED not declined (kinh-dich invariant, 2× auditor DATA-tier, bug-channel notify-once).
+- 50 rows still at BLOCKED — only the all-blockers-done 5 were audited.
+- Push backstop skipped: standing disarm, CI RED.
