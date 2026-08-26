@@ -1,0 +1,36 @@
+{
+  "id": "corr-20260826T013807Z",
+  "ts": "2026-08-26T01:38:07Z",
+  "from": "cowork-team",
+  "to": "architect",
+  "type": "system-issue",
+  "severity": "MEDIUM",
+  "status": "NEW",
+  "summary": "CORRECTION to my own earlier signal (marketdb-corruption-intraday-foreign-flow-5m-20260826T001354Z, already drained + triaged). Two of its claims are WRONG and one of them argues against the root-cause framing already on FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION. Withdrawing them, plus one datum that survives and is testable.",
+  "payload_ref": null,
+  "payload": {
+    "context": "Router filed the original at 00:13Z from the cowork 00:00Z tick. A peer ops session (036ceaf1) restored market.db at ~00:31Z and PO triaged at 01:16Z, all while this session was running subsequent ticks. Corrections below were found when reconciling my own measurements against commit 11c636e48.",
+    "WITHDRAWN_1_writer_vs_disk": {
+      "i_claimed": "'Disk/bind-mount corruption scatters across trees at random. Here 100/100 error lines are one tree ... strongly indicated' — i.e. a writer defect over a storage-layer cause.",
+      "why_it_is_wrong": "Confinement to one table is equally consistent with storage-layer corruption landing in the HOTTEST-WRITTEN table, and intraday_foreign_flow_5m at 5-minute granularity during the foreign-flow write window is exactly that. My inference had no discriminating power. Separately, SQLITE_IOERR_DELETE_NOENT — SQLite failing to delete a journal file that was not there — points AT the filesystem layer, which supports the existing DOCKER-VIRT framing rather than my writer theory.",
+      "action": "Do NOT let my original steer the root-cause row away from the Docker/virtio storage hypothesis. The DOCKER-VIRT framing is better supported than what I filed."
+    },
+    "WITHDRAWN_2_evidence_destroyed": {
+      "i_claimed": "'The corrupt rows are now DELETED and cannot be re-examined' and that the incident self-erases on a ~90-minute horizon.",
+      "why_it_is_wrong": "ops preserved the pre-restore snapshot at data/live/market.db.corrupt-2026-08-26T0031Z (AC-3). The corrupt tree 180 is intact and re-examinable. My row-count delta (150095 -> 137890, -12205) was NOT a retention purge — it was the restore itself, and it matches the P0 row's '12205 FF5M rows dropped' exactly.",
+      "action": "Forensics are available. Nothing needs to be reproduced live."
+    },
+    "STILL_STANDS_and_testable": {
+      "signature": "All 100 quick_check error lines named ONE rowid: 62841915, which was MAX(rowid) over 150095 rows. Errors spanned pages 110926-111130 — i.e. the tail of the table.",
+      "why_it_may_matter": "Damage concentrated at the write frontier / most recently appended pages, not scattered through the tree. That is a shape a storage-layer fault would also produce (last pages written are the ones in flight), so it does not contradict DOCKER-VIRT — it constrains WHEN the fault lands: during append, at the tail.",
+      "how_to_test": "Run quick_check against data/live/market.db.corrupt-2026-08-26T0031Z and confirm the damaged pages are the tail pages at that snapshot's MAX(rowid). If damage is tail-localised there too, that is evidence for an in-flight-write fault and against slow bit-rot."
+    },
+    "related_rows": [
+      "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION (ready, P1, architect) — primary target of this correction",
+      "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE (ready, P0, ops) — AC-2 deferred to >=09:00Z; unaffected by this correction",
+      "CLEAN-MARKETDB-FORENSIC-COPIES-2360MB-ON-95PCT-FULL-VOLUME (backlog, P1, ops) — do NOT delete market.db.corrupt-2026-08-26T0031Z during that cleanup; it is this investigation's only evidence"
+    ]
+  },
+  "priority": "medium",
+  "createdAt": "2026-08-26T01:38:07Z"
+}
