@@ -24783,7 +24783,7 @@
         "last_served_tick": "2026-08-26T11:19:21Z"
       }
     },
-    "_updated_at": "2026-08-26T12:49:55Z",
+    "_updated_at": "2026-08-26T13:10:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24819,6 +24819,29 @@
         },
         "createdAt": "2026-08-26T12:23:52Z",
         "drained_at": "2026-08-26T12:48:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "18ba303ce48d6bc73be2f1070b766ac13bbd08f2e5c811fb18fb1dfa336ea62e",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md",
+          "line_count": 155,
+          "cap": 600,
+          "byte_count": 42548,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 6548,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T13:08:06Z",
+        "drained_at": "2026-08-26T13:10:12Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
