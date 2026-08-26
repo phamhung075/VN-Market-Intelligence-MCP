@@ -2,79 +2,79 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "market-watcher",
-  "_updated_at": "2026-08-26T00:07:57Z",
+  "_updated_at": "2026-08-26T20:08:09Z",
   "_eod_completed": "2026-07-11T16:06:30Z",
   "tickers": {
     "VNM": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T20:08:43Z"
     },
     "FPT": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-25T08:08:56Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T08:07:44Z"
     },
     "VCB": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T00:06:16Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T04:09:15Z"
     },
     "ACB": {
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "HPG": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T04:09:01Z"
     },
     "BID": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-26T00:07:57Z"
     },
     "SHB": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-26T00:07:57Z"
     },
     "EIB": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-26T00:07:57Z"
     },
     "VHM": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T08:05:57Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T12:07:34Z"
     },
     "VIC": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-25T08:08:56Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T08:07:44Z"
     },
     "KBC": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-24T20:07:23Z"
     },
     "HUT": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T08:08:56Z"
     },
     "DIG": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T12:06:01Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T20:08:09Z"
     },
     "DXG": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T12:06:01Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T20:08:09Z"
     },
     "KDH": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T08:05:57Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T12:07:34Z"
     },
     "PDR": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-24T20:07:23Z"
     },
     "NVL": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-24T20:07:23Z"
     },
     "VRE": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T00:08:21Z"
     },
     "D2D": {
@@ -82,23 +82,23 @@
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "MSN": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T12:09:22Z"
     },
     "FRT": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T00:08:21Z"
     },
     "KDC": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T12:09:22Z"
     },
     "SAB": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T12:09:22Z"
     },
     "DPM": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T08:08:56Z"
     },
     "GAS": {
@@ -106,47 +106,47 @@
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "SSI": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T04:05:29Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T08:07:44Z"
     },
     "VIX": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T04:09:01Z"
     },
     "VND": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T04:09:01Z"
     },
     "VCI": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T00:08:21Z"
     },
     "DGC": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T04:05:29Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T04:09:15Z"
     },
     "VJC": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T20:08:43Z"
     },
     "GEX": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T08:08:56Z"
     },
     "BSR": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T04:05:29Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T08:07:44Z"
     },
     "PLX": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T12:06:01Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T12:07:34Z"
     },
     "DAG": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T04:05:29Z"
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
+      "last_covered_market_watcher": "2026-08-26T08:07:44Z"
     },
     "DBC": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T08:08:56Z"
     },
     "GVR": {
@@ -206,7 +206,7 @@
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "VEA": {
-      "last_covered_news_scout": "2026-08-25T20:09:47Z",
+      "last_covered_news_scout": "2026-08-26T16:10:03Z",
       "last_covered_market_watcher": "2026-08-25T20:08:43Z"
     },
     "REE": {
