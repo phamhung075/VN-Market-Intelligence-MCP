@@ -87,11 +87,11 @@
     }
   ],
   "head": {
-    "status": "busy",
-    "active_task_id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
-    "next_agent": "developer",
-    "updated_at": "2026-08-26T02:48:06Z",
-    "updated_by": "router"
+    "status": "idle",
+    "updated_at": "2026-08-26T02:59:10Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24168,7 +24168,7 @@
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
         "type": "FIX",
         "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
-        "status": "IN_PROGRESS",
+        "status": "BLOCKED",
         "priority": "P0",
         "size": "M",
         "zone": "cross-service/",
@@ -24189,12 +24189,12 @@
         "po_escalated_by": "po",
         "occurrence_count": 3,
         "last_occurrence_at": "2026-07-21T20:25:14Z",
-        "updated_at": "2026-08-26T02:48:06Z",
+        "updated_at": "2026-08-26T02:59:10Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS-BA-spec.md",
         "ba_completed_at": "2026-07-23T09:30:55Z",
         "po_corroboration_20260729T0858": "CORROBORATION, NOT A NEW ROW — routed here by PO 2026-07-29T11:26Z from an unrouted cowork signal. Source: docs/signals/cowork-team-2026-07-29T0858Z-chef-eod-router-race-nearmiss.json. THIS IS THE FIRST TWO-SIDED CONCRETE EVIDENCE for this row's premise; every prior instance was inferred after the fact from a stray extra claim. Both sides captured: cowork-cron spawned chef-eod (agent a69593e83d6792247, dispatcher session a2161c5c-c4e1-4696-834e-d73fbbbbad81, last_fired 08:53:12Z) and got claimed:false on published:chef-eod:2026-07-29, exiting cleanly 'DONE: duplicate-publish blocked'; the marker was held by session b5fdaa7f-e239-42a0-942a-dd688e927ad9, claimed 08:53:45Z ttl 100800s, whose session-presence record reads owner_agent 'router', host 'main-server', started_at 08:51:00Z, current_task 'dispatch-init'. So a router-seat session reached chef.md Step 0.5 ~33s ahead of the cron spawn, ~2.5 min after that session started, via a path outside the cowork fire-election lock cron:cowork:<TICK> — precisely the shared-namespace gap this row names. OUTCOME: safe. get_unreviewed_market_messages confirms exactly ONE chef-eod dish for 2026-07-29 (id 1066, sent_at 08:55:13). IT WAS SAFE BY ORDERING LUCK, NOT BY CONTROL — had the cron spawn won the 33s it would have published and the router seat would then have been the loser; the marker is the only thing that arbitrated, and the marker is claimed AFTER the expensive work begins. COST EVEN ON THE GOOD PATH: the losing cowork spawn burned a full unified-agent run (58673 tokens, 9 tool calls, 76s) to reach a blocked exit. Consistent with feedback_router_intent_path_double_dispatches_cowork_slots and feedback_router_demand_dispatch_cowork_slot_double_publish. Related but NOT duplicated: FIX-ROUTER-COWORK-SLOT-DEMAND-DISPATCH-BLIND (P1, slot-tick blindness on the router side) and FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (P2). No new row minted.",
-        "updated_by": "router",
+        "updated_by": "developer",
         "architect_completed_at": "2026-07-29T14:31:31Z",
         "architect_brief": "docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md",
         "dev_team_note_20260729T1446": "architect ruling complete + verified (commit 89d4b4340); row handed to next_agent=pm but SUPERVISED HOLD stays in effect per architect own report (do not auto-dispatch past architect without supervisor go-ahead). Moved in_progress[]->ready[] so this does not pin WIP indefinitely on a row that cannot be auto-picked anyway; supervised:true continues to block BOUNDED-1/SLS auto-pickup exactly as designed. Deliberate pm dispatch remains a router/PO decision.",
@@ -24208,10 +24208,14 @@
         "po_corroboration_20260730": "PO 2026-07-30T21:1xZ (triage-20260730T2107Z) — 3rd CONFIRMED INSTANCE, priority/scope UNCHANGED (already P0). Telegram report 4219 (bctc-analyst, 2026-07-30T21:19:46Z) + bctc-analyst notebook c133 PEER-COLLISION ADDENDUM: the dispatcher fired bctc-analyst-slot-3 TWICE for the same 21:00 UTC tick (identical cycle_id 20260730-2100); a second session ran ~21:09-21:17Z in parallel and was detected only post-hoc, via an Edit-tool stale-read conflict on the notebook. Same shape as the two 2026-07-15 instances already in the title (chef-evening double-publish, tnb dual c110 audit).\n\nMEASURED BLAST RADIUS this time: 12 duplicate record_evidence_fragment rows (ids 761-772 duplicating 749-760), a duplicate log_agent_work lifecycle (id 1708 duplicating 1707), 2x tool-call cost for the slot, and both same-day bctc_signal_*_20260730_routine.json files rewritten twice.\n\nTWO FINDINGS WORTH CARRYING INTO THE FIX: (a) the ESC guard HELD correctly under the race — the second session's task_claim on esc-deepdive:FPT:Q1-2026:ESC-5 serialized properly (stolen:true only after the first guard's TTL genuinely lapsed at 21:10:43Z), so the mutex primitive is sound and the defect really is the missing shared task_id namespace named in this row's title, not lock semantics; (b) the cowork tick telemetry is BLIND to this class — docs/signals/processed/cowork-team-2026-07-30T21:06:45Z.json reports spawned:[bctc-analyst-slot-3], held_by_other:[], all_held:false, errors:[] for the very tick that double-fired. Any acceptance test that reads telemetry to prove the fix will false-green; assert on the duplicated downstream rows (record_evidence_fragment / log_agent_work) instead.",
         "owner": "developer",
         "dispatch_lane": "developer",
-        "owner_client_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
-        "claimed_at": "2026-08-26T02:48:05Z",
-        "claimed_by": "router",
-        "router_dispatch_20260826T0250Z": "Hand-dispatched developer. Head idle, 109 ready rows, no automated tick had moved this P0. deps=[] so deps_satisfied() is trivially true (hand-dispatch bypasses that gate per feedback_router_hand_dispatch_bypasses_deps_satisfied_gate, so it is asserted explicitly here). Terminal-shape requirement stated in the spawn prompt per feedback_devteam_three_stranded_inprogress_rows_deadlock_all_four_wip_pickers."
+        "owner_client_session": null,
+        "claimed_at": null,
+        "claimed_by": null,
+        "router_dispatch_20260826T0250Z": "Hand-dispatched developer. Head idle, 109 ready rows, no automated tick had moved this P0. deps=[] so deps_satisfied() is trivially true (hand-dispatch bypasses that gate per feedback_router_hand_dispatch_bypasses_deps_satisfied_gate, so it is asserted explicitly here). Terminal-shape requirement stated in the spawn prompt per feedback_devteam_three_stranded_inprogress_rows_deadlock_all_four_wip_pickers.",
+        "blocked_by": [
+          "TASK-COWORK-MUTEX-001"
+        ],
+        "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128."
       },
       {
         "id": "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
