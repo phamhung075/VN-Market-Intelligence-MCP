@@ -94,3 +94,24 @@ DONE: Brief authored, PO's two options ruled on (A, generalized + hardened; B re
 NEXT: po — sign off, then route build (developer), install (ops), doc-fix (agent-father), verify (qa) per §5.
 HANDOFF: `docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md`
 PIPELINE: continue
+
+---
+
+## Addendum (2026-08-26, TASK-COWORK-CATCHUP-9, FR-10) — sprint COWORK-GUARANTEED-SLOT-CATCHUP status, verified against disk
+
+Historical body above is untouched (repo convention). This addendum records the **actual, disk-verified** status of the follow-on sprint COWORK-GUARANTEED-SLOT-CATCHUP (design: `docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md`, FR-1..10), which built a *different* recovery mechanism (bounded catch-up look-back) on top of this brief's OS-level launchd backstop. The row that originally carried this addendum (TASK-COWORK-CATCHUP-9) was frozen 2026-08-23 because its handoff instructed recording several FR-9 items as shipped that are not — this addendum corrects that instead of repeating it.
+
+**Shipped (verified on disk 2026-08-26):**
+- FR-1 — pure domain predicate module `scripts/agents-flow/cowork-catchup-predicate.js` (`TASK-COWORK-CATCHUP-1`, DONE_VERIFIED).
+- FR-1/FR-4 wiring — `cowork-match-slots.js`'s CLI entrypoint computes and emits a `catchup_raw` array every tick (`TASK-COWORK-CATCHUP-2`, DONE_VERIFIED).
+- FR-2/FR-8 — per-dish-type `_dish_type_catchup_config` (`catchup_max_lateness_minutes`, `fire_timeout_seconds`) present in `docs/data/cowork-schedule.json`.
+- Per-slot `publish_date_basis` field (`vn_date` / `utc_date` / `iso_week_period` / `vn_date_saturday_anchor`) present on all live slots.
+
+**NOT shipped — do not cite these as done:**
+- FR-3 (delivery-evidence check via `task_list_held`) and FR-9 (per-caller consumer wiring): grep-confirmed zero references. `docs/agents/cowork-team/flow/catchup-check.md` does not exist. `scripts/agents-flow/cowork-tick-preflight.sh` has no Step 6.5 / no `catchup_raw` read. `scripts/agents-flow/cowork-guaranteed-slot-firer.sh` has no `mcp-call.sh` sourcing and never reads `catchup_raw` — it only matches the *current* tick's `slots[]` (unrelated to catch-up). The `is_catchup:true` tag this wiring would produce is emitted nowhere in the codebase.
+- FR-5 (structured per-miss-file record) — not implemented; no `docs/signals/cowork-guaranteed-slot-miss-*.json` writer exists anywhere.
+- FR-7 (reconciliation-based `last_fired`) — `docs/agents/cowork-team/flow/last-fired.md` Step 5b still implements the original 2026-07-23 post-spawn stamp (`WON_SLOTS`-based, stamped right after dispatch), not the `task_list_held`-`claimed_at`-based reconciler that §2.6 of the design specified. A 2026-08-23 change to that file added an unrelated de-stamp correction for a different (BGFAN-1 async-return-timing) bug; it does not implement FR-7.
+
+**Consequence:** `catchup_raw` has been correctly computed since 2026-07-28 and is consumed by nothing (confirmed live 2026-08-06 and again 2026-08-23 — see `po_note_20260806` and the freeze note on `TASK-COWORK-CATCHUP-9`). A guaranteed slot missed during a genuine host-standby / multi-hour gap today has no automated catch-up recovery and produces no structured miss record — its only real backstop remains this brief's own §5 mechanism (`cowork-guaranteed-slot-firer.sh`, F1-LAUNCHD-COWORK-BACKSTOP), which re-fires the *current* tick when no live session is up but does not reach back across a gap the host itself slept through. The three consumer rows that would have closed this gap: `TASK-COWORK-CATCHUP-3` (CANCELLED 2026-08-23), `TASK-COWORK-CATCHUP-4`/`-5` (BLOCKED pending re-spec). Widening/actuator follow-up is tracked under `FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY` (`TASK-COWORK-CATCHUP-SCOPE-PREDICATE`, `TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE`). Current full layer inventory: `docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md`.
+
+**Risk flags carried forward, unaffected by the above (still open, separate rows):** marker-lifecycle bugs (leak-on-bail, premature release — `feedback_chef_leaks_published_marker_on_silent_exit`, `feedback_chef_releases_published_marker_enables_peer_double_publish`); `digest-daily`'s UTC-date key basis is mirrored, not corrected (deliberate scope discipline, §1 of the 2026-07-22 design).
