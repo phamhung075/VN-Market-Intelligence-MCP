@@ -13,5 +13,11 @@
     "mechanism": "Identical shape to the already-FIXED S2/ILC resume-key defect (feedback_resume_key_ttl_expires_under_live_agent_inverting_dedup, resolved ecb825731) but on a DIFFERENT key namespace: that fix heartbeats task:<row-id>, it does not touch intent:<agent>:<key>. The PRE-CLAIM guard is the one CARD.md calls the hard gate.",
     "impact": "A peer session running the same PRE-CLAIM would see the key free and spawn a duplicate of a still-live agent. The router-side harness notice (Background agent still running) is out-of-band and unavailable to a peer terminal.",
     "suggested_direction": "Either heartbeat the intent key while the spawned agent is live, or raise ttl to exceed realistic agent runtime (architect/agent-father routinely 10-25min). Do NOT simply raise the constant without bounding it — the sibling fix showed an unbounded keepalive inverts the guard the other way; any bound must live outside the renewed lock."
+  },
+  "_processed": {
+    "fingerprint": "7b300c0f380df51796be2f81581c82f186a8058c4ca8fddb26a16d27d45ab224",
+    "processedAt": "2026-08-26T01:12:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
