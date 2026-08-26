@@ -1,0 +1,19 @@
+{
+  "from": "dev-pdf-extractor",
+  "to": "po",
+  "type": "task_proposal",
+  "priority": "P3",
+  "createdAt": "2026-08-26T07:27:21Z",
+  "payload": {
+    "title": "mcp-server bctcExtractReconcileJob re-fires a 20-request batch every 30min with no pacing against pdf-extractor's single extraction slot — AC-3/AC-4 companions of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+    "origin_row": "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+    "why_deferred": "Fix lives in apps/mcp-server/ — outside apps/pdf-extractor/ (dev-pdf-extractor's zone_restricted boundary). Cannot be implemented by this agent.",
+    "evidence": {
+      "ac3_answer": "threading.Semaphore(1) in PekEngineAdapter was DELIBERATELY chosen (REQ-PEK-9d/AC-PEK-4d, docs/architecture-briefs/2026-05-26-pek-integrate-design.md §2.x: 'prevents two concurrent model instances from doubling RAM' against the Docker --memory 2.5g cap; measured +845.4 MiB RSS growth per single extraction per pek_engine_adapter.py's own FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM comment). It was never a default value.",
+      "capacity_mismatch": "43 POST /pek-extract requests arrived in the 01Z hour on 2026-08-26 against 1 server-side slot. pek_engine_adapter.py's own comment names the caller: bctcExtractReconcileJob.ts (mcp-server) re-fires its whole still-pek_triggered batch (DEFAULT_BATCH_SIZE=20) every 30-min tick with no pacing.",
+      "which_side_should_change": "The CALLER, not the server. Raising server concurrency risks the container's OOM-kill threshold (see ac3_answer). Raising PEK_SEMAPHORE_WAIT_SECONDS was explicitly ruled out as a non-fix by PO on the origin row (po_ruling_20260826T0650Z)."
+    },
+    "recommendation": "File a P3 row for dev-mcp-server: give bctcExtractReconcileJob.ts either (a) a client-side market-hours gate (it currently burns pointless round-trips into the 02:00-07:59 UTC block window the guard already refuses), or (b) honor the detail.retry_after field the 503 response already carries, plus add inter-request/inter-batch pacing so a 20-request re-fire does not queue 19 requests behind pdf-extractor's single slot.",
+    "found_by": "dev-pdf-extractor, while closing AC-3/AC-4 of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S (session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb)"
+  }
+}
