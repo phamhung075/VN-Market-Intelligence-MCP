@@ -127,10 +127,54 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T17:12:02Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-26T17:37:33Z",
+    "_updated_by": "narrative-truth-gate",
     "archive": [],
     "rows": [
+      {
+        "id": "ntg-20260826T173733Z-financials-SHB-ed1c0e",
+        "ts": "2026-08-26T17:37:33Z",
+        "from": "digest-predict",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: digest-predict claimed no financials for SHB; compare_financials returned: | YoY | {\"current\":null,\"previous\":3,…",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "narrative_contradiction:digest-predict:compare_financials:SHB:2026-08-26",
+        "payload": {
+          "agent_id": "digest-predict",
+          "claim": "Chưa có dữ liệu BCTC Q gần nhất (absent).",
+          "tool": "compare_financials",
+          "ticker": "SHB",
+          "probe_ticker": "SHB",
+          "returned_value": "| YoY | {\"current\":null,\"previous\":3,\"changeAbsolute\":-3,\"changePct\":-100} | {\"current\":null,\"previous\":3,\"changeAbsolute\":-3,\"changePct\":-100} | {\"current\":null,\"previous\":0,\"changeAbsolute\":0,\"changePct\":null} | {\"curr",
+          "cycle": "2026-08-26",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260826T173731Z-financials-VIX-e5f773",
+        "ts": "2026-08-26T17:37:31Z",
+        "from": "digest-predict",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: digest-predict claimed no financials for VIX; compare_financials returned: | YoY | {\"current\":null,\"previous\":0,…",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "narrative_contradiction:digest-predict:compare_financials:VIX:2026-08-26",
+        "payload": {
+          "agent_id": "digest-predict",
+          "claim": "Chưa có dữ liệu BCTC Q gần nhất (absent, không phải lỗi).",
+          "tool": "compare_financials",
+          "ticker": "VIX",
+          "probe_ticker": "VIX",
+          "returned_value": "| YoY | {\"current\":null,\"previous\":0,\"changeAbsolute\":0,\"changePct\":null} | {\"current\":null,\"previous\":0,\"changeAbsolute\":0,\"changePct\":null} | {\"current\":null,\"previous\":0,\"changeAbsolute\":0,\"changePct\":null} | {\"curren",
+          "cycle": "2026-08-26",
+          "gate_version": "1"
+        }
+      },
       {
         "id": "sys-20260825T183933-7adf",
         "ts": "2026-08-25T18:39:33Z",
@@ -17344,19 +17388,20 @@
       {
         "id": "FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE",
         "type": "FIX",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "priority": "P1",
         "size": "L",
         "zone": "apps/pdf-extractor/",
         "owner": "dev-pdf-extractor",
         "next_agent": "dev-pdf-extractor",
         "depends": [
-          "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE"
+          "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE",
+          "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION"
         ],
         "created_at": "2026-08-26T01:22:10Z",
         "created_by": "po",
-        "updated_at": "2026-08-26T08:47:18Z",
-        "updated_by": "router (superseded-prose guard on 09:00Z unblock text)",
+        "updated_at": "2026-08-26T17:34:37Z",
+        "updated_by": "po/release-20260826T1734Z",
         "dedup_key": "pdfocr-orientation-corpus-sweep:79-files-312-pages",
         "files": [
           "scripts/migrations/reextract-pdf-ocr-orientation.ts",
@@ -17369,10 +17414,10 @@
         "title": "79 files / 312 pages of stored BCTC text in pdf_extracted_text still carry pre-fix rotation garble. The orientation fix (905e32be1 / 8d361eee9) is correct and shipped forward; this is purely stored-corpus invalidation. The 2026-08-26 sweep attempt was halted by live DB corruption and its 5-file/12-page progress was then reverted by the restore, so the corpus is back to a uniform 79/312.",
         "blocked_reason": "TWO HARD GATES, BOTH REAL. (1) DB HEALTH: the dev-pdf-extractor incident report states verbatim 'DO NOT re-run the sweep until the corruption question is resolved', and the sweep firing many back-to-back write transactions in a 4-minute window is the probable proximate trigger of the 2026-08-26 corruption. Unblocks when FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE closes. (2) VN MARKET HOURS: pdf-extractor must NEVER run 02:00-08:59Z on a weekday. A 79-file sweep runs well over an hour, so it must START at or after 09:00Z with margin, computed against real date -u output and never against a narrated clock. This row is deliberately status=BLOCKED rather than READY-with-a-prose-warning because dispatch gates are known to be blind to prose status_note and have auto-claimed a contraindicated row before.",
         "status_note": "PO TRIAGE 2026-08-26T01:16Z — merges THREE inbox envelopes into ONE row: the qa follow-up (named 2 files, understated scope), the router scope amendment (79 files / 312 pages, the correct scope, ~40x larger), and the sweep-outcome report. SCOPE, from the router measurement (independent, read-only, 15887 pages / 372 filenames scanned): 79 files, 312 garbled pages, 25 tickers (ACB BID BSR DBC DGC DHG DIG DPM DXG GAS HPG HSG HUT KBC KDC MWG SAB SHB VCI VHM VIC VJC VPB plus long-form CBTT filenames). Worst offenders VIC_2026_Q2 15/71, VIC_2025_Q4 14/72, KBC_2026_Q2 13/58, GAS-2025-kiem-toan 13/68. Every affected row has extracted_at between 2026-04-29 and 2026-08-24, i.e. all pre-orientation-fix — consistent with one already-fixed root cause. CALIBRATED DISCRIMINATOR, DO NOT RE-DERIVE IT: garbled if vietnamese_diacritic_density < 0.10 AND reversed_token_hits >= 3. Calibration on 4 known-garbled vs 5 known-correct pages separated cleanly with zero overlap (garbled density 0.017-0.058, hits 11-72; correct density 0.222-0.270, hits 0). Guards that matter: skip pages with under 200 alpha chars (short/blank pages are a DIFFERENT defect), and str()-coerce text_content because some rows store INTEGER and .isalpha() throws on them. DISCLOSED PRECISION LIMIT, carried forward honestly: 6/6 spot-checked pages were genuinely broken, but 1 of the 6 (SAB_2026_Q1 p10) was a near-blank total-OCR-miss rather than rotation garble — the predicate detects 'page is broken', which is slightly broader than 'page is rotated'. STATE AFTER THE 2026-08-26 INCIDENT: the restore reverted everything. The 5 files / 12 pages that had been conclusively fixed are gone, and the 17 files / 28 pages that the crashed sweep had left with ZERO rows were restored to their original garbled state by that same restore — so there is no longer a regression to undo and the corpus is uniformly back to its pre-sweep 79/312 baseline. That is a cleaner starting point, not a worse one. THE THREE SCRIPTS ARE LANDED AND VALIDATED CORRECT IN ISOLATION: the DB corruption was an environmental hazard the sweep exposed, not a defect in them. ALSO IN SCOPE, small and doc-only, flagged by dev-pdf-extractor: scripts/migrations/reextract-pdf-ocr-orientation.ts and its 2 new sibling scripts lack the standard journal_mode comment that every other scripts/migrations/*.ts touching market.db carries.",
-        "next_recheck_not_before": "2026-08-26T17:11:00Z",
         "po_gate_20260826T0536Z": "STAYS BLOCKED. This row had status=BLOCKED with blocked_by=null AND depends_on=null — the vacuous-truth shape where deps_satisfied() is trivially true and NO completion event can ever exist. The real gate is the same market-hours bar (re-OCR of 312 pages must not run 02:00-08:59Z weekdays), now written explicitly. UNBLOCK ACTION at/after 2026-08-26T09:00:00Z: set status=BACKLOG, next_agent=dev-pdf-extractor, dispatch_lane=dev-pdf-extractor.",
         "po_regate_20260826T0650Z": "DECISION C — GATE MOVED 09:00Z -> 17:11Z, NOT relaxed. 09:00Z was set against the VN market-close constraint alone. That is the wrong binding constraint for this row: a 79-file / 312-page re-OCR sweep is a heavy sustained load on container 417febec1a03, which is mid-flight on a 12h AC-7 cgroup-memory sampler series closing at 2026-08-26T17:11Z. Running the sweep at 09:00Z would contaminate that series and force a FIFTH restart of a measurement that has already been destroyed four times. 17:11Z satisfies both constraints at once (market long closed, sampler window complete).",
-        "router_supersede_20260826T0850Z": "SUPERSEDED-PROSE GUARD (router 2026-08-26T08:50Z). Any 09:00Z instruction on this row is DEAD TEXT, retained for provenance only. The binding gate is next_recheck_not_before=2026-08-26T17:11:00Z per po_regate_20260826T0650Z. Do NOT set status=BACKLOG before 17:11:00Z: the earlier 09:00Z bound was computed against VN market-close alone, while the real binding constraint is AC-7 sampler contamination. Specifically superseded: gate_note and po_gate_20260826T0536Z UNBLOCK ACTION lines, and acceptance AC-1 lower bound of 09:00:00Z (a floor, now weaker than the real gate - it does NOT authorise a 09:00Z start). Release actuator today is session-only cron 00545d31 (13 19 26 8 * = 19:13 local = 17:13Z); if this CLI session ends before then nothing releases these rows, because status=BLOCKED is admitted by no consumer allowlist - structural fix tracked at FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT (ready[], P0, architect). A fresh session must hand-release at/after 17:11:00Z."
+        "router_supersede_20260826T0850Z": "SUPERSEDED-PROSE GUARD (router 2026-08-26T08:50Z). Any 09:00Z instruction on this row is DEAD TEXT, retained for provenance only. The binding gate is next_recheck_not_before=2026-08-26T17:11:00Z per po_regate_20260826T0650Z. Do NOT set status=BACKLOG before 17:11:00Z: the earlier 09:00Z bound was computed against VN market-close alone, while the real binding constraint is AC-7 sampler contamination. Specifically superseded: gate_note and po_gate_20260826T0536Z UNBLOCK ACTION lines, and acceptance AC-1 lower bound of 09:00:00Z (a floor, now weaker than the real gate - it does NOT authorise a 09:00Z start). Release actuator today is session-only cron 00545d31 (13 19 26 8 * = 19:13 local = 17:13Z); if this CLI session ends before then nothing releases these rows, because status=BLOCKED is admitted by no consumer allowlist - structural fix tracked at FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT (ready[], P0, architect). A fresh session must hand-release at/after 17:11:00Z.",
+        "po_release_20260826T1734Z": "RELEASED FROM THE CLOCK, STILL GATED ON DB HEALTH — and the DB gate is now honest. blocked_reason gate (2) VN MARKET HOURS: spent for today, permanent for 02:00-08:59Z weekdays. blocked_reason gate (1) DB HEALTH: NOT discharged. The restore row FIX-MARKETDB-20260826-RESTORE-... is status=DONE (not DONE_VERIFIED) in done[], so deps_satisfied() already holds this row; more importantly the substantive bar is the CORRUPTION QUESTION, and the restore row's own status_note hands that off — 'Next: architect investigates FIX-SQLITE-DOCKER-VIRT-CORRUPTION root cause'. That row is READY, next_agent=developer, OPEN. This sweep firing many back-to-back write transactions in a 4-minute window is the probable proximate trigger of the 2026-08-26 corruption, so re-running it before the root cause is known risks a second corruption of a database restored only hours ago. FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION is therefore ADDED to .depends — a real edge with a real completion event, replacing a status=BLOCKED freeze that had none. This row must NOT be dispatched on the clock alone."
       },
       {
         "id": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
@@ -17563,7 +17608,7 @@
         "id": "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE",
         "type": "SPIKE",
         "size": "M",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "priority": "P1",
         "zone": "apps/pdf-extractor/",
         "next_agent": "dev-pdf-extractor",
@@ -17573,13 +17618,13 @@
         "baseline_pass": true,
         "created_at": "2026-08-26T05:41:12Z",
         "created_by": "po/triage-20260826T0536Z",
-        "updated_at": "2026-08-26T08:47:18Z",
-        "updated_by": "router (superseded-prose guard on 09:00Z unblock text)",
+        "updated_at": "2026-08-26T17:34:37Z",
+        "updated_by": "po/release-20260826T1734Z",
         "blocked_by": null,
         "depends_on": [
-          "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S"
+          "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+          "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
         ],
-        "next_recheck_not_before": "2026-08-26T17:11:00Z",
         "timebox": 180,
         "dedup_key": "pdfx-ocr:production-bctc-extraction-quality-baseline-on-the-tesseract-vie-default",
         "files": [
@@ -17605,17 +17650,17 @@
         "po_correction_20260826T0604Z": "PREMISE CORRECTION by po 2026-08-26T06:04Z, binding on AC-2/AC-3. This row calls the current production configuration (OCR_TEXT_BACKEND unset) the tesseract-vie configuration and treats the resulting numbers as a paddle-free reference. THAT IS FALSE, and a baseline labelled that way would be invalid. infrastructure/ocr_worker.py contains ZERO references to OCR_TEXT_BACKEND, so ocr_pages_worker runs on the production default, and at ocr_worker.py:266 it constructs PaddleOCR(lang=\"vi\") in the ProcessPoolExecutor child for any page where Tesseract yields fewer than LOW_TESSERACT_PAGE_CHARS (default 30) characters. Any run of this row will therefore silently include PaddleOCR output on exactly the worst pages, which are the pages the diacritic-presence metric is most sensitive to. REQUIRED: AC-2 must additionally report, per document, the count of pages that tripped that rescue and the per-page character counts before and after, and AC-3 must label the baseline as tesseract-vie-plus-sub-30-char-PaddleOCR-rescue, naming the LOW_TESSERACT_PAGE_CHARS and BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT values in force. A genuinely paddle-free reference arm, if wanted, is obtained by setting BCTC_LOW_TESSERACT_PAGE_CHARS=0 for one run. Scoring of that rescue belongs to DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH, which depends_on this row; this row only has to stop mislabelling its own baseline.",
         "po_regate_20260826T0650Z": "DECISION C — GATE MOVED 09:00Z -> 17:11Z, and RE-SEQUENCED. Same sampler-contamination reason as the orientation sweep: establishing a quality baseline means running the extractor over named exemplars, which is exactly the load the AC-7 series must not see. ADDITIONAL DEPENDENCY ADDED THIS TICK: this row is now sequenced BEHIND FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S. A quality baseline measured over a corpus in which ~29% of accepted extractions silently evaporate (13 of 45 report_ids on 2026-08-26 died with SemaphoreContendedError after the 202) is not a baseline — the denominator is unknown and the survivor set is selected by queue luck. Fix the silent drop, then measure.",
         "router_supersede_20260826T0850Z": "SUPERSEDED-PROSE GUARD (router 2026-08-26T08:50Z). Any 09:00Z instruction on this row is DEAD TEXT, retained for provenance only. The binding gate is next_recheck_not_before=2026-08-26T17:11:00Z per po_regate_20260826T0650Z. Do NOT set status=BACKLOG before 17:11:00Z: the earlier 09:00Z bound was computed against VN market-close alone, while the real binding constraint is AC-7 sampler contamination. Specifically superseded: gate_note and po_gate_20260826T0536Z UNBLOCK ACTION lines, and acceptance AC-1 lower bound of 09:00:00Z (a floor, now weaker than the real gate - it does NOT authorise a 09:00Z start). Release actuator today is session-only cron 00545d31 (13 19 26 8 * = 19:13 local = 17:13Z); if this CLI session ends before then nothing releases these rows, because status=BLOCKED is admitted by no consumer allowlist - structural fix tracked at FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT (ready[], P0, architect). A fresh session must hand-release at/after 17:11:00Z.",
-        "router_seqdep_20260826T0850Z": "SEQUENCING DEP NOW SATISFIED (router 2026-08-26T08:50Z, verified on the live board): po_regate_20260826T0650Z sequenced this row BEHIND FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S so the baseline would not be measured over a corpus where ~29% of accepted extractions silently evaporate. That row is now status=DONE_VERIFIED in done_verified[]. The silent-drop precondition is met; the only remaining bar is the 17:11Z sampler window."
+        "router_seqdep_20260826T0850Z": "SEQUENCING DEP NOW SATISFIED (router 2026-08-26T08:50Z, verified on the live board): po_regate_20260826T0650Z sequenced this row BEHIND FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S so the baseline would not be measured over a corpus where ~29% of accepted extractions silently evaporate. That row is now status=DONE_VERIFIED in done_verified[]. The silent-drop precondition is met; the only remaining bar is the 17:11Z sampler window.",
+        "po_release_20260826T1734Z": "RELEASED — BLOCKED->BACKLOG. 17:11Z gate DISCHARGED: AC-7 series complete/intact (148 samples 05:11:30Z-17:25:12Z, container 417febec1a03, RestartCount=0) and VN market shut. depends_on FIX-PDFX-PEK-EXTRACT-202 verified DONE_VERIFIED. NEW REAL DEP, replacing the dead BLOCKED freeze: UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT. Reason, binding: AC-3 must name the image id + git_sha, and po_correction_20260826T0604Z requires the baseline to name the BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT in force. That constant ships in 1db5f9f81, which is NOT in the running image — so a baseline measured today would describe a configuration (unbounded rescue fires, git_sha label 'unknown') that ceases to exist at the next rebuild, and would not be comparable with DECIDE's AC-3/AC-4 which mandate a post-1db5f9f81 image on the SAME document set. Rebuild first, then measure. AC-1's 09:00Z floor is spent; the 02:00-08:59Z weekday bar is PERMANENT and no picker can see it — do not dispatch inside it."
       },
       {
         "id": "FIX-BCTC-CTG-BALANCE-SHEET-REFINE",
         "size": "M",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "title": "CTG balance-sheet section missing from carried-forward bctc_table_rows — needs fresh agentic-refine pass against CTG's source report",
         "type": "FIX",
         "zone": "apps/pdf-extractor/",
         "priority": "high",
-        "blocked_on": "gateway-blind defect resolution (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md) — fresh agentic-refine pass requires mcp__gateway__call_tool to be reliably available",
         "depends_on": [
           "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD"
         ],
@@ -17630,8 +17675,8 @@
         ],
         "detail_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
         "notes": "Not a defect in the carry-forward script; the script correctly refused to promote PARTIAL status because the source rows lack balance-sheet data. This is a genuine data-completeness gap requiring re-extraction from the original CTG report source. Escalated by QA 2026-07-10 per the task's own AC-TRACK1-3 clause (if source rows are still corrupted / incomplete, escalate — found incomplete). Mint timing: after gateway-blind defect resolves (blocker confirmed live as of 2026-07-10T01:24Z). QA Review Record indicates the AC-TRACK1-3 escalation is legitimate and correctly routed to backlog.",
-        "updated_at": "2026-08-26T06:51:41Z",
-        "updated_by": "po/triage-20260826T0650Z",
+        "updated_at": "2026-08-26T17:34:37Z",
+        "updated_by": "po/release-20260826T1734Z",
         "owner": "dev-pdf-extractor",
         "next_agent": "dev-pdf-extractor",
         "promoted_at": "2026-08-26T05:40:53Z",
@@ -17640,17 +17685,17 @@
         "claimed_at": null,
         "claimed_by": null,
         "owner_client_session": null,
-        "next_recheck_not_before": "2026-08-26T17:11:00Z",
         "status_note": "router 2026-08-26T05:41:48Z — BOUNDED-1 claimed this at 05:40Z and the router REVERTED the claim without dispatching. next_agent=dev-pdf-extractor and the VN market-hours prohibition (02:00-08:59Z weekdays) bars running the extractor; a CTG balance-sheet refine cannot be verified without running it. SECOND, INDEPENDENT reason: the AC-7 passive sampler (PID 86980) is mid-series against container 417febec1a03 until ~17:11Z, and container recreation has already defeated that AC FOUR times — a pdf-extractor rebuild/restart would make it five and destroy the measurement the PaddleOCR rescue path is gated on. Re-dispatch >=09:00Z weekday, and even then do NOT rebuild/restart/recreate pdf-extractor before 17:11Z. NOTE: next_recheck_not_before is honoured by the qa-drain picker only — BOUNDED-1 does not read it, so this row WILL be re-promoted next tick unless PO gates it properly (cf. backlog row FIX-PDFX-MARKET-HOURS-GUARD-ONLY-ON-PEK-EXTRACT-FOUR-OCR-ROUTES-UNGUARDED).",
         "blocked_by": null,
         "router_note_markethours_gate": "Router 2026-08-26T05:49:30Z: lane-moved ready[]->backlog[] and re-gated to match the four rows PO gated this tick (BLOCKED is illegal in ready[] per validator Stage 1b). Reverted a BOUNDED-1 claim at 05:40Z: market hours 02:00-08:59Z, plus the AC-7 sampler is running against container 417febec1a03 until ~17:11Z and a 5th recreation would destroy the series. next_recheck_not_before alone was NOT sufficient: bounded1 and the ready-lane consumer both `include` scripts/lib/devteam-eligibility yet NEVER CALL is_gated_not_before -- only devteam-review-claim-qa-drain.jq:199 calls it. The 06:07Z tick would have re-picked this claim-clean READY row inside market hours. 4th live row depending on AC-2 of FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT.",
-        "po_regate_20260826T0650Z": "DECISION C — GATE MOVED 09:00Z -> 17:11Z. A CTG balance-sheet agentic-refine cannot be verified without running the extractor, so it inherits BOTH the market-hours bar and the AC-7 sampler window. 09:00Z clears only the first. 17:11Z clears both."
+        "po_regate_20260826T0650Z": "DECISION C — GATE MOVED 09:00Z -> 17:11Z. A CTG balance-sheet agentic-refine cannot be verified without running the extractor, so it inherits BOTH the market-hours bar and the AC-7 sampler window. 09:00Z clears only the first. 17:11Z clears both.",
+        "po_release_20260826T1734Z": "RELEASED — BLOCKED->BACKLOG, and its two stale gates are both discharged on live evidence. (1) blocked_on 'gateway-blind defect — fresh agentic-refine pass requires mcp__gateway__call_tool to be reliably available' (filed 2026-07-10) is DEAD: probed live 2026-08-26T17:32Z through mcp__gateway__call_tool(server=vn-market), got a real payload back. Field DELETED so no reader can re-honour it; this note is the provenance. (2) depends_on TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD resolves DONE_VERIFIED and is KEPT, not stripped. It is absent from every live task_board lane but present in docs/data/orch/archive/2026-07.json .done_tasks[181], and dep_status_map($archive) has resolved cold-archived deps since FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (2026-07-28); all four pickers thread --slurpfile archive. Verified by running the real scripts/lib/devteam-eligibility.jq: deps_satisfied=true. Pointing at an archived id is CORRECT here — stripping it would destroy provenance for zero mechanical gain. RESIDUAL, unchanged: verifying a CTG balance-sheet refine means running the extractor, so the permanent 02:00-08:59Z weekday bar applies and no picker can see it."
       },
       {
         "id": "DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH",
         "type": "SPIKE",
         "size": "M",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "priority": "P1",
         "zone": "apps/pdf-extractor/",
         "next_agent": "dev-pdf-extractor",
@@ -17660,13 +17705,12 @@
         "baseline_pass": true,
         "created_at": "2026-08-26T06:04:12Z",
         "created_by": "po/decision-20260826T0604Z",
-        "updated_at": "2026-08-26T08:47:18Z",
-        "updated_by": "router (superseded-prose guard on 09:00Z unblock text)",
+        "updated_at": "2026-08-26T17:34:37Z",
+        "updated_by": "po/release-20260826T1734Z",
         "blocked_by": null,
         "depends_on": [
           "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE"
         ],
-        "next_recheck_not_before": "2026-08-26T17:11:00Z",
         "timebox": 180,
         "dedup_key": "pdfx-ocr:ocr-pages-worker-per-page-paddle-rescue-quality-and-fire-budget",
         "files": [
@@ -17689,7 +17733,8 @@
         ],
         "dedup_checked": "po 2026-08-26T06:0xZ. Hot lanes via scripts/po-board-dedup-search.sh (jq PATH rooted at task_board, so telemetry objects sharing the task-row shape cannot false-positive) on /ocr_pages_worker|LOW_TESSERACT|BCTC_MAX_PADDLE|rasterize|ocr_worker/ --all-lanes: exactly ONE hit, FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, read in full -- it owns container memory headroom, not the quality question or the budget value. Cold archives 2026-06/07/08.json scanned with a path-resolving jq over every id-bearing object (NOT first-match grep, per the related[]-precedes-real-row hazard) on the same pattern: ONE hit, done_tasks.246 FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK, a pytest sys.modules isolation bug, not this subject. MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE lists ocr_worker.py in files[] but its ACs establish a tesseract-vie reference baseline and settle pek_engine_adapter lang=vi grid inertness -- it never scores this rescue; declared as depends_on rather than duplicated.",
         "po_regate_20260826T0650Z": "DECISION C — GATE MOVED 09:00Z -> 17:11Z and left BLOCKED deliberately. This row asks PO to rule on whether the per-page PaddleOCR(lang=vi) rescue should stay live and whether the 4-fires/document cap is the right number. PO CANNOT rule yet and says so plainly: the ruling needs the tesseract-vie production baseline (MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE), which is itself now sequenced behind the silent-drop fix. DEFERRED-NOT-DECLINED. The reason is a missing measurement, not a missing opinion, and inventing a number here would repeat exactly the defect the row was filed to protest — that 1db5f9f81 capped the rescue at 4 with no product ruling behind it.\n\nALSO RECORDED: the related observability signal rtr-20260826T0639-ocrworkerloggingnotobservable was RETRACTED BY ITS OWN PRODUCER this tick. Do NOT treat 'ocr_worker.py emits no logs' as a live premise for this row. Logging is configured (infrastructure/lifespan.py:37); the module is IDLE, not dark — /extract, its only route, was called twice since container start.",
-        "router_supersede_20260826T0850Z": "SUPERSEDED-PROSE GUARD (router 2026-08-26T08:50Z). Any 09:00Z instruction on this row is DEAD TEXT, retained for provenance only. The binding gate is next_recheck_not_before=2026-08-26T17:11:00Z per po_regate_20260826T0650Z. Do NOT set status=BACKLOG before 17:11:00Z: the earlier 09:00Z bound was computed against VN market-close alone, while the real binding constraint is AC-7 sampler contamination. Specifically superseded: gate_note and po_gate_20260826T0536Z UNBLOCK ACTION lines, and acceptance AC-1 lower bound of 09:00:00Z (a floor, now weaker than the real gate - it does NOT authorise a 09:00Z start). Release actuator today is session-only cron 00545d31 (13 19 26 8 * = 19:13 local = 17:13Z); if this CLI session ends before then nothing releases these rows, because status=BLOCKED is admitted by no consumer allowlist - structural fix tracked at FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT (ready[], P0, architect). A fresh session must hand-release at/after 17:11:00Z."
+        "router_supersede_20260826T0850Z": "SUPERSEDED-PROSE GUARD (router 2026-08-26T08:50Z). Any 09:00Z instruction on this row is DEAD TEXT, retained for provenance only. The binding gate is next_recheck_not_before=2026-08-26T17:11:00Z per po_regate_20260826T0650Z. Do NOT set status=BACKLOG before 17:11:00Z: the earlier 09:00Z bound was computed against VN market-close alone, while the real binding constraint is AC-7 sampler contamination. Specifically superseded: gate_note and po_gate_20260826T0536Z UNBLOCK ACTION lines, and acceptance AC-1 lower bound of 09:00:00Z (a floor, now weaker than the real gate - it does NOT authorise a 09:00Z start). Release actuator today is session-only cron 00545d31 (13 19 26 8 * = 19:13 local = 17:13Z); if this CLI session ends before then nothing releases these rows, because status=BLOCKED is admitted by no consumer allowlist - structural fix tracked at FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT (ready[], P0, architect). A fresh session must hand-release at/after 17:11:00Z.",
+        "po_release_20260826T1734Z": "RELEASED — BLOCKED->BACKLOG. The clock gate is spent; the REAL gate is and always was depends_on MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE, which deps_satisfied() enforces on its own. DEFERRED-NOT-DECLINED stands unchanged: PO still cannot rule on whether the rescue stays or what the fire budget should be, because the measurement does not exist. NEW HARD INPUT for AC-5/AC-6, measured this window, do not re-derive: an ordinary concurrent BCTC workload (POST /extract burst 14:02-14:15Z with 8x 429 Too Many Requests, plus a 61-page pek-extract at 14:46:18Z) drove cgroup memory.current to 2,681,626,624 B at 14:04:15Z — 2,727,936 B (2.6 MiB) under the 2,684,354,560 B cap, i.e. 99.90%. 894 memory.events.max increments, all inside 14:04-14:49Z; oom=0 and oom_kill=0 on all 148 samples; anon fully returned (1.384 GiB at 14:54Z, below the 1.577 GiB pre-burst rest). Read it correctly: zero OOM kills is NOT headroom. Measured headroom for any NEW in-container allocator on the current image is ~2.6 MiB at peak, so AC-5 must sweep against that ceiling, not against a nominal 2.5 GiB. STALE PREMISE, do not re-import: 'ocr_worker.py emits zero log lines' was RETRACTED BY ITS OWN PRODUCER (signal rtr-20260826T0639-ocrworkerloggingnotobservable); logging is configured at infrastructure/lifespan.py:37 and the module is IDLE, not dark."
       },
       {
         "id": "FIX-FLEET-DEPLOYED-VS-MAIN-UNANSWERABLE-GIT-SHA-BUILD-ARG-IS-OMITTABLE",
@@ -23405,7 +23450,7 @@
         "priority": "P1",
         "size": "M",
         "zone": "apps/pdf-extractor/",
-        "next_agent": "po",
+        "next_agent": "ops",
         "owner": "ops",
         "created_at": "2026-08-15T09:22:28Z",
         "created_by": "po/triage-20260815T0915Z-pdfx-ops-deploy",
@@ -23421,8 +23466,8 @@
           "OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND"
         ],
         "sequencing": "DISPATCH ORDER (PO 2026-08-15, still stands): if this row and UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW reach the same ops session, take the rag-service read-only durability sampling FIRST, then this. Never interleave. That row's D1 window cannot close before 2026-08-24T14:37Z; do not touch rag-service 16c59b5e929f.",
-        "updated_at": "2026-08-26T06:10:23Z",
-        "updated_by": "po/decision-20260826T0604Z",
+        "updated_at": "2026-08-26T17:34:37Z",
+        "updated_by": "po/release-20260826T1734Z",
         "status_note": "[ops 2026-08-26T05:11Z AC-7 SAMPLER ARMED] Persistent sampler: scripts/pdf-extractor-cgroup-sampler.sh, running (nohup), sampling container 417febec1a03 every 5min into docs/incidents/data/pdf-extractor-ac7-sampler.csv. 2 rows verified (header+1 sample). Metrics per AC-7 spec; container_id stamped on every row (C1). 12h window completes 2026-08-26T17:11Z. B1-B4 per sibling row.",
         "claimed_at": null,
         "claimed_by": null,
@@ -23432,7 +23477,8 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT",
         "owner_client_session": null,
         "po_ac_rescope_20260826T0604Z": "DEPLOY-AC RE-SCOPING by po 2026-08-26T06:04Z. A discharge verified against a since-replaced image asserts nothing about what runs now, so this row's acceptance is re-scored against the LIVE container 417febec1a03 / image sha256:4e431bca (built 2026-08-25T23:13:41Z, started 00:33:39Z, label vn.market.git_sha=\"unknown\"). AC-1 VOID: it was discharged 2026-08-15 against image sha256:5d7d36db / git_sha 0c9380859, an image that no longer exists locally; the identity it certified is unrecoverable. AC-2 STANDS, but ONLY because it was independently re-verified by content probe today (interface/pek_run_helper.py 7 malloc_trim hits, interface/routes_extract.py 4, both byte-matching repo) -- NOT because the 08-15 discharge carried forward. AC-3 VOID: it certified a container that has since been retired; the current container has been recreated and the AC-7 sampler series destroyed four times. AC-4 unchanged (already SUPERSEDED by AC-7/AC-8). AC-5 VOID in the same sense already flagged in po_ruling: its dmesg kills belong to a retired container. AC-6 unaffected (process AC). GENERAL RULE, adopt fleet-wide: any acceptance criterion whose subject is the state of a RUNNING container or a BUILT image is void the moment that container or image is replaced, and must be re-discharged, not inherited. Until FIX-FLEET-DEPLOYED-VS-MAIN-UNANSWERABLE-GIT-SHA-BUILD-ARG-IS-OMITTABLE lands there is no cheap way to notice a replacement, so re-verify by content probe before quoting any such discharge.",
-        "po_rebuild_scope_20260826T0604Z": "REBUILD SCOPE, binding when this row finally runs. The rebuild must carry commit 1db5f9f81 (2026-08-26T02:32Z), not just c3fd44766 -- a SECOND redeploy debt accrued on this service after the 2026-08-25T23:13Z build. Post-rebuild verification is by IMAGE ID plus a four-file content probe inside the new container: main.py must show ProcessPoolExecutor(max_workers=1, max_tasks_per_child=1); infrastructure/ocr_worker.py must show BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT and 5 malloc_trim hits; interface/pek_run_helper.py 7 hits; interface/routes_extract.py 4 hits. Do NOT verify by the vn.market.git_sha label -- it reads the literal string unknown on this image. Build with --build-arg GIT_SHA=$(git rev-parse HEAD) so the next probe does not have to be manual. TIMING, unchanged and binding: no rebuild, restart or recreate of container 417febec1a03 before 2026-08-26T17:11Z (AC-7 sampler window), and never during 02:00-08:59Z on a weekday."
+        "po_rebuild_scope_20260826T0604Z": "REBUILD SCOPE, binding when this row finally runs. The rebuild must carry commit 1db5f9f81 (2026-08-26T02:32Z), not just c3fd44766 -- a SECOND redeploy debt accrued on this service after the 2026-08-25T23:13Z build. Post-rebuild verification is by IMAGE ID plus a four-file content probe inside the new container: main.py must show ProcessPoolExecutor(max_workers=1, max_tasks_per_child=1); infrastructure/ocr_worker.py must show BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT and 5 malloc_trim hits; interface/pek_run_helper.py 7 hits; interface/routes_extract.py 4 hits. Do NOT verify by the vn.market.git_sha label -- it reads the literal string unknown on this image. Build with --build-arg GIT_SHA=$(git rev-parse HEAD) so the next probe does not have to be manual. TIMING, unchanged and binding: no rebuild, restart or recreate of container 417febec1a03 before 2026-08-26T17:11Z (AC-7 sampler window), and never during 02:00-08:59Z on a weekday.",
+        "po_ac7_result_20260826T1734Z": "AC-7 WINDOW CLOSED — RESULT (po 2026-08-26T17:34Z; this row's non_goals says measurement results belong here). SERIES COMPLETE AND INTACT: 148 samples 05:11:30Z-17:25:12Z (12h13m >= the required 12h), container 417febec1a03 on every row, RestartCount=0, StartedAt 00:33:39Z predates sample 1 — no 5th recreation. NUMBERS, cgroup only: memory.current 1,689,071,616 B -> 2,288,406,528 B; PEAK 2,681,626,624 B at 14:04:15Z = 2,727,936 B under the 2,684,354,560 B cap (99.90%). memory.events.max 1645 -> 2539, and ALL +894 increments fall in 14:04:15Z-14:49:30Z — flat before, flat after: one episode, not a ramp. oom=0, oom_kill=0 on all 148. Anon returned fully (1.384 GiB at 14:54Z, under the 1.577 GiB pre-burst rest). CAUSE, from the container log: POST /extract burst 14:02-14:15Z with 8x 429 Too Many Requests (concurrency semaphore saturated) plus POST /pek-extract 14:46:18Z on 61-page CTG_2025_Q4. The window was therefore NOT passive — it captured a real concurrent workload, which makes it more informative than specified. RULING: 0 OOM kills is NOT evidence of headroom; an ordinary workload reached 99.90% of cap on the CURRENT image, leaving ~2.6 MiB at peak. REBUILD AUTHORISED as of 17:11Z, scope per po_rebuild_scope_20260826T0604Z (must carry 1db5f9f81). BEFORE rebuilding, kill scripts/pdf-extractor-cgroup-sampler.sh (PID 86980): it is `while true` with NO stop condition and re-resolves the container id every loop, so it will silently follow the new container into the same CSV. Analyse rows <= 2026-08-26T17:25:12Z only. next_agent po->ops: AC-1 is a rebuild and this row's own title says Docker/infra is out of the dev charter; owner was already ops. AC-6 unchanged — ops hands the numbers back and PO closes."
       },
       {
         "id": "FIX-PRECLAIM-INTENT-KEY-TTL-600-EXPIRES-UNDER-LONG-RUNNING-AGENT",
