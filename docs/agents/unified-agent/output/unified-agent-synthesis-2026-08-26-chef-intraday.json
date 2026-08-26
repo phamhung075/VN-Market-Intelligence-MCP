@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "cycle_id": "chef-intraday-20260826T0713Z",
+    "dish_type": "intraday",
+    "slot_id": "chef-intraday",
+    "scheduled_utc": "2026-08-26T07:13:00.000Z",
+    "date_utc": "2026-08-26",
+    "date_vn": "2026-08-26",
+    "authored_by": "unified-agent",
+    "published_at": "2026-08-26T07:22:45Z",
+    "marker_key": "published:chef-intraday:2026-08-26:14",
+    "marker_ttl_seconds": 3600
+  },
+  "convergence": {
+    "clusters_qualified": 4,
+    "cluster_types": ["macro_extreme", "real_estate_sector", "tech_convergence", "ag_breakout"],
+    "convergence_triggered": true
+  },
+  "market_signal": {
+    "macro_driver": "Brent crude -7.47% (85.51 USD/bbl, -4.77σ below mean)",
+    "vn_carry_status": "intact (VND 25,890 vs 26,500 threshold)",
+    "breadth": "negative (ADL -423, -11 net new highs)",
+    "volatility_regime": "NORMAL",
+    "sentiment_z": -0.245,
+    "foreign_room_utilization_pct": 9.74
+  },
+  "tickers_analyzed": [
+    {"ticker": "FPT", "signal": "volume_spike + geopolitical", "conviction": "ACCUMULATE", "pillars": "3/4"},
+    {"ticker": "VCB", "signal": "news_mention", "conviction": "HOLD", "pillars": "3/4"},
+    {"ticker": "VHM", "signal": "ta_oversold + news", "conviction": "HOLD_NEUTRAL", "pillars": "1/4"},
+    {"ticker": "DIG", "signal": "ta_bb_breakout_up", "confidence": 60},
+    {"ticker": "MSN", "signal": "ta_bb_breakout_up", "confidence": 60},
+    {"ticker": "DBC", "signal": "ta_bb_breakout_up", "confidence": 60}
+  ],
+  "quality_verdict": "full",
+  "phase": "slowdown",
+  "convergence": true
+}
