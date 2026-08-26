@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-26T15:21:12Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-26T15:48:42Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24096,7 +24097,7 @@
         "created_at": "2026-08-23T09:00:00Z",
         "created_by": "pm",
         "handoff_ref": "docs/handoffs/TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION.md",
-        "updated_at": "2026-08-25T03:00:58Z",
+        "updated_at": "2026-08-26T15:46:54Z",
         "commit_sha": "735dfa815cb1e97864498877c968674bb7bff159",
         "agent_father_completed_at": "2026-08-23T08:54:35Z",
         "agent_father_completed_by": "agent-father",
@@ -24105,7 +24106,10 @@
         "reviewed_by": "po",
         "po_review_verdict": "REWORK — 6 of 7 AC verified independently, 1 AC falsified. NOT DONE_VERIFIED.",
         "dedup_key": "doc-accuracy:triage-signals-cold-archive-correction-block",
-        "rework_note": "PO INDEPENDENT SIGN-OFF 2026-08-25T02:5xZ (dev-team review-lane SECONDARY-drain, done[]-origin owner-triage class). Every claim below was executed, not read off the review_note.\n\nVERIFIED PASS (6/7):\n(1) AC-1/2/3 — the dated CORRECTION block IS present at docs/agents/po/flow/triage-signals.md:68-73 carrying the 20/86/6=112 and 0/51/57=109 month-by-month table. Re-derived at the row own commit 735dfa815cb1e97864498877c968674bb7bff159 by the same method the block cites (grep -c across docs/data/orch/archive/2026-0{6,7,8}.json): system_issue=112, system-issue=108(+1 hot row = 109). Both figures reproduce.\n(2) AC-5 — the falsified assertions are gone. The string \"<=1-2 fires each\" survives in the file exactly ONCE, inside the CORRECTION block, as a QUOTATION of the claim being falsified. That is correct authoring, not a residue. The replacement instruction (run scripts/audits/guard-signal-type-coverage.sh --check rather than trusting a static count, including the new one) is present.\n(3) AC-6 — the Pipeline-B audit-handoff table row IS present AND is provably inside the guard-parsed range. Verified mechanically, not visually: replayed the guard own two read-only extractors (pipeline_b_section awk + extract_type_column sed/grep) against the live doc. Parsed Pipeline-B set = [audit-handoff, auditor_cycle_loss, auditor_cycle_missing, cron_fire_gap, data_stale, db_freshness, db_integrity_breach, microservice_degraded, narrative_contradiction, signal_feedback, system-issue]. audit-handoff is in it.\n(4) AC-7 — signal row tra-20260822T203234 is still OPEN, status=READ, NOT closed. It is no longer in the hot .signal_queue.rows[]; it now lives in docs/data/orch/archive/2026-08.json .signal_rows[] with status READ. That is routine cold-eviction, not a close. PO did not touch it. NOTE for the reworker: its disposition still never happened, and once cold it has no reader at all.\n\nFAILED (1/7) — AC-4, and this is why the row is not DONE_VERIFIED:\nThe CORRECTION block asserts \"at 109-112 fires each these are the two largest type classes in the whole ~100+-type namespace\". That is FALSE, and it was ALREADY FALSE when the block was written. Measured by the block own stated method (grep -c \"\\\"type\\\": \\\"<t>\\\"\" across the three archive months + the hot file), 2026-08-25:\n  signal_feedback          230   (to=po 229)\n  narrative_contradiction  144\n  microservice_degraded     121\n  system_issue              115\n  system-issue              115\nsystem_issue / system-issue rank 4th and 5th, not 1st and 2nd. As of the row own commit 735dfa8 the same three already led: signal_feedback=226 vs system_issue=112 / system-issue=108. So this is not measurement drift after the fact — the ranking claim was never verified, it was carried over verbatim from architect brief docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md line 56, which contains the same error. The block that exists to delete a falsified prose claim shipped a fresh falsified prose claim in the same paragraph.\n\nREWORK SCOPE — ONE CLAUSE, nothing else. Do NOT re-touch the count table (it is correct as-of-then and correctly disclaimed as stale). Replace the \"two largest type classes\" clause with either the measured rank (4th/5th of the to=po namespace) or, preferably, no ranking claim at all — a rank is exactly as perishable as the count the same paragraph tells the reader not to trust. Fix the same sentence in the architect brief line 56 or record there that it is superseded, otherwise the next reader re-imports it.\n\nGUARD RE-RUN (I ran it, I did not trust the review_note): bash scripts/audits/guard-signal-type-coverage.sh --check EXITS 1 today. The review_note claim of \"PASS post-edit (8/8 live to=po types routed)\" is NOT reproducible. This is NOT attributable to this row: (a) Pipeline-A checking did not exist when this row was authored — it landed later in commit 4e7aa7eaf; (b) all 4 current Pipeline-B unrouted types (container_capacity_pressure, memory_loop_breach, memory_pressure_transient, system_issue) already have their own tracking rows created 2026-08-23T23:43Z and later, i.e. after this row completed at 2026-08-23T08:54:35Z. The audit-handoff bridge this row shipped is still parsed and still routed. Not a regression of this row.\n\nSIDE EFFECT DISCLOSURE: running --check is NOT read-only. Its self-filing fallback minted 4 backlog rows into the live orch-state.json during my verification run (02:52:22-25Z). All 4 were subject-duplicates of the pre-existing backlog row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and I removed them in the same tick, folding their evidence into that row instead."
+        "rework_note": "PO INDEPENDENT SIGN-OFF 2026-08-25T02:5xZ (dev-team review-lane SECONDARY-drain, done[]-origin owner-triage class). Every claim below was executed, not read off the review_note.\n\nVERIFIED PASS (6/7):\n(1) AC-1/2/3 — the dated CORRECTION block IS present at docs/agents/po/flow/triage-signals.md:68-73 carrying the 20/86/6=112 and 0/51/57=109 month-by-month table. Re-derived at the row own commit 735dfa815cb1e97864498877c968674bb7bff159 by the same method the block cites (grep -c across docs/data/orch/archive/2026-0{6,7,8}.json): system_issue=112, system-issue=108(+1 hot row = 109). Both figures reproduce.\n(2) AC-5 — the falsified assertions are gone. The string \"<=1-2 fires each\" survives in the file exactly ONCE, inside the CORRECTION block, as a QUOTATION of the claim being falsified. That is correct authoring, not a residue. The replacement instruction (run scripts/audits/guard-signal-type-coverage.sh --check rather than trusting a static count, including the new one) is present.\n(3) AC-6 — the Pipeline-B audit-handoff table row IS present AND is provably inside the guard-parsed range. Verified mechanically, not visually: replayed the guard own two read-only extractors (pipeline_b_section awk + extract_type_column sed/grep) against the live doc. Parsed Pipeline-B set = [audit-handoff, auditor_cycle_loss, auditor_cycle_missing, cron_fire_gap, data_stale, db_freshness, db_integrity_breach, microservice_degraded, narrative_contradiction, signal_feedback, system-issue]. audit-handoff is in it.\n(4) AC-7 — signal row tra-20260822T203234 is still OPEN, status=READ, NOT closed. It is no longer in the hot .signal_queue.rows[]; it now lives in docs/data/orch/archive/2026-08.json .signal_rows[] with status READ. That is routine cold-eviction, not a close. PO did not touch it. NOTE for the reworker: its disposition still never happened, and once cold it has no reader at all.\n\nFAILED (1/7) — AC-4, and this is why the row is not DONE_VERIFIED:\nThe CORRECTION block asserts \"at 109-112 fires each these are the two largest type classes in the whole ~100+-type namespace\". That is FALSE, and it was ALREADY FALSE when the block was written. Measured by the block own stated method (grep -c \"\\\"type\\\": \\\"<t>\\\"\" across the three archive months + the hot file), 2026-08-25:\n  signal_feedback          230   (to=po 229)\n  narrative_contradiction  144\n  microservice_degraded     121\n  system_issue              115\n  system-issue              115\nsystem_issue / system-issue rank 4th and 5th, not 1st and 2nd. As of the row own commit 735dfa8 the same three already led: signal_feedback=226 vs system_issue=112 / system-issue=108. So this is not measurement drift after the fact — the ranking claim was never verified, it was carried over verbatim from architect brief docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md line 56, which contains the same error. The block that exists to delete a falsified prose claim shipped a fresh falsified prose claim in the same paragraph.\n\nREWORK SCOPE — ONE CLAUSE, nothing else. Do NOT re-touch the count table (it is correct as-of-then and correctly disclaimed as stale). Replace the \"two largest type classes\" clause with either the measured rank (4th/5th of the to=po namespace) or, preferably, no ranking claim at all — a rank is exactly as perishable as the count the same paragraph tells the reader not to trust. Fix the same sentence in the architect brief line 56 or record there that it is superseded, otherwise the next reader re-imports it.\n\nGUARD RE-RUN (I ran it, I did not trust the review_note): bash scripts/audits/guard-signal-type-coverage.sh --check EXITS 1 today. The review_note claim of \"PASS post-edit (8/8 live to=po types routed)\" is NOT reproducible. This is NOT attributable to this row: (a) Pipeline-A checking did not exist when this row was authored — it landed later in commit 4e7aa7eaf; (b) all 4 current Pipeline-B unrouted types (container_capacity_pressure, memory_loop_breach, memory_pressure_transient, system_issue) already have their own tracking rows created 2026-08-23T23:43Z and later, i.e. after this row completed at 2026-08-23T08:54:35Z. The audit-handoff bridge this row shipped is still parsed and still routed. Not a regression of this row.\n\nSIDE EFFECT DISCLOSURE: running --check is NOT read-only. Its self-filing fallback minted 4 backlog rows into the live orch-state.json during my verification run (02:52:22-25Z). All 4 were subject-duplicates of the pre-existing backlog row FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS and I removed them in the same tick, folding their evidence into that row instead.",
+        "secondary_claimed_at": "2026-08-26T15:46:53Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "agent-father"
       },
       {
         "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
@@ -24484,12 +24488,14 @@
         "router_note_qadrain_revert_20260826T0754Z": "Router reverted a qa-drain lane-move this tick WITHOUT dispatching qa. Reason: blocked_by=OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT is ready[]/READY/next_agent=ops, gated next_recheck_not_before=2026-08-26T09:00:00Z — NOT landed. PO adjudication 0650Z is explicit: qa re-verifies once that row AC-2 lands; only arrival in the running binary is outstanding. The qa-drain selects on effective_next_agent==qa alone and is blind to both blocked_by and this prose, so it will re-pick this row every tick until the redeploy lands. Not charged to redispatch_count (no qa work happened).",
         "qa_not_before": "2026-08-27T09:00:00Z",
         "router_note_qa_gate_20260826T0817Z": "2026-08-26T08:18:05Z router: qa_not_before set to 2026-08-26T09:30:00Z. This is a TIME PROXY for the real condition, which is blocker OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT reaching a terminal DONE state — that blocker is still ready[]/READY/next_agent=ops, itself gated next_recheck_not_before=2026-08-26T09:00:00Z. PO adjudication 0650Z: qa re-verifies only once the redeploy lands in the running binary. The qa-drain selects on effective_next_agent==qa alone and is blind to blocked_by and to prose, so without a gate key it re-picks this row EVERY tick (observed 07:37Z and 08:07Z, reverted both times). qa_not_before is one of the three keys is_gated_not_before() honors (scripts/lib/devteam-eligibility.jq:684/694) and the qa-drain is the ONE picker that calls it. If the redeploy slips past 09:30Z this row becomes eligible again and must be re-gated or reverted once more — the gate is a churn brake, not a dependency check."
-      },
+      }
+    ],
+    "qa": [
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
         "type": "FIX",
         "title": "system-auditor notebook-compose bypass has no mechanical forcing function -- add a NEW commit-msg git hook (not pre-commit, which cannot read the commit message) rejecting/warning any commit to docs/agent-memory/notebooks/system-auditor.md lacking a notebook-compose OK/WARN marker",
-        "status": "REVIEW",
+        "status": "QA",
         "priority": "P0",
         "size": "S",
         "zone": "scripts/git-hooks/",
@@ -24504,12 +24510,14 @@
           "docs/policies/dev-standards.md"
         ],
         "status_note": "Implemented per docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A. scripts/git-hooks/commit-msg (new, this repos first commit-msg hook) + install.sh wiring (4 hooks: pre-push/pre-commit/post-commit/commit-msg, verified re-run) + commit-msg-notebook-compose-marker.test.sh (5/5 pass) + dev-standards.md CANONICAL pointer. Committed 16e2096bb. DEVIATION FROM BRIEF (found+fixed): the briefs literal regex fails to match the real nested-bracket marker shape (live commit efe62d83d, double-bracket form) because the negated-bracket-class cannot cross the inner closing bracket. Widened to tolerate one level of nesting, re-verified against all 4 real observed shapes plus negative controls (bare [skip ci], OK-substring words TOKEN/BROKEN outside brackets). AC-1 (5 test cases) and AC-4 (install.sh links 4 hooks) both verified this cycle. AC-2 (live WARN observed on stderr for the next narrated notebook commit) NOT yet observable: no commit has touched docs/agent-memory/notebooks/system-auditor.md since hook install (2026-08-26T~15:16Z) -- the most recent such commit (56f41ab1c) predates install. Mechanism verified via isolated scratch-repo regression suite only; QA/next tick should confirm the live WARN fires on the next real system-auditor notebook commit lacking a marker. AC-3 (48h adoption-ratio trend) is explicitly out of this cycles scope per the briefs own Verification Gate #3.",
-        "updated_at": "2026-08-26T15:21:12Z",
+        "updated_at": "2026-08-26T15:48:42Z",
         "reviewed_ready_at": "2026-08-26T15:21:12Z",
-        "implemented_by": "developer"
+        "implemented_by": "developer",
+        "claimed_at": "2026-08-26T15:48:41Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review"
       }
     ],
-    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
@@ -24600,7 +24608,7 @@
         "last_served_tick": "2026-08-26T15:12:10Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-26T12:49:55Z"
+        "last_served_tick": "2026-08-26T15:43:32Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-26T13:10:55Z"
@@ -24615,7 +24623,7 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T15:41:37Z",
+    "_updated_at": "2026-08-26T15:43:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
