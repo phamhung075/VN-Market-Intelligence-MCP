@@ -25,3 +25,35 @@ Zone: Docker/VPS/DB operations, incident response, close-gate verification.
 
 **Result**: ✅ BOTH ROWS READY FOR QA
 
+
+## 2026-08-26 SQLite Corruption Recovery — market.db
+
+**Incident:** 5th recurrence of FIX-SQLITE-DOCKER-VIRT-CORRUPTION (Docker Desktop bind-mount advisory-locking issue). Triggered during pdf-extractor sweep, affecting intraday_foreign_flow_5m (Tree 180) and pdf_extracted_text (Tree 96). 16501 error lines in uncapped integrity_check (not 100).
+
+**Diagnosis:**
+- 8247 index-only errors (Tree 180)
+- 7787 rowid out of order errors (Tree 180)
+- 188 NUMERIC type corruption (pdf_extracted_text)
+- Reindex attempted but failed (rowid defects unfixable via REINDEX)
+- Clean backup available: 2026-08-25T04:30Z (verified with quick_check=ok)
+
+**Recovery Executed (02:31-02:33Z UTC):**
+1. Stopped writers: mcp-server, pdf-extractor (containers halted)
+2. Backed up corrupt file: market.db.corrupt-2026-08-26T0031Z (434 MB)
+3. Restored from verified clean backup: market.db (424 MB from 2026-08-25T04:30Z)
+4. Verified restore: PRAGMA quick_check = ok
+5. Restored 28 deleted pdf pages from backup (all files: DBC/DIG/DXG/DGC/SHB/VJC variants)
+6. Restarted services: mcp-server, pdf-extractor (both healthy)
+7. Verified by test write + PRAGMA integrity_check = ok
+
+**Data Impact:**
+- pdf_extracted_text: 15814→15763 rows (restored from 20h-stale backup, legitimate pre-sweep count)
+- intraday_foreign_flow_5m: live data from 2026-08-25 04:30Z restored (will be current after market open 02:00Z)
+- agent_signals: 150→150 rows (backup clean)
+- No uncommitted data lost (backup from before the pdf-extractor sweep incident)
+
+**Root Cause (Confirmed):**
+Documented class: Docker Desktop shared volume + SQLite advisory locking mismatch across host/container boundary. Bind-mounted market.db accessed concurrently by host-side bun:sqlite (pdf-extractor sweep) and container-side mcp-server connections without reliable fcntl lock enforcement via virtiofs/FUSE layer. This is a known recurrence (04-25, 07-13, 07-30, 08-06, now 08-26) — the underlying defect predates this session.
+
+**Next Steps (separate task):**
+Root-cause investigation needed: FIX-SQLITE-DOCKER-VIRT-CORRUPTION (5th recurrence requires systemic fix, not repeated recover cycles). Leading hypothesis: move market.db off bind-mounted volume to named volume, or establish host-side write serialization gate. Minted board row for architect/ops collaboration.
