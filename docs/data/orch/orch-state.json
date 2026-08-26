@@ -1153,6 +1153,17 @@
         "severity": "MED",
         "status": "READ",
         "payload_ref": "docs/handoffs/SIGNAL-notebook-retention-doc-remedy-failed-20260826.md"
+      },
+      {
+        "id": "rtr-20260826T1947-axisd-agebound-nearmiss",
+        "ts": "2026-08-26T19:47:35Z",
+        "from": "router",
+        "to": "po",
+        "type": "detector_defect",
+        "summary": "Step 2.4 Axis D age-bound fails to clear a structurally-prior-period marker when the prior fire ran later-in-day than the current dispatch. Live case 2026-08-26T19:47:35Z, hand-dispatch of chef-evening: held row published:chef-evening:2026-08-25 (period key = YESTERDAY) had claimed_at=1787687605 (2026-08-25T19:53:25Z), AGE_SEC=86050 < CADENCE_SEC=86400, so Axis D took the CURRENT-PERIOD branch and did not `continue`. Root cause: AGE_SEC is arithmetic on claimed_at, which only tracks the period boundary if each fire claims at a non-decreasing time-of-day; yesterdays chef-evening claimed at 19:53:25Z (8m late vs the 45 19 cron) while todays dispatch ran at 19:47Z, opening a 5m50s band in which a prior-period marker reads as current. Band width = (prior claim lateness) - (current dispatch lateness); recurs on any slot whose fire jitter varies, daily 86400s and weekly 604800s alike. Axis C would have cleared it, but only via the known-bad path (roster holds dispatcher sessions, markers are held by agent sessions - see feedback_router_hand_dispatch_double_fires_guaranteed_slot, false-clears 7/7), so the two axes disagree and neither is sound here. Cheap direction (PO to rule): compare the period-key SUFFIX already embedded in the task_id against the slots own publish_date_basis, instead of (or as a guard on) pure claimed_at arithmetic - the string `2026-08-25` is unambiguous where the age is not. This dispatch was correctly suppressed anyway, but by ps-grep evidence (live pid 70235 running the slot), NOT by Axis D - the axis was right by coincidence, and the same band inverts to a FALSE-CLEAR whenever the current fire runs later-in-day than the prior one.",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
