@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T11:22:21Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-08-26T12:47:54Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -1376,7 +1376,7 @@
         "type": "system-issue",
         "summary": "136 telegram reports unresolved, all status=NEW, zero ever claimed, oldest 2d - no consumer drains them",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -24764,9 +24764,45 @@
         "last_served_tick": "2026-08-26T11:19:21Z"
       }
     },
-    "_updated_at": "2026-08-26T12:12:14Z",
+    "_updated_at": "2026-08-26T12:48:20Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "2481d0673b40ea5a39dec14295e071a4518ccd0e625cf694d81c6497e22c0138",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "HIGH",
+        "payload": "136 telegram reports unresolved, all status=NEW, zero ever claimed, oldest 2d - no consumer drains them",
+        "createdAt": "2026-08-26T12:39:44Z",
+        "drained_at": "2026-08-26T12:47:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "11bead93cee41f7bd6d9c9081e9776a5d60329e1a7e39a22e409b93c0482ae65",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md",
+          "line_count": 152,
+          "cap": 600,
+          "byte_count": 42263,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 6263,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T12:23:52Z",
+        "drained_at": "2026-08-26T12:48:20Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
