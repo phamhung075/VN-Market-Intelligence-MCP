@@ -163,7 +163,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-08-25T20:21:24Z",
+      "last_fired": "2026-08-26T20:21:31Z",
       "trigger_id": "trig_01QgnBwnEyzLj5as55i53tea",
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "superseded",

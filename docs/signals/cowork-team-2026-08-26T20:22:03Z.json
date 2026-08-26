@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T20:22:03Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-08-26T20:21:31Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 118,
+    "signal_backlog": 32,
+    "note": "Single guaranteed slot tnb-audit (cron 13 20 * * *), last_fired was 2026-08-25T20:21:24Z so no Layer-C same-day double-fire. Fanout gate NORMAL (load 5.99/24, headroom 2799MB). cycle_snapshot_promoted=false again: snapshot keyed 20:20 vs nominal 20:15, 44s apart - occurrence 10 of the wallclock-vs-nominal keying defect, freshness cannot be the cause at that margin."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T20:22:03Z"
+}
