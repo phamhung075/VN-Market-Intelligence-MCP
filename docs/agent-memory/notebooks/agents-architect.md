@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-23T14:04:55Z
-
-**Brief:** `docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md`
-
-Row `FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE`: root-caused to Step 2.4's prefix-only match in `dispatch-claim/SKILL.md` (not chef.md's own exact-match gate, not any `MARKER_TTL` constant — that gate compares exact per-period strings and never collides). Ruled Axis D (cadence-bounded prefix match, keyed on `cowork-schedule.json`'s already-live `publish_date_basis` field, zero date-basis duplication, zero `apps/mcp-server` change) landed together with Axis C (AC-3/AC-5 stale-owner presence check) in one Step 2.4 revision — Axis D closes AC-1 deterministically where presence-only would only close it contingent on the claiming dispatcher session having died. New finding: `digest-sunday` carries the identical latent overlap defect at weekly scale (691200s TTL vs 604800s cadence = 86400s/week window), closed for free by the same fix.
-
-**Signal dropped:** `docs/signals/fix-cowork-published-marker-ttl-cadence-mismatch-2026-08-23T14:04:55Z.json` → pm
-
----
-
 ## 2026-08-23T14:15:51Z
 
 **Brief:** `docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md`
@@ -49,3 +39,17 @@ Ruled (a)+(b) and explicitly **not a new mechanism**: port the live code-plane s
 Row `FIX-CADENCE-COWORK-DUP-MARKET-WATCHER` (P1, cross-service) — investigated, found this row is a duplicate of already-shipped, already-DONE_VERIFIED work from my own 2026-08-14 brief (`docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md`): commits `662d1fcc3` (supersede-mutex script + wiring into `cowork-match-slots.js` `finish()`) + `5918c55fe` (schedule `supersedes` field + pathspec fixes), both QA `DONE_VERIFIED` 2026-08-14T17:38-39Z, cold-evicted to `docs/data/orch/archive/2026-08.json` before this row was promoted 2026-08-15T00:40Z off the identical incident. Re-verified live this cycle (not cited from either prior artifact): cron values unchanged (still structurally colliding by construction), test suite re-run 32/0 pass, and independently confirmed working on TODAY's real 16:00Z tick — `market-watcher-eod` fired alone (commit `3c3f18bc6`), `market-watcher-offhours.last_fired` stayed at `12:04:50Z` (did not advance), two independent planes (git notebook history + schedule file bookkeeping) agree. Recommended remedy: none new — the shipped declarative same-tick supersede-mutex already IS the correct primary (achieves de-overlap's goal with zero cron-timing change; per-slot notebook split re-rejected, 4 `fb-market-poster` files still read `market-watcher.md` by fixed path, re-confirmed live). One non-blocking loose end flagged for agent-father: stale "Field is INERT..." wording in `cowork-schedule.json` `market-watcher-eod._note`.
 
 **Signal dropped:** `docs/signals/fix-cadence-cowork-dup-market-watcher-dedup-review.json` → po
+
+---
+
+## 2026-08-26T18:04:48Z
+
+**Brief:** `docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md`
+
+User escalation (direct, no pre-existing row): agents pass every gate and still ship unobserved behaviour. Re-verified the router-supplied anchor myself rather than trusting it: `FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL` commit `4b4bfea7a` landed 19:15:49Z, qa `DONE_VERIFIED` 19:53:57Z, frontend image built 20:06:57Z — DONE_VERIFIED 13min before the image existed, confirmed via `git show`/`docker images`, not narrated. Root-caused past the single row: two live qa verification paths exist (`docker-deployment-runbook.md` Close Gate Step 5, deploy-aware but for branch-based work; `qa/flow/main.md` Direct-Commit Verify, no rebuild step, and per its own header the path for "every one of its 32 live source rows" — the anchor case's actual path). The defect is a flow gap, not a skipped step.
+
+Found and explicitly routed around two more dead substrates rather than depending on either: `scripts/verify-deploy-sha.sh`'s `vn.market.git_sha` label — live-probed 9/11 running services report `"unknown"`, `docker-compose.yml` has zero `GIT_SHA` wiring, already tracked (`FIX-FLEET-DEPLOYED-VS-MAIN-UNANSWERABLE-GIT-SHA-BUILD-ARG-IS-OMITTABLE`, P1 backlog, not re-minted); and orch-sentinel's own OH-2 ("Behavioral-Verification Coverage Map") — scorecard frozen at its first LITE run 2026-07-22, OH-2.1-3 still read "(pending first FULL run)" 5 weeks later, FULL cron never armed, already tracked (`FIX-ORCH-SENTINEL-OH4-CRONS-NEVER-ARMED...`, P2 backlog, `depends_on` a P3 that's also unpicked, not re-minted).
+
+Design: mint-time `behavior_predicate{cmd,expect}` (P0/P1 `apps/` rows only — the ~6.9%-of-commits population that ships in a built image) + deploy-time `behavior_probe` riding ops's already-mandatory Post-Rebuild Health Verification (timestamp-gated against the row's commit, since the SHA label is dead — not a new gate on every commit, sampled once per rebuild batch) + new orch-sentinel check OH-2.4 (a genuinely new 5th axis — "does the product behave," not a duplicate of OH-2's existing 4 policy/architecture/tool/file axes — promoted to FULL+LITE so it gets real data from the cron that actually runs) + a PO-gated 3-rung remediation ladder reusing the existing `oh2_2/oh4_2/oh4_3`-style OH-STATE consecutive-failure counter, no new infra. Explicit removals: qa's per-behavioral-AC free-text re-derivation is replaced by a probe citation; Close Gate Step 5's unstructured prose gets the same machine-checked predicate; zero new crons/agents — rides two already-unconditional steps. 7 files scoped for agent-father in brief §9.
+
+**Signal dropped:** `docs/signals/behavioral-verification-gate-deploy-aware-ordering-2026-08-26T18:04:48Z.json` → agent-father

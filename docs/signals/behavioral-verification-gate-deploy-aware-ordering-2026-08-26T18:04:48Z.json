@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md",
+  "priority": "high",
+  "summary": "User escalation: agents pass every gate and still ship unobserved behaviour. Anchor: qa DONE_VERIFIED FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL 13min before its image was built (re-verified). Design: mint-time behavior_predicate (P0/P1 apps/ rows only) + deploy-time behavior_probe riding ops's already-mandatory Post-Rebuild Health Verification (timestamp-gated, NOT the confirmed-dead vn.market.git_sha label) + new orch-sentinel OH-2.4 ratio (FULL+LITE, extends OH-2, does not duplicate) + PO-gated remediation ladder reusing the existing OH-STATE counter pattern. 7 files listed in brief §9. Explicitly does not depend on or re-mint 2 already-dead, already-tracked substrates (SHA label, OH-2/4 FULL cron never armed).",
+  "createdAt": "2026-08-26T18:04:48Z"
+}
