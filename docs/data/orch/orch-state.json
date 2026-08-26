@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-26T12:26:01Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "TASK-COWORK-CATCHUP-9",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s) (1 from review[], 0 from done[]), highest-ranked TASK-COWORK-CATCHUP-9 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-26T12:54:32Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24183,7 +24184,7 @@
         "next_agent": "developer",
         "created_at": "2026-08-23T23:41:24Z",
         "created_by": "po (triage of dev-team CORRECTION envelope 68531dca, 2026-08-24)",
-        "updated_at": "2026-08-24T22:24:11Z",
+        "updated_at": "2026-08-26T12:52:32Z",
         "dedup_key": "orch-apply:cas-window-misses-caller-read-transform-gap",
         "origin_signal_id": "68531dca05f022a240858d2fc6ced44f863ba60e567587c38722304aa1e5d8dc",
         "title": "orch-apply.sh's CAS window opens AFTER the caller's jq already read the file, so a stale full-document candidate silently reverts a peer's lane-move — and nothing downstream catches it because conservation compares magnitudes, which a revert preserves",
@@ -24212,7 +24213,10 @@
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-24T22:24:11Z",
-        "status_note": "\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commits 894a6617e+4adbf5b1b): AC-1/2/3/5 verified live (109/109 wrapper tests re-run, orch-apply.sh:259 conservation call confirmed unconditional/non-bypassable, LANE-BACKWARD-SINGLE-TOLERATED fixture read at source). AC-3's threshold=1 + AC-1's caller-baseline being adopted by ZERO real callers (grep-verified repo-wide) means the ORIGINAL bug's 1-row stale-revert shape (not just the reproduced 5-row incident) still sails through undetected -- confirmed via the test file's own single-id fixture. AC-4 ('callers migrated OR a tracked follow-up per caller') is UNMET on both disjuncts: no caller migrated, and no tracked-follow-up artifact exists anywhere (board/archive/decisions/notebooks all grepped, zero hits) -- 'tracked as a follow-up' is prose-only in the commit msg/implementation_note/WORK.md, not a discoverable board row. Fix: (a) migrate >=1 real caller end-to-end, or (b) mint an actual findable follow-up board row naming every caller to migrate + correct the implementation_note. Full analysis: decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S202."
+        "status_note": "\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commits 894a6617e+4adbf5b1b): AC-1/2/3/5 verified live (109/109 wrapper tests re-run, orch-apply.sh:259 conservation call confirmed unconditional/non-bypassable, LANE-BACKWARD-SINGLE-TOLERATED fixture read at source). AC-3's threshold=1 + AC-1's caller-baseline being adopted by ZERO real callers (grep-verified repo-wide) means the ORIGINAL bug's 1-row stale-revert shape (not just the reproduced 5-row incident) still sails through undetected -- confirmed via the test file's own single-id fixture. AC-4 ('callers migrated OR a tracked follow-up per caller') is UNMET on both disjuncts: no caller migrated, and no tracked-follow-up artifact exists anywhere (board/archive/decisions/notebooks all grepped, zero hits) -- 'tracked as a follow-up' is prose-only in the commit msg/implementation_note/WORK.md, not a discoverable board row. Fix: (a) migrate >=1 real caller end-to-end, or (b) mint an actual findable follow-up board row naming every caller to migrate + correct the implementation_note. Full analysis: decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S202.",
+        "secondary_claimed_at": "2026-08-26T12:52:31Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer"
       },
       {
         "id": "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION",
@@ -24630,7 +24634,9 @@
         "router_note_qadrain_revert_20260826T0754Z": "Router reverted a qa-drain lane-move this tick WITHOUT dispatching qa. Reason: blocked_by=OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT is ready[]/READY/next_agent=ops, gated next_recheck_not_before=2026-08-26T09:00:00Z — NOT landed. PO adjudication 0650Z is explicit: qa re-verifies once that row AC-2 lands; only arrival in the running binary is outstanding. The qa-drain selects on effective_next_agent==qa alone and is blind to both blocked_by and this prose, so it will re-pick this row every tick until the redeploy lands. Not charged to redispatch_count (no qa work happened).",
         "qa_not_before": "2026-08-27T09:00:00Z",
         "router_note_qa_gate_20260826T0817Z": "2026-08-26T08:18:05Z router: qa_not_before set to 2026-08-26T09:30:00Z. This is a TIME PROXY for the real condition, which is blocker OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT reaching a terminal DONE state — that blocker is still ready[]/READY/next_agent=ops, itself gated next_recheck_not_before=2026-08-26T09:00:00Z. PO adjudication 0650Z: qa re-verifies only once the redeploy lands in the running binary. The qa-drain selects on effective_next_agent==qa alone and is blind to blocked_by and to prose, so without a gate key it re-picks this row EVERY tick (observed 07:37Z and 08:07Z, reverted both times). qa_not_before is one of the three keys is_gated_not_before() honors (scripts/lib/devteam-eligibility.jq:684/694) and the qa-drain is the ONE picker that calls it. If the redeploy slips past 09:30Z this row becomes eligible again and must be re-gated or reverted once more — the gate is a churn brake, not a dependency check."
-      },
+      }
+    ],
+    "qa": [
       {
         "id": "TASK-COWORK-CATCHUP-9",
         "title": "FR-10: Documentation updates and flow clarifications",
@@ -24639,11 +24645,11 @@
         "priority": "P0",
         "zone": "docs/",
         "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "REVIEW",
+        "status": "QA",
         "depends_on": null,
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-08-26T12:26:01Z",
+        "updated_at": "2026-08-26T12:54:32Z",
         "next_agent": "qa",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
         "updated_by": "developer",
@@ -24655,10 +24661,12 @@
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "dispatch_lane": "qa",
-        "review_note": "[developer 2026-08-26T12:25Z] RE-SCOPED per router's on-the-merits freeze (po 2026-08-23) — did NOT execute the handoff verbatim. Verdicts per touch point, all disk-verified: (1) cowork-schedule.json `guaranteed` semantics comment — STILL-VALID + unowned (no overlap with FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA's delivery_proof field nor TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE's on_miss/catchup_scope fields), but wrote a CORRECTED version (handoff's proposed text overclaimed live catch-up delivery) — landed via `_notes.guaranteed_field_semantics` inside a peer cowork-team tick's own commit d6144f64c (its Step 5b last_fired writer re-serialized the whole document and picked up my uncommitted Edit-tool change before I could commit it myself; content verified byte-identical+correct at HEAD, no data lost, no separate commit possible). (2) match-slots.md catchup_raw contract — ALREADY DONE by TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (DONE_VERIFIED, commit f4e944454, 2026-08-23) — wrote nothing. (3) spawn-fanout.md is_catchup:true note — NO-LONGER-TRUE (grep-confirmed: no is_catchup tag emitted anywhere in the codebase; its producer row TASK-COWORK-CATCHUP-3 is CANCELLED) and a materially-equivalent accurate note already shipped there (agent-father, commit df08ec793) — wrote nothing. (4) durability-brief addendum — wrote the ACCURATE version: FR-1 (cowork-catchup-predicate.js, CATCHUP-1 DONE_VERIFIED)/FR-2+FR-8 (_dish_type_catchup_config present)/publish_date_basis all confirmed SHIPPED; FR-3 (task_list_held delivery check)/FR-5 (structured miss record)/FR-7 (reconciliation-based last_fired)/FR-9 (per-caller wiring) all confirmed NOT shipped — catchup-check.md absent, cowork-tick-preflight.sh has no Step 6.5, cowork-guaranteed-slot-firer.sh never reads catchup_raw or sources mcp-call.sh, last-fired.md Step 5b is still the original post-spawn stamp not a claimed_at reconciler — instead of the false \"per-caller wiring shipped\" narrative the frozen handoff specified. Historical brief body untouched, addendum appended at end (commit cdd159a49). (5) cron-runbook — this row's own handoff never assigned it under Files to modify (TLDR mentions it only to defer to TASK-COWORK-CATCHUP-10/agent-father) — wrote nothing.\nVerification: jq empty docs/data/cowork-schedule.json valid; node scripts/agents-flow/cowork-schedule-consistency.test.js 13/13 pass; node scripts/agents-flow/cowork-match-slots.js exit 0, catchup_raw still 8 candidates (no regression). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S130 (§ STEP dev-T9). Notebook: docs/agent-memory/notebooks/developer.md session 2026-08-26T12:20:00Z.\nFiles changed: docs/data/cowork-schedule.json (via peer commit d6144f64c), docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md (commit cdd159a49). No apps/mcp-server code touched (docs-only row) -- bun test/tsc N/A. -> qa.\n"
+        "review_note": "[developer 2026-08-26T12:25Z] RE-SCOPED per router's on-the-merits freeze (po 2026-08-23) — did NOT execute the handoff verbatim. Verdicts per touch point, all disk-verified: (1) cowork-schedule.json `guaranteed` semantics comment — STILL-VALID + unowned (no overlap with FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA's delivery_proof field nor TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE's on_miss/catchup_scope fields), but wrote a CORRECTED version (handoff's proposed text overclaimed live catch-up delivery) — landed via `_notes.guaranteed_field_semantics` inside a peer cowork-team tick's own commit d6144f64c (its Step 5b last_fired writer re-serialized the whole document and picked up my uncommitted Edit-tool change before I could commit it myself; content verified byte-identical+correct at HEAD, no data lost, no separate commit possible). (2) match-slots.md catchup_raw contract — ALREADY DONE by TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (DONE_VERIFIED, commit f4e944454, 2026-08-23) — wrote nothing. (3) spawn-fanout.md is_catchup:true note — NO-LONGER-TRUE (grep-confirmed: no is_catchup tag emitted anywhere in the codebase; its producer row TASK-COWORK-CATCHUP-3 is CANCELLED) and a materially-equivalent accurate note already shipped there (agent-father, commit df08ec793) — wrote nothing. (4) durability-brief addendum — wrote the ACCURATE version: FR-1 (cowork-catchup-predicate.js, CATCHUP-1 DONE_VERIFIED)/FR-2+FR-8 (_dish_type_catchup_config present)/publish_date_basis all confirmed SHIPPED; FR-3 (task_list_held delivery check)/FR-5 (structured miss record)/FR-7 (reconciliation-based last_fired)/FR-9 (per-caller wiring) all confirmed NOT shipped — catchup-check.md absent, cowork-tick-preflight.sh has no Step 6.5, cowork-guaranteed-slot-firer.sh never reads catchup_raw or sources mcp-call.sh, last-fired.md Step 5b is still the original post-spawn stamp not a claimed_at reconciler — instead of the false \"per-caller wiring shipped\" narrative the frozen handoff specified. Historical brief body untouched, addendum appended at end (commit cdd159a49). (5) cron-runbook — this row's own handoff never assigned it under Files to modify (TLDR mentions it only to defer to TASK-COWORK-CATCHUP-10/agent-father) — wrote nothing.\nVerification: jq empty docs/data/cowork-schedule.json valid; node scripts/agents-flow/cowork-schedule-consistency.test.js 13/13 pass; node scripts/agents-flow/cowork-match-slots.js exit 0, catchup_raw still 8 candidates (no regression). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S130 (§ STEP dev-T9). Notebook: docs/agent-memory/notebooks/developer.md session 2026-08-26T12:20:00Z.\nFiles changed: docs/data/cowork-schedule.json (via peer commit d6144f64c), docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md (commit cdd159a49). No apps/mcp-server code touched (docs-only row) -- bun test/tsc N/A. -> qa.\n",
+        "claimed_at": "2026-08-26T12:54:31Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review"
       }
     ],
-    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
@@ -24749,7 +24757,7 @@
         "last_served_tick": "2026-08-26T11:51:05Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-26T04:42:49Z"
+        "last_served_tick": "2026-08-26T12:49:55Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-26T09:44:06Z"
@@ -24764,7 +24772,7 @@
         "last_served_tick": "2026-08-26T11:19:21Z"
       }
     },
-    "_updated_at": "2026-08-26T12:48:20Z",
+    "_updated_at": "2026-08-26T12:49:55Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
