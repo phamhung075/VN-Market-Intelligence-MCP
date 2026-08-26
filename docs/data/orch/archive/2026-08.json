@@ -19794,6 +19794,40 @@
         }
       },
       "po_review_note": "PO SIGN-OFF 2026-08-26T15:08:05Z (Review-Lane SECONDARY-Drain). Independently re-verified, not narrated from prose: (1) AC-1 scrub HOLDS at current HEAD -- bash scripts/audits/verify-notebook-uuid-provenance-gate.sh (default, last 8 commits) shows ZERO RULE1 hits on all 3 named files (agent-father.md, dev-team.md, qa.md), confirming developer's 2026-08-22 review_note is still true today, not stale. (2) AC-2 validator already run by developer; re-confirmed fleet-wide this tick: 59 tracked notebooks scanned, 10 RULE1 hits total, ALL on ONE file -- docs/agent-memory/notebooks/tran-ngoc-bau.md -- zero on this row's own scrub targets. (3) AC-3 (flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE default warn->reject) CONFIRMED still unsafe: the fresh scan's tran-ngoc-bau.md hits include its MOST RECENT commit (967aea78fabb, heading c136 2026-08-25T20:13-20:32Z, this session=7a47f7c6-...) -- the raw-UUID-in-heading convention is active as of yesterday, not stale history. Flipping the fleet-wide default today would immediately hard-block tran-ngoc-bau's very next notebook commit -- exactly the fleet-memory-stranding failure this row's own AC-1 STRICT ORDERING section exists to prevent, against a 4th agent outside this row's files[] scope. THIS OVERRULES po_fold_20260824T2258Z's 'flip anyway' recommendation, written before this fresh verification and reading the recurrence as proof warn-mode 'failed' rather than as proof AC-3's own precondition (no other active unscoped producer) is not yet met. DISPOSITION: DONE_VERIFIED for this row's own scoped deliverable (3-file scrub + validator run, both independently confirmed). AC-3 execution is not this row's to finish -- gated on new row FIX-TNB-NOTEBOOK-UUID-HEADING-ACTIVE-PRODUCER-SCRUB (backlog[], next_agent=agent-father, minted this tick), per the developer's own AC-4 request to route the scope decision to PO rather than silently widen or force the flip. GIT_NOTEBOOK_UUID_PROVENANCE_MODE left at default (warn) -- NOT flipped."
+    },
+    {
+      "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
+      "type": "FIX",
+      "title": "system-auditor notebook-compose bypass has no mechanical forcing function -- add a NEW commit-msg git hook (not pre-commit, which cannot read the commit message) rejecting/warning any commit to docs/agent-memory/notebooks/system-auditor.md lacking a notebook-compose OK/WARN marker",
+      "status": "DONE_VERIFIED",
+      "priority": "P0",
+      "size": "S",
+      "zone": "scripts/git-hooks/",
+      "created_at": "2026-08-26T12:26:38Z",
+      "created_by": "architect (FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED split, child A)",
+      "dedup_key": "auditor-notebook-compose-commitmsg-marker-gate",
+      "files": [
+        "scripts/git-hooks/commit-msg",
+        "scripts/git-hooks/install.sh",
+        "scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh",
+        "docs/policies/dev-standards.md"
+      ],
+      "status_note": "Implemented per docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A. scripts/git-hooks/commit-msg (new, this repos first commit-msg hook) + install.sh wiring (4 hooks: pre-push/pre-commit/post-commit/commit-msg, verified re-run) + commit-msg-notebook-compose-marker.test.sh (5/5 pass) + dev-standards.md CANONICAL pointer. Committed 16e2096bb. DEVIATION FROM BRIEF (found+fixed): the briefs literal regex fails to match the real nested-bracket marker shape (live commit efe62d83d, double-bracket form) because the negated-bracket-class cannot cross the inner closing bracket. Widened to tolerate one level of nesting, re-verified against all 4 real observed shapes plus negative controls (bare [skip ci], OK-substring words TOKEN/BROKEN outside brackets). AC-1 (5 test cases) and AC-4 (install.sh links 4 hooks) both verified this cycle. AC-2 (live WARN observed on stderr for the next narrated notebook commit) NOT yet observable: no commit has touched docs/agent-memory/notebooks/system-auditor.md since hook install (2026-08-26T~15:16Z) -- the most recent such commit (56f41ab1c) predates install. Mechanism verified via isolated scratch-repo regression suite only; QA/next tick should confirm the live WARN fires on the next real system-auditor notebook commit lacking a marker. AC-3 (48h adoption-ratio trend) is explicitly out of this cycles scope per the briefs own Verification Gate #3.\n[QA] Review Record (direct-commit verify): QA verify-committed (session 036ceaf1). AC-1 5/5 + AC-4 4-hooks re-run green, ancestry+files-touched confirmed for 16e2096bb. AC-2 (live WARN on real notebook commit) genuinely NOT yet observed -- 0 commits touched the notebook since install; RULING: non-blocking, sign off now -- mechanism independently re-verified via realistic git-init/add/commit test harness + confirmed-live .git/hooks/commit-msg symlink, same precedent as FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED's AC-5 (trend AC left open post-DONE_VERIFIED). CORRECTION to dispatcher framing: nested-bracket commit efe62d83d touches the SAME pilot notebook (system-auditor.md), not a different one -- widened regex is load-bearing TODAY (DATA-tier caller), not only for the future fleet-wide rollout; verified live regex test, narrow brief regex fails on efe62d83d, shipped regex passes. Residual gaps non-blocking: (a) rename R100 bypasses ^[AM] path-gate, reproduced live -- but identical pre-existing blind spot shared by _check_auditor_heartbeat_shapes/_check_notebook_immutability in pre-commit, not unique to this hook, flag as fleet-wide follow-up; (b) ALL_GREEN SKIP empty-COMPOSE_MARKER path confirmed unreachable today (SKIP stages nothing, no commit created).",
+      "updated_at": "2026-08-26T15:55:33Z",
+      "reviewed_ready_at": "2026-08-26T15:21:12Z",
+      "implemented_by": "developer",
+      "claimed_at": "2026-08-26T15:48:41Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-26T15:55:32Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bash scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh + bash scripts/git-hooks/pre-commit.test.sh + bash -n + live regex repro against efe62d83d + live rename-bypass repro in scratch repo",
+          "args": "commit=16e2096bb; files=scripts/git-hooks/commit-msg,scripts/git-hooks/install.sh,scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh,docs/policies/dev-standards.md",
+          "live_value_observed": "ancestor=yes; stat touches 4/4 claimed files; commit-msg suite 5/5 pass; pre-commit suite 15/15 pass (no regression); bash -n clean x3; .git/hooks/commit-msg symlink confirmed -> scripts/git-hooks/commit-msg; narrow brief regex NO-MATCH vs efe62d83d nested marker, shipped widened regex MATCH; git-mv rename onto pilot notebook path confirmed to bypass ^[AM] gate in scratch repo",
+          "observed_at": "2026-08-26T15:55:32Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
@@ -32198,6 +32232,23 @@
       "provenance": "router-observed",
       "audit_cycle_tag": "cron:dev-team:2026-08-25T15:07Z",
       "dedup_key": "tooling_defect:drain-signals-js:unknown_flag_falls_through_to_destructive_default"
+    },
+    {
+      "id": "rtr-20260825T1545-qadrainskip",
+      "ts": "2026-08-25T15:44:26Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "Review-Lane QA-Drain SKIP branch STRANDS the row it skips. Both invocation sites say: `if not outer_claim.claimed: log SKIP -- held by peer session; continue`. But the claim script (scripts/devteam-review-claim-qa-drain.jq) has ALREADY moved that row review[] -> qa[] and stamped claimed_at/claimed_by in the committed orch-apply write BEFORE the per-row outer_claim is attempted. A skipped row therefore sits in qa[] with status=QA and no qa agent ever dispatched, and no later tick re-picks it: both QA-Drain sites select from review[], never qa[]. Hit live this tick on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. SECOND finding, same incident: task_claim is NOT re-entrant on task: keys -- it returned claimed:false with current_holder.owner_client_session EQUAL TO the requesting session (a stale RLC lock from that row own earlier completed dispatch). So the SKIP branch prose -- held by peer session -- is wrong twice over: the holder can be YOURSELF. Router resolved it by releasing its own stale lock and re-claiming rather than stranding a P0; the flow gives no sanctioned path for that. Same class as FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED lane-narrower-than-claim-script family.",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "provenance": "router-observed",
+      "audit_cycle_tag": "cron:dev-team:2026-08-25T15:37Z",
+      "dedup_key": "flow_defect:devteam-qadrain:skip_branch_strands_already_lanemoved_row",
+      "triaged_at": "2026-08-25T16:22:00Z",
+      "triaged_by": "po",
+      "disposition": "BOTH findings accepted, BOTH verified at source by PO before minting, TWO rows minted (deliberately not one — different zones, different owners, different remedy layers). (1) QA-Drain SKIP branch strands the row it skips -> FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA (P0, backlog[], next_agent=architect, DRS-allowlisted so it has a real automated picker). PO re-read scripts/devteam-review-claim-qa-drain.jq and confirmed the mechanism: the batch is appended to .task_board.qa and .task_board.review is rebuilt without those indices INSIDE the same orch-apply write as the claim stamp, i.e. before the caller's per-row outer task_claim runs; both QA-Drain sites then select from review[] only, so a SKIPped row is unreachable. AC-5 of that row additionally requires sweeping the 3 rows currently sitting in qa[] for pre-existing strands (two carry claimed_at from 2026-08-14 and 2026-08-23). (2) task_claim not re-entrant on task: keys, holder can be the requesting session itself -> FIX-TASKCLAIM-NOT-REENTRANT-SAME-SESSION-STALE-LOCK-BLOCKS-OWN-REDISPATCH (P1, backlog[], zone apps/mcp-server/, next_agent=dev-mcp-server, dev-role so BOUNDED-1 eligible). The router's hand fix (release own stale lock, re-claim) is recorded there as currently off-flow and AC-4 requires a sanctioned path for it. The live victim of this incident, FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS, is back in review[] and was separately ruled on this tick."
     }
   ],
   "backlog_detail": [],
