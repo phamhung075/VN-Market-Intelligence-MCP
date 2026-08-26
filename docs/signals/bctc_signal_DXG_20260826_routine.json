@@ -1,0 +1,30 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q2-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Bat dong san dan dung/khu do thi (Dat Xanh Group) — phat trien du an, moi gioi, dich vu BDS",
+  "customer": "Nguoi mua nha o thuong mai, nha dau tu ca nhan/to chuc BDS khu vuc phia Nam",
+  "ops": "DATA-GAP: get_bctc_full(DXG) tra ve 'Chua co du lieu BCTC' chu ky nay (45+ chu ky lien tiep, dev-team pickup pending tu c162 cash-flow-anomaly signal) — khong the tinh EY_SPREAD tu BCTC truc tiep hoac cac chi so tai chinh khac; chi co so sanh nganh (sector-comparison, live) va KD reading",
+  "mgmt": "Khong co du lieu quan tri chu ky nay (thieu BCTC)",
+  "ey_spread_pct": -3.5,
+  "ey_spread_source": "sector_comparison_pe_66.5x_not_bctc_direct",
+  "valuation_verdict": "AVOID",
+  "pe_sector": 66.5,
+  "pe_median_sector": 16.1,
+  "roe_sector_comparison_pct": 1.9,
+  "kd_reading": {"que": "Lu (56)", "trend": "TRUNG_TINH", "signal": "BAN", "confidence_pct": 37, "note": "changed vs c182-c185 (was Que Tuy 45, THUAN LOI, THAN TRONG 75% for 4 consecutive cycles) — flipped from favorable-cautious to negative BAN(sell) signal, 4-cycle byte-identical pattern broken this cycle — worth flagging to alert-commander"},
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC data this cycle (structural data gap, not this cycle's finding)"
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "insider_signals": "none_significant",
+  "legal_risk_signals": 0,
+  "data_quality_flag": "DXG BCTC 'Chua co du lieu' unresolved 45+ cycles; DXG cash-flow-anomaly (c162) still pending dev-team pickup",
+  "evidence_fragments_recorded": ["bctc_valuation_premium (id=1590)", "bctc_roe_ratio (id=1591)", "bctc_report_overdue (id=1592)"],
+  "generated_at": "2026-08-26T15:20:00Z"
+}
