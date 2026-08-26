@@ -356,7 +356,30 @@ when the origin behind-set touches divergent code/config, runs the mandatory `pn
 pre-push gate, and self-cleans the worktree on every exit. No flow-step coordination, no commit-mutex
 gateway dependency (which fail-closed in sub-agents). Threshold-gated → most 30-min runs are sub-second no-ops.
 
-**Install / re-arm** (after machine restart): `launchctl load ~/Library/LaunchAgents/com.vn-market.fleet-push.plist`.
+**Install / re-arm** (fresh host, disaster recovery, or after machine restart):
+`com.vn-market.fleet-push` installs to `~/Library/LaunchAgents/` as an independent
+COPY, not a symlink (unlike the 3 other launchd labels in this repo — see
+`launchd/` census in `docs/architecture-briefs/2026-08-26-fix-fleetpush-disarm-durable-install-guard.md`
+§1.2) — a bare `cp`/re-install from source silently re-arms any live host-level
+`Disabled` override the user made directly on the installed copy
+(FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS).
+This is the ONLY sanctioned install/re-arm path — never a bare `cp`:
+```bash
+bash scripts/install-launchd-plist.sh com.vn-market.fleet-push
+# REFUSES (exit 1) if the installed copy currently has Disabled=>true;
+# does not run `launchctl load` itself — that remains an explicit, separate step:
+launchctl load ~/Library/LaunchAgents/com.vn-market.fleet-push.plist
+```
+Verify the installed `Disabled` state with `plutil -extract Disabled raw ~/Library/LaunchAgents/com.vn-market.fleet-push.plist`
+— never `grep` (binary plist; `grep` reads the key as false-absent).
+
+`scripts/install-launchd-plist.sh <label>` is generic (argv-driven, no
+per-label branching) and is the sole sanctioned path for every copy-based
+`launchd/*.plist` label, not only `fleet-push` — e.g. `com.vn-market.docker-events`,
+the only other copy-based label (the remaining 3 tracked labels install as
+symlinks, drift-immune by construction — no separate install step needed).
+`docker-events` has no dedicated "Install / re-arm" doc block in this file
+today; use the same script invocation, substituting the label.
 
 **Flow-step status:** `docs/agents/po/flow/main.md` Step PUSH-BACKSTOP + `docs/agents/dev-team/flow/post-cycle.md`
 Step 4.8 are retained as a SECONDARY opportunistic best-effort (harmless when they do run on a real router
