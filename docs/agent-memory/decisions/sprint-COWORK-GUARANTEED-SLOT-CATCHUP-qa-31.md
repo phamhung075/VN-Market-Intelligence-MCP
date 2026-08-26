@@ -2,11 +2,22 @@
 
 **Sprint goal:** COWORK-GUARANTEED-SLOT-CATCHUP
 **Agent:** qa
-**Started:** 2026-08-26T11:05Z (continuation — qa-30.md breached byte cap 37744/36000, rolled per decision-journal § Cap Check)
+**Started:** 2026-08-26T10:58Z (continuation — qa-30.md breached byte cap 37744/36000, rolled per decision-journal § Cap Check)
 
 ---
 
-### STEP qa-S242 · qa · 2026-08-26T11:05Z
+### STEP qa-S242 · qa · 2026-08-26T10:58Z
+**task-id:** FACTORY-STOCK-extract-vndirect-mapper
+**what-done:** Read the row's own status_note/po_adjudication/blocked_by first — PO 0650Z split the prior CHANGES_REQUESTED (gap 1 descoped to a P3 dupe row, gap 2 retained, `blocked_by=OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT`). Independently re-checked the real dependency instead of trusting the elapsed `qa_not_before` gate: that ops row is still `READY`/`next_agent=ops`, AC-2 not executed; `docker inspect` on live `stock-price` shows image unchanged since the prior QA cycle (no rebuild); `git log 912a4bf79..main` on `fetchers.go`/`mapper.go` empty — nothing changed since the last QA cycle.
+**what-considered:**
+- Re-run the full pipeline (go test/go vet/mock-guard) anyway vs recognize unchanged code can only reproduce the already-recorded prior-cycle PASS and cannot touch the one unmet clause — did not manufacture a pipeline re-run against unchanged code.
+- Charge `redispatch_count` vs not — not charged, mirrors router's own 07:54Z precedent (no qa work was performable, gate elapse is a proxy-gate artifact not a rework request).
+**why-decision:** Same still-open, PO-adjudicated blocker re-dispatched by a wall-clock proxy-gate elapse, not a stale premise fixed elsewhere and not a fresh defect. Reverted `qa[]->review[]` (matching `drain_source_lane`), `qa_not_before` bumped `09:30Z->14:00Z` as a further brake, `next_agent` left `"qa"` per PO's routing intent, status_note appended with the live evidence. `.head` (pointing at sibling batch row `TASK-CRON-SKILLMD-PROBE-WIRING`) reset to idle per terminal-shape instruction, self-verified. Outer lock `task:FACTORY-STOCK-extract-vndirect-mapper` left untouched (INV-GATEWAY-1).
+**why-change:** no change from plan. Residual flagged in-row: if this slips a 3rd time, po should re-anchor the gate to the ops row's terminal status rather than wall-clock.
+
+*(Reconstructed by a peer qa session sharing this batch/journal-chain: the two of us rolled to this same new continuation file at effectively the same moment and both resolved the next id as `qa-S242`, and the first physical `Write()` of this file clobbered the other's entry, since it did not yet exist to `Edit`-append against. Recovered verbatim from this cycle's own intact notebook entry — `docs/agent-memory/notebooks/qa.md` cycle-867 — nothing here is invented. Flagging this collision class rather than silently absorbing it: a brand-new continuation-file creation has no append-anchor to race against, unlike every subsequent write to an already-existing file.)*
+
+### STEP qa-S243 · qa · 2026-08-26T10:59Z
 **task-id:** FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH
 **what-done:** Direct-commit verify of `9cc870461` (branch:null). Confirmed commit is a real `main`-ancestor touching all 8 claimed files. Grep-confirmed the SSOT def (`design_router_default_allowlist`, `devteam-eligibility.jq:636`) is called by claim (`:181,189`) and promote (`:132`) — no surviving hardcoded copy of the array inside either production consuming script. Ran `devteam-dispatch-gate-satisfiability.sh` at HEAD: both new cases (AC-DRS-ALLOWLIST-GATE, AC-DRS-ALLOWLIST-SKIP-TO-NEXT) PASS; re-ran the SAME post-fix script against a worktree checked out at the parent commit (pre-fix claim/promote/eligibility files) — both FAIL there (real discrimination, not vacuous). Ran the claim jq read-only against a scratch copy of the LIVE board twice: 1st picks on-allowlist P0 `FIX-CYCLE-SNAPSHOT-...`, 2nd (after removing it) picks the next on-allowlist row `FIX-COWORK-LASTFIRED-...`; across both runs all 3 blast-radius off-allowlist rows (`FIX-FLEETPUSH-DISARM-...`, `FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN`, `UC-SDF-P2`) stayed parked in `ready[]`, never claimed. Never touched the live orch-state.json (scratch copies only).
 **what-considered:**
