@@ -77,3 +77,20 @@ Cycles c320 (BA-PREDICTION-EVIDENCE-REVIVAL, 2026-07-01), c319 (EVENING_SUMMARY,
 **`.head`:** `in_progress` on `FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION` (developer, peer-owned) throughout. Never named any row I was dispatched for, so flow Step 3e's head release is a no-op by construction. Left untouched, deliberately.
 
 **Session:** 7be6b4cd-057e-419b-a967-4810daf2b646
+
+## Session 2026-08-26T11:47:45Z — Review-Lane Secondary-Drain Triage: FIX-COWORK-DELIVERY-PROOF-GATE sign-off
+
+**Row:** `FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION` (P0 M FIX, cross-service/, decomposed 2026-08-24)
+**Dispatched via:** review-lane secondary-drain, `secondary_dispatch_target: pm`, awaiting triage
+**Status on arrival:** `done[]`, `status: DONE`, `children: [2 tasks]`
+
+**Assessment:**
+- Decomposition decision + journal entry (STEP pm-S15, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm-2.md) ✓
+- Child 1 (FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE): developer route ✓, handoff complete ✓
+- Child 2 (FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA): agent-father route ✓, handoff complete ✓
+- Blocking dependency (FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES) DONE_VERIFIED ✓
+- No implementation work on this row (plan-only → decomposed by design, not a shipped implementation) ✓
+
+**Decision:** DONE status confirmed final. Terminal lane: `done[]`. No DONE_VERIFIED transition needed (PM decomposition rows do not undergo implementation verification; the decomposition IS the deliverable, recorded in decision journal). Children dispatched to BACKLOG ready for developer/agent-father pickup.
+
+**FINAL SHAPE:** `task_board.done[N]` with status=DONE, children=[FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE, FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA], next_agent=null.
