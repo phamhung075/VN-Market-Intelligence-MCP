@@ -1,0 +1,63 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T08:22:38Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T08:21:36Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": [
+      "Step 0a: 1 NEW row sys-20260826T080003-2786 (from=system-auditor, to=po) HELD at NEW, not marked READ — po has 0 slots in cowork-schedule.json so the route-to-slot branch is structurally unreachable, and PO selects on status==NEW; marking READ would strand it. Second consecutive tick holding this same row.",
+      "Step 4.7: FILE_TICK=08:19, 16368B, no pre-existing file at that key. Prune removed docs/data/cycle-snapshot-08:05.json — the 2026-08-25 decoy flagged prospectively at the 08:00Z tick. Count 42 -> 42 (+1 new, -1 pruned).",
+      "STRUCTURAL FINDING (new this tick): the 24h-decoy exposure is PER-TICK, not a rare alignment. cycle-snapshot-08:23.json (2026-08-25T08:23:44Z, age 1436min) was alive during this tick and only became prune-eligible at 08:24:44Z — inside the predicted consumer window. Because the producer writes at a stable HH:MM+4..5 offset every tick, yesterday file for the same nominal tick always sits ~4min short of prune-eligibility exactly while today consumer is keying minutes in that neighbourhood. The <=7min freshness gate is therefore the SOLE guard on EVERY tick, not occasionally.",
+      "Sample #12 RESULT (4 replicates, premise verified not assumed: news-scout/market-watcher/alert-commander all load the same .claude/skills/step-0-cowork/SKILL.md, whose Step -1 has no nearest/newest/glob language). Outcomes: news-scout key 08:04 HIT; alert-commander-critical key 08:04 HIT; alert-commander-market key 08:06 MISS explicitly rejecting 08:04 as nearest-treated-as-absent; market-watcher key 08:05 = the decoy path, fell through. Hit rate 2/4 within one tick.",
+      "Sample #12 DECOY TEST PASSED: market-watcher keyed 08:05 where the 08-25 decoy existed. Payload discriminator settles it — decoy carries yield FAIRLY_VALUED/1.7pp, today 08:04 carries CHEAP/3.2pp; market-watcher notebook records yield cheap, so it did NOT consume 24h-old data. Freshness gate rejected under live conditions. Pre-registered failure signature did not fire.",
+      "UNRESOLVED, deliberately not scored as refutation: alert-commander-critical reported HIT at 08:04 described as ~2min old, implying a ~08:06 read which under own-clock exact match would have keyed 08:06 and missed. One imprecise prose number against three clean observations. Reading it as newest-file semantics would recreate the retracted sample-#10 error, so the own-clock hypothesis stands with one unexplained observation.",
+      "SPEC DIVERGENCE: .claude/skills/cycle-bootstrap/SKILL.md:57 specifies round to nearest 5-min slot; the actually-loaded .claude/skills/step-0-cowork/SKILL.md:38 specifies plain current-UTC HH:MM with no rounding. The rounding variant would have keyed 08:05 — straight onto the decoy, with the freshness gate as sole guard.",
+      "Step 4b collision logged WARNING-only at 08:00Z MATERIALIZED as real contention: the two alert-commander slots collided on notebook section numbering (c285 taken between peer read and write, critical self-corrected to c286) and on commit-mutex, where critical backed off 5s then 10s then reclaimed a stale lock (stolen:true) past the 90s TTL. R3 multi-slot policy produced genuine write contention, not just a theoretical warning.",
+      "BLOCKER for architect dispatch: P0 row FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK now serializes to 12071B, over the 12000B orch-row-prose-ceiling. Any further write to it aborts, including the architect own on dispatch. Sanctioned remedy is detail_ref cold store via scripts/orch-backlog-stub.sh (backlog is an eligible lane). NOT written this tick.",
+      "Sample #13 PRE-REGISTERED BEFORE SPAWN: producer wrote key 08:19 at 08:19:59Z for nominal tick 08:15; single agent alert-commander-market, which runs Step 0-GW gateway probe BEFORE bootstrap so its key lags spawn by ~1-2min. Predicted consumer key 08:22-08:24 -> MISS. If it keys 08:23 the decoy exists and the freshness gate must reject it; payload discriminator FAIRLY_VALUED/1.7pp appearing in the notebook would mean the gate FAILED and 24h-old data was consumed. A HIT reported at 08:19 from a bootstrap minute != 08:19 would refute own-clock exact match.",
+      "Counters: signal_backlog 31 == independent file recount (20th consecutive match); cycle_snapshot_promoted false (60th consecutive); calendar_status open (53rd+); cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z with regime_status AND volatility_level both absent (18th verification); locale-comma parse 25th confirmation (raw load average s: 2,46 2,83 3,20 -> spec gsub parse yields 2 vs threshold 24, latent non-binding); container_vm_headroom_mb recovered 2459 -> 3203 as the four 08:00Z agents exited."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T08:22:38Z"
+}
