@@ -45,5 +45,11 @@
     "note": "STEP-0A DELIBERATE DEVIATION: 3 NEW signal_queue rows this tick, ALL to=po (rtr-20260826T0429-staleblockedstatusfreezesrows HIGH, rtr-20260826T0431-invarianttestmissedretainedgoliterals MED, cj-20260826T043200 LOW). Step 0a says mark processed rows NEW->READ. NOT DONE, on purpose: po/flow/main.md:66 selects NEW rows, so marking READ buries them unseen. po is a dev-team agent this dispatcher must never spawn, so all 3 fall in the log-for-PO branch, which is NOT processing. Already-filed root cause: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO (backlog P1 architect); related FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (backlog P1 ba). No new row minted. Rows left NEW for po pickup. || SIGNAL_BACKLOG 31->43 (+12) IN ONE TICK: 3 commit-sweep-guard + 1 janitor + 8 notebook-cap. The 8 are 4 DISTINCT findings emitted TWICE each ~90s apart (04:30:08-09 and 04:31:37-39), verified BYTE-IDENTICAL after deleting ts/createdAt/emitted_at/timestamp. Emitter=notebook-auto-prune-hook, to=claude-manager-helper, filename timestamp-keyed so nothing collapses. Also: these files carry NO status field at all, so a status==NEW drain predicate cannot match them and a terminal-status eviction allowlist cannot either. NOT FILED - the notebook-cap cluster is a known do-not-re-file set, and I did not read the file-plane drain predicate, so whether the missing-status half is already covered is UNVERIFIED. Flagged for po, not minted. || 04:35 snapshot minute IS a 5-multiple (rare: 1 of 7 measured), so the round-to-5 consumer lookup can hit fresh THIS tick; also the write CLOBBERED the prior-day 04:35 decoy. Recorded as observation, NOT a prediction - direction hinges on the agent bootstrap minute crossing 04:37:30, which is timing, not mechanism. || Step 5.1 locale-comma spec bug 10th confirmation (true 2,50 -> spec-parsed 2); non-binding at threshold 24. || cycle_snapshot_promoted false, 45th consecutive. || signal_backlog 43 matched independent recount exactly, 5th consecutive."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T04:38:31Z"
+  "createdAt": "2026-08-26T04:38:31Z",
+  "_processed": {
+    "fingerprint": "acd56f84f9f42cf1dedbd2192ff9a417ef949dfbd2dbb1e6bdc7d9ba493f1b5c",
+    "processedAt": "2026-08-26T04:42:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

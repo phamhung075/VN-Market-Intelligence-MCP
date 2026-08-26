@@ -1256,7 +1256,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-26.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-26.json"
       },
       {
         "id": "rtr-20260826T0435-datatiercyclewrotenorecord",
@@ -24399,7 +24399,7 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T04:10:12Z",
+    "_updated_at": "2026-08-26T04:42:00Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24587,6 +24587,392 @@
         },
         "createdAt": "2026-08-26T04:07:33Z",
         "drained_at": "2026-08-26T04:09:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9c40683f61d243e2b210f13d10da68209c2f1fe4c64079c8ee9541b4048cc4cb",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/unified-agent.md. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid7018:git commit -m chef-intraday 2026-08-26 04:13Z — silent cycle (0 convergence clusters)\\012\\012No cross-ticker or cross-sector convergence detected despite 5 sign]<-[pid7014:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604597949-wnhuaq.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88052:claude --dangerously-skip-permissions -n cowork-team ]",
+        "createdAt": "2026-08-26T04:21:40Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1430ca851bcf8fae2d4d1260b603c87233e02826a47d9e65a825c3d41ad739a4",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/unified-agent.md — retained section '## 2026-08-25T07:24Z — chef-intraday convergence scan (PUBLISHED)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-26T04:21:47Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "eda2c1ffe0178de101d96b4a49814c9158361b902682dc19e1da44ef3e43aad9",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: apps/kinh-dich-service/pkg/module/reading_composer/hexagram_reference.go. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid22513:git commit --amend --no-edit ]<-[pid22510:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
+        "createdAt": "2026-08-26T04:28:23Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aad38a39809e01abf5b85926203e8191455ec0bdbe6ba4ebe3703d7f3af8e283",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T04:21:09Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": "60",
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T04:15:00Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:15",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "2-slot fan-out, no Step 4b collision (two distinct agents).",
+          "PER-SLOT-NOMINAL-DIVERGENCE": {
+            "detail": "chef-intraday's cron is `13 2-8 * * 1-5`, so its own scheduled_utc_time is 2026-08-26T04:13:00.000Z — NOT the 04:15 dispatcher tick. alert-commander-market's is 04:15. The two slots on this tick genuinely have DIFFERENT nominal fire instants.",
+            "action_taken": "Step 5b was run as TWO invocations, stamping each slot with its OWN nominal (chef 04:13, alert 04:15), instead of flattening both to the tick value. Prior ticks in this session used a single FIRED_AT for all slots because every slot on those ticks shared one nominal; that was not wrong then and would have been wrong here.",
+            "why_it_matters": "last_fired feeds cadence/boundary dedup. Flattening chef-intraday to 04:15 would have shifted its next due from 05:13 to 05:15 — small, but it is exactly the sort of drift that accumulates silently and then gets misread as a scheduler defect."
+          },
+          "FIELD-PROVENANCE": {
+            "dev_head": "resolved from CANONICAL top-level .head — status=in_progress (FACTORY-KINHDICH-extract-hexagram-data, next_agent=dev-kinh-dich, updated_by=router @04:11:45Z) => reported 'active'. NOT the deprecated .task_board.head stub. The 'router' that stamped it is a PEER session, not this dispatcher — this dispatcher never writes .head.",
+            "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excluding cowork-team-*) = 31; server emit returned 31 — EXACT MATCH, 4th consecutive tick",
+            "devq": "server-computed by emit_pressure_state",
+            "last_regime / last_volatility_level": "passed 'unknown'; both keys re-verified ABSENT from cycle-snapshot-latest.json this tick (keys are exactly [created_at, macro_snapshot, market_context, tick]). Did NOT substitute .macro_snapshot.data.signals.carry.regime — different key, substituting it would fabricate telemetry."
+          },
+          "P3_snapshot_consumer_lookup": {
+            "_recorded_before_returns": true,
+            "setup": "Step 4.7 wrote docs/data/cycle-snapshot-04:19.json (created 04:19:37Z). 04:19 is NOT a 5-minute multiple.",
+            "claim": "At least one spawned agent will report HITTING cycle-snapshot-04:19.json. If so, the consumer is NOT applying cycle-bootstrap/SKILL.md Step -1's documented rule (TICK = round to nearest 5-min slot), which on this tick can only ever compute 04:20 or 04:15 — never 04:19.",
+            "falsifier": "agents report a snapshot MISS and fall back to a direct get_cycle_bootstrap call",
+            "prior_supporting_datapoint": "c267 (03:45Z tick) hit cycle-snapshot-03:49.json, also not a 5-multiple",
+            "consequence_if_confirmed": "Strengthens the note already on rtr-20260826T0257-snapshotagentconsumerclock: BOTH sides are off-spec — producer names by wall clock, consumer finds files that its own documented rule cannot name. Fixing only the producer's filename would not make the pair spec-compliant.",
+            "status": "OPEN — resolve when returns land"
+          },
+          "P4_tick_derivation_OBSERVATION_SLOT_NOT_A_PREDICTION": {
+            "_honesty_note": "Deliberately NOT stated as a directional prediction. At 04:00Z two alert-commander instances with identical inputs wrote DIFFERENT ticks (c268 04:05 wrong, c269 04:00 correct), which established the derivation is nondeterministic. I therefore have no mechanism that predicts direction, and dressing a coin flip up as a prediction would manufacture false confidence — the opposite of what the 03:45Z and 04:00Z falsifications were for.",
+            "what_to_record_next_tick": "alert-commander-market received scheduled_utc=2026-08-26T04:15:00.000Z. Read the c270 notebook header's tick= value and add it to the tally, whichever way it falls.",
+            "tally_before_this_sample": "4 wrong of 7 — c265/c266/c267/c268 wrong, c263/c264/c269 right. Streak already broken by c269.",
+            "status": "OPEN — tally only"
+          },
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "44th consecutive. Do NOT 'fix' by rounding the producer — po_fold_20260825 withdrew that shape.",
+            "cycle_snapshot_latest_stale": "still tick=00:00, created_at=2026-08-23T00:07:50Z (~76h stale)",
+            "calendar_status_open": "35th+ consecutive computation defect, architect-owned",
+            "step51_locale_comma": "9th confirmation — '1,48' truncated to '1'. Bug is IN THE SPEC. Non-binding at threshold 24. Still unfiled: latent."
+          }
+        },
+        "createdAt": "2026-08-26T04:21:09Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "acd56f84f9f42cf1dedbd2192ff9a417ef949dfbd2dbb1e6bdc7d9ba493f1b5c",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T04:38:31Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T04:30:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 43,
+          "note": "STEP-0A DELIBERATE DEVIATION: 3 NEW signal_queue rows this tick, ALL to=po (rtr-20260826T0429-staleblockedstatusfreezesrows HIGH, rtr-20260826T0431-invarianttestmissedretainedgoliterals MED, cj-20260826T043200 LOW). Step 0a says mark processed rows NEW->READ. NOT DONE, on purpose: po/flow/main.md:66 selects NEW rows, so marking READ buries them unseen. po is a dev-team agent this dispatcher must never spawn, so all 3 fall in the log-for-PO branch, which is NOT processing. Already-filed root cause: FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO (backlog P1 architect); related FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (backlog P1 ba). No new row minted. Rows left NEW for po pickup. || SIGNAL_BACKLOG 31->43 (+12) IN ONE TICK: 3 commit-sweep-guard + 1 janitor + 8 notebook-cap. The 8 are 4 DISTINCT findings emitted TWICE each ~90s apart (04:30:08-09 and 04:31:37-39), verified BYTE-IDENTICAL after deleting ts/createdAt/emitted_at/timestamp. Emitter=notebook-auto-prune-hook, to=claude-manager-helper, filename timestamp-keyed so nothing collapses. Also: these files carry NO status field at all, so a status==NEW drain predicate cannot match them and a terminal-status eviction allowlist cannot either. NOT FILED - the notebook-cap cluster is a known do-not-re-file set, and I did not read the file-plane drain predicate, so whether the missing-status half is already covered is UNVERIFIED. Flagged for po, not minted. || 04:35 snapshot minute IS a 5-multiple (rare: 1 of 7 measured), so the round-to-5 consumer lookup can hit fresh THIS tick; also the write CLOBBERED the prior-day 04:35 decoy. Recorded as observation, NOT a prediction - direction hinges on the agent bootstrap minute crossing 04:37:30, which is timing, not mechanism. || Step 5.1 locale-comma spec bug 10th confirmation (true 2,50 -> spec-parsed 2); non-binding at threshold 24. || cycle_snapshot_promoted false, 45th consecutive. || signal_backlog 43 matched independent recount exactly, 5th consecutive."
+        },
+        "createdAt": "2026-08-26T04:38:31Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c9058ba3499dca740bd3840d48e9a9e7e3b74f9339bf6780c3744b9e51a912f8",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-26T04:30:07Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bb560493a16203e36ce77fccf7351123447aa9c1da1159f6b0680b4a28919c76",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 186,
+          "cap": 200,
+          "byte_count": 27694,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:30:09Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b454f7b240303a1252f294c580b558855a7a0d546e8ee55526762086e4314de4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 186,
+          "cap": 200,
+          "byte_count": 27694,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:31:39Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6caf131748ad641fb878003d1fa1ccad2cd5a1a19dbcbacf14fae51587ab8edd",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 12860,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:30:09Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "72c4242777cd301de764077e10e54d2d5bc2014fa9f6ca3b9feacb6300dae2cf",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "line_count": 37,
+          "cap": 200,
+          "byte_count": 12860,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:31:38Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c44a1f570fec7e01f76bf9312cbf75a03839002c91d0306fe8534422fd5e25e5",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 112,
+          "cap": 200,
+          "byte_count": 19953,
+          "byte_cap": 12000,
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "undroppable_line_count": 41,
+          "undroppable_byte_count": 13916,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:30:08Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "66fea0bb2a07f6a22a02e53a6c02e72c9b48a101925530b2eb2f1c5a6223b746",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 112,
+          "cap": 200,
+          "byte_count": 19953,
+          "byte_cap": 12000,
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "undroppable_line_count": 41,
+          "undroppable_byte_count": 13916,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:31:37Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "346e7a4429fd02d55bb1b19598330021e57109074cdd52f8089046a9e80891b6",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 70,
+          "cap": 200,
+          "byte_count": 41835,
+          "byte_cap": 12000,
+          "section_count": 4,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:30:08Z",
+        "drained_at": "2026-08-26T04:42:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4774266e79c515965846276bb7dc0b6c0cd5f6b86f1168484bba97eaa77d4bda",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_undroppable_remainder_over_cap_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 70,
+          "cap": 200,
+          "byte_count": 41835,
+          "byte_cap": 12000,
+          "section_count": 4,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 1,
+          "undroppable_line_count": 46,
+          "undroppable_byte_count": 38160,
+          "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-26T04:31:38Z",
+        "drained_at": "2026-08-26T04:42:00Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

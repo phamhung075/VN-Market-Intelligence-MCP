@@ -13,5 +13,11 @@
     "section_count": 1,
     "reason": "only preamble+1 section remain; cannot prune further without data loss",
     "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "6caf131748ad641fb878003d1fa1ccad2cd5a1a19dbcbacf14fae51587ab8edd",
+    "processedAt": "2026-08-26T04:42:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

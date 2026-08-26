@@ -4,11 +4,20 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-26T04:21:09Z",
-    "matched_slots": ["chef-intraday","alert-commander-market"],
-    "won_slots": ["chef-intraday","alert-commander-market"],
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md","docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +27,19 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": {"chef-intraday":"cadence","alert-commander-market":"cron"},
-    "cadence_minutes": {"chef-intraday":"60","alert-commander-market":null},
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "60",
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-26T04:15:00Z",
-    "last_fired_slots": ["chef-intraday","alert-commander-market"],
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -31,20 +49,17 @@
     "devq": 5,
     "signal_backlog": 31,
     "note": "2-slot fan-out, no Step 4b collision (two distinct agents).",
-
     "PER-SLOT-NOMINAL-DIVERGENCE": {
       "detail": "chef-intraday's cron is `13 2-8 * * 1-5`, so its own scheduled_utc_time is 2026-08-26T04:13:00.000Z — NOT the 04:15 dispatcher tick. alert-commander-market's is 04:15. The two slots on this tick genuinely have DIFFERENT nominal fire instants.",
       "action_taken": "Step 5b was run as TWO invocations, stamping each slot with its OWN nominal (chef 04:13, alert 04:15), instead of flattening both to the tick value. Prior ticks in this session used a single FIRED_AT for all slots because every slot on those ticks shared one nominal; that was not wrong then and would have been wrong here.",
       "why_it_matters": "last_fired feeds cadence/boundary dedup. Flattening chef-intraday to 04:15 would have shifted its next due from 05:13 to 05:15 — small, but it is exactly the sort of drift that accumulates silently and then gets misread as a scheduler defect."
     },
-
     "FIELD-PROVENANCE": {
       "dev_head": "resolved from CANONICAL top-level .head — status=in_progress (FACTORY-KINHDICH-extract-hexagram-data, next_agent=dev-kinh-dich, updated_by=router @04:11:45Z) => reported 'active'. NOT the deprecated .task_board.head stub. The 'router' that stamped it is a PEER session, not this dispatcher — this dispatcher never writes .head.",
       "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excluding cowork-team-*) = 31; server emit returned 31 — EXACT MATCH, 4th consecutive tick",
       "devq": "server-computed by emit_pressure_state",
       "last_regime / last_volatility_level": "passed 'unknown'; both keys re-verified ABSENT from cycle-snapshot-latest.json this tick (keys are exactly [created_at, macro_snapshot, market_context, tick]). Did NOT substitute .macro_snapshot.data.signals.carry.regime — different key, substituting it would fabricate telemetry."
     },
-
     "P3_snapshot_consumer_lookup": {
       "_recorded_before_returns": true,
       "setup": "Step 4.7 wrote docs/data/cycle-snapshot-04:19.json (created 04:19:37Z). 04:19 is NOT a 5-minute multiple.",
@@ -54,14 +69,12 @@
       "consequence_if_confirmed": "Strengthens the note already on rtr-20260826T0257-snapshotagentconsumerclock: BOTH sides are off-spec — producer names by wall clock, consumer finds files that its own documented rule cannot name. Fixing only the producer's filename would not make the pair spec-compliant.",
       "status": "OPEN — resolve when returns land"
     },
-
     "P4_tick_derivation_OBSERVATION_SLOT_NOT_A_PREDICTION": {
       "_honesty_note": "Deliberately NOT stated as a directional prediction. At 04:00Z two alert-commander instances with identical inputs wrote DIFFERENT ticks (c268 04:05 wrong, c269 04:00 correct), which established the derivation is nondeterministic. I therefore have no mechanism that predicts direction, and dressing a coin flip up as a prediction would manufacture false confidence — the opposite of what the 03:45Z and 04:00Z falsifications were for.",
       "what_to_record_next_tick": "alert-commander-market received scheduled_utc=2026-08-26T04:15:00.000Z. Read the c270 notebook header's tick= value and add it to the tally, whichever way it falls.",
       "tally_before_this_sample": "4 wrong of 7 — c265/c266/c267/c268 wrong, c263/c264/c269 right. Streak already broken by c269.",
       "status": "OPEN — tally only"
     },
-
     "carried_defects": {
       "cycle_snapshot_promoted_false": "44th consecutive. Do NOT 'fix' by rounding the producer — po_fold_20260825 withdrew that shape.",
       "cycle_snapshot_latest_stale": "still tick=00:00, created_at=2026-08-23T00:07:50Z (~76h stale)",
@@ -70,5 +83,11 @@
     }
   },
   "priority": "low",
-  "createdAt": "2026-08-26T04:21:09Z"
+  "createdAt": "2026-08-26T04:21:09Z",
+  "_processed": {
+    "fingerprint": "aad38a39809e01abf5b85926203e8191455ec0bdbe6ba4ebe3703d7f3af8e283",
+    "processedAt": "2026-08-26T04:42:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
