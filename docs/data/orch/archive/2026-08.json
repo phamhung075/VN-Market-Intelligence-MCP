@@ -32368,6 +32368,20 @@
       "dedup_key": "detector_defect:auditor-tier1-probe:mem_creep_debounce_window_vs_persistent_fold_baseline:pdf-extractor",
       "read_at": "2026-08-25T18:13:00Z",
       "read_by": "dev-team (0a-D queue drain, tick 2026-08-25T18:07Z)"
+    },
+    {
+      "id": "sys-20260825T183933-7adf",
+      "ts": "2026-08-25T18:39:33Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "detector_defect",
+      "summary": "A-30 mem_creep gate should exclude ephemeral containers",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
+      "dedup_key": "a30_gate_ephemeral_scope_exclusion"
     }
   ],
   "backlog_detail": [],

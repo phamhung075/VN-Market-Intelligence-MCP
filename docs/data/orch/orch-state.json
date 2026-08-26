@@ -1,7 +1,7 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787766162,
+    "last_mtime": 1787769819,
     "last_linecount": 69
   },
   "decision_journal": [
@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T17:42:52Z",
+    "_updated_at": "2026-08-26T18:43:56Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -180,20 +180,6 @@
         "triaged_at": "2026-08-26T18:01:22Z",
         "triaged_by": "po/triage-20260826T1737Z",
         "disposition": "FOLDED into FIX-CCATO-NULLMARKER-SET-INCOMPLETE-2ND-TOOL-GETTECHNICALINDICATORS-NOTFOUND-SCORED-AS-CONTRADICTION (backlog, raised P2->P1). NOT a fabrication and NOT probe-substitution: compare_financials returned current=null, so the absence-claim was TRUE. Third tool hitting the same null-marker gap. Mechanism read from source: verdictClassifier.ts flattenText() JSON.stringify()s the object, classifyVerdict() only substring-matches 10 prose literals from claim-tool-map.json .tool_null_markers, and JSON.stringify(null)===\"null\" is not one of them -> NON_NULL -> spurious contradiction."
-      },
-      {
-        "id": "sys-20260825T183933-7adf",
-        "ts": "2026-08-25T18:39:33Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "detector_defect",
-        "summary": "A-30 mem_creep gate should exclude ephemeral containers",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-25T18:33:17Z",
-        "dedup_key": "a30_gate_ephemeral_scope_exclusion"
       },
       {
         "id": "sys-20260825T185015-4f55",
@@ -1262,7 +1248,7 @@
         "type": "preserved_bug_no_tracking_row",
         "summary": "bctc-analyst notebook retention off-by-one recurred 11d after doc-only fix; real fix (Bash grant) never minted",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/SIGNAL-notebook-retention-doc-remedy-failed-20260826.md"
       }
     ],
@@ -24638,9 +24624,22 @@
         "last_served_tick": "2026-08-26T17:44:06Z"
       }
     },
-    "_updated_at": "2026-08-26T18:13:08Z",
+    "_updated_at": "2026-08-26T18:42:23Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "2a4eb0f0eb568b77e9ca0c3eb2c08f831f94666afe4c2368e5a45a5a6efcacfa",
+        "source": "dashboard",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "preserved_bug_no_tracking_row",
+        "priority": "MED",
+        "payload": "# Notebook retention off-by-one: the doc-only remedy failed, and the real fix was never minted\n\n**Observed:** 2026-08-26T18:07Z, cowork tick 18:00Z, slot `bctc-analyst-slot-2` (cycle c187).\n**Reported by:** cowork-team dispatcher, on Step 5.3 verification of the spawned agent's return.\n\n## What happened\n\n`docs/agents/bctc-analyst/flow/stage-log-notify.md:19` mandates: *\"retention target: exactly 3\nsections after this write, current+2 prior, NOT 2\"*. The agent produced **2**.\n\n- HEAD before the cycle: `c186`, `c185`\n- Disk after the cycle: `c187`, `c186`  ← `c185` pruned\n- The agent's own return text reported *\"3 sections retained: c187/c186/c185\"* — i.e. it reported\n  compliance while doing the off-by-one. An auditor reading only the return text scores this clean.\n\n`c185` is recoverable (`git show HEAD:docs/agent-memory/notebooks/bctc-analyst.md`), so there is no\npermanent data loss. Severity is about recurrence and blindness, not lost bytes.\n\n## Why this is not a re-file\n\n`FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT` (2026-08-15, agent-father STEP S51, in\n`docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md:174`) already\ninvestigated this and **confirmed the root cause**: *\"no Bash grant -> no deterministic actuator,\nLLM-narrated compose drifts (`>=3` vs `>3`)\"*.\n\nThe remedy actually applied was **documentation only**: a worked example in\n`.claude/skills/notebook-write/SKILL.md` AC-2 plus the inline \"NOT 2\" reminder in\n`stage-log-notify.md`.\n\nThe real fix was explicitly **deferred**, verbatim from S51:\n> Wire bctc-analyst to scripts/notebook-compose.sh (system-auditor's 2026-08-14 fix) — deferred:\n> requires a Bash grant, a tool-permission change outside agent-father's unilateral authority;\n> flagged as a follow-up for PO/architect, not actioned here.\n\n**That follow-up was never minted.** Probed 2026-08-26: absent from every live `task_board` lane by\nid and by subject; absent from `docs/data/orch/archive/` by id; the only archive subject match is\n`FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE` (DONE_VERIFIED), a different row.\n\n## The measurement that is new\n\nThe doc-only remedy has now been **falsified on its own terms**. The inline reminder was added\n2026-08-15 specifically to stop this. Eleven days later the drift recurred — in the very file whose\nline 19 says \"NOT 2\", read by the agent during the cycle that then produced 2. Prose instruction\ndoes not enforce a count for an agent with no deterministic actuator; S51 predicted exactly this and\nscoped the doc fix as \"the correctly-scoped remedy today\" only because the real fix needed authority\nit did not have.\n\n## Scope is fleet-wide, not bctc-analyst\n\nS51's own fleet spot-check: *\"news-scout/agents-architect/digest-predict all show similarly noisy\nsection counts; system-auditor itself only got a deterministic actuator 2026-08-14\"*. Any\nmanually-composing APPEND agent without a Bash grant is in this class.\n\n## Decision needed (PO/architect — not the dispatcher's call)\n\n1. Grant `bctc-analyst` (and the other manual-compose agents) a scoped Bash grant so\n   `scripts/notebook-compose.sh` can be the actuator — the fix S51 identified and could not make.\n2. Or accept the drift and change AC-2 to match reality — S51 explicitly rejected this\n   (*\"would codify the bug; disproven by 3-section cycles in git history\"*), so it needs a fresh ruling.\n3. Either way: mint a tracking row. The absence of one is why an 11-day-old confirmed root cause\n   with a known fix is still recurring unowned.\n\nRelated, same agent, same cause: `project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`\n(this cycle also left 4 signal files + the notebook uncommitted for the same missing-grant reason).\n",
+        "createdAt": "2026-08-26T18:15:21Z",
+        "drained_at": "2026-08-26T18:42:23Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-26T15:08:05Z",
     "last_po_triage_note": "secondary-drain-signoff-20260826T1500Z: 5 envelopes triaged (1 system-issue fold, 2 context_bloat_breach DEFER, 1 audit_finding fold+3-part ruling, 1 bug-escalation fold), 0 held back, inbox cleared to zero",
     "last_po_triage_consumed": 5,
