@@ -185,7 +185,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-08-25T15:06:26Z",
+      "last_fired": "2026-08-26T15:05:15Z",
       "trigger_id": null,
       "_note": "Slot 1 of 4. Off-market confirmed. E2 in-cycle guard provides defense-in-depth."
     },
