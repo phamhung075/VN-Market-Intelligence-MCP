@@ -79,3 +79,24 @@
 - Synthesis JSON: docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json (2.2KB)
 
 **Telemetry:** All steps completed, no degraded-floor triggers, full dish published.
+
+### 2026-08-26 04:13:00Z — chef-intraday (SILENT)
+
+**Cycle:** Intraday convergence scan (slot=chef-intraday, scheduled=04:13Z, VN local 11:13)
+
+**Signals gathered (24h window):**
+- price_anomaly: 1 file (DBC volume spike +407%, RSI 63.4, overbought)
+- bctc_signal: 4 tickers (DXG=AVOID, FPT=FAIR, HPG=FAIR, VCB=FAIR)
+- news_impact: 0 files
+- Total signal count: 5 distinct sources
+
+**Convergence analysis:**
+- Ticker convergence (≥2 types/ticker): NONE (price anomaly tickers ≠ bctc tickers)
+- Sector convergence (≥3/sector): NONE (each sector has ≤1 signal)
+- Macro-micro contradiction: NOT EVALUATED (macro unavailable, expected)
+- Extreme individual signal: NONE (DBC RSI 63.4 within 2-sigma, no CRITICAL)
+- Geopolitical/war convergence: NONE
+
+**Verdict:** 0 clusters qualify → Silent exit per Step 1 intraday gate
+
+**PIPELINE:** complete | **QUALITY:** silent-intraday
