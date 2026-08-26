@@ -115,3 +115,26 @@ Commits: 579e7c685 (triage-signals.md), 0bac54347 (orch-state.json terminal-flip
   completion note once X actually closes — a forward-looking dup guess can be falsified by the
   cited row's real AC outcome, and the correct successor may be a THIRD row minted afterward, not
   the one originally named.
+
+## Task-dispatch 2026-08-26T20:04Z — Behavioral-Verification Gate (deploy-aware ordering), 6/7 files landed
+
+- Built `docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md`
+  §9's in-zone files, live and enforcing: `po/flow/main.md` + `ba/flow/main.md` (mint-side
+  `verification.behavior_predicate`, commit `ee158a9ea`), then `qa/flow/main.md` (Direct-Commit
+  Verify CHANGES_REQUESTED gate) + `ops/flow/docker.md` (Behavioral-Predicate Probe loop, writes
+  `verification.behavior_probe`, reopens `match:false` to `review[]`) + `orch-sentinel` OH-2.4
+  (FULL+LITE) (commit `900d640ad`). Mint-side landed strictly first — the CUTOFF constant
+  (`2026-08-26T19:57:54Z`) is that commit's own landing time, read back via `git show -s
+  --format=%cI`, so the gates can never reject a row minted before the field existed (the
+  router-flagged ordering hazard the brief itself didn't cover).
+- `orchStateSchema.ts` `checkVerificationGate()` (§5c, the actual hard-reject) is `apps/` — filed a
+  precise patch-spec signal for dev-mcp-server (`docs/signals/2026-08-26-fix-...schema-handoff-...json`,
+  commit `0bf6a073c`) instead of editing it. Until that lands, nothing MECHANICALLY blocks a
+  DONE_VERIFIED flip missing `behavior_predicate` — only the qa flow-doc conditional (agent-honored,
+  not code-enforced) does.
+- §9's handoff table named the wrong file for the OH-STATE counter
+  (`docs/agent-memory/modules/tool-usage-stats.json` has no OH-STATE key at all) — corrected in the
+  signal + built the counter in the real writer, `emit-scorecard.md`.
+- Live board `priority` field is a mixed P0-P3/high-low convention (measured: 61 P0, 317 P1, 82
+  'high', 1 'HIGH', plus P2/P3/low/medium/normal/med) — flagged explicitly in the schema handoff so
+  the P0/P1 hard-reject condition doesn't silently under-scope to only the P-tier rows.
