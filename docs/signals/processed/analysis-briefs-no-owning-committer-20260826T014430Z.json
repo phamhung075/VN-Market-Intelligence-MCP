@@ -21,5 +21,11 @@
     "not_yet_verified": "Whether unified-agent or any other briefs-writer has the same omission. Only news-scout and market-watcher were checked.",
     "router_action_taken": "Recovery commit e6fbe0017 landed the 6 stranded appends (verified append-only, 0 deletions). Recovery only — the flow-doc gap is unfixed and will re-strand next cycle.",
     "suggested_owner": "cowork-refactory-expert (cowork agent .md files) or agent-father"
+  },
+  "_processed": {
+    "fingerprint": "d5db986303977ce9a0413de9b95876fa5511cd0b1d1f63831c26bc5657a29dd0",
+    "processedAt": "2026-08-26T02:19:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

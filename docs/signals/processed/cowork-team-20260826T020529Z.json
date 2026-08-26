@@ -45,5 +45,11 @@
     "note": "First alert-commander-market fire of the 02:00-08:59Z weekday window; prior last_fired 2026-08-25T08:24:59Z is the previous window close, not a miss. cycle_snapshot_promoted=false again (35th consecutive, naming defect already routed to architect)."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T02:05:29Z"
+  "createdAt": "2026-08-26T02:05:29Z",
+  "_processed": {
+    "fingerprint": "669588f1e8646026244ae78b9f4a32361d51aacc57909b55050b715fda142ef6",
+    "processedAt": "2026-08-26T02:19:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
