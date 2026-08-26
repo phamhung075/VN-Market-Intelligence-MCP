@@ -134,3 +134,28 @@
 - Tickers: FPT(6), HPG(5), VCB(5), DXG(5), BSR(1), DBC(1), HUT(1), VIC(1)
 - Convergence check: NO (0 clusters qualify — no ticker-level multi-type convergence)
 - Exit: DONE: intraday-silent | PIPELINE: complete
+
+---
+
+## Chef Intraday Cycle 2026-08-26T07:13Z
+
+**Convergence:** 4 clusters (MACRO-extreme, real-estate-sector, tech-convergence, ag-breakout)
+
+**Key Signal:** Brent crude -7.47% (-4.77σ, CRITICAL severity) → oil shock contradicts VN carry narrative despite VND intact at 25,890.
+
+**Conviction Calls:**
+- FPT: ACCUMULATE (MEDIUM-HIGH, 3/4 pillars, volume spike + 12% US geopolitical exposure, 28.3% ROE annualized)
+- VCB: HOLD (MEDIUM, 3/4 pillars, 16.7% ROE but macro hedge mismatch vs oil shock)
+- VHM: HOLD/NEUTRAL (LOW, 1/4 pillars, RSI 28.4 oversold but recovery unconfirmed)
+
+**Sector Convergence:** Real estate (DIG breakout + VHM oversold + VIC FTSE re-rating, 3 tickers → qualify). Tech: FPT volume_spike. Ag: MSN/DBC breakouts (3 signals).
+
+**Layers Walked:** L1-L4 complete; L5 Kinh Dịch service unavailable [gap:L5_kinhdich_unavailable]; L6 gaps documented (single-pillar VHM, L3 incomplete on US macro/FX reserves, macro CPI data missing).
+
+**Phase:** Slowdown (M2 flat, COC rising, oil shock compresses return); tier = fixed_income/quality_equity.
+
+**Quality Verdict:** FULL
+
+**Gaps:** [gap:macro_cpi_data_missing] [gap:L3_us_macro_incomplete] [gap:L3_fx_reserves_missing] [gap:L5_kinhdich_unavailable] [gap:L6_single_pillar_vhm]
+
+Marker claimed: published:chef-intraday:2026-08-26:14 (TTL 3600s)
