@@ -151,7 +151,19 @@ def create_app() -> FastAPI:
     # even when OCR saturates CPU at 100%+. max_workers=1 matches D6 host-safety (no
     # parallel Tesseract processes on the 16GB Mac — matches PekEngineAdapter Semaphore(1)).
     # Shutdown is handled in lifespan (build_lifespan receives the executor reference).
-    ocr_executor = ProcessPoolExecutor(max_workers=1)
+    #
+    # FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (worker-recycling amendment,
+    # 2026-08-26): max_tasks_per_child=1 recycles this child process after EVERY
+    # submitted task (fresh fork each time), so infrastructure/ocr_worker.py's
+    # module-global _paddle_ocr_worker_instance cache never survives across
+    # documents/tasks — it re-loads on the next fork's "if None" branch (zero
+    # change needed there). This bounds CROSS-task retention only; recycling
+    # cannot interrupt one already-running ocr_pages_worker task, which is why
+    # BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT + malloc_trim(0) inside that
+    # worker (ocr_worker.py) are the mandatory safety belt for INTRA-document
+    # compounding — see docs/architecture-briefs/2026-08-26-fix-pdfx-parent-
+    # process-memory-burst-headroom-worker-recycling.md §3-§5.
+    ocr_executor = ProcessPoolExecutor(max_workers=1, max_tasks_per_child=1)
 
     extract_tables_usecase = ExtractTablesUseCase(
         table_extractor=table_extractor,

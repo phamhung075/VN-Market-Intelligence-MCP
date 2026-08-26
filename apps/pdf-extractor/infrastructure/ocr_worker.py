@@ -80,6 +80,24 @@ LOW_TESSERACT_PAGE_CHARS: int = int(
 RASTERIZE_DPI: int = int(os.environ.get("BCTC_RASTERIZE_DPI", "200"))
 
 # ---------------------------------------------------------------------------
+# FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (worker-recycling amendment,
+# 2026-08-26) — per-document PaddleOCR rescue-fire budget.
+#
+# max_tasks_per_child=1 on the ocr_executor (main.py) recycles this process
+# BETWEEN tasks, but ocr_pages_worker loops over every rescue fire INSIDE one
+# uninterruptible task (application/extract_tables_usecase.py submits exactly
+# one ocr_pages_worker call per document). Recycling cannot bound a single
+# pathological document's own accumulated fires — this budget is the safety
+# belt for that intra-task case. Default 4 is PROVISIONAL pending AC-3 (a
+# real fire-count sweep against this module's own _paddle_ocr_worker_instance
+# call site — never measured directly; see the design brief's evidence-
+# provenance note before citing any number here as a measurement of THIS
+# mechanism).
+BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT: int = int(
+    os.environ.get("BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT", "4")
+)
+
+# ---------------------------------------------------------------------------
 # Vietnamese balance-sheet markers (duplicated from ocr_adapter.py so this
 # module stays self-contained and picklable without importing infrastructure/).
 # Keep in sync with ocr_adapter._BS_MARKERS when either changes.
@@ -105,6 +123,32 @@ _FALLBACK_PAGES = [4, 5, 6, 7]
 
 # Module-level PaddleOCR instance cache for the subprocess (avoids reload per page).
 _paddle_ocr_worker_instance = None
+
+
+def _malloc_trim_or_noop() -> None:
+    """
+    Best-effort glibc malloc_trim(0) — returns freed native-allocator arena
+    pages back to the OS. FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM
+    (worker-recycling amendment, 2026-08-26) §5: attacks the INTRA-document
+    compounding that max_tasks_per_child recycling structurally cannot reach
+    (recycling only bounds cross-task/cross-document retention). Same
+    ctypes.CDLL("libc.so.6") shape already shipped twice — interface/
+    pek_run_helper.py's _malloc_trim_or_noop and interface/routes_extract.py's
+    call site. Duplicated here (not imported) because this module must stay
+    self-contained and picklable for the ProcessPoolExecutor child — it does
+    not import interface/ (a higher DDD layer).
+
+    Guarded: "libc.so.6" only resolves on glibc-based Linux (the production
+    container's actual runtime) — macOS dev/test host, musl/Alpine, etc.
+    raise OSError/AttributeError here, caught and treated as a silent no-op.
+    """
+    try:
+        import ctypes
+
+        libc = ctypes.CDLL("libc.so.6")
+        libc.malloc_trim(0)
+    except (OSError, AttributeError):
+        pass  # non-glibc platform (e.g. macOS dev/test host) — nothing to trim
 
 
 # ---------------------------------------------------------------------------
@@ -416,6 +460,12 @@ def ocr_pages_worker(pdf_path: str, page_numbers: List[int]) -> List[Dict]:
 
     pages_out: List[Dict] = []
     sorted_pages = sorted(set(page_numbers))
+    # FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (worker-recycling amendment,
+    # 2026-08-26): per-document PaddleOCR rescue-fire budget. A local counter is
+    # sufficient — application/extract_tables_usecase.py submits exactly ONE
+    # ocr_pages_worker call per document, so this call's own lifetime IS "one
+    # document"; nothing needs to persist across calls or processes.
+    rescue_fires_used = 0
 
     for page_num in sorted_pages:
         try:
@@ -457,40 +507,68 @@ def ocr_pages_worker(pdf_path: str, page_numbers: List[int]) -> List[Dict]:
             # Try PyMuPDF rasterize + PaddleOCR and keep whichever has more chars.
             # GENERIC — no ticker/form/date literals.
             if len(text.strip()) < LOW_TESSERACT_PAGE_CHARS:
-                logger.info(
-                    "ocr_pages_worker: page %d Tesseract yielded %d chars "
-                    "(< LOW_TESSERACT_PAGE_CHARS=%d) — trying PaddleOCR rasterize fallback",
-                    page_num,
-                    len(text.strip()),
-                    LOW_TESSERACT_PAGE_CHARS,
-                )
-                try:
-                    paddle_text = _rasterize_and_ocr_page_worker(pdf_path, page_num)
-                    if len(paddle_text.strip()) > len(text.strip()):
-                        logger.info(
-                            "ocr_pages_worker: page %d PaddleOCR (%d chars) > "
-                            "Tesseract (%d chars) — using PaddleOCR result",
-                            page_num,
-                            len(paddle_text.strip()),
-                            len(text.strip()),
-                        )
-                        text = paddle_text
-                    else:
-                        logger.info(
-                            "ocr_pages_worker: page %d PaddleOCR (%d chars) <= "
-                            "Tesseract (%d chars) — keeping Tesseract result",
-                            page_num,
-                            len(paddle_text.strip()),
-                            len(text.strip()),
-                        )
-                except Exception as paddle_exc:
+                if rescue_fires_used >= BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT:
+                    # FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM AC-4: budget
+                    # exhausted for this document — recycling (main.py
+                    # max_tasks_per_child=1) only bounds CROSS-task retention, it
+                    # cannot interrupt this already-running task, so a single
+                    # pathological document must not be allowed to keep firing
+                    # unbounded. Remaining low-char pages keep their Tesseract
+                    # result as-is (same fallback already used on a
+                    # _rasterize_and_ocr_page_worker exception below) — logged so
+                    # a page silently reverting to a weak read is visible.
                     logger.warning(
-                        "ocr_pages_worker: page %d PaddleOCR fallback failed: %s "
-                        "— keeping Tesseract result (%d chars)",
+                        "ocr_pages_worker: PaddleOCR rescue budget exhausted "
+                        "(%d/%d fires already used this document) — page %d stays "
+                        "on its Tesseract result (%d chars), rescue skipped",
+                        rescue_fires_used,
+                        BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT,
                         page_num,
-                        paddle_exc,
                         len(text.strip()),
                     )
+                else:
+                    logger.info(
+                        "ocr_pages_worker: page %d Tesseract yielded %d chars "
+                        "(< LOW_TESSERACT_PAGE_CHARS=%d) — trying PaddleOCR rasterize fallback",
+                        page_num,
+                        len(text.strip()),
+                        LOW_TESSERACT_PAGE_CHARS,
+                    )
+                    rescue_fires_used += 1
+                    try:
+                        paddle_text = _rasterize_and_ocr_page_worker(pdf_path, page_num)
+                        if len(paddle_text.strip()) > len(text.strip()):
+                            logger.info(
+                                "ocr_pages_worker: page %d PaddleOCR (%d chars) > "
+                                "Tesseract (%d chars) — using PaddleOCR result",
+                                page_num,
+                                len(paddle_text.strip()),
+                                len(text.strip()),
+                            )
+                            text = paddle_text
+                        else:
+                            logger.info(
+                                "ocr_pages_worker: page %d PaddleOCR (%d chars) <= "
+                                "Tesseract (%d chars) — keeping Tesseract result",
+                                page_num,
+                                len(paddle_text.strip()),
+                                len(text.strip()),
+                            )
+                    except Exception as paddle_exc:
+                        logger.warning(
+                            "ocr_pages_worker: page %d PaddleOCR fallback failed: %s "
+                            "— keeping Tesseract result (%d chars)",
+                            page_num,
+                            paddle_exc,
+                            len(text.strip()),
+                        )
+                    finally:
+                        # FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM AC-5: trim
+                        # after every FIRE (attempted, success or exception) — not
+                        # per page. Attacks the intra-document compounding that
+                        # cross-task recycling (main.py max_tasks_per_child=1)
+                        # structurally cannot reach (§5 of the worker-recycling brief).
+                        _malloc_trim_or_noop()
 
             pages_out.append({"page_number": page_num, "text": text})
 
