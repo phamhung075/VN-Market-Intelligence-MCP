@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T02:05:29Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T02:05:05Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:00",
+    "leader_lock": "acquired",
+    "dev_head": "deprecated",
+    "devq": 5,
+    "signal_backlog": 32,
+    "note": "First alert-commander-market fire of the 02:00-08:59Z weekday window; prior last_fired 2026-08-25T08:24:59Z is the previous window close, not a miss. cycle_snapshot_promoted=false again (35th consecutive, naming defect already routed to architect)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T02:05:29Z"
+}
