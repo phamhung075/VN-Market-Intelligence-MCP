@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 4 row(s) (2 from review[], 2 from done[]), highest-ranked FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 4 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-26T03:24:48Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-26T03:31:04Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23874,6 +23873,46 @@
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-26T00:34:55Z"
+      },
+      {
+        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/po/flow/",
+        "owner": "po",
+        "next_agent": "po",
+        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
+        "created_at": "2026-08-23T12:10:00Z",
+        "created_by": "po/triage-20260823T1157Z",
+        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "related": [
+          "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
+          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
+        ],
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "dispatch_lane": "po",
+        "promoted_at": "2026-08-25T20:00:30Z",
+        "promoted_by": "po (triage-20260825T1937Z)",
+        "claimed_at": null,
+        "claimed_by": null,
+        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
+        "occurrence_count": 2,
+        "updated_at": "2026-08-26T03:30:54Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains.\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED (direct-commit verify, commit 9434b1b73): AC-1/AC-2 independently reproduced PASS (zsh echo|jq control-char parse-error repro pre-fix; printf|jq drains fixture 2->0 post-fix). AC-3 FAIL: trailing || true still present verbatim on the orch-apply pipe -- no fail-loud replacement shipped, so an unrelated orch-apply abort will still silently no-op with exit 0. AC-4 FAIL: no post-write self-verification/re-read block added near the CLEAR. AC-5 FAIL: commit swept only this one file; independent fleetwide grep across docs/agents/**/flow/*.md found the identical echo \"$VAR\" | jq idiom still live in 5+ other flow docs (system-auditor/flow/main.md, cowork-team/flow/main.md + match-slots.md, dev-team/flow/main.md + post-cycle.md) -- none reported/fixed/waived. Full detail: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-30.md STEP qa-S228.",
+        "po_live_verification_20260826T0116Z": "PO VERIFIED LIVE 2026-08-26T01:22Z — FIX CONFIRMED WORKING ON REAL TRAFFIC, not on a synthetic repro. PO ran the documented durable-inbox CLEAR block end-to-end this tick against a genuinely populated inbox and it cleared 16 of 16 envelopes: depth 16 before, 0 after, orch-apply reported inbox_row_identity=clean and task_total unchanged at 884. The fix is the printf '%s' substitution for echo at docs/agents/po/flow/triage-signals.md lines 53-54, landed as 9434b1b73. Before it, zsh echo corrupted any payload containing a backslash-n escape, jq then produced an empty candidate id list, and orch-apply fail-loud-aborted on it. NOTE ON THIS ROW OWN ID, recorded so a future reader does not mis-triage it: the id says SILENT-NOOP and that is WRONG. The failure mode was a FAIL-LOUD ABORT — orch-apply refused the write and left the live file untouched, so nothing was ever half-drained and no envelope was ever lost. The id was knowingly not renamed because .head referential integrity is schema-enforced against it. Treat the id as a label, never as evidence about the failure mode. next_agent=qa for form only; the acceptance evidence is this live 16-envelope drain.",
+        "drain_source_lane": "done",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-26T03:30:54Z",
+        "owner_client_session": null
       }
     ],
     "qa": [
@@ -24074,43 +24113,6 @@
         "claimed_at": "2026-08-25T20:21:26Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review"
-      },
-      {
-        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/po/flow/",
-        "owner": "po",
-        "next_agent": "qa",
-        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
-        "created_at": "2026-08-23T12:10:00Z",
-        "created_by": "po/triage-20260823T1157Z",
-        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "related": [
-          "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
-          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
-        ],
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-        "dispatch_lane": "po",
-        "promoted_at": "2026-08-25T20:00:30Z",
-        "promoted_by": "po (triage-20260825T1937Z)",
-        "claimed_at": "2026-08-26T03:24:47Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
-        "occurrence_count": 2,
-        "updated_at": "2026-08-26T03:24:48Z",
-        "updated_by": "po (adjudication-20260826T0116Z)",
-        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains.",
-        "po_live_verification_20260826T0116Z": "PO VERIFIED LIVE 2026-08-26T01:22Z — FIX CONFIRMED WORKING ON REAL TRAFFIC, not on a synthetic repro. PO ran the documented durable-inbox CLEAR block end-to-end this tick against a genuinely populated inbox and it cleared 16 of 16 envelopes: depth 16 before, 0 after, orch-apply reported inbox_row_identity=clean and task_total unchanged at 884. The fix is the printf '%s' substitution for echo at docs/agents/po/flow/triage-signals.md lines 53-54, landed as 9434b1b73. Before it, zsh echo corrupted any payload containing a backslash-n escape, jq then produced an empty candidate id list, and orch-apply fail-loud-aborted on it. NOTE ON THIS ROW OWN ID, recorded so a future reader does not mis-triage it: the id says SILENT-NOOP and that is WRONG. The failure mode was a FAIL-LOUD ABORT — orch-apply refused the write and left the live file untouched, so nothing was ever half-drained and no envelope was ever lost. The id was knowingly not renamed because .head referential integrity is schema-enforced against it. Treat the id as a label, never as evidence about the failure mode. next_agent=qa for form only; the acceptance evidence is this live 16-envelope drain.",
-        "drain_source_lane": "done"
       },
       {
         "id": "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
