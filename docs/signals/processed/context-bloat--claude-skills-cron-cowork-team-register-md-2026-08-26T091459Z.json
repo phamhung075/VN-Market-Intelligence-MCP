@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-26T09:14:59Z",
+  "payload": {
+    "file": ".claude/skills/cron-cowork-team/register.md",
+    "line_count": 168,
+    "cap": 200,
+    "byte_count": 12609,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 609,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "56edb01cd6be29f09886157812093adebe70e0e5a2b3b2830388059145e463f3",
+    "processedAt": "2026-08-26T09:40:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

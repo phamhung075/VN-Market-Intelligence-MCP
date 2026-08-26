@@ -24704,7 +24704,7 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T09:12:58Z",
+    "_updated_at": "2026-08-26T09:40:53Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25077,6 +25077,128 @@
         "payload": "auditor tier-2 cycle possibly missing — no completion evidence in 10h (cadence 4h)",
         "createdAt": "2026-08-26T08:59:21Z",
         "drained_at": "2026-08-26T09:12:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cccecab69f4d0fe5a1df76b169fd7025ed4712cc3b4b5e0f76bb46f8f9508be6",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/cron-cowork-team/SKILL.md",
+          "line_count": 343,
+          "cap": 200,
+          "byte_count": 21896,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "line-cap,byte-cap",
+          "overage": 143,
+          "byte_overage": 9896,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T09:15:14Z",
+        "drained_at": "2026-08-26T09:40:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "56edb01cd6be29f09886157812093adebe70e0e5a2b3b2830388059145e463f3",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/cron-cowork-team/register.md",
+          "line_count": 168,
+          "cap": 200,
+          "byte_count": 12609,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 609,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T09:14:59Z",
+        "drained_at": "2026-08-26T09:40:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "89a75436329f21c32312413c6c4f9c26c3d5322d31d00ee582678d7cbfc16bed",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/cron-standalone-team/SKILL.md",
+          "line_count": 249,
+          "cap": 200,
+          "byte_count": 14869,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "line-cap,byte-cap",
+          "overage": 49,
+          "byte_overage": 2869,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T09:20:11Z",
+        "drained_at": "2026-08-26T09:40:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8e0ec0818f7f44f2e933ca0fcf224110ef18a4c88902eb5d782d5846687967e1",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T09:22:01Z",
+          "matched_slots": [
+            "fb-daily"
+          ],
+          "won_slots": [
+            "fb-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/fb-market-poster/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "fb-daily": "cron"
+          },
+          "cadence_minutes": {
+            "fb-daily": null
+          },
+          "last_fired_timestamp": "2026-08-26T09:20:45Z",
+          "last_fired_slots": [
+            "fb-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "09:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 34,
+          "note": "fb-daily fired after 12 DAYS silent - last_fired was 2026-08-13T09:25:15Z on a '15 9 * * 1-5' cron, so ~8 weekday fires were missed entirely. Same class as chef-eod's 13-day freeze that this dispatcher broke at 08:45Z. Host-sleep/no-session gap, still unattributed. || EXPERIMENT RESULT - caller-supplied last_regime is LIVE, not dead. Passed last_regime=NEUTRAL to emit_pressure_state and pressure-state.json stored NEUTRAL verbatim. Last tick passed 'unknown' so the result was non-discriminating; this tick discriminates. CORRECTION (issued same tick, superseding the causal claim first written here): the promotion failure is NOT what makes last_regime unknown. A promoted cycle-snapshot-latest.json would STILL lack the key regime_status, which telemetry.md Step 6.0 documents as the lookup and which exists at no path in any snapshot, fresh or stale. The single blocker on this consumer path is the WRONG KEY. Promotion is not on this path at all: Step 4.7 writes a fresh cycle-snapshot-<HH:MM>.json every non-silent tick and that fresh file already carries the value at carry.regime - which is exactly where I read the NEUTRAL I just pushed through. Fixing the key alone revives this field. volatility_level is untouched and still has no producer. || regime_status key ABSENT again from the fresh snapshot (21st+ verification); real value lives at the carry path and read NEUTRAL this tick. volatility_level is ABSENT from EVERY path in the fresh snapshot - that one has genuinely no producer and is NOT fixed by the promotion fix. || cycle-snapshot-latest still NOT promoted - 64th consecutive. Still do NOT fix by rounding the producer filename. || Step 4.7 wrote cycle-snapshot-09:20.json (16946 B), count now 45 - but fb-market-poster has ZERO cycle-snapshot references across its whole flow dir, so THIS tick's snapshot serves ZERO consumers. Consistent with last tick's fleet census: exactly 1 consumer (alert-commander) out of 8 cowork agents. || snapshot-write -> spawn gap 14s, best observed (67s -> 29s -> 25s -> 14s). || signal_backlog 31 -> 34 this tick. || calendar_status='open' at 09:21Z though VN market closed 08:59Z - ~57th consecutive intraday falsification, normal trading day. || PRIOR TICK RETURN VERIFIED (refine_bctc_md, 09:00Z slot): DB contradicts the agent's own counts - get_bctc_refined says 9 DONE / 27 FAILED, the RETURN claimed 8 DONE / 28 FAILED and misread prior state as 8+16 vs the verified 9+15. Also reproduced the 1/sec byte-identical-flag burst (units 0028-0035, eight single-page units in 9s) that the P0 row flagged as a separate sub-finding on 08-24. Zero successful units in 24 consecutive attempts since 2026-08-24T09:05:30Z. Recorded on FIX-REFINEBCTC-SKIPSET-NO-STATUS-FILTER-FAILED-UNITS-PERMANENTLY-TERMINAL, commit e2d1e2539, including an explicitly REFUTED hypothesis (never-fetched-text) so the owner does not re-spend it. || Off-flow detector on the refine return: 0/6 against a mandatory 3/6 fail-open control (.claude/skills/dispatch-claim/CARD.md). Detector healthy. || NO SAMPLE PRE-REGISTERED THIS TICK - fb-market-poster has zero snapshot consumption, so it cannot produce the hit/miss observable. Same deliberate abstention as last tick."
+        },
+        "createdAt": "2026-08-26T09:22:01Z",
+        "drained_at": "2026-08-26T09:40:53Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
