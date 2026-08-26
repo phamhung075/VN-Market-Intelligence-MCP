@@ -32508,6 +32508,17 @@
       "provenance": "router-observed",
       "audit_cycle_tag": "cron:dev-team:2026-08-25T19:37Z",
       "dedup_key": "tooling_defect:devteam-tick-preflight:reentrant-run-cannot-distinguish-inflight-from-crashed"
+    },
+    {
+      "id": "tra-20260825T203533Z",
+      "ts": "2026-08-25T20:35:33Z",
+      "from": "tran-ngoc-bau",
+      "to": "po",
+      "type": "audit-handoff",
+      "summary": "Overall: CRITICAL",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/handoffs/tnb-audit-latest.md"
     }
   ],
   "backlog_detail": [],

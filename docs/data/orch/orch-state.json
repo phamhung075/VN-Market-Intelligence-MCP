@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T20:12:33Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-26T20:34:55Z",
+    "_updated_by": "tran-ngoc-bau",
     "archive": [],
     "rows": [
       {
@@ -180,17 +180,6 @@
         "triaged_at": "2026-08-26T18:01:22Z",
         "triaged_by": "po/triage-20260826T1737Z",
         "disposition": "FOLDED into FIX-CCATO-NULLMARKER-SET-INCOMPLETE-2ND-TOOL-GETTECHNICALINDICATORS-NOTFOUND-SCORED-AS-CONTRADICTION (backlog, raised P2->P1). NOT a fabrication and NOT probe-substitution: compare_financials returned current=null, so the absence-claim was TRUE. Third tool hitting the same null-marker gap. Mechanism read from source: verdictClassifier.ts flattenText() JSON.stringify()s the object, classifyVerdict() only substring-matches 10 prose literals from claim-tool-map.json .tool_null_markers, and JSON.stringify(null)===\"null\" is not one of them -> NON_NULL -> spurious contradiction."
-      },
-      {
-        "id": "tra-20260825T203533Z",
-        "ts": "2026-08-25T20:35:33Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "Overall: CRITICAL",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       },
       {
         "id": "cj-20260825T223214",
@@ -1146,6 +1135,17 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": "docs/signals/cowork-layerc-no-identity-preamble-20260826T2010Z.md"
+      },
+      {
+        "id": "tnb-20260826T203455",
+        "ts": "2026-08-26T20:34:55Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "Overall: CRITICAL - evening L2/L3 silent gap + bizctx-null CONFIRMED via JSON, pipeline coverage clean",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
@@ -18096,6 +18096,60 @@
         "updated_at": "2026-08-26T18:15:07Z",
         "po_duplicate_flag_20260806T2230": "DUPLICATE-CANDIDATE of FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, created 2026-07-29T13:50:01Z by pm - roughly 14h after this row. Evidence is field-level, not title-similarity: both BACKLOG; both files=[docs/agents/dev-team/flow/main.md]; both depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES]; both size L; both zone docs/agents/dev-team/flow/; and both titles state the identical deliverable ('replace fixed-priority BOUNDED-1 -> SLS -> RLC -> QA-Drain -> Step1 with aged round-robin rotation'). Both evaluate is_bounded1_eligible=true independently, so whichever BOUNDED-1 reaches first wins and the loser becomes duplicated work on the same file - the two sit at ranks #1 and #6 of the same 39-row eligible queue, close enough that this is a live risk, not a theoretical one. PO did NOT close either row: choosing which decomposition survives - this five-row TASK-DEVTEAM-IDLE-CHAIN-2..5 family versus the five-row FIX-DEVTEAM-IDLE-CHAIN-P1A/P2A/MAIN-COMPLETION/TEST-FAIRNESS/TEST-DURABLE family - is a PM decomposition-ownership call, outside PO triage scope. PO dispatched P1A in the 2026-08-06T22:07Z tick BATCH on priority alone (P0 vs high). FLAGGED here so this one is not implemented a second time against the same file.",
         "bounded1_rollback_20260826T1813Z": "AUTO-CLAIM ROLLED BACK BY DISPATCHER, NOT DISPATCHED, NO WORK DONE. BOUNDED-1 promoted+claimed this row at 18:13:24Z as priority_rank=1. Measured before dispatch: (a) the row carries po_duplicate_flag_20260806T2230 naming FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION as the row PO dispatched instead, explicitly FLAGGED so this one is not implemented a second time against the same file; (b) that survivor is DONE_VERIFIED 2026-08-08T15:37:34Z in docs/data/orch/archive/2026-08.json, alongside P2A-DURABLE-DRAIN (15:33:13Z) and MAIN-COMPLETION; (c) all three of this row acceptance criteria are already satisfied in the live docs/agents/dev-team/flow/main.md — rotation-select block present, Step 1 reads .dev_team_idle_chain.pending_triage_inbox, scripts/devteam-idle-chain-stamp.jq referenced. Deliverable shipped 2026-08-08. NOT cancelled here: choosing which of the two decomposition families survives, and closing this row plus siblings 4/5, is a PO/PM ownership call per the duplicate flag own wording. Signal emitted to PO. DISPATCH HAZARD: every gate passed — the contraindication lives in a bespoke top-level key with status_note absent, the live instance of FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION as widened by PO at 18:0xZ this same tick."
+      },
+      {
+        "id": "HOOK-ENFORCEMENT-STAGE0-SMOKE-TEST",
+        "title": "Stage 0: Live smoke test of agent_type/agent_id presence in PreToolUse hook payload",
+        "owner": "developer",
+        "zone": "scripts/agents-flow/",
+        "priority": "P1",
+        "type": "feature",
+        "status": "BACKLOG",
+        "created_at": "2026-08-26T20:35:58Z",
+        "depends": [],
+        "note": "Prerequisite for Stage 1/2. Verify agent_type and agent_id fields present in hook JSON payload on a real Task-tool-spawned subagent. Pass or fail both count as Stage 0 closure — result determines Rule Class 2/3 identity design.",
+        "updated_at": "2026-08-26T20:35:59Z"
+      },
+      {
+        "id": "HOOK-ENFORCEMENT-BASH-DIRECT-WRITE-GUARD-IMPL",
+        "title": "Stage 0-1: Implement orch-bash-direct-write-guard.mjs PreToolUse heuristic (observe-only, Stage 1 promotion criteria)",
+        "owner": "developer",
+        "zone": "scripts/agents-flow/",
+        "priority": "P1",
+        "type": "feature",
+        "status": "BACKLOG",
+        "created_at": "2026-08-26T20:35:58Z",
+        "depends": [
+          "HOOK-ENFORCEMENT-STAGE0-SMOKE-TEST"
+        ],
+        "note": "New file: scripts/agents-flow/orch-bash-direct-write-guard.mjs + test. Heuristic detects direct-bypass writes >|>>|tee|mv|cp|sed -i targeting orch-state.json without orch-apply.sh. Stage 0-1: instrumentation, zero blocking yet. Kill switch env var ORCH_BASH_GUARD_DISABLE=1. Depends on Stage 0 smoke test.",
+        "updated_at": "2026-08-26T20:35:59Z"
+      },
+      {
+        "id": "HOOK-ENFORCEMENT-DEGRADATION-LOG-INSTRUMENTATION",
+        "title": "Append fail-open degradation-log instrumentation to existing hooks + create hook-degradation-log.jsonl SSOT",
+        "owner": "developer",
+        "zone": "scripts/agents-flow/",
+        "priority": "P2",
+        "type": "feature",
+        "status": "BACKLOG",
+        "created_at": "2026-08-26T20:35:58Z",
+        "depends": [],
+        "note": "Modify orch-state-hook-prewrite.mjs, orch-state-hook-bash-backstop.sh; create hook-degradation-log.jsonl. Append {ts,hook,reason,session_id} on fail-open branches only (rare, bounded cost). Independent; can run in parallel.",
+        "updated_at": "2026-08-26T20:35:59Z"
+      },
+      {
+        "id": "HOOK-ENFORCEMENT-MCP-COORDINATION-ROUTE",
+        "title": "New GET /internal/coordination-status loopback route on mcp-server for coordination-state reads",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "type": "feature",
+        "status": "BACKLOG",
+        "created_at": "2026-08-26T20:35:58Z",
+        "depends": [],
+        "note": "New route on mcp-server/src/interface/mcp/server.ts: GET /internal/coordination-status?key=<lock_key>&session=<CLAUDE_CODE_SESSION_ID>. Read-only, loopback-only (127.0.0.1:3000). Decision point (brief §2): AF_UNIX socket vs loopback TCP — dev-mcp-server to document choice with one-line rationale.",
+        "updated_at": "2026-08-26T20:35:59Z"
       }
     ],
     "closed_sprints": [
