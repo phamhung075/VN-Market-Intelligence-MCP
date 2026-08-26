@@ -1,0 +1,25 @@
+{
+  "from": "agent-father",
+  "to": "po",
+  "type": "flow_actuator_fix",
+  "priority": "P1",
+  "summary": "checkVerificationGate() needs the behavior_predicate hard-reject (brief §5c) - out of agent-father's commit_zone (apps/), po to mint a dev-mcp-server row",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md",
+    "no_new_brief": true,
+    "reason": "design fully specified in brief §5c; this is the one row from §9's file table that lands in apps/ (dev-mcp-server zone), which agent-father's commit_zone explicitly excludes (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/] only). 6 of §9's 7 files already landed doc-side, this cycle, in two ordered commits: ee158a9ea (mint-side: po/flow/main.md, ba/flow/main.md) then 900d640ad (enforcement-side: qa/flow/main.md, ops/flow/docker.md, orch-sentinel dim-oh2/main/emit-scorecard.md). This row is the remaining one.",
+    "target_files": ["apps/mcp-server/src/infrastructure/orchStateSchema.ts"],
+    "ac": [
+      "AC-1: add a new conditional inside checkOne() in checkVerificationGate() (orchStateSchema.ts:627, right after the existing hasValidRawProbe block, ~line 641), mirroring the hasValidRawProbe/hasHonestGapReason pattern (helper fn hasValidBehaviorPredicate(v) that VerificationSchema.safeParse()s v and checks .data.behavior_predicate?.cmd && .data.behavior_predicate?.expect !== undefined). VerificationSchema already .passthrough()s (orchStateSchema.ts:166-171) so nested behavior_predicate/behavior_probe fields are schema-legal today with zero migration.",
+      "AC-2: reject condition is row.status === 'DONE_VERIFIED' AND !RC_VERIF_GRANDFATHERED_IDS.has(id) AND zone starts with 'apps/' AND priority is P0/P1-equivalent AND created_at (fallback declared_at) >= BEHAVIOR_PREDICATE_CUTOFF AND !hasValidBehaviorPredicate(row.verification).",
+      "AC-3 (PRIORITY FIELD IS MIXED CONVENTION - VERIFY BEFORE HARDCODING): live orch-state.json priority values measured 2026-08-26 across all 6 non-terminal+done_verified lanes: 317xP1, 181xP2, 82x'high', 61xP0, 57xP3, 34x'low', 31x'medium', 6x'normal', 2x'med', 1x'HIGH'. docs/standards/task-schema.md only documents high/medium/low (stale, pre-existing gap, not fixed here, out of agent-father's zone). The gate's P0/P1 test MUST match on ['P0','P1','high','HIGH'] (or normalize-then-compare), not a bare === 'P0' || === 'P1' string check, or it silently under-scopes to 61+317=378 of the ~460 P0/P1-equivalent rows and misses the 82+1=83 'high'/'HIGH' rows entirely.",
+      "AC-4: BEHAVIOR_PREDICATE_CUTOFF = '2026-08-26T19:57:54Z' (exact commit-landing timestamp of the mint-side capability, docs/agents/po/flow/main.md commit ee158a9ea, 2026-08-26T19:58:30Z - the cutoff constant is 36s before actual landing, deliberately conservative so mint-side is never behind enforcement). MANDATORY - do not enforce without this cutoff: every P0/P1 apps/ row on the board right now was minted before behavior_predicate existed as a mint-time field; a bare hard-reject with no cutoff wedges the board on rows nobody can fix by doing the work right (this was the router-flagged deploy-ordering hazard this whole cycle exists to close - reproducing it here would be the exact bug being fixed).",
+      "AC-5: error message must name the fix path explicitly, matching the raw_probe issue's style: 'task \"${id}\" (P0/P1 apps/, minted ${createdAt}) set to DONE_VERIFIED without verification.behavior_predicate{cmd,expect}. fix: PO/BA re-author the predicate at mint (docs/agents/po/flow/main.md), or set status to DONE pending verification.'",
+      "AC-6: unit test - a P0 apps/ row with created_at >= cutoff and no behavior_predicate rejects; the same row with created_at < cutoff passes (grandfather-by-time, not by id-list); a P2/scripts row never rejects regardless of behavior_predicate presence.",
+      "AC-7 (dedup honored, do not duplicate): checked backlog[]/ready[]/done_verified[]/archive/2026-08.json by subject before minting this signal - the only 4 rows matching 'behavior_predicate|behavioral-verification|checkVerificationGate|OH-2.4|behavior_probe' are FIX-RCVERIF-50-GRANDFATHERED-IDS-MARKER-BLIND-NO-TRACKING-ROW (backlog) and 3 archived rows, all about the UNRELATED raw_probe grandfather-exemption defect, not this mint-time predicate gate. None is a duplicate."
+    ],
+    "commits_already_landed": ["ee158a9ea", "900d640ad"],
+    "not_agent_fathers_zone": "apps/mcp-server/src/infrastructure/orchStateSchema.ts is apps/ - outside agent-father's commit_zone.allowed. Zone boundary per this task's own dispatch: dev-mcp-server."
+  },
+  "createdAt": "2026-08-26T20:03:00Z"
+}
