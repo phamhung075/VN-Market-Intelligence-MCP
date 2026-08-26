@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-26T03:31:04Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-KINHDICH-extract-hexagram-data",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-KINHDICH-extract-hexagram-data — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-26T04:10:38Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5525,15 +5526,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-FRONTEND-reconcile-formatters",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-reconcile-formatters"
-      },
-      {
-        "title": "Extract 64-hexagram prose to an embedded data asset behind a small loader",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-KINHDICH-extract-hexagram-data",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-extract-hexagram-data"
       },
       {
         "title": "Extract a pure VnDirect quote-mapper primitive; collapse Tier1/Tier2 duplication",
@@ -24043,6 +24035,35 @@
         "qa_changes_requested_at": "2026-08-26T03:30:54Z",
         "owner_client_session": null,
         "router_note_20260826T0334Z": "ROUTER CORROBORATION 2026-08-26T03:34Z — AC-5 is worse than \"not swept fleetwide\". One of the unswept copies is on the gate that decides whether PO triage runs at all: docs/agents/dev-team/flow/main.md Step 1, pending_n=$(echo \"$pendingSignals\" | jq \"length\"). Reproduced against the LIVE inbox (12 envelopes, 28545 bytes) under real zsh this tick: echo -> \"jq: parse error: Invalid escape at line 1, column 6704\"; printf \"%s\" -> 12. So pending_n is a parse-error string, not a number, and the \"if pending_n == 0 -> skip the PO spawn\" short-circuit is comparing garbage. It did not fire this tick only because the idle-rotation selected qa_drain, which JUMPs to end before Step 1 is reached. It is armed now, and some of the escaped content arming it came from this tick own signal_queue writes. Same file also carries the VERDICT_JSON copy. Treat main.md Step 1 as the highest-priority site in the AC-5 sweep, not one entry in a list of 17."
+      },
+      {
+        "id": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
+        "type": "FIX",
+        "title": "sweep-guard REPEAT-OFFENDER-AFTER-BLOCK: the router coordinating session reached prior_warns=20 against threshold=3 and is now hard-blocked mid-commit, with 5 peer-staged files in the blast radius",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "po",
+        "owner": "qa",
+        "created_at": "2026-08-14T13:37:19Z",
+        "created_by": "po",
+        "source": "durable-inbox signal from=commit-sweep-guard type=bug-escalation 2026-08-14T11:26:00Z (escalated=true)",
+        "dedup_key": "sweepguard:bare-commit|defect:repeat-offender-after-block|actor:router-session",
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned. FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (backlog/developer) is the VICTIM side (detecting that your WIP was absorbed) - this is the OFFENDER side. FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE (ready) is within-file capture by cold-evict, different actuator. FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS is done/DONE (skills already converted to pathspec). NO open offender-side row -> minted per triage-signals.md's mandatory escalated=true rule.",
+        "evidence": "Payload verbatim: '[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0-pm.md docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=20 threshold=3 outcome=blocked.' Per triage-signals.md this payload class is a TRUE POSITIVE BY CONSTRUCTION (pre-commit exits 0 silently on mode=SCOPED before the signal write is reached, so the signal existing IS the mechanism proof) - it must NEVER be dispositioned via git show --stat.",
+        "root_cause": "Some commit call-site reachable from the router session still issues a BARE `git commit -m ...` with no `-- <paths>`. 20 warns vs a threshold of 3 means the per-session escalation counter converged to hard-block without the offending call-site ever being identified or fixed - the hook's escalation is working, the remediation loop is not.",
+        "acceptance": "AC-1 [QA PASS, scope-narrowed] name the concrete bare-commit call-site(s) reachable from a router/dispatcher session (file:line) — satisfied for the COWORK-TICK class; the other 3 classes are owned by the follow-up rows named in the ruling. AC-2 [QA PASS, same narrowing] convert each to pathspec-scoped form. AC-3 [NARROWED 2026-08-25 by PO — COWORK-TICK CLASS ONLY] over a 24h window anchored at commit e6adc6dfe committer date 2026-08-25T14:59:30Z (earliest closable 2026-08-26T14:59:30Z), PASS requires BOTH: (i) zero BARE fires inside the window whose staged-file list matches the cowork-tick signature (docs/data/cowork-schedule.json and/or docs/signals/cowork-team-*.json), AND (ii) POSITIVE EXERCISE PROOF — at least 2 commits inside the window that touch either of those paths AND are pathspec-scoped, proving telemetry.md Step 6.2 actually ran. Clause (ii) is MANDATORY and NON-WAIVABLE: the class base rate is ~1.3 fires/day (4 fires / 3 days), so clause (i) alone cannot distinguish 'fixed' from 'the path was never exercised'. BARE fires from the system-auditor-notebook, ad-hoc-mega-sweep or misc-agent classes DO NOT fail this AC. AC-4 [QA PASS 2026-08-25T15:49:37Z, independently re-probed in a fresh sandbox repo across all 3 surfaces] the escalation payload names the offending call-site (caller_chain), not only the actor session id.",
+        "non_goals": "Not a change to the discriminator itself (verify-commit-sweep-discriminator.sh VERDICT: PASS - the detector is sound).",
+        "updated_at": "2026-08-26T04:10:35Z",
+        "occurrence_count": 32,
+        "updated_by": "po (ac3-scope-ruling-20260825T1612Z)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
+        "verify_note": "[QA/verify-committed 2026-08-25T15:49:37Z] PARTIAL PASS — 3 of 4 ACs verified, AC-3 NOT verifiable yet (24h window only 3.3% elapsed). Commit e6adc6dfe: on main ancestry (git merge-base --is-ancestor = yes), touches 3/3 claimed files.\n\nAC-4 PASS — independently re-verified end-to-end, NOT trusted from the developer's prose. Confirmed the LIVE hook is the fixed one (.git/hooks/pre-commit is a symlink to scripts/git-hooks/pre-commit, byte-identical, caller_chain present 6x). Fresh sandbox repo + a real BARE commit emitted caller_chain= on ALL THREE surfaces: stderr banner, .git/sweep-guard.log line, and the docs/signals/ bug-escalation payload. The chain named both the invoking command line (\"git commit -q -m bare probe\") AND the top-level family identity (\"claude --dangerously-skip-permissions -n detect-loop\") — which is exactly the operator-actionable field this row's AC-4 demanded and the actor session id alone never gave. scripts/git-hooks/pre-commit.test.sh re-run by QA: 15/15 PASS, 0 failed.\n\nAC-1 / AC-2 PASS-WITH-SCOPE-CAVEAT. The cowork-team gap is real and log-corroborated, not merely asserted: BARE fires at 2026-08-24T21:08:29Z and 2026-08-25T00:08:22Z (actor 7a47f7c6) staged exactly [docs/data/cowork-schedule.json, docs/signals/cowork-team-*.json] — precisely the tick artifacts the cowork-team flow tree named no commit step for. The remedy is NOT inert: telemetry.md Step 6.2 delegates to .claude/skills/commit-mutex/SKILL.md, whose Step 2c is itself pathspec-scoped (\"-- <path1> <path2>\"). CAVEAT: this class is only 4 of 59 BARE fires since 2026-08-22 (6.8%). The rest: system-auditor notebook 16/59 (27.1%), ad-hoc mega-sweep n>=20 1/59 (1.7%), misc agent commits 38/59 (64.4%) — all explicitly named-not-fixed by this commit. AC-1's literal wording (\"identify the concrete call-site(s) ... name file:line\") is satisfied only for one class; 93.2% of the live fire population still has no named call-site.\n\nAC-3 PENDING — CANNOT BE CLOSED TODAY, and was not. Window anchor = e6adc6dfe committer date 2026-08-25T14:59:30Z. EARLIEST CLOSABLE: 2026-08-26T14:59:30Z. At QA time (2026-08-25T15:49:37Z) only 0h47m of 24h had elapsed = 3.3%. Zero post-fix BARE fires so far is NOT evidence of anything: across the last 40 fires the MEDIAN inter-fire gap is 0.68h and 48% of historical gaps ALREADY exceed 47 min, so the current silence is the modal outcome under the UNFIXED regime. Base rate for comparison: 14-22 BARE fires/day (08-22: 20, 08-23: 22, 08-24: 14).\n\nAC-3 FORWARD RISK, for whoever re-verifies after 2026-08-26T14:59:30Z: with 93.2% of the fire population unaddressed, AC-3 as literally written (\"zero new BARE fires\") is unlikely to pass on this fix alone. PO ruling needed on whether AC-3 is scoped to the cowork-team class only, or whether the row must widen to cover the system-auditor execution-fidelity class and the ad-hoc mega-sweep class.\n\nOUT OF SCOPE — flagged, NOT absorbed into this row's verdict: scripts/verify-fleet-commit-pathspec.sh is RED (exit 1, 6 FAIL lines), but all 6 were inspected line-by-line and ALL 6 are prose false positives, zero real bare-commit instructions. Two distinct causes. (a) ALLOWLIST LINE-NUMBER DRIFT, 3 sites: docs/agents/developer/flow/main.md allowlisted at :104, prose now at :105; docs/policies/dev-standards.md allowlisted at :805 and :1465, prose now at :1428 and :2204. (b) NEVER-ALLOWLISTED RULE-2.5 prose notes, 3 sites: docs/agents/market-watcher/flow/cycle.md:306, docs/agents/market-watcher/flow/eod.md:106, docs/agents/news-scout/flow/stage-log-notify.md:45 — each sits immediately BELOW its own correctly-pathspec-scoped code fence and says so verbatim (\"The trailing -- <path> ABOVE closes that gap\"), while the script's LOOKAHEAD=10 scans only FORWARD. That script is AC-3 of FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK, a DIFFERENT row — it is NOT a blocker here (this row's AC-1/AC-2 were verified by direct call-site inspection, never by that script), but it is currently unusable as fleet-wide evidence and needs its own fix row (line-anchored allowlist keys are inherently drift-prone; a backward lookbehind window would close cause (b)).\n\nALSO FLAGGED SEPARATELY (not absorbed): system-auditor notebook BARE fires recur despite the already-mandatory pathspec-scoped scripts/auditor-notebook-commit.sh at every call site — 16 fires since 08-22 across 6 actor sessions, latest 2026-08-25T08:01:59Z. Confirmed INTERMITTENT, not deterministic: the post-fix system-auditor notebook commit 0a7d11978 (2026-08-25T15:05:51Z) did NOT fire. Execution-fidelity gap, not a missing script — needs its own row.\n\n\n--- prior note, preserved ---\n[developer/dispatch 2026-08-25] AC-4 done first: scripts/git-hooks/pre-commit now captures a best-effort caller_chain (OS process ancestry + top-level claude -n <family> identity) into the WARN banner/log/signal payload -- verified live in a sandboxed repo, pre-commit.test.sh 15/15 PASS. AC-1/AC-2: exhaustive call-site sweep found every documented commit site already pathspec-scoped except one full gap -- docs/agents/cowork-team/flow/ named NO commit step anywhere for docs/data/cowork-schedule.json or its own telemetry signal despite committing both every ~15min tick. Fixed: telemetry.md Step 6.2 (commit-mutex-guarded, pathspec-scoped) + main.md dispatch-table update. Named, not fixed (broader pattern, separate follow-up recommended): system-auditor notebook BARE fires recur despite an already-mandatory pathspec-scoped script at every call site -- compliance/execution-fidelity gap, not a missing instruction; also a distinct ad hoc git-add-A-style mega-fire class (45-46 files) that already violates an existing rule. AC-3 24h zero-new-BARE window PENDING VERIFICATION (cannot close inside this dispatch). Commit: e6adc6dfe (scripts/git-hooks/pre-commit, docs/agents/cowork-team/flow/main.md, docs/agents/cowork-team/flow/telemetry.md).\n\n[QA re-verify 2026-08-26T04:07:07Z] HOLD — dispatched before qa_not_before=2026-08-26T14:59:30Z (window anchor e6adc6dfe committer 2026-08-25T14:59:30Z; only ~13h/24h elapsed at dispatch time). Per po_ruling_ac3_scope_20260825's own instruction (a Review-Lane pick before that timestamp MUST read qa_not_before first and return HOLD without consuming a redispatch), returning HOLD; redispatch_count NOT bumped (stays 1). Re-confirmed on fresh inspection: AC-1/AC-2/AC-4 still hold (e6adc6dfe on main ancestry; telemetry.md Step 6.2 + pre-commit caller_chain intact; scripts/git-hooks/pre-commit.test.sh 15/15 PASS). AC-3 informational-only spot-check (NOT a verdict, window still open): 0 cowork-tick-signature BARE fires in .git/sweep-guard.log since anchor (3 fires total since anchor, none match cowork-schedule.json/cowork-team-* signature); clause(ii) exercise-proof strong, 32 commits touched docs/data/cowork-schedule.json since anchor, 3 spot-checked are clean 2-file pathspec-scoped diffs. Do NOT re-verify before 2026-08-26T14:59:30Z.",
+        "redispatch_count": 1,
+        "qa_not_before": "2026-08-26T14:59:30Z",
+        "po_ruling_ac3_scope_20260825": "RULING: NARROW AC-3 TO THE COWORK-TICK CLASS. DO NOT WIDEN THIS ROW. ***FULL RULING (rationale, the three rejected alternatives, the exact narrowed AC-3, and the three follow-up rows) IS IN THE COLD STORE: docs/data/orch/archive/backlog-detail.json .items[] id=FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS field po_ruling_ac3_scope_20260825 — READ IT BEFORE RE-VERIFYING.*** SUMMARY: QA's classification is accepted in full — of 59 BARE fires since 2026-08-22, e6adc6dfe closes the cowork-tick class ONLY (4/59 = 6.8%); system-auditor notebook 16/59 = 27.1%; ad-hoc mega-sweep 1/59; misc agent commits 38/59 = 64.4%. AC-3 as literally worded cannot pass on this fix. NARROW, because the three remaining classes have structurally different remedies that cannot share one DoD: cowork = missing instruction (fixed); system-auditor = EXECUTION-FIDELITY gap on an already-mandatory already-pathspec-scoped script, proven intermittent not deterministic (0a7d11978 at 15:05:51Z did not fire, actor c6581d0a at 08:01:59Z did) so no further doc edit closes it; misc = no named call-site at all, discoverable for the first time only because AC-4 shipped caller_chain today. Folding them into one AC-3 yields an unbounded DoD — the exact mechanism that left this row 11 days at occurrence_count 32. The row's delivered value is AC-4, which three prior PO notes each called the binding blocker, and it landed and was independently re-verified. FOLLOW-UPS MINTED THIS TICK so the other 93.2% is not dropped: FIX-AUDITOR-NOTEBOOK-BARE-COMMIT-EXECUTION-FIDELITY-16-OF-59; SPIKE-SWEEPGUARD-MISC-CLASS-CALLERCHAIN-CLASSIFY-38-OF-59; FIX-VERIFYFLEETPATHSPEC-LINEKEYED-ALLOWLIST-AND-FORWARDONLY-LOOKAHEAD. ROUTING: next_agent po -> qa; the only remaining work is the AC-3 re-verify. qa_not_before=2026-08-26T14:59:30Z — a Review-Lane QA-Drain pick before that timestamp MUST read qa_not_before first and return HOLD without consuming a redispatch. QA-Drain PRIMARY is a live picker, so NO hand-hop is needed for this row. Historical occurrence log (status_note + the 3 po_occurrence_* fields) relocated to the same cold entry; nothing was deleted.",
+        "qa_hold_at": "2026-08-26T04:10:34Z"
       }
     ],
     "qa": [
@@ -24212,37 +24233,6 @@
         "qa_new_window_csv": "docs/incidents/data/rag-durability-2026-08-25T1318Z-16c59b5e929f-window.csv",
         "qa_new_window_earliest_d1_close": "2026-08-26T13:18:55Z",
         "po_ops_followup_20260825T1624": "OPS FOLLOW-UP RELAYED FROM THE PO DURABLE INBOX (envelope from=po to=qa, 2026-08-25T13:45:50Z, WARN). Verbatim: 'RAG durability window opened 13:18Z on container 16c59b5e929f — take a MID-window D1 dmesg capture, not only at close; the previous window died exactly this way.' Landed on this row because it is the row that owns the open durability window and it sits in qa[] where QA will read it; the envelope itself was addressed to=qa but had no board anchor and would otherwise have been cleared with the inbox. Same failure shape as feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled: a close-only capture cannot distinguish 'survived' from 'died and restarted inside the window'."
-      },
-      {
-        "id": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
-        "type": "FIX",
-        "title": "sweep-guard REPEAT-OFFENDER-AFTER-BLOCK: the router coordinating session reached prior_warns=20 against threshold=3 and is now hard-blocked mid-commit, with 5 peer-staged files in the blast radius",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "owner": "qa",
-        "created_at": "2026-08-14T13:37:19Z",
-        "created_by": "po",
-        "source": "durable-inbox signal from=commit-sweep-guard type=bug-escalation 2026-08-14T11:26:00Z (escalated=true)",
-        "dedup_key": "sweepguard:bare-commit|defect:repeat-offender-after-block|actor:router-session",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned. FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (backlog/developer) is the VICTIM side (detecting that your WIP was absorbed) - this is the OFFENDER side. FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE (ready) is within-file capture by cold-evict, different actuator. FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS is done/DONE (skills already converted to pathspec). NO open offender-side row -> minted per triage-signals.md's mandatory escalated=true rule.",
-        "evidence": "Payload verbatim: '[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0-pm.md docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=20 threshold=3 outcome=blocked.' Per triage-signals.md this payload class is a TRUE POSITIVE BY CONSTRUCTION (pre-commit exits 0 silently on mode=SCOPED before the signal write is reached, so the signal existing IS the mechanism proof) - it must NEVER be dispositioned via git show --stat.",
-        "root_cause": "Some commit call-site reachable from the router session still issues a BARE `git commit -m ...` with no `-- <paths>`. 20 warns vs a threshold of 3 means the per-session escalation counter converged to hard-block without the offending call-site ever being identified or fixed - the hook's escalation is working, the remediation loop is not.",
-        "acceptance": "AC-1 [QA PASS, scope-narrowed] name the concrete bare-commit call-site(s) reachable from a router/dispatcher session (file:line) — satisfied for the COWORK-TICK class; the other 3 classes are owned by the follow-up rows named in the ruling. AC-2 [QA PASS, same narrowing] convert each to pathspec-scoped form. AC-3 [NARROWED 2026-08-25 by PO — COWORK-TICK CLASS ONLY] over a 24h window anchored at commit e6adc6dfe committer date 2026-08-25T14:59:30Z (earliest closable 2026-08-26T14:59:30Z), PASS requires BOTH: (i) zero BARE fires inside the window whose staged-file list matches the cowork-tick signature (docs/data/cowork-schedule.json and/or docs/signals/cowork-team-*.json), AND (ii) POSITIVE EXERCISE PROOF — at least 2 commits inside the window that touch either of those paths AND are pathspec-scoped, proving telemetry.md Step 6.2 actually ran. Clause (ii) is MANDATORY and NON-WAIVABLE: the class base rate is ~1.3 fires/day (4 fires / 3 days), so clause (i) alone cannot distinguish 'fixed' from 'the path was never exercised'. BARE fires from the system-auditor-notebook, ad-hoc-mega-sweep or misc-agent classes DO NOT fail this AC. AC-4 [QA PASS 2026-08-25T15:49:37Z, independently re-probed in a fresh sandbox repo across all 3 surfaces] the escalation payload names the offending call-site (caller_chain), not only the actor session id.",
-        "non_goals": "Not a change to the discriminator itself (verify-commit-sweep-discriminator.sh VERDICT: PASS - the detector is sound).",
-        "updated_at": "2026-08-25T20:21:27Z",
-        "occurrence_count": 32,
-        "updated_by": "po (ac3-scope-ruling-20260825T1612Z)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
-        "verify_note": "[QA/verify-committed 2026-08-25T15:49:37Z] PARTIAL PASS — 3 of 4 ACs verified, AC-3 NOT verifiable yet (24h window only 3.3% elapsed). Commit e6adc6dfe: on main ancestry (git merge-base --is-ancestor = yes), touches 3/3 claimed files.\n\nAC-4 PASS — independently re-verified end-to-end, NOT trusted from the developer's prose. Confirmed the LIVE hook is the fixed one (.git/hooks/pre-commit is a symlink to scripts/git-hooks/pre-commit, byte-identical, caller_chain present 6x). Fresh sandbox repo + a real BARE commit emitted caller_chain= on ALL THREE surfaces: stderr banner, .git/sweep-guard.log line, and the docs/signals/ bug-escalation payload. The chain named both the invoking command line (\"git commit -q -m bare probe\") AND the top-level family identity (\"claude --dangerously-skip-permissions -n detect-loop\") — which is exactly the operator-actionable field this row's AC-4 demanded and the actor session id alone never gave. scripts/git-hooks/pre-commit.test.sh re-run by QA: 15/15 PASS, 0 failed.\n\nAC-1 / AC-2 PASS-WITH-SCOPE-CAVEAT. The cowork-team gap is real and log-corroborated, not merely asserted: BARE fires at 2026-08-24T21:08:29Z and 2026-08-25T00:08:22Z (actor 7a47f7c6) staged exactly [docs/data/cowork-schedule.json, docs/signals/cowork-team-*.json] — precisely the tick artifacts the cowork-team flow tree named no commit step for. The remedy is NOT inert: telemetry.md Step 6.2 delegates to .claude/skills/commit-mutex/SKILL.md, whose Step 2c is itself pathspec-scoped (\"-- <path1> <path2>\"). CAVEAT: this class is only 4 of 59 BARE fires since 2026-08-22 (6.8%). The rest: system-auditor notebook 16/59 (27.1%), ad-hoc mega-sweep n>=20 1/59 (1.7%), misc agent commits 38/59 (64.4%) — all explicitly named-not-fixed by this commit. AC-1's literal wording (\"identify the concrete call-site(s) ... name file:line\") is satisfied only for one class; 93.2% of the live fire population still has no named call-site.\n\nAC-3 PENDING — CANNOT BE CLOSED TODAY, and was not. Window anchor = e6adc6dfe committer date 2026-08-25T14:59:30Z. EARLIEST CLOSABLE: 2026-08-26T14:59:30Z. At QA time (2026-08-25T15:49:37Z) only 0h47m of 24h had elapsed = 3.3%. Zero post-fix BARE fires so far is NOT evidence of anything: across the last 40 fires the MEDIAN inter-fire gap is 0.68h and 48% of historical gaps ALREADY exceed 47 min, so the current silence is the modal outcome under the UNFIXED regime. Base rate for comparison: 14-22 BARE fires/day (08-22: 20, 08-23: 22, 08-24: 14).\n\nAC-3 FORWARD RISK, for whoever re-verifies after 2026-08-26T14:59:30Z: with 93.2% of the fire population unaddressed, AC-3 as literally written (\"zero new BARE fires\") is unlikely to pass on this fix alone. PO ruling needed on whether AC-3 is scoped to the cowork-team class only, or whether the row must widen to cover the system-auditor execution-fidelity class and the ad-hoc mega-sweep class.\n\nOUT OF SCOPE — flagged, NOT absorbed into this row's verdict: scripts/verify-fleet-commit-pathspec.sh is RED (exit 1, 6 FAIL lines), but all 6 were inspected line-by-line and ALL 6 are prose false positives, zero real bare-commit instructions. Two distinct causes. (a) ALLOWLIST LINE-NUMBER DRIFT, 3 sites: docs/agents/developer/flow/main.md allowlisted at :104, prose now at :105; docs/policies/dev-standards.md allowlisted at :805 and :1465, prose now at :1428 and :2204. (b) NEVER-ALLOWLISTED RULE-2.5 prose notes, 3 sites: docs/agents/market-watcher/flow/cycle.md:306, docs/agents/market-watcher/flow/eod.md:106, docs/agents/news-scout/flow/stage-log-notify.md:45 — each sits immediately BELOW its own correctly-pathspec-scoped code fence and says so verbatim (\"The trailing -- <path> ABOVE closes that gap\"), while the script's LOOKAHEAD=10 scans only FORWARD. That script is AC-3 of FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK, a DIFFERENT row — it is NOT a blocker here (this row's AC-1/AC-2 were verified by direct call-site inspection, never by that script), but it is currently unusable as fleet-wide evidence and needs its own fix row (line-anchored allowlist keys are inherently drift-prone; a backward lookbehind window would close cause (b)).\n\nALSO FLAGGED SEPARATELY (not absorbed): system-auditor notebook BARE fires recur despite the already-mandatory pathspec-scoped scripts/auditor-notebook-commit.sh at every call site — 16 fires since 08-22 across 6 actor sessions, latest 2026-08-25T08:01:59Z. Confirmed INTERMITTENT, not deterministic: the post-fix system-auditor notebook commit 0a7d11978 (2026-08-25T15:05:51Z) did NOT fire. Execution-fidelity gap, not a missing script — needs its own row.\n\n\n--- prior note, preserved ---\n[developer/dispatch 2026-08-25] AC-4 done first: scripts/git-hooks/pre-commit now captures a best-effort caller_chain (OS process ancestry + top-level claude -n <family> identity) into the WARN banner/log/signal payload -- verified live in a sandboxed repo, pre-commit.test.sh 15/15 PASS. AC-1/AC-2: exhaustive call-site sweep found every documented commit site already pathspec-scoped except one full gap -- docs/agents/cowork-team/flow/ named NO commit step anywhere for docs/data/cowork-schedule.json or its own telemetry signal despite committing both every ~15min tick. Fixed: telemetry.md Step 6.2 (commit-mutex-guarded, pathspec-scoped) + main.md dispatch-table update. Named, not fixed (broader pattern, separate follow-up recommended): system-auditor notebook BARE fires recur despite an already-mandatory pathspec-scoped script at every call site -- compliance/execution-fidelity gap, not a missing instruction; also a distinct ad hoc git-add-A-style mega-fire class (45-46 files) that already violates an existing rule. AC-3 24h zero-new-BARE window PENDING VERIFICATION (cannot close inside this dispatch). Commit: e6adc6dfe (scripts/git-hooks/pre-commit, docs/agents/cowork-team/flow/main.md, docs/agents/cowork-team/flow/telemetry.md).",
-        "redispatch_count": 1,
-        "qa_not_before": "2026-08-26T14:59:30Z",
-        "po_ruling_ac3_scope_20260825": "RULING: NARROW AC-3 TO THE COWORK-TICK CLASS. DO NOT WIDEN THIS ROW. ***FULL RULING (rationale, the three rejected alternatives, the exact narrowed AC-3, and the three follow-up rows) IS IN THE COLD STORE: docs/data/orch/archive/backlog-detail.json .items[] id=FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS field po_ruling_ac3_scope_20260825 — READ IT BEFORE RE-VERIFYING.*** SUMMARY: QA's classification is accepted in full — of 59 BARE fires since 2026-08-22, e6adc6dfe closes the cowork-tick class ONLY (4/59 = 6.8%); system-auditor notebook 16/59 = 27.1%; ad-hoc mega-sweep 1/59; misc agent commits 38/59 = 64.4%. AC-3 as literally worded cannot pass on this fix. NARROW, because the three remaining classes have structurally different remedies that cannot share one DoD: cowork = missing instruction (fixed); system-auditor = EXECUTION-FIDELITY gap on an already-mandatory already-pathspec-scoped script, proven intermittent not deterministic (0a7d11978 at 15:05:51Z did not fire, actor c6581d0a at 08:01:59Z did) so no further doc edit closes it; misc = no named call-site at all, discoverable for the first time only because AC-4 shipped caller_chain today. Folding them into one AC-3 yields an unbounded DoD — the exact mechanism that left this row 11 days at occurrence_count 32. The row's delivered value is AC-4, which three prior PO notes each called the binding blocker, and it landed and was independently re-verified. FOLLOW-UPS MINTED THIS TICK so the other 93.2% is not dropped: FIX-AUDITOR-NOTEBOOK-BARE-COMMIT-EXECUTION-FIDELITY-16-OF-59; SPIKE-SWEEPGUARD-MISC-CLASS-CALLERCHAIN-CLASSIFY-38-OF-59; FIX-VERIFYFLEETPATHSPEC-LINEKEYED-ALLOWLIST-AND-FORWARDONLY-LOOKAHEAD. ROUTING: next_agent po -> qa; the only remaining work is the AC-3 re-verify. qa_not_before=2026-08-26T14:59:30Z — a Review-Lane QA-Drain pick before that timestamp MUST read qa_not_before first and return HOLD without consuming a redispatch. QA-Drain PRIMARY is a live picker, so NO hand-hop is needed for this row. Historical occurrence log (status_note + the 3 po_occurrence_* fields) relocated to the same cold entry; nothing was deleted.",
-        "claimed_at": "2026-08-25T20:21:26Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
@@ -24261,8 +24251,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T01:15:03Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-26T04:10:36Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -24316,6 +24306,21 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128."
+      },
+      {
+        "title": "Extract 64-hexagram prose to an embedded data asset behind a small loader",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-KINHDICH-extract-hexagram-data",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-extract-hexagram-data",
+        "promoted_at": "2026-08-26T04:10:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-26T04:10:38Z",
+        "claimed_at": "2026-08-26T04:10:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -24331,7 +24336,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-25T22:13:30Z"
+        "last_served_tick": "2026-08-26T04:10:12Z"
       },
       "sls": {
         "last_served_tick": "2026-08-25T22:46:28Z"
@@ -24349,9 +24354,197 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T03:55:12Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-26T04:10:12Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "1f02f2142d472bffaf2c2fbd716c3360728db0ecd9ce02d513ba1ea640553c77",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/archive/po-2026-08.md — retained section '## 2026-08-14T07:08Z · I became the swept victim mid-cycle, and my own persistence gate would have lied about it in the other direction' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-26T03:57:43Z",
+        "drained_at": "2026-08-26T04:09:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ffdf943f67d553b0fc20595991bdfe1792332fe3fa6f7a2ef7cffce1e1acb866",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=c6581d0a-1104-40e4-8b55-16c563969d28 mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid66371:git commit -m chore(auditor): DATA tier cycle c11 — 2026-08-26T03:59:38Z — 6 real findings all already-open\\012\\012All major DB anomalies (deep_fetch_stats, dee]<-[pid66368:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604637536-hhz8hl.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid89397:claude --dangerously-skip-permissions -n standalone-team ]",
+        "createdAt": "2026-08-26T04:00:33Z",
+        "drained_at": "2026-08-26T04:09:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5d6fab10eb86a5506ddd255e842cb765355bc3647902087b4e940d31da1dab61",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T03:49:48Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T03:45:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "03:45",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "1-slot fan-out. Step 0a drain no-op — ZERO NEW rows queue-wide this tick (the 3 architect-bound rows present at 03:30Z were drained by dev-team in the interval). Watch item on return: rtr-20260826T0325-markerkeynominaltickderiv predicts alert-commander will write tick=03:50 (floor-5 of its bootstrap wall clock) instead of the nominal 03:45. If it does, that is a THIRD consecutive occurrence and the row's severity should rise from WARN."
+        },
+        "createdAt": "2026-08-26T03:49:48Z",
+        "drained_at": "2026-08-26T04:09:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5d52a1c6eba76eb9a9f39b172b2edbd75955d0c0d7f7b75d47c2c60cbe658f45",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T04:07:33Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-market": "cron",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": "30",
+            "market-watcher-offhours": "30",
+            "alert-commander-market": null,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-26T04:00:00Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 33,
+          "note": "4-slot fan-out — the 0 */4 top-of-hour block (news-scout-offhours, market-watcher-offhours, alert-commander-critical) converged with the */15 alert-commander-market slot. Largest batch this session.",
+          "FIELD-PROVENANCE": {
+            "dev_head": "resolved from CANONICAL top-level .head (status=idle, updated_by=qa @03:31:04Z) — NOT the deprecated .task_board.head passthrough stub",
+            "signal_backlog": "independently recomputed by the dispatcher as a FILE count (docs/signals/*.json excluding cowork-team-*) = 33; server emit returned 33 — EXACT MATCH, 3rd consecutive tick",
+            "devq": "server-computed by emit_pressure_state; NOT ready[]+backlog[]",
+            "last_regime / last_volatility_level": "passed 'unknown' — both lookup keys verified genuinely ABSENT from cycle-snapshot-latest.json (top-level keys are exactly [created_at, macro_snapshot, market_context, tick]). Deliberately did NOT substitute the live value at .macro_snapshot.data.signals.carry.regime — that is a different key and substituting it would fabricate telemetry."
+          },
+          "STEP-4B-COLLISION": {
+            "agent_id": "alert-commander",
+            "slots": [
+              "alert-commander-market",
+              "alert-commander-critical"
+            ],
+            "declared_supersedes_pair": false,
+            "detail": "Verified against docs/data/cowork-schedule.json: NEITHER slot declares supersedes over the other; the only supersedes edge in the whole schedule is market-watcher-eod -> [market-watcher-offhours], which does not apply. This is therefore an UNDECLARED same-agent collision — precisely the residual case match-slots.md Step 4b says its WARN survives to catch post-FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION. WARN telegram sent to work channel; both slots spawned per R3 (WARNING only, never blocks)."
+          },
+          "PREDICTIONS-RECORDED-BEFORE-RETURNS": {
+            "_why": "Both spawns are backgrounded, so these are written strictly before any evidence arrives. Recording them here is what makes the next tick's check a falsification rather than hindsight — the method that overturned my own asserted mechanism on the marker-key row at 03:45Z.",
+            "P1_scope_gap_4th_consecutive": {
+              "claim": "alert-commander will write tick=<its own raw wall-clock HH:MM at bootstrap>, NOT the nominal 04:00, into its notebook header — even though scheduled_utc=2026-08-26T04:00:00.000Z WAS present in both spawn prompts.",
+              "expected_value": "tick approximately 04:07-04:12 (spawn issued 04:06Z)",
+              "falsifier": "a header reading tick=04:00",
+              "basis": "spawn-fanout.md ANCHOR-3 enumerates SCHEDULED_UTC_LINE's intended consumers as chef-morning/eod/evening, digest-daily, digest-sunday, fb-daily, tnb-audit. alert-commander is NOT in that list, and the same comment states the omission case 'lets each worker's own absent-branch fall back to date -u'. Prior 3 consecutive: c265 03:20/nominal 03:15, c266 03:35/03:30, c267 03:49/03:45.",
+              "status": "OPEN — resolve next tick"
+            },
+            "P2_concurrent_same_notebook_overwrite": {
+              "claim": "NEW hazard, first observation opportunity this tick. Two alert-commander instances are running CONCURRENTLY and its agent definition says it writes docs/agent-memory/notebooks/alert-commander.md by FULL OVERWRITE. Predict the final notebook will NOT carry coherent distinct sections for both slot=alert-commander-market AND slot=alert-commander-critical — expect last-writer-wins loss of one, and/or a git commit-mutex race between the two.",
+              "falsifier": "both slots present as distinct, coherent sections after both agents return",
+              "why_it_matters": "If confirmed, the Step 4b WARN is understating the impact: it says 'all will spawn (R3)' as if benign, but R3 was written for multi-slot fires of agents with per-slot outputs. An agent whose sole artifact is one full-overwrite file cannot safely multi-slot. That would make this a schedule DEFECT, not a schema-drift curiosity.",
+              "status": "OPEN — resolve next tick"
+            }
+          },
+          "HONEST-LIMIT-ON-P1": "news-scout and market-watcher also stamp wall-clock-ish times (news-scout c283 '2026-08-25T16:07:00Z' for a nominal 16:00 fire; market-watcher '## Metrics (cycle 2026-08-26 00:07 UTC)' for a nominal 00:00). That is suggestive but NOT the same defect and must not be counted toward P1: neither agent has a tick= KEY field, so their timestamps are legitimately 'when I ran', not a mis-derived nominal-tick key. Only alert-commander publishes a tick= key that is specified to be nominal. Do not let this tick's larger sample tempt a generalization the evidence does not carry.",
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "43rd consecutive. Do NOT 'fix' by rounding the producer — po_fold_20260825 withdrew that shape.",
+            "cycle_snapshot_latest_stale": "still tick=00:00, created_at=2026-08-23T00:07:50Z (~76h stale)",
+            "calendar_status_open": "34th+ consecutive computation defect, architect-owned",
+            "snapshot_name_wallclock": "this tick wrote docs/data/cycle-snapshot-04:05.json (created 04:05:10Z) for nominal tick 04:00 — producer names by wall clock. Filed: rtr-20260826T0257-snapshotagentconsumerclock. NOTE 04:05 happens to BE a 5-min multiple this tick, so a consumer applying cycle-bootstrap Step -1's round-to-nearest-5 rule at ~04:06 would coincidentally HIT. That coincidence is not evidence the naming is correct.",
+            "step51_locale_comma": "8th confirmation. Spec's `awk -F','` truncates '4,17' to '4' on this locale-comma host. The bug is IN THE SPEC, not the host. Non-binding at threshold 24 (12 cores x factor 2) — true load 4.17 was under it either way. Still unfiled: latent, fires only if true load ever exceeds the threshold while its integer part does not."
+          }
+        },
+        "createdAt": "2026-08-26T04:07:33Z",
+        "drained_at": "2026-08-26T04:09:55Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
