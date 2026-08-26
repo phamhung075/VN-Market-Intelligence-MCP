@@ -1,5 +1,57 @@
 # PO Notebook
 
+## 2026-08-26T01:16-01:24Z — The row was blocked on a measurement its own fix never needed
+
+Journal: `docs/agent-memory/decisions/triage-20260826T0116Z-po.md`.
+**3 minted · 1 unblocked+rerouted · 2 closed · 3 folded · inbox 16→0 read back off disk.**
+
+### The gate was real, it was just the wrong gate
+`FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` was not waiting on adjudication with no blocker
+recorded — `blocked_by` was null but `depends[]` and `blocked_reason` both named the ops B1-B4
+measurement. The mistake was mine from 08-24: I serialized two independent questions. Whether the
+container idles safely (measurement, ops) and why the Paddle rescue grows with fire count
+(structural, readable at source) never depended on each other. 18 days lost to that ordering.
+
+### Read the source and the answer was one missing keyword argument
+`main.py:154` builds `ProcessPoolExecutor(max_workers=1)` with no `max_tasks_per_child`, so its one
+child is immortal for the container life. `ocr_worker.py:207-208` justifies caching a global
+PaddleOCR inside it: *"process lives for the duration of the ProcessPoolExecutor; safe to cache
+here."* The premise is true. The memory conclusion drawn from it is the bug — immortal worker means
+an arena never returned to the OS. And **both** malloc_trim(0) calls are wired only into PID 1
+(`pek_run_helper.py:133`, `routes_extract.py:112`); the executor child has zero mitigation. That is
+why fire-count growth survived the malloc_trim fix. Recycling reclaims 100% of the address space
+without anyone ever identifying the leak. `python3 -V` in-container = 3.12.3, so the kwarg exists.
+
+### Two fallbacks, and only the one that must classify is broken
+The confidence discriminator failed because `AutoFallbackOcrBackend` has to tell broken from
+legitimately-sparse at a ~0.4% base rate. But `ocr_worker.py:455-495` already ships a different
+rescue: fire below `LOW_TESSERACT_PAGE_CHARS`, keep whichever output is longer. It never classifies,
+it only compares — a false fire costs latency, never correctness. The bounded rescue the user asked
+for is already written. Only memory stands between it and production.
+
+### The restart-hides-it trap, and the claim that was false in the other direction
+Four envelopes were one DB-corruption incident. The cowork-team envelope warned that restarting
+mcp-server makes the symptom vanish while the tree stays corrupt, and that this is probably how
+07-19/07-30/08-06 were each falsely closed. mcp-server had restarted 36 min before I looked, so live
+`quick_check = ok` proved nothing on its own. Running the same check against the preserved 00:31Z
+snapshot **did** report Tree 96 + Tree 180 damage — instrument non-blind, live ok is real.
+But the ops recovery commit says *"no uncommitted data lost"*, and that is false: live vs snapshot,
+`intraday_foreign_flow_5m` 137,890 vs 150,095 = **12,205 rows gone**, `evidence_fragments` max id
+1509 vs 1563 = **54 gone** — exactly the writes the incident report logged as having *succeeded*.
+The snapshot evidence_fragments b-tree is intact, so those 54 are recoverable **until it is pruned**,
+and five older corrupt snapshots already sit beside it as prune bait. P0 to ops.
+
+### Carry-over
+- `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` → ready[1], architect. Burst verification is
+  market-hours gated to ≥09:00Z; design+impl are not.
+- `FIX-MARKETDB-20260826-RESTORE-DROPPED-...` → ready[0], ops, P0. Time-decaying: snapshot must not
+  be pruned before AC-1/AC-2 close.
+- Corpus sweep row is deliberately `BLOCKED`, not READY-with-a-warning — pickers are blind to prose
+  `status_note` and have auto-claimed a contraindicated row before.
+- Prose ceiling (12000B/row) fired on my first transform and was right to. Shed four superseded PO
+  fields to the cold store instead of splitting the write; hot file got smaller, not larger.
+
+
 ## 2026-08-25T21:44-21:56Z — The row that says over-ceiling rows are unbumpable is itself 486 bytes from becoming unbumpable
 
 Triage of 20 envelopes. Journal: `docs/agent-memory/decisions/triage-20260825T2144Z-po.md`.

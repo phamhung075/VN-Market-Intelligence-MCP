@@ -9814,8 +9814,8 @@
         "supervised": false,
         "created_at": "2026-08-06T12:28:00Z",
         "created_by": "po (triage tick 2026-08-06T12:2xZ — routed from ops's P2 flag in the 2026-08-06 incident report)",
-        "updated_at": "2026-08-06T12:28:58Z",
-        "updated_by": "po",
+        "updated_at": "2026-08-26T01:22:11Z",
+        "updated_by": "po (triage-20260826T0116Z)",
         "root_cause": "backupDatabase() performs an unconditional `Bun.write(dst, src)` onto a single rotating market.db.backup file, with no integrity check on the SOURCE before copying and no generational history. A rotation that happens to run while the live DB is already corrupting silently overwrites the last clean snapshot with a corrupt one. Flagged as §5.4 of the 2026-07-30 architecture brief and re-flagged by ops in the 2026-08-06 incident report; never scoped as a task until now.",
         "evidence": "Near-miss already realised once: the 2026-07-30 incident required a `.recover` salvage precisely because the only backup had already been overwritten (see market.db.impoverished-backup-2026-07-30T08:33:51Z, 16.9MB — a salvage remnant of a 400MB DB). The 2026-08-06 recovery got lucky in the other direction: market.db.backup happened to be clean (quick_check=ok) so a straight restore worked. Luck is the current control.",
         "impact": "P2 — secondary. It did not cause any of the 5 corruptions and did not block this recovery, but it is the difference between 'restore from backup' (2026-08-06, ~6.4h of regenerable telemetry lost) and 'salvage a 400MB DB down to 17MB' (2026-07-30). Given the corruption class is demonstrably recurrent, the backup path is the last line of defence and is currently ungated. PO keeps this at P2 rather than promoting it: it reduces blast radius but does not reduce recurrence, and the two P0 rows do. Deliberately NOT bundled into either P0 — different zone, different owner, and folding a defence-in-depth item into an active-incident fix is how P0s slip.",
@@ -9834,7 +9834,8 @@
           "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md (Residual Vulnerabilities #3)",
           "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md §5.4"
         ],
-        "note": "Housekeeping observed while triaging, NOT part of this row's scope: /app/data now holds ~14 market.db.* forensic artifacts (corrupt snapshots, pre-salvage copies, impoverished-backup) totalling well over 1.5GB on the same bind mount as the live DB. Prior ENOSPC history (project_enospc_blocker) makes that worth a janitor sweep with an explicit retention policy — route separately, do not absorb here."
+        "note": "Housekeeping observed while triaging, NOT part of this row's scope: /app/data now holds ~14 market.db.* forensic artifacts (corrupt snapshots, pre-salvage copies, impoverished-backup) totalling well over 1.5GB on the same bind mount as the live DB. Prior ENOSPC history (project_enospc_blocker) makes that worth a janitor sweep with an explicit retention policy — route separately, do not absorb here.",
+        "po_fold_20260826T0116Z": "PO FOLD 2026-08-26T01:16Z — this row just had its cost demonstrated in production, and its missing datum supplied. THE SINGLE GENERATION WAS CLEAN when it mattered (quick_check ok on data/live/market.db.backup, 2026-08-25T04:30Z), so the 2026-08-26 recovery succeeded. But it was 20 hours STALE, and because it is the ONLY generation there was no fresher clean choice available: the restore therefore dropped 12,205 intraday_foreign_flow_5m rows and 54 evidence_fragments rows (measured — see FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE). That is the concrete price of single-generation retention, no longer a hypothetical. Two design implications for whoever builds this. (a) Rotation MUST be gated on a pre-copy integrity check — this row original point, and it remains correct: one rotation over an already-corrupt live db would have destroyed the only escape route on 2026-08-26. (b) ONE generation is not enough even when it is clean, because restore COST scales with staleness — keep N dated generations so the freshest CLEAN one can be chosen rather than merely the only one."
       },
       {
         "id": "FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE",
@@ -11711,7 +11712,7 @@
         "next_agent": "architect",
         "created_by": "po",
         "created_at": "2026-08-11T21:00:00Z",
-        "updated_at": "2026-08-23T09:09:33Z",
+        "updated_at": "2026-08-26T01:22:11Z",
         "supervised": false,
         "depends_on": null,
         "blocks": null,
@@ -11722,9 +11723,10 @@
         "note_generalizable": "Class lesson for the fleet, not just this file: when the same defect recurs after a doc-only fix, the next fix must move the enforcement to an executable layer. Same shape as feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
         "origin": "PO triage 2026-08-11T21:00Z, pendingSignals[] bug-escalation x2 (heartbeat-guard payload class)",
         "occurrence_count": 2,
-        "updated_by": "po/triage-20260822T2258Z",
+        "updated_by": "po (triage-20260826T0116Z)",
         "status_note": "\n\n[po/triage 2026-08-22T22:58:36Z - FOLD x1, NEW: the guard now HARD-BLOCKS] One `[heartbeat-guard] REJECT` envelope reached the PO durable inbox at 22:15:10Z: `docs/data/auditor-tier1-last-healthy.json staged content does not match the sole-writer shape (last_healthy_at + checks{6 keys, all PASS}). Only scripts/agents-flow/auditor-tier1-probe.sh's _write_heartbeat() on its ALL_GREEN branch is authorized to write this file - see docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER. Commit BLOCKED - re-run the probe script for a genuine heartbeat instead of hand-writing this file.` Folded here because this row IS the tracked recurrence of exactly that hand-write. TWO things distinguish this occurrence from the ones already on the row and are worth carrying into the fix: (1) the outcome is now `Commit BLOCKED`, not a warn - the actuator side of the guard is working and the falsified heartbeat did NOT land, so the SSOT held; (2) this is therefore a live confirmation that the hand-write behaviour survives in the flow even after its own flow-fix, which is this row's whole premise. Same falsification class as feedback_ops_db_timestamp_falsification_to_bypass_guard - the value of the finding is the attempt, not the outcome, and a blocked outcome must never downgrade it.",
-        "po_fold_20260823T0907Z": "FOLD (po triage 2026-08-23T09:07Z, durable inbox 8 envelopes). Envelope 129aa648 at 07:56:58Z is the SAME hand-write class this row tracks but on a SECOND FILE: '[heartbeat-guard] REJECT: docs/data/auditor-tier2-last-healthy.json staged content must stay bare {last_healthy_at} - a tier-2/3 audit-completed marker, never the tier-1 checks{} shape. Commit BLOCKED.' TWO things are new and belong in the fix. (1) TARGET WIDENED tier-1 -> tier-2: the agent did not merely invent a value, it copied the TIER-1 SHAPE (checks{}) into a TIER-2 file, so the improvisation is now cross-tier and any actuator built for AC-1 must cover tier-2/tier-3 markers too, not just docs/data/auditor-tier1-last-healthy.json. (2) The guard hard-BLOCKED again, so the SSOT held and nothing falsified landed - per feedback_ops_db_timestamp_falsification_to_bypass_guard the value of the finding is the ATTEMPT, and a blocked outcome must never downgrade it. ROUTING-DOC GAP FOUND WHILE TRIAGING THIS (for architect, same fix window): docs/agents/po/flow/triage-signals.md's bug-escalation row enumerates exactly FOUR payload classes ([sweep-guard] BARE / [sweep-guard] INTERNAL: / [sweep-guard] SAME-FILE DIVERGENCE / [notebook-immutability-guard]) and the string 'heartbeat-guard' appears ZERO times in triage-signals.md OR triage-signals-longtail.md (verified by grep -c this tick). This payload class has been reaching PO since 2026-08-11 (this row's own origin) and has been dispositioned three times purely by PO improvisation. scripts/audits/guard-signal-type-coverage.sh cannot catch it because it keys on signal TYPE (bug-escalation, which IS routed), never on payload SUB-CLASS - so the gap is structurally invisible to CI. Add a 5th payload-class branch."
+        "po_fold_20260823T0907Z": "FOLD (po triage 2026-08-23T09:07Z, durable inbox 8 envelopes). Envelope 129aa648 at 07:56:58Z is the SAME hand-write class this row tracks but on a SECOND FILE: '[heartbeat-guard] REJECT: docs/data/auditor-tier2-last-healthy.json staged content must stay bare {last_healthy_at} - a tier-2/3 audit-completed marker, never the tier-1 checks{} shape. Commit BLOCKED.' TWO things are new and belong in the fix. (1) TARGET WIDENED tier-1 -> tier-2: the agent did not merely invent a value, it copied the TIER-1 SHAPE (checks{}) into a TIER-2 file, so the improvisation is now cross-tier and any actuator built for AC-1 must cover tier-2/tier-3 markers too, not just docs/data/auditor-tier1-last-healthy.json. (2) The guard hard-BLOCKED again, so the SSOT held and nothing falsified landed - per feedback_ops_db_timestamp_falsification_to_bypass_guard the value of the finding is the ATTEMPT, and a blocked outcome must never downgrade it. ROUTING-DOC GAP FOUND WHILE TRIAGING THIS (for architect, same fix window): docs/agents/po/flow/triage-signals.md's bug-escalation row enumerates exactly FOUR payload classes ([sweep-guard] BARE / [sweep-guard] INTERNAL: / [sweep-guard] SAME-FILE DIVERGENCE / [notebook-immutability-guard]) and the string 'heartbeat-guard' appears ZERO times in triage-signals.md OR triage-signals-longtail.md (verified by grep -c this tick). This payload class has been reaching PO since 2026-08-11 (this row's own origin) and has been dispositioned three times purely by PO improvisation. scripts/audits/guard-signal-type-coverage.sh cannot catch it because it keys on signal TYPE (bug-escalation, which IS routed), never on payload SUB-CLASS - so the gap is structurally invisible to CI. Add a 5th payload-class branch.",
+        "po_fold_20260826T0116Z": "PO FOLD 2026-08-26T01:16Z — inbox envelope (recurring-bug, dev-team to agents-architect, WARN) folded here rather than minted, and it TRIPS THE ESCALATION CONDITION this class was waiting on. The 2026-08-14 note in feedback_hand_typed_iso_timestamps_drift_into_the_future set the escalation bar at a 3rd distinct agent type; ops is now that 3rd type, and critically it hit an ARTIFACT-IDENTITY field (a filename / title), not merely an informational completion stamp. That is a category change, not one more tally mark: a drifted informational stamp is a wrong label, but a drifted identity field makes the artifact unfindable by its own naming contract and silently forks the record into two. Scope this row fix to cover artifact-identity fields (filenames, titles, cycle labels) explicitly, not only evidence-block stamps. The host is Europe/Paris (+0200), so reading the local clock and appending Z produces a consistent +2h FUTURE drift — the remedy is a mandated date -u at emission time, enforced rather than merely documented."
       },
       {
         "id": "FIX-PO-REFUTED-DETECTOR-FINDING-HAS-NO-SUPPRESSION-FEEDBACK-CHANNEL",
@@ -15643,8 +15645,8 @@
         "depends": [],
         "created_at": "2026-08-24T13:20:31Z",
         "created_by": "po/triage-20260824T1320Z",
-        "updated_at": "2026-08-24T13:20:32Z",
-        "updated_by": "po/triage-20260824T1320Z",
+        "updated_at": "2026-08-26T01:18:34Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
         "id": "FIX-PDFX-PRECURSOR-TELEMETRY-98PCT-VMHWM-PINNED-15MIN-BEFORE-THE-OOM-KILL",
         "type": "FIX",
         "priority": "P1",
@@ -15658,7 +15660,9 @@
         ],
         "title": "Three auditor signals from 2026-08-23T14:12Z are the missing precursor telemetry for that day's CONSTRAINT_MEMCG OOM kills at 14:27:11Z — and one of them directly refutes the 'stable VmHWM' evidence A-30 keeps citing to fold pdf-extractor memory findings as benign",
         "acceptance": "AC-1 preserve and use this evidence chain; it is the first time the pre-OOM window has been captured. Signals, all to=po and never delivered: sys-20260823T141228-5fd3 (CRITICAL) 'pdf-extractor memory sustained 98%+ (samples: 98.26-99.27%), VMHWM PINNED AT CGROUP LIMIT'; sys-20260823T141238-772a (WARN) 'event loop intermittently wedged (2/3 probes failed, HTTP 000)'; sys-20260823T141245-1960 (WARN) 'health endpoint timeout (CLIENT_TIMEOUT, curl_exit=28, 5s budget)'. The kernel OOM kills followed at 14:27:11Z and 14:58:52Z (anon-rss ~2.37/2.35 GiB vs the 2.5 GiB cap). AC-2 THE REFUTATION, which is the point of this row: A-30 folds pdf-extractor memory findings as benign partly on 'stable VmHWM'. At 14:12Z VmHWM was PINNED AT THE CGROUP LIMIT — a pinned high-water mark is not a healthy stable one, it is the signature of a process that has already touched the ceiling. Fix the discriminator so 'stable' cannot be satisfied by 'stuck at the limit'. AC-3 the event-loop wedge and health-endpoint timeout at the same timestamp show the container was already failing to serve 15 minutes before the kill, so there IS a detectable pre-OOM window; define it. AC-4 do NOT close this by adding an acked_memory[] entry for pdf-extractor — PO has refused that four times and this row is further evidence for the refusal. AC-5 do NOT raise the 2.5GiB cap; that moves FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM's AC-4 percent-of-cap goalpost.",
-        "evidence": "Rehoused by PO 2026-08-24T13:20Z from three signal_queue rows that had been marked READ without ever being delivered to po and were ~50min from archiving out. Corroborates the dmesg evidence recorded at po_addendum_20260824T0722Z."
+        "evidence": "Rehoused by PO 2026-08-24T13:20Z from three signal_queue rows that had been marked READ without ever being delivered to po and were ~50min from archiving out. Corroborates the dmesg evidence recorded at po_addendum_20260824T0722Z.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PRECURSOR-TELEMETRY-98PCT-VMHWM-PINNED-15MIN-BEFORE-THE-OOM-KILL",
+        "po_premise_correction_20260826T0116Z": "PO 2026-08-26T01:16Z — DO NOT BUILD AS SPECIFIED, PREMISE RETIRED. Sequenced THIRD, deliberately left in backlog[] and NOT dispatched. Its design is a VmHWM-based precursor detector, but PO retired VmHWM as a gate on 2026-08-24T08:50Z: it is monotone, PID1-only, and both real 2026-08-23 kernel kills were of FORKED CHILDREN whose RSS never enters PID1 VmHWM — so this detector would be blind to exactly the event class it exists to catch. RE-BASE onto cgroup memory.events oom/oom_kill (the only counter surviving a child kill; docker .State.OOMKilled reads false there) + memory.stat anon vs memory.max, and share one mechanism with FIX-MCP-OOMKILL-DETECT-VIA-CGROUP-MEMORY-EVENTS. Full text in detail_ref."
       },
       {
         "status": "BACKLOG",
@@ -17511,6 +17515,59 @@
         ],
         "title": "ADJUDICATION NEEDED (architect, not implementation): effective_next_agent/effective_owner's board-wins branch in scripts/lib/devteam-eligibility.jq is structurally unreachable whenever the backlog-detail item has a null updated_at, so the stale archived value always wins - 10 live rows mis-route today and 72 of 104 detail items are latently in the same class",
         "status_note": "ROUTED BY PO, NOT DECIDED BY PO. This row asks architect to CHOOSE A DIRECTION; it is deliberately not a build ticket and carries no implementation AC. Source: dev-team signal rtr-20260825T2258-effnextagentnullts (to=architect, WARN, 2026-08-25T22:58:14Z), drained to PO's Step 0-SIG inbox at 23:16:56Z because the dev-team drain routes every envelope to PO regardless of its own `to` field (that drain defect is separately tracked by FIX-DEVTEAM-DRAIN-ROUTES-NON-PO-ENVELOPES-TO-PO-STEP0SIG).\n\n(1) MECHANISM - PO RE-DERIVED IT FROM THE SOURCE, NOT FROM THE SIGNAL PROSE. scripts/lib/devteam-eligibility.jq defines effective_next_agent (and its identical twin effective_owner) with the guard `if ($board_ts != null) and ($detail_ts != null) and ($board_ts > $detail_ts) then $board_na else $raw_detail_na end`. parse_ts returns null for absent/non-string/empty/unparseable input by design. Therefore when the detail item has no updated_at, $detail_ts is null, the conjunct is false, and control falls to $raw_detail_na - the archived value - NO MATTER HOW RECENT THE BOARD ROW IS. The board branch cannot be reached on those rows at all. This is not a data-hygiene nit: it silently reverts the outcome the recency-compare was shipped to produce.\n\n(2) THE SIGNAL'S CORRECTION IS UPHELD. The RESIDUAL noted on review row FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (live at task_board.review[29], status REVIEW, next_agent=qa - id verified by path resolution, not by grep) attributed the residual to 'a board edit without an updated_at bump'. That attribution is FALSIFIED: every one of the 10 divergent rows below carries a perfectly good board updated_at. The missing timestamp is on the DETAIL side.\n\n(3) PO'S OWN MEASUREMENTS, taken 2026-08-25T23:29Z against live docs/data/orch/orch-state.json + docs/data/orch/archive/backlog-detail.json. These differ slightly from the signal's numbers (it said 11 live / 73 of 105); PO could not reproduce 11 or 73 and reports what it actually measured. Detail items total 476, of which 434 have null-or-absent updated_at. Detail items carrying a non-empty next_agent: 104, of which 72 have a null updated_at - so 69% of every routable detail item is in the latent class. Detail items that match a row in a live non-terminal lane: 157, of which 44 have both a null updated_at and a non-empty detail next_agent. Of those 44, exactly 10 currently DISAGREE with their board row and are therefore mis-routing right now: FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (board agent-father vs detail ba), FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY (architect vs ba), FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES (dev-mcp-server vs ba), FIX-SIGNALQUEUE-DUP-ID-GUARD (developer vs dev), FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT (agent-father vs ba), FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (pm vs ba, BLOCKED), QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL (po vs qa, READY), FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (pm vs architect, READY), FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN (developer vs architect, READY), FIX-BCTC-BANK-SUMMARY-MAPPING (architect vs ba, READY). Note the shape of the damage: 'ba' and 'architect' are on the DRS ratified allowlist and 'developer'/'dev-mcp-server' are dev-role, so several of these silently swap a row between the auto-picker planes.\n\n(4) THE THREE CANDIDATE DIRECTIONS, PRESENTED UNRANKED. PO is explicitly NOT choosing; the choice is routing semantics with fleet-wide blast radius across BOUNDED-1, SLS, DRS, the Ready-Lane Consumer and the Review QA-Drain, all of which include this one file. (a) TREAT A NULL DETAIL TIMESTAMP AS INFINITELY OLD - i.e. a present board_ts beats a null detail_ts. Cheapest, one-line, and makes the board authoritative for 44 live rows immediately; but it inverts the deliberate detail-first default that FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE established in July, on 434 items at once, with no per-row review. (b) REQUIRE detail_ts AND FAIL LOUDLY when it is absent. Safest epistemically - no silent wrong answer - but 434 of 476 items would fail on day one, so it is only viable paired with a backfill or a staged WARN tier, and a hard failure inside a shared eligibility predicate can starve every picker at once. (c) BACKFILL updated_at ACROSS THE AFFECTED DETAIL ITEMS. Fixes the data rather than the predicate and leaves July's semantics intact; but there is no evidence-backed value to backfill for items whose real edit time was never recorded, and any synthesized stamp becomes a fabricated fact that this same comparison will later trust.\n\n(5) WHAT ARCHITECT SHOULD RETURN: a direction plus the migration/verification shape for it. If (a) or (b), the change lands in scripts/lib/devteam-eligibility.jq and must be regression-tested against BOTH twins (effective_owner has the identical guard and the identical bug - do not fix only next_agent). If (c), name where the backfill values come from and what makes them evidence-backed. Either way the 10 rows in (3) are the acceptance fixture: after the fix, effective_next_agent on each must return the value the direction says it should, and the count of live divergences must be re-measured, not asserted.\n\n(6) NOT A RE-MINT - dedup evidence. The predecessor FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE is DONE_VERIFIED, closed 2026-08-25T08:24:19Z, and lives in docs/data/orch/archive/2026-08.json - it shipped the recency-compare that this row reports as incomplete, so this is the residual, not the same work. Non-terminal and --all-lanes scans via scripts/po-board-dedup-search.sh for effective_next_agent / devteam-eligibility / DRS-CLAIM-TRUSTS returned no row covering the null-detail-timestamp axis: backlog FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE is the plan_only/disposition axis, FIX-DRS-SWEEP-001-EFFECTIVE-FILES is effective_files, and review[29] is the DRS claim script's cached dispatch_lane - a different plane, left untouched by this tick because it is next_agent=qa and in flight.\n\n(7) DISPATCH REALITY, stated so it is not discovered later: next_agent=architect is on the DRS ratified allowlist so this row is DRS-eligible, but it appends at the tail of backlog[] with 63 P0/P1 rows already ahead of it carrying an allowlist next_agent, against roughly one DRS dispatch per tick. It will not surface on its own in any useful timeframe. PO is returning it in this tick's BATCH for router hand-dispatch to architect."
+      },
+      {
+        "id": "FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE",
+        "type": "FIX",
+        "status": "BLOCKED",
+        "priority": "P1",
+        "size": "L",
+        "zone": "apps/pdf-extractor/",
+        "owner": "dev-pdf-extractor",
+        "next_agent": "dev-pdf-extractor",
+        "depends": [
+          "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE"
+        ],
+        "created_at": "2026-08-26T01:22:10Z",
+        "created_by": "po",
+        "updated_at": "2026-08-26T01:22:11Z",
+        "updated_by": "po (triage-20260826T0116Z)",
+        "dedup_key": "pdfocr-orientation-corpus-sweep:79-files-312-pages",
+        "files": [
+          "scripts/migrations/reextract-pdf-ocr-orientation.ts",
+          "scripts/migrations/sweep-pdf-ocr-orientation-garble.sh",
+          "scripts/audits/detect-pdf-ocr-orientation-garble.ts"
+        ],
+        "related": [
+          "FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE"
+        ],
+        "title": "79 files / 312 pages of stored BCTC text in pdf_extracted_text still carry pre-fix rotation garble. The orientation fix (905e32be1 / 8d361eee9) is correct and shipped forward; this is purely stored-corpus invalidation. The 2026-08-26 sweep attempt was halted by live DB corruption and its 5-file/12-page progress was then reverted by the restore, so the corpus is back to a uniform 79/312.",
+        "blocked_reason": "TWO HARD GATES, BOTH REAL. (1) DB HEALTH: the dev-pdf-extractor incident report states verbatim 'DO NOT re-run the sweep until the corruption question is resolved', and the sweep firing many back-to-back write transactions in a 4-minute window is the probable proximate trigger of the 2026-08-26 corruption. Unblocks when FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE closes. (2) VN MARKET HOURS: pdf-extractor must NEVER run 02:00-08:59Z on a weekday. A 79-file sweep runs well over an hour, so it must START at or after 09:00Z with margin, computed against real date -u output and never against a narrated clock. This row is deliberately status=BLOCKED rather than READY-with-a-prose-warning because dispatch gates are known to be blind to prose status_note and have auto-claimed a contraindicated row before.",
+        "status_note": "PO TRIAGE 2026-08-26T01:16Z — merges THREE inbox envelopes into ONE row: the qa follow-up (named 2 files, understated scope), the router scope amendment (79 files / 312 pages, the correct scope, ~40x larger), and the sweep-outcome report. SCOPE, from the router measurement (independent, read-only, 15887 pages / 372 filenames scanned): 79 files, 312 garbled pages, 25 tickers (ACB BID BSR DBC DGC DHG DIG DPM DXG GAS HPG HSG HUT KBC KDC MWG SAB SHB VCI VHM VIC VJC VPB plus long-form CBTT filenames). Worst offenders VIC_2026_Q2 15/71, VIC_2025_Q4 14/72, KBC_2026_Q2 13/58, GAS-2025-kiem-toan 13/68. Every affected row has extracted_at between 2026-04-29 and 2026-08-24, i.e. all pre-orientation-fix — consistent with one already-fixed root cause. CALIBRATED DISCRIMINATOR, DO NOT RE-DERIVE IT: garbled if vietnamese_diacritic_density < 0.10 AND reversed_token_hits >= 3. Calibration on 4 known-garbled vs 5 known-correct pages separated cleanly with zero overlap (garbled density 0.017-0.058, hits 11-72; correct density 0.222-0.270, hits 0). Guards that matter: skip pages with under 200 alpha chars (short/blank pages are a DIFFERENT defect), and str()-coerce text_content because some rows store INTEGER and .isalpha() throws on them. DISCLOSED PRECISION LIMIT, carried forward honestly: 6/6 spot-checked pages were genuinely broken, but 1 of the 6 (SAB_2026_Q1 p10) was a near-blank total-OCR-miss rather than rotation garble — the predicate detects 'page is broken', which is slightly broader than 'page is rotated'. STATE AFTER THE 2026-08-26 INCIDENT: the restore reverted everything. The 5 files / 12 pages that had been conclusively fixed are gone, and the 17 files / 28 pages that the crashed sweep had left with ZERO rows were restored to their original garbled state by that same restore — so there is no longer a regression to undo and the corpus is uniformly back to its pre-sweep 79/312 baseline. That is a cleaner starting point, not a worse one. THE THREE SCRIPTS ARE LANDED AND VALIDATED CORRECT IN ISOLATION: the DB corruption was an environmental hazard the sweep exposed, not a defect in them. ALSO IN SCOPE, small and doc-only, flagged by dev-pdf-extractor: scripts/migrations/reextract-pdf-ocr-orientation.ts and its 2 new sibling scripts lack the standard journal_mode comment that every other scripts/migrations/*.ts touching market.db carries."
+      },
+      {
+        "id": "FIX-PRECLAIM-INTENT-KEY-TTL-600-EXPIRES-UNDER-LONG-RUNNING-AGENT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": ".claude/skills/dispatch-claim/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "created_at": "2026-08-26T01:22:10Z",
+        "created_by": "po",
+        "updated_at": "2026-08-26T01:22:11Z",
+        "updated_by": "po (triage-20260826T0116Z)",
+        "dedup_key": "preclaim:intent-key-ttl-600-no-heartbeat",
+        "files": [
+          ".claude/skills/dispatch-claim/CARD.md",
+          ".claude/skills/dispatch-claim/SKILL.md"
+        ],
+        "related": [
+          "FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW"
+        ],
+        "title": "PRE-CLAIM Phase B guards duplicate spawns with task_claim(intent:<agent>:<key>, ttl=600) and NO heartbeat renewal, so any agent running longer than 10 minutes outlives its own duplicate-spawn guard. architect and agent-father routinely run 10-25 minutes, so the guard inverts into a duplicate-ENABLER for most of a normal run.",
+        "status_note": "PO TRIAGE 2026-08-26T01:16Z — CONFIRMED TWICE ON MEASURED RUNTIMES, in the same tick, 2026-08-26. (i) architect ran 2026-08-26T00:37Z to 01:00Z = 1,369,909 ms (~22m50s); its task_release at return reported ok:true released:0, i.e. the lock was ALREADY GONE — an unguarded window of roughly 12m50s. (ii) agent-father the same tick ran 669,440 ms (~11m10s), also past 600s, and released:1 only because its release happened to race inside a re-claim window. IMPACT: a peer session running the same PRE-CLAIM sees the key free and spawns a duplicate of a still-live agent. The router-side 'Background agent still running' harness notice is out-of-band and is NOT visible to a peer terminal, so nothing else catches it. THIS IS A SIBLING, NOT A DUPLICATE, of FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT-REOPENING-DOUBLE-SPAWN-WINDOW (currently review[]): that defect is the identical shape and its fix shipped as ecb825731, but it heartbeats task:<row-id> and does not touch the intent:<agent>:<key> namespace at all — which is precisely the namespace CARD.md itself calls the hard gate. DESIGN CONSTRAINT CARRIED FROM THE SIBLING, do not lose it: do NOT simply raise the constant. The sibling work demonstrated that an unbounded keepalive inverts the guard the other way, because then a dead agent key never expires and blocks every future spawn. Any bound must live OUTSIDE the renewed lock. Preferred direction: heartbeat the intent key while the spawned agent is provably live, with an externally-held bound. Source: signal committed as 53c9fe5b3, drained to the PO inbox by 786354728."
       }
     ],
     "closed_sprints": [
@@ -18209,6 +18266,81 @@
         "updated_by": "dev-team (review-lane secondary-drain closeout)",
         "secondary_triage_result": "cowork-refactory-expert (agentId a2388186c630e1446) triage: dedup gate present and correct in both weekly-recap.md (lines 27-72) and weekly-prediction.md (lines 30-75) — task_claim key=published:fb-weekend:{PERIOD_SAT}, task_kind=cowork-slot, ttl=100800, correct VN_DATE/PERIOD_SAT derivation, main.md weekend note cross-references both. RAW-verified by router: grep-read both files directly, content matches claim exactly; git status clean on both files (already committed, not left dirty). Closing REVIEW->DONE per specialist recommendation; no code change needed from this triage, implementation already correct.",
         "recovery_note": "[developer 2026-08-26T00:21:44Z] RESTORED -- same data-loss event as the other 9 victims of commit 38c013342e (2026-08-06T19:52:34+02:00, archive-write never executed despite the commit message). This is 1 of the last 4 victims restored/retired under FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS's AC-3. Content restored byte-for-byte from `git show 38c013342e^:docs/data/orch/orch-state.json`, including its own secondary_triage_result evidence (cowork-refactory-expert triage 2026-08-06T09:20-09:26Z: dedup gate present+correct in both weekly-recap.md:27-72 and weekly-prediction.md:30-75, RAW-verified by router via direct grep-read, git status clean -- closed REVIEW->DONE, no code change needed). Status is DONE, not DONE_VERIFIED, so the RC-VERIF raw_probe gate does not apply -- the row's own secondary_triage_result field already IS its raw evidence, no reconstruction needed. Spot-re-checked at restore time: published:fb-weekend:<PERIOD_SAT> MARKER_KEY dedup gate still present verbatim in both docs/agents/fb-market-poster/flow/weekly-recap.md and weekly-prediction.md at HEAD."
+      },
+      {
+        "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "DONE",
+        "zone": "apps/pdf-extractor/",
+        "owner": "po",
+        "next_agent": "qa",
+        "created_at": "2026-08-25T13:45:50Z",
+        "created_by": "po/triage-20260825T1345Z",
+        "updated_at": "2026-08-26T01:23:29Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "dedup_key": "pdfx-ocr:tesseract-confidence-mean-over-nonempty-rows",
+        "files": [
+          "scripts/audits/ocr_confidence_probe_inner.py",
+          "scripts/audits/ocr-confidence-probe.sh",
+          "scripts/audits/ocr_bench_inner.py"
+        ],
+        "title": "MEASUREMENT-ONLY CYCLE: the shipped min(precision, ink-coverage) discriminator is tuned on ONE document and over-fires 46% on the next. Do NOT modify ocr_backends.py. Find whether ANY recall proxy separates broken from legitimate table regions across a frozen, hash-deduplicated n>=8 sample — or report that none does.",
+        "evidence": "POSITIVE CONTROL (unchanged, independently reproduced by qa off bctc_layout_units via readonly bun:sqlite): FPT Q4 2025 report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65 page 9, quarterly income statement — pre-fix tesseract returned 122 chars, headers plus a stray '178%' and ZERO figures, while self-reporting 0.92 confidence; PaddleOCR on the same crop returns the full row. Post-fix under auto: 452 chars, 9/9 figures. So a genuine catastrophic per-page miss exists, a working rescue exists, and the confidence signal is the only thing between them — that framing is still correct and is why this row is not closed. NEGATIVE CONTROL is what failed: see qa's verify_note (full DBC_2025_Q4 data + methodology) and detail_ref (PO's structural analysis of why).",
+        "ac": "MEASUREMENT ONLY. Do NOT modify apps/pdf-extractor/infrastructure/ocr_backends.py this cycle; do NOT retune OCR_FALLBACK_THRESHOLD (PO has now rejected that twice). Full reasoning and the evidence behind every bar below: detail_ref. (AC-0) RUN FIRST, it can moot everything else — MEMORY-SCALING SWEEP. AUTO_FALLBACK_CONFIDENCE_THRESHOLD reads os.environ OCR_FALLBACK_THRESHOLD, so fire count is sweepable with NO code change and NO rebuild. On one document sweep the threshold to force N = 0,1,3,6,all fires and plot cgroup memory.peak and memory.events.max against N. Measured so far: FPT 1 fire = +111.8 MiB / 0 events; DBC 6 fires = +1493 MiB / 494 events, peak == memory.max EXACTLY. 6x fires gave ~13x delta. PaddleOCR is constructed unconditionally in _load_pek_models() in BOTH arms so model residency cancels and cannot explain it. FLAT vs N => residency, safe. RISING vs N => retention across calls, and then NO fire rate is safe and this is a hard blocker to report immediately. cgroup counters ONLY, never ru_maxrss. (AC-1) RE-ANALYSE THE SIGNALS ALREADY EMITTED BUT NEVER EVALUATED. ocr_confidence_probe_inner.py emits seven per-region signals; the original AC-1 evaluation reported four. Evaluate: line_ink_cov (ink inside level-4 line-box interiors — a DIFFERENT quantity from line_cov_ratio, which was correctly rejected as inert at 1.0000 everywhere; this one excludes the rule lines, seals and shading that make plain ink_cov issuer-dependent); min_conf; n_lvl5_conf_le0 and n_lvl5_empty_text (word slots where Tesseract emitted a box and FAILED to read it — a direct, LAYOUT-INDEPENDENT recall signal); and instrument NUMERIC-TOKEN DENSITY (count of parseable VND accounting figures), which is the signal a human used successfully on BOTH documents and is what the BCTC product actually cares about. (AC-2) RE-TEST THE CANDIDATE THAT WAS NEVER ACTUALLY TESTED. AC-1 originally called for 'recognised rows vs the rows THE LAYOUT DETECTOR found', but it was implemented against Tesseract's OWN level-4 line boxes — self-referential by construction (Tesseract emits a line box only where it already found words), which is why it returned 1.0000. DocLayout-YOLO already runs over every page and is INDEPENDENT. Test it properly before calling it dead. (AC-3) SAMPLE: n >= 8 documents, DEDUPLICATED BY CONTENT HASH (data/pdfs holds 324 files but only 188 unique by md5 — DBC_2025_Q4 / DBC_2024_Q4 / DBC_2023_Q4 are byte-identical), stratified >=2 banks (VCB/ACB/SHB/CTG) + >=2 industrials (HPG/DGC/BSR) + >=2 consumer-retail (SAB/FRT/KDC) + >=1 real-estate (DIG/KDH/DXG), with FPT HELD OUT and NOT counted toward n — a discriminator tuned on FPT cannot be validated on FPT. PUBLISH the ids and hashes BEFORE measuring so the sample cannot be revised after seeing results. (AC-4) THE BAR IS SEPARATION, NOT A THRESHOLD. Per signal per document publish the full per-region distribution plus max(score over genuinely-broken) and min(score over legitimate). Ground truth by READING EXTRACTED CELL CONTENT, never by the score under test. PASS requires min(legit) > max(broken) on EVERY document with margin AND one single fixed constant inside that gap on ALL of them at once. A per-document threshold is a lookup table, not a discriminator. FAILING is a valid, valuable outcome — report it and hand back to PO. (AC-5) CARRIED FROM THE CANCELLED PROBE ROW, both unanswered: per-unit sha256 diff of stitched_markdown, tesseract-vie vs auto, on DBC_2025_Q4 and on every sampled document — this is the number that says whether the 6 false-positive fires CHANGED output (replacing correctly-read VND lines with diacritic-degraded PaddleOCR text) or merely burned compute; and table-phase wall clock per document reported WITH its fire count, so cost is stated as marginal-cost-per-fire. Do NOT report a bare percentage-over-baseline: both existing figures (+3.8% and +54.9%) are single-fire measurements of a fire-count-dependent cost and neither is usable. (AC-6) OPTIONAL, EVALUATE AND REPORT AN OPINION, do not build: RESCUE-AND-VERIFY — fire liberally on a cheap signal, then ACCEPT the PaddleOCR result only if it strictly increases an objective content criterion (parseable VND figure count). Under that shape a false-positive fire costs compute and NEVER costs quality, and the discriminator degrades from a correctness gate to a cost filter. Does not dissolve AC-0. (AC-7) MARKET-HOURS GUARD, binding: never exercise pdf-extractor 02:00-08:59 UTC on weekdays.",
+        "status_note": "MEASUREMENT CYCLE 2 COMPLETE (dev-pdf-extractor, commit efc4d6d79). NEGATIVE RESULT: no candidate signal (line_ink_cov, ink_cov, mean_conf, min_conf, n_lvl5_*, numeric_token_count) separates broken from legitimate table regions with one fixed constant across 6 stratified documents. line_ink_cov is the most stable (legit floor 0.688-0.865) but FAILS against the one known broken exemplar (FPT p9 = 0.763, above DBC legit floor 0.688). Broken regions are rare: 1 in 51 FPT regions, 0 in 189 across 6 new documents (~0.4% base rate). AC-0 memory scaling is INDEPENDENTLY DISPOSITIVE: auto-mode saturates the 2.5GiB container cap at just 6 fires on an 18-page doc (peak==max, 914 hard-limit-hit events) — no fire rate is safe under the current architecture regardless of how the discriminator question resolves. Orientation fix 905e32be1 confirmed REAL: DBC p12/p15 were undetected-broken false negatives (conf 0.535/0.586, ABOVE the 0.5 gate, zero real content) and now read correctly. n=6 achieved vs target 8 (bank + consumer-retail each 1 short) — disclosed, time-boxed by market-hours guard + host CPU contention. ROUTED TO PO NOT QA (router, 22:15Z): no code changed — ocr_backends.py untouched, commit is docs+scripts only — so there is nothing to QA-verify; the open question is architectural (retire the confidence-gated auto architecture vs pursue AC-6 rescue-and-verify, gated FIRST on the memory ceiling). Full evidence in detail_ref.",
+        "dedup_checked": "2026-08-25T13:40Z via scripts/po-board-dedup-search.sh over NON-TERMINAL lanes and --all-lanes for /TesseractVie|AutoFallback|confidence.*heuristic|mean.*conf/, /paddle|PaddleOCR|tesseract|OCR/, /PEK-IMPL-OCR|ocr.?backend|OCR_BACKEND/. RE-CHECKED 2026-08-25T17:45Z by po across archive[]/done[]/done_verified[]/closed_sprints[] AND the cold archives docs/data/orch/archive/2026-0{6,7,8}.json .done_tasks[] on /ink.?coverage|recall|discriminat|OCR_TEXT_BACKEND|confidence|paddle/ — every hit read, none owns the OCR recall-proxy or discriminator-generalisation question. No duplicate exists on any lane, hot or cold.",
+        "related": [
+          "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
+          "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE"
+        ],
+        "baseline_pass": true,
+        "promoted_at": "2026-08-25T15:24:03Z",
+        "promoted_by": "po (ruling-20260825T1524Z)",
+        "dispatch_lane": "po",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-25T17:32:16Z",
+        "verify_note": "[QA] Direct-Commit Verify — CHANGES_REQUESTED. Full independent methodology and raw numbers.\n\nSETUP: `git status --short -- apps/pdf-extractor/` clean at HEAD; rebuilt `pdf-extractor:latest` fresh from HEAD (`docker compose build pdf-extractor`, 2026-08-25T16:53Z) so every check below ran against a binary that provably contains e9144ea75 -- confirmed via `docker run --rm --entrypoint sh vn-market-intelligence-mcp-pdf-extractor:latest -c \"grep -n 'RESCUE FIRED' /app/infrastructure/ocr_backends.py\"` (line 603, present). Live container `vn-market-intelligence-mcp-pdf-extractor-1` untouched throughout (still on old image sha256:12ec82d1..., confirmed via `docker inspect`).\n\nZONE HEALTH (independently re-run, not read from the commit message):\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"python3 -m pytest -q\"` -> 1075 passed, 11 skipped, 1 failed (`test_bt3_fix3_real_ocr_fidelity`, AC-12 \"79 rows not in [80,110]\"). Confirmed PRE-EXISTING and NOT caused by this fix: re-ran the identical test with `apps/pdf-extractor/infrastructure/ocr_backends.py` bind-mounted back to its pre-fix content (`git show <e9144ea75^>:...ocr_backends.py`) -- byte-identical failure, same row count (79), same page.\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"lint-imports\"` (the real entrypoint, NOT `python3 -m importlinter.cli lint-imports`, which the developer's own notebook correctly flags as printing nothing/evaluating nothing) -> 3 kept, 0 broken. Confirmed the false-green trap is NOT present in my own gate.\n- PDF-Extract-Kit subtree: `cd apps/pdf-extractor/PDF-Extract-Kit && git status --short` -> clean (it is its own nested git repo, HEAD fdb25fd).\n- G12 sandbox (30 green/6 negative-fixture red) NOT independently re-run -- out of scope of the OCR-confidence change (domain-primitive scenario sandbox, unrelated files) and not blocking given pytest + lint-imports were reproduced directly.\n\nAC-2 (page 9 rescue) -- CONFIRMED, two independent paths:\n1. Read live `data/live/market.db` (readonly bun:sqlite, never push-echo): `bctc_layout_units` report_id=e71f845d-...-9be, schema_page=9 -> md_len=452 (was 122), `stitched_markdown` contains all 9 figures verbatim as claimed (Doanh thu thuan 20.225.450/70.112.826; LNTT 3.498.405/13.038.869; LNST 2.988.149/11.225.523, plus 2024 comparatives).\n2. Fresh from-scratch bench run (my own image, my own containers) via `scripts/audits/ocr-backend-bench.sh tesseract-vie auto` against FPT Q4 2025 (e71f845d...) reproduced page 9 md_len 122 (tesseract-vie) -> 452 (auto), sha256 differs only on page 9 of 46 total units / 30 table units.\n\nAC-3 (FPT Q4 2025 negative control) -- CONFIRMED on FPT alone:\n- `unit_digests` diff between the two bench runs above: 29/30 table units byte-identical sha256, page 9 the sole diff. `rescue_fire_count=1`, `rescue_fire_pages=[9]`. Matches the commit's claim.\n\nAC-4 (FPT Q4 2025 memory) -- CONFIRMED on FPT, timing caveat:\n- cgroup memory.peak: tesseract-vie 1235070976 B (1177.9 MiB, 46.0% of the 2,684,354,560 B / 2560 MiB cap); auto 1346867200 B (1284.5 MiB, 50.2%). memory.events.max=0 both. Consistent in magnitude with the commit's claimed 49.8%/0 hard-limit-hits.\n- Timing NOT reproduced at the claimed magnitude: commit claims table-phase +3.8% (117.26s vs 112.97s); my run measured +54.9% (168.45s vs 108.78s auto vs tesseract-vie, same script `ocr_bench_inner.py`, sequential ephemeral containers). Absolute magnitudes are still small and within the 600s page timeout, and this is NOT itself an AC-4 blocker (AC-4's literal text only requires reporting wall-clock + staying under cap with comparable headroom, both of which hold) -- flagged as a reproducibility discrepancy on a claimed number, not a pass/fail criterion.\n\nHIGHEST-VALUE CHECK (per the qa_focus / router dispatch instruction) -- SECOND DOCUMENT, FAILS:\nRan `scripts/audits/ocr-confidence-probe.sh <uuid> /app/data/pdfs/DBC_2025_Q4.pdf` (18pp, 13 table pages; DBC = Dabaco, unrelated issuer, already tracked in docs/analysis-briefs/DBC.md, ordinary file from the same production PDF corpus -- not a cherry-picked adversarial input) plus a full tesseract-vie/auto bench pair via ad hoc `docker compose run --rm --no-deps -e OCR_TEXT_BACKEND=<x> ... ocr_bench_inner.py` (same script the row's own bench uses, just pointed at a different PDF/report_id since ocr-backend-bench.sh hardcodes FPT).\n\n- rescue_fire_count=6 of 13 table regions (46%), pages [4,10,11,13,14,16] -- vs 1/30 (3.3%) on FPT.\n- Read the RAW tesseract text for all 6 pages from the confidence-probe output (never inferred from the score): every one is a coherent, correctly-parsed VND accounting line (e.g. page 16: \"Doanh thu bán thành phẩm sản xuất 14.904.619.255.974\" / revenue line; page 10: \"1. Tiền và các khoản tương đương tiền 439.331.953.874\" / cash equivalents) -- NOT the \"header + garbled residue, zero figures\" shape that characterizes a genuine miss (contrast FPT page 9 pre-fix: 122 chars, headers + stray \"178%\", zero figures). These are real reads being wrongly penalised.\n- ink_coverage for these 6 legitimate regions: 0.443, 0.432, 0.387, 0.356, 0.329, 0.350 (page4-r1, page10, page11, page13, page14, page16 respectively) -- ALL below the 0.5 AutoFallback threshold AND below the FPT-derived \"lowest legitimate = 0.674\" floor the row's whole design argument rests on. The floor collapses to under half its claimed value on ordinary input from a different issuer.\n- Memory: auto run cgroup memory.current/peak = 2,684,354,560 B = memory.max EXACTLY (100.00% of the configured 2.5g docker-compose limit for this service), memory.events.max=494 (oom=0, oom_kill=0 -- did not crash, but repeatedly hit the hard ceiling and had to reclaim). tesseract-vie same document: peak 1,118,744,576 B (41.7%), events.max=0. This is a genuine, previously-undisclosed memory-safety regression under broader rescue firing, not merely a quality concern.\n- This independently reproduces exactly the risk PO already formalised as a hard gate: `PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN` (backlog[], AC-2: \"the lowest LEGITIMATE region's ink coverage must be >= 0.50, and NO legitimate region may score at or below any genuinely-broken region\"). My data shows that bar FAILS (0.329 legitimate vs threshold 0.50). Per that same row's AC-5, retuning the 0.5 constant is explicitly a non-remedy PO already rejected once.\n\nARTIFACTS (scratch, not committed -- reproducible via the exact commands above): bench-fpt-q4-2025.jsonl, probe-dbc-q4-2025.jsonl, bench2-dbc-q4-2025.jsonl under the QA session scratchpad.\n\nVERDICT: CHANGES_REQUESTED. The discriminator (min(precision, ink-coverage)) is mechanically sound and well-tested in isolation, and AC-2/AC-3/AC-4 as narrowly scoped to FPT Q4 2025 all hold -- but the row's implicit claim that this makes `auto` safe to enable does not survive a second, ordinary document from the same corpus. Route to dev-pdf-extractor: either (a) re-derive/augment the discriminator so it generalises (per PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN's own AC bar), or (b) narrow this row's claims to \"FPT Q4 2025 only, not yet proven safe fleet-wide\" and let PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN own the generalisation question -- but do not let `auto` become the production default (DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO) on FPT-only evidence, since production is unset/tesseract-vie today regardless (OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION, unaffected either way).\n",
+        "detail_ref": "docs/agent-memory/decisions/dev-pdf-extractor-ocr-widen-20260825T2210Z.md",
+        "po_ruling_20260825T1752Z": "NEXT WRITER READ THIS FIRST: this row sits ~1KB under the 12,000B prose ceiling and IS in a measured lane (ready[]), so appending findings inline WILL hard-reject the whole orch-apply write. Put your results in detail_ref (docs/agent-memory/decisions/triage-20260825T1752Z-po.md, or a sibling doc you create and repoint detail_ref at) and keep the row to a pointer. root_cause and qa_verdict_20260825T1730Z were dropped here to make room; both survive in git history and in qa's verify_note, which is ceiling-EXEMPT and stays on the row in full. Held at P1 and placed at ready[0] so the Ready-Lane Consumer's [priority_rank, array-index] sort ranks it first in its band rather than last (priority_rank collapses 'high' and 'P1' into one rank, so the band is ~90 rows and append-order would bury it). Incident-lane expedite REVOKED — there is no outage and inflating a measurement cycle into the incident lane devalues the real P0s. Moved OUT of in_progress[] because NO picker dispatches from that lane (devteam-backlog-claim-{ready-lane,incident-lane,design-router-sweep}.jq and devteam-claim-backlog-task-by-id.jq all read in_progress[] only to COUNT WIP): qa's review[] -> in_progress[] CHANGES_REQUESTED move left this row stranded AND holding one of the two WIP slots permanently. The move required shrinking prose from 13,965B to under the 12,000B ceiling, because orch-row-prose-ceiling-check.mjs measures only backlog/ready/review and scores a row arriving from an unmeasured lane as liveBytes=0 — i.e. net-new growth of its full size, a hard reject. Dropped fields (dev_impl_*, dev_ac_evidence_*, dev_zone_health_*, rebuild_required_*, qa_focus_*, po_priority_ruling_*, po_ac4_baseline_correction_*, po_zone_probe_correction_*) are preserved in git history and their surviving content is re-derived in detail_ref. NOTE the +3.8% table-phase figure from dev_ac_evidence is STRUCK, not merely dropped: unreproduced by qa on the same script and commit (+54.9%), not explicable by host contention (qa's tesseract arm was FASTER while its auto arm was 44% slower — contention slows both), and mechanically implausible against the valid lang=vi benchmark's ~8s/region for PaddleOCR.",
+        "po_closure_20260826T0116Z": "PO CLOSES THIS ROW 2026-08-26T01:16Z. The measurement cycle it was dispatched to run is COMPLETE and its negative result is VALID AND FINAL — closing on a definitive negative is a success, not an abandonment. Verified on this row own evidence rather than on relayed prose: cycle 2 (commit efc4d6d79) shows no candidate signal separates broken from legitimate table regions with a single fixed constant across 6 stratified documents; line_ink_cov is the most stable candidate and still fails (FPT p9 = 0.763 sits ABOVE DBC legit floor of 0.688). The methodological trap is now named and must not be re-entered: broken regions are a ~0.4% base rate (1 in 51 FPT regions, 0 in 189 across 6 documents), so any threshold tuned on the single positive exemplar was always going to over-fire on the next document. Do NOT re-open this as a threshold-tuning task.\nTHE ARCHITECTURAL QUESTION THIS ROW ROUTED TO PO IS NOW ANSWERED, AND THE ANSWER TURNS ON A DISTINCTION THE ROW DID NOT DRAW. There are TWO different tesseract-to-PaddleOCR fallback mechanisms live in this codebase, and only one of them is the failing one. (A) The CONFIDENCE-GATED path — AutoFallbackOcrBackend, selected by OCR_TEXT_BACKEND=auto, described at apps/pdf-extractor/main.py as 'Tesseract-first; PaddleOCR on low confidence'. That is the mechanism this row measured and falsified. RETIRED as the rescue trigger. Its sibling DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO is already CANCELLED in archive[], which is consistent. (B) The CHARACTER-COUNT path — apps/pdf-extractor/infrastructure/ocr_worker.py:455-495, which fires the PaddleOCR(lang=vi) rescue when a page yields fewer than LOW_TESSERACT_PAGE_CHARS and then keeps whichever output is longer. This is a DIFFERENT and far more robust discriminator: it does not need to distinguish 'broken' from 'legitimate-but-sparse' at all, because it only ever ADDS text and keeps the better of two results, so a false fire costs latency and never costs correctness. It is already shipped and it is the sanctioned bounded-rescue path. That asymmetry is exactly why (A) failed and (B) does not: (A) must classify, (B) only has to compare.\nCONSEQUENCE: no further discriminator work is authorised. The remaining blocker for the user standing BCTC-extraction-quality objective is memory, not detection, exactly as this row own AC-0 finding said — auto-mode saturates the 2.5 GiB cap at 6 fires on an 18-page document, and no fire rate is safe under the current architecture. That is now tracked on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (ready[], architect), whose root cause PO settled at source in the same tick: the ocr_executor child is never recycled and has zero malloc_trim coverage. ALSO BANKED HERE: this row independently re-confirmed the orientation fix 905e32be1 is REAL — DBC p12/p15 were undetected-broken FALSE NEGATIVES at confidence 0.535/0.586, both ABOVE the 0.5 gate while containing zero real content, and they now read correctly. That is a second, independent demonstration that the confidence field is not a usable brokenness signal. next_agent=qa is a formality: no production code changed (ocr_backends.py untouched, the commit is docs+scripts only), so there is nothing to functionally verify."
+      },
+      {
+        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "type": "FIX",
+        "status": "DONE",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/po/flow/",
+        "owner": "po",
+        "next_agent": "qa",
+        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
+        "created_at": "2026-08-23T12:10:00Z",
+        "created_by": "po/triage-20260823T1157Z",
+        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "related": [
+          "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
+          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
+        ],
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "dispatch_lane": "po",
+        "promoted_at": "2026-08-25T20:00:30Z",
+        "promoted_by": "po (triage-20260825T1937Z)",
+        "claimed_at": "2026-08-26T00:48:57Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
+        "occurrence_count": 2,
+        "updated_at": "2026-08-26T01:23:29Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains.",
+        "po_live_verification_20260826T0116Z": "PO VERIFIED LIVE 2026-08-26T01:22Z — FIX CONFIRMED WORKING ON REAL TRAFFIC, not on a synthetic repro. PO ran the documented durable-inbox CLEAR block end-to-end this tick against a genuinely populated inbox and it cleared 16 of 16 envelopes: depth 16 before, 0 after, orch-apply reported inbox_row_identity=clean and task_total unchanged at 884. The fix is the printf '%s' substitution for echo at docs/agents/po/flow/triage-signals.md lines 53-54, landed as 9434b1b73. Before it, zsh echo corrupted any payload containing a backslash-n escape, jq then produced an empty candidate id list, and orch-apply fail-loud-aborted on it. NOTE ON THIS ROW OWN ID, recorded so a future reader does not mis-triage it: the id says SILENT-NOOP and that is WRONG. The failure mode was a FAIL-LOUD ABORT — orch-apply refused the write and left the live file untouched, so nothing was ever half-drained and no envelope was ever lost. The id was knowingly not renamed because .head referential integrity is schema-enforced against it. Treat the id as a label, never as evidence about the failure mode. next_agent=qa for form only; the acceptance evidence is this live 16-envelope drain."
       }
     ],
     "done_verified": [
@@ -20250,6 +20382,53 @@
       "note": "Re-collapsed 3rd time (router, post FIX-SBV-FETCHER-ZERO-VALUE-EMIT verify) — see feedback_orchstate_dual_head_keys_toplevel_authoritative.md. Do not write routing fields here; DeprecatedHeadStubSchema.passthrough() lets them through Zod silently."
     },
     "ready": [
+      {
+        "id": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "created_at": "2026-08-26T01:22:10Z",
+        "created_by": "po",
+        "updated_at": "2026-08-26T01:22:11Z",
+        "updated_by": "po (triage-20260826T0116Z)",
+        "dedup_key": "marketdb-corruption:2026-08-26:restore-data-loss-accounting",
+        "files": [
+          "data/live/market.db",
+          "data/live/market.db.corrupt-2026-08-26T0031Z"
+        ],
+        "related": [
+          "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION",
+          "FIX-MARKETDB-BACKUP-NO-INTEGRITY-GATE-SINGLE-GENERATION"
+        ],
+        "title": "The 2026-08-26T00:31Z market.db restore-from-backup silently dropped 12,205 intraday_foreign_flow_5m rows and 54 evidence_fragments rows; the ops recovery commit ea8650291 states 'no uncommitted data lost', which is FALSE. All of it is still recoverable from the preserved corrupt snapshot, but only until that snapshot is pruned.",
+        "status_note": "PO TRIAGE 2026-08-26T01:16Z — ACK-WITH-CORRECTION on ops recovery commit ea8650291, plus a live-recoverable data-loss window. THE RECOVERY ITSELF WAS CORRECT AND WELL-EXECUTED: writers stopped, corrupt copy preserved as data/live/market.db.corrupt-2026-08-26T0031Z (455405568 B), restored from the quick_check-verified 2026-08-25T04:30Z backup, services restarted. PO independently re-verified the restore is genuinely clean and NOT merely restart-masked — the cowork-team envelope warned that a restart hides tree-180 damage and that this is likely how the 07-19 / 07-30 / 08-06 occurrences were each falsely closed. PRAGMA quick_check on the LIVE db returns ok, and the SAME check run against the preserved snapshot DOES report the damage (Freelist: size is 0 but should be 1; Tree 96 and Tree 180 Rowid out of order), so the instrument is demonstrably non-blind and the live ok is a real result, not a blind spot. ONE OPS CLAIM VERIFIED TRUE: all 28 deleted pdf pages restored — pdf_extracted_text is 15842 live vs 15814 in the snapshot, exactly +28. ONE OPS CLAIM FALSE, AND THAT IS THIS ROW: 'no uncommitted data lost since backup pre-dates sweep incident' is true only of the SWEEP. Measured live by PO, read-only, live db vs the 00:31Z snapshot — intraday_foreign_flow_5m 137,890 live vs 150,095 in snapshot = 12,205 ROWS LOST (max rowid 61363236 vs 62841915); evidence_fragments 619 live with max id 1509 vs 662 in snapshot with max id 1563 = 54 ROWS LOST, and those are exactly the market-watcher and bctc-analyst writes the incident report recorded as having SUCCEEDED (ids 1562, 1563) before the crash. WHY THIS IS RECOVERABLE AND WHY IT IS URGENT: the evidence_fragments b-tree in the snapshot is INTACT — quick_check names ONLY Tree 96 and Tree 180 as damaged — so those 54 rows can be exported and re-inserted cleanly today. The 12,205 foreign-flow rows sit in Tree 180, which IS the corrupt tree, so they need .recover or a selective export with rowid re-assignment, not a naive copy. BOTH depend on the snapshot continuing to exist, and data/live/ already holds 5+ historical corrupt snapshots (07-19, 07-30 x2, 08-06) that are obvious prune candidates. AC-1 export and re-insert the 54 evidence_fragments (ids 1510-1563) from the snapshot into the live db; verify by row count AND by reading a fragment body, never by count alone. AC-2 decide and execute a recovery path for the 12,205 intraday_foreign_flow_5m rows, OR record an explicit signed-off decision to accept the loss with its business reason — do not leave it undecided by default. AC-3 do not prune data/live/market.db.corrupt-2026-08-26T0031Z until AC-1 and AC-2 are closed. AC-4 correct the record: the ea8650291 commit message line will be trusted by future readers and is materially wrong. ALSO CLEAN UP, small and safe: data/live/market.db.corrupt-2026-07-30T08 is a 0-byte file created 2026-08-26T00:46, a colon-truncated filename from an unquoted shell redirect during this recovery — pure garbage, delete it. DO NOT run VACUUM / REINDEX / .recover against the LIVE db as part of this row; the live db is currently clean and is taking writes."
+      },
+      {
+        "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/pdf-extractor/",
+        "depends": [],
+        "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+        "updated_at": "2026-08-26T01:18:34Z",
+        "next_agent": "architect",
+        "owner": "architect",
+        "status_note": "UNBLOCKED + NARROWED + RE-ROUTED by PO 2026-08-26T01:16Z. Root cause is settled at source: ocr_executor = ProcessPoolExecutor(max_workers=1) at main.py:154 has NO max_tasks_per_child, so its single child is never recycled for the container life, while ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child and BOTH malloc_trim(0) mitigations are wired only into PID1 (pek_run_helper.py:133, routes_extract.py:112) — the executor child has zero mitigation. PRIMARY REMEDY = worker recycling (max_tasks_per_child; Python 3.12.3 verified in-container). Cap raise REJECTED. Call budget DEMOTED to safety-belt. architect: small bounded design call only (dedicated recycled executor vs tuned N, because the same executor also serves tesseract), then hand to dev-pdf-extractor. Burst/extraction VERIFICATION is market-hours gated to >=09:00Z weekdays; design+impl are not. FULL RULING + the four retired/superseded PO fields (po_burst_measurement_20260824T0722Z, po_ac4_bar_ruling_20260824T0850Z incl. the B1-B4 bar definitions, po_goahead_20260808T000430, po_ruling_20260824) are in detail_ref under key po_adjudication_20260826T0116Z — moved to cold store, NOT deleted.",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "files": [
+          "apps/pdf-extractor/main.py",
+          "apps/pdf-extractor/infrastructure/ocr_worker.py",
+          "apps/pdf-extractor/interface/pek_run_helper.py",
+          "apps/pdf-extractor/interface/routes_extract.py"
+        ]
+      },
       {
         "id": "FIX-TASKSCHEMA-NEXTAGENT-CONDITIONAL-MANDATORY",
         "type": "FIX",
@@ -22997,7 +23176,7 @@
         "priority": "P1",
         "created_by": "ops",
         "created_at": "2026-08-26T00:34:44Z",
-        "updated_at": "2026-08-26T00:59:49Z",
+        "updated_at": "2026-08-26T01:22:11Z",
         "tags": [
           "infrastructure",
           "docker-desktop",
@@ -23019,7 +23198,8 @@
         ],
         "detail_ref": "docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md",
         "architect_review_note": "2026-08-26T00:56Z architect. Brief: docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md. Read-only forensics only (immutable=1 / {readonly:true} against preserved .corrupt-* snapshots + live read-only docker exec probes) — zero writes to market.db or any snapshot. VERDICT: both previously-known mechanisms (04-25 SHM/WAL torn-write; 08-06 Go DSN WAL re-arm) independently re-confirmed EXCLUDED for tonight via header-byte forensics (file-format writer/reader version byte): the 08-26 corrupt file is rollback-journal format (1/1) — the FIRST of the 4 preserved snapshots to be so. 07-19/07-30/08-06 are ALL WAL-format (2/2) sharing ONE scattered multi-tree btreeInitPage()-error-11 signature (SHM torn-write recurring because the DELETE-mode mitigation kept getting silently defeated) — 08-26 is a genuinely NEW, narrower signature instead: 7788 rowid-disorder cells concentrated in Tree 180 (intraday_foreign_flow_5m) + exactly 1 stray Tree-96 pointer + freelist off-by-exactly-1 + 37 orphaned pages = classic non-atomic multi-page-commit fingerprint, not disk-level scatter. NEW FINDING absent from every prior record: host bun (1.3.13 macOS) and container bun (1.3.13 oven/bun:1.3.13-debian) run DIFFERENT embedded SQLite engines (3.43.2 vs 3.51.2) against the SAME bind-mounted file — verified live both directions, twice. Two surviving root-cause candidates (engine-version skew; virtiofs advisory-lock/cache-coherency gap on the ROLLBACK-JOURNAL locking path, not WAL/SHM) are BOTH eliminated by ONE fix, so this is not a blocking ambiguity. RECOMMENDATION (costed, not option-1): do NOT re-migrate to a container-exclusive named volume now — tried once (ffa045e81 04-25), reverted after a VM-rebuild wiped it entirely (5ba622eca 07-15); would also require rewriting all 86 host-invoked script call-sites (52 apps/mcp-server/scripts + 34 scripts/migrations, up from 25 four weeks ago) to docker-exec — same migration cost as the cheaper fix below, for a strictly worse durability tradeoff. INSTEAD: new scripts/run-against-market-db.sh wrapper (mirrors orch-apply.sh SSOT-wrapper convention) that docker-execs every host-invoked market.db script into mcp-servers own container/engine — eliminates both candidates at once, zero mount-type change, zero rewrite of the 86 scripts own code (invocation-only). Also re-flagged STILL-OPEN from the 07-30 brief: backupDatabase() (checkpoint.ts:93) remains unconditional single-generation overwrite with no pre-copy integrity gate — unrelated to root cause but determines next-incident blast radius; not touched this session. Rowid magnitude (62.8M on a ~150K-row table) is a RED HERRING, not evidence of tampering — fully explained by INSERT OR REPLACE churn on a non-AUTOINCREMENT table (verified ~1.51M rowids consumed in the 20h between the clean 04:30Z backup and the corruption). No repair/write action taken this session; forensics only. NEXT: developer implements scripts/run-against-market-db.sh + dev-standards.md CANONICAL wrapper rule + checkpoint.ts backup integrity-gate/multi-generation fix per brief §6.",
-        "updated_by": "architect"
+        "updated_by": "po (triage-20260826T0116Z)",
+        "po_occurrence_fold_20260826T0116Z": "PO FOLD 2026-08-26T01:16Z — THREE inbox envelopes (news-scout, bctc-analyst, cowork-team/router) report ONE incident; folded here per the reporters own dedup instruction, deliberately NOT minted as three rows. NEW EVIDENCE FROM THIS 5TH OCCURRENCE. (1) Damage was CONCENTRATED, not scattered: 100/100 quick_check error lines named one tree (180 = intraday_foreign_flow_5m), one error class (Rowid 62841915 out of order), on the single MAX rowid, while the 04:30Z backup was clean — which argues a writer ordering-invariant fault rather than random bind-mount page damage. A second tree (96 = pdf_extracted_text) was also hit. (2) POISONED-CONNECTION HYPOTHESIS, the most valuable lead here: SQLite poisons a connection once it returns SQLITE_CORRUPT, and mcp-server holds long-lived pooled connections (57m uptime at detection). That one mechanism explains all three otherwise-contradictory observations at once — intermittent ACROSS agents (which pooled connection you happen to draw), NON-transient WITHIN a single agent cycle (same poisoned connection), and unrelated tables reading fine while refusing writes. (3) THE TRAP THAT PROBABLY CLOSED 07-19, 07-30 AND 08-06 FALSELY: restarting mcp-server makes the symptom vanish while leaving the tree corrupt, so a clean error log after a restart proves nothing at all. Verify with quick_check, never with log silence. PO applied that check on this occurrence — live quick_check = ok AND the same check against the preserved snapshot DOES report the damage — so the instrument is provably non-blind and this occurrence is genuinely resolved rather than restart-masked. (4) INVESTIGATION LEAD, unverified, recorded so it is not rediscovered: intraday_foreign_flow_5m is fed by the foreign-flow VPS path, which has a documented clock-drift recheck harness; non-monotonic rowids derived from a drifting clock would produce exactly this out-of-order signature. (5) journal_mode was delete with no -wal/-shm files present, so the 08-06 re-armed-WAL vector is RULED OUT for this occurrence and should not be re-investigated. Data-loss accounting and the still-recoverable rows are tracked separately on FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE (P0, ops)."
       },
       {
         "id": "FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA",
@@ -23152,29 +23332,6 @@
         "updated_at": "2026-08-23T00:21:44Z",
         "next_agent": "dev-team",
         "blocked_reason": "Re-measurement FAILED (0/4 pass). See detail ref."
-      },
-      {
-        "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "type": "FIX",
-        "status": "BLOCKED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/pdf-extractor/",
-        "depends": [
-          "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
-        ],
-        "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
-        "po_goahead_20260808T000430": "RATIFIED 2026-08-08T00:04:30Z by po (supervised-goahead). NOTE ON TIMING: this row moved in_progress->review at 23:58:16Z (architect closeout, commits a107d9135 + 7c35ce8e4 + 8a1df94ac) DURING this PO tick, and head reset to idle — so nothing is held at this instant; this stamp is forward-looking and exists so the NEXT resume of this row (next_agent=dev-pdf-extractor) is not held by WF-2. RATIFICATION BASIS 1 — deliverable verified at source, not on relayed prose: docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-burst-headroom.md exists, 29237 bytes, commit a107d9135 real, plus scripts/audits/pdfx-pek-mem-arena-probe.py (5410 bytes). RATIFICATION BASIS 2 — the brief's single load-bearing claim re-derived from the source it is about, NOT from the brief: \"PEK inference runs inside uvicorn PID1, thread-isolated only, unlike tesseract's real process isolation\" is CONFIRMED — apps/pdf-extractor/main.py:154 declares ocr_executor = ProcessPoolExecutor with max_workers=1 (tesseract genuinely out-of-process, so its RSS is not PID1's) versus apps/pdf-extractor/interface/pek_run_helper.py:57 which awaits asyncio.to_thread(...) — thread-isolated only, same address space — reached from the POST /pek-extract route declared at apps/pdf-extractor/interface/routes_pek.py:29 via _run_pek_extract, with models resident in PID1 from startup (main.py:221 constructs PekEngineAdapter). That asymmetry is exactly why FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT bounded the child term and left the parent term untouched. RATIFICATION BASIS 3 — the brief's correction of this row's OWN AC2 is accepted: AC2 specified a 15-wide POST /extract burst, but /extract is the already-fixed, process-isolated tesseract path and bursting it can never reproduce PID1 growth; the correct trigger is POST /pek-extract. AC2 is amended accordingly. RATIFICATION BASIS 4 — independent live corroboration by PO, read-only, 2026-08-07T23:58Z: docker stats 1.557GiB/2.5GiB=62.27%; /proc/1/status VmRSS=1559376 kB VmHWM=2582784 kB; tesseract children 0; cgroup memory.current=1690714112 memory.max=2684354560 memory.peak=2684358656; docker inspect RestartCount=7 ExitCode=0 OOMKilled=false StartedAt=2026-08-04T14:23:22Z; 0 POST /extract since 20:00Z. memory.peak has EXCEEDED memory.max in this container life and RestartCount grew 2 -> 7 since 2026-08-01 with OOMKilled=false throughout — AC7's silent-clean-exit mode is real and was unwitnessed by every OOM-plane detector. It also independently supports the brief's malloc-arena verdict: idle VmRSS fell back to 59.5% of cap while VmHWM stayed at 98.5%, which a genuine unreleased Python heap would not do. SCOPE OF THIS GO-AHEAD: covers the implementation hop for AC3 (the malloc_trim remedy as designed), AC6 (idle-floor re-measurement at least 5 minutes after the last job with tesseract child count 0) and AC7 (regression gate keyed on MemPerc/VmRSS/RestartCount, NEVER on OOMKilled). plan_only is cleared by this ratification — the diagnose-then-design phase it gated is complete and its artifact is ratified above; supervised stays TRUE so any further hop still returns to PO. DOES NOT cover: raising the 2.5 GiB cap (ops/user capacity decision, per the row's own deliverable text) or any container restart/recreate for testing (read-only discipline stands).",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "updated_at": "2026-08-24T08:41:42Z",
-        "next_agent": "po",
-        "owner": "po",
-        "blocked_reason": "BLOCKED on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT AC-4/AC-5/AC-6 (burst re-measurement, VmHWM+dmesg OOM evidence, idle-floor re-measurement). The DEPLOY half is DISCHARGED, not pending: ops recorded ops_ac1_ac2_status=PASS 2026-08-15T09:49:23Z, and PO independently re-verified at source 2026-08-24T03:49-03:56Z that the running image is sha256:5d7d36db (Created 2026-08-23T15:44:11Z, a SECOND rebuild after ops sha256:4ee7f1c3) with malloc_trim present in /app/interface/pek_run_helper.py and /app/interface/routes_extract.py. This row cannot move until those three measurements land; PO -- not ops -- closes it, per that row AC-6.",
-        "status_note": "next_agent AND blocked_reason were both null from 2026-08-23T00:21:38Z until 2026-08-24, so the row was unspawnable and nothing recorded why it was blocked. Restored by po. DO NOT CLOSE ON THE A-30 FOLD VERDICT: this row own AC-4 bar (peak <=80% of cap) is currently VIOLATED AT TROUGH on the post-fix image -- docker-stats MemPerc 85.00-87.06% across the 02:00Z-03:55Z window, and the cgroup itself sits at 99.85% of memory.max (memory.current ~2.681GB vs memory.max 2.684GB, true free 1.5-3.7 MiB, memory.peak == memory.max exactly, anon ~1.38GiB and rising). The shipped malloc_trim remedy has not met this row own acceptance bar.",
-        "po_ruling_20260824": "NOT ACKED. PO refused an acked_memory[] entry for pdf-extractor on 2026-08-24 rather than suppress this signal. Full reasoning + the two detector rows minted alongside it are recorded on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT.po_ruling_20260824 (kept off this row to respect its non_goals prose-ceiling instruction).",
-        "updated_by": "po (ac4-bar-ruling-20260824T0850Z)",
-        "po_burst_measurement_20260824T0722Z": "THE MISSING SINGLE-ALLOCATION NUMBER NOW EXISTS, AND THIS ROW'S AC-4 IS FAILED ON HARD EVIDENCE, NOT ON AN IDLE PERCENTAGE. DMESG GROUND TRUTH, read 2026-08-24T07:18:59Z (docker run --rm --privileged --pid=host justincormack/nsenter1 -- the read-only recipe documented on FU-RAG-DEPLOY-MEMORY's status_note; it allocates in its OWN cgroup, never the target's). Ring buffer spans 2026-08-20T12:00:11Z..2026-08-24T07:18:58Z; VM clock confirmed UTC in the same call. NEGATIVE CONTROL non-vacuous: 942 hits for 'docker0' from the same pipeline. TWO REAL KERNEL MEMCG OOM KILLS, both on cgroup /docker/6ec27ac85c8e6a8026ea32086b09fe8496d74610d38d0918660bb0ccb3d9934c: (1) 2026-08-23T14:27:11Z 'oom-kill:constraint=CONSTRAINT_MEMCG ... task=python3,pid=8887' -> 'Memory cgroup out of memory: Killed process 8887 (python3) total-vm:4953540kB, anon-rss:2484996kB (2.37 GiB), file-rss:15304kB'; (2) 2026-08-23T14:58:52Z 'task=python3,pid=17002' -> 'Killed process 17002 (python3) total-vm:7871780kB, anon-rss:2468832kB (2.35 GiB), file-rss:76396kB'. Cgroup 6ec27ac85c8e no longer exists (docker inspect: no such object) -- it is the PREVIOUS pdf-extractor container, replaced by the current 2edf0c9c9905 at StartedAt 2026-08-23T15:44:17Z. WHAT THIS DELIVERS: scripts/agents-flow/auditor-tier1-probe.sh's `_mem_container_acked` header states this row's burst profile is qualitatively '100s of MiB to ~1 GiB' but that 'no settled single-allocation number exists yet'. It does now: a single pdf-extractor python3 worker reached 2,484,996 kB anon-rss (2.37 GiB) and was killed by the kernel against a 2,684,354,560 B (2.5 GiB) cap. That is a MEASURED terminal allocation, from the kernel's own OOM report, not an inference. WHAT IT MEANS FOR AC-4 (bar: <=80% of cap): failed, and worse than the idle 85-87% reading suggested -- the container is not merely idling high, it has reached its hard ceiling and lost worker processes to the OOM killer inside the post-fix (malloc_trim) image. WHAT IT MEANS FOR THE PROBE: A-30's FOLD discriminator reads OOMKilled/RestartCount/VmHWM/MemPerc and is therefore BLIND to this by construction -- a killed CHILD leaves all four clean. The FOLD verdicts of 03:30Z and 06:39Z were not wrong about their inputs; their inputs cannot see this event class. WHAT IT DOES NOT SETTLE: whether the right remedy is bounding the per-job allocation (this row) or raising the cap (ops). PO position: NOT a cap raise as the primary remedy -- live per-container caps already sum to 13.5 GiB against 7.75 GiB of host RAM (1.74x overcommit, documented host-memory-panic history), so a container that can legitimately want 2.4 GiB for ONE OCR job needs the job bounded, with any cap change as a sized ops mitigation on top. Re-run the recipe above before any closure: the ring buffer rolls (a 2026-08-20T11:01Z pdf-extractor hit already aged out of it), so absence of hits is only provable for the buffer's live span.",
-        "po_ac4_bar_ruling_20260824T0850Z": "PO RULING 2026-08-24T08:50Z. AC-4's '<=80% of cap' BAR IS REPLACED. The measurement evidence and the AC-5 attribution correction live on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT field po_ruling_20260824T0850Z; read that first. This field rules ONLY on the bar.\nWHY THE OLD BAR CANNOT WORK. It was measured via VmHWM. VmHWM is a MONOTONE lifetime high-water mark of PID 1's RSS: it never decreases and cannot be reset without restarting the process. Once the process has ever touched 2.21 GiB, AC-4-via-VmHWM is permanently FAILED for that container's entire life no matter how well the fix works -- the instrument cannot register a PASS after the first burst, so the criterion is unfalsifiable in the pass direction. Second defect: VmHWM measures PID 1 only, while both 2026-08-23 kernel kills were of forked python3 children (host pids 8887 and 17002) whose RSS is not in PID 1's VmHWM at all. Third defect: '% of cap' read off memory.current or docker-stats conflates reclaimable file cache with irreducible anon -- at 08:33Z memory.current was 85.3% of cap while anon was 64.9%, the ~20pp gap being page cache the kernel reclaims on demand (pgsteal/pgscan 98.6%).\nTHE REPLACEMENT BAR -- all four must hold across the measurement window:\n B1 peak `anon` (cgroup memory.stat) <= 80% of memory.max = 2,147,483,648 B. anon is what the OOM killer actually charges: both kills were at anon-rss 2,544,635,904 B (94.8% of cap) and 2,528,083,968 B (94.2%). Current anon 1,743,306,752 B = 64.9%, headroom 385.5 MiB.\n B2 cgroup memory.events oom_kill == 0 AND oom == 0 for the whole window. Non-negotiable, and it is the ONLY counter that survives a CHILD-process kill -- docker .State.OOMKilled reads false in exactly that case, proven here and on the rag-service sibling.\n B3 reclaim health: memory.stat pgsteal/pgscan >= 0.90 AND workingset_refault_anon == 0. This is what distinguishes 'touches the ceiling and reclaims successfully' from 'thrashing toward death'. memory.peak == memory.max ALONE is NOT a failure; B3 is what disambiguates it.\n B4 no idle anon drift: (anon at end - anon at start) over a sub-window with zero /extract and zero /pek-extract requests <= 32 MiB. Added because a +282 MiB/4.6h zero-traffic drift was observed 2026-08-24T03:56Z..08:33Z; both malloc_trim fixes are wired to request finally-blocks, so with no requests neither can have run.\nRETIRED: 'VmHWM <= 80% of cap'. VmHWM is still REPORTED for continuity, never used as a gate. memory.peak is also monotone but IS resettable by write on kernel >= 6.12 (host verified 6.12.76-linuxkit), so it may serve as a burst gauge PROVIDED the pre-reset values are recorded on the row first.\nTHIS ROW STAYS BLOCKED, next_agent=po. B1-B4 are unmeasured. It unblocks when the UNBLOCK row's new AC-7/AC-8 passive sampler returns them. Do NOT close it on the '563 clean /extract calls' evidence alone: that shows no kills (B2), it does not show B1 or B4."
       },
       {
         "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
@@ -23779,44 +23936,6 @@
         "qa_changes_requested_at": "2026-08-25T20:31:50Z"
       },
       {
-        "id": "FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "REVIEW",
-        "zone": "apps/pdf-extractor/",
-        "owner": "dev-pdf-extractor",
-        "next_agent": "po",
-        "created_at": "2026-08-25T13:45:50Z",
-        "created_by": "po/triage-20260825T1345Z",
-        "updated_at": "2026-08-25T22:12:19Z",
-        "updated_by": "router (dev-pdf-extractor measurement cycle 2 return; terminal-shape actuated by router, next_agent corrected qa->po)",
-        "dedup_key": "pdfx-ocr:tesseract-confidence-mean-over-nonempty-rows",
-        "files": [
-          "scripts/audits/ocr_confidence_probe_inner.py",
-          "scripts/audits/ocr-confidence-probe.sh",
-          "scripts/audits/ocr_bench_inner.py"
-        ],
-        "title": "MEASUREMENT-ONLY CYCLE: the shipped min(precision, ink-coverage) discriminator is tuned on ONE document and over-fires 46% on the next. Do NOT modify ocr_backends.py. Find whether ANY recall proxy separates broken from legitimate table regions across a frozen, hash-deduplicated n>=8 sample — or report that none does.",
-        "evidence": "POSITIVE CONTROL (unchanged, independently reproduced by qa off bctc_layout_units via readonly bun:sqlite): FPT Q4 2025 report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65 page 9, quarterly income statement — pre-fix tesseract returned 122 chars, headers plus a stray '178%' and ZERO figures, while self-reporting 0.92 confidence; PaddleOCR on the same crop returns the full row. Post-fix under auto: 452 chars, 9/9 figures. So a genuine catastrophic per-page miss exists, a working rescue exists, and the confidence signal is the only thing between them — that framing is still correct and is why this row is not closed. NEGATIVE CONTROL is what failed: see qa's verify_note (full DBC_2025_Q4 data + methodology) and detail_ref (PO's structural analysis of why).",
-        "ac": "MEASUREMENT ONLY. Do NOT modify apps/pdf-extractor/infrastructure/ocr_backends.py this cycle; do NOT retune OCR_FALLBACK_THRESHOLD (PO has now rejected that twice). Full reasoning and the evidence behind every bar below: detail_ref. (AC-0) RUN FIRST, it can moot everything else — MEMORY-SCALING SWEEP. AUTO_FALLBACK_CONFIDENCE_THRESHOLD reads os.environ OCR_FALLBACK_THRESHOLD, so fire count is sweepable with NO code change and NO rebuild. On one document sweep the threshold to force N = 0,1,3,6,all fires and plot cgroup memory.peak and memory.events.max against N. Measured so far: FPT 1 fire = +111.8 MiB / 0 events; DBC 6 fires = +1493 MiB / 494 events, peak == memory.max EXACTLY. 6x fires gave ~13x delta. PaddleOCR is constructed unconditionally in _load_pek_models() in BOTH arms so model residency cancels and cannot explain it. FLAT vs N => residency, safe. RISING vs N => retention across calls, and then NO fire rate is safe and this is a hard blocker to report immediately. cgroup counters ONLY, never ru_maxrss. (AC-1) RE-ANALYSE THE SIGNALS ALREADY EMITTED BUT NEVER EVALUATED. ocr_confidence_probe_inner.py emits seven per-region signals; the original AC-1 evaluation reported four. Evaluate: line_ink_cov (ink inside level-4 line-box interiors — a DIFFERENT quantity from line_cov_ratio, which was correctly rejected as inert at 1.0000 everywhere; this one excludes the rule lines, seals and shading that make plain ink_cov issuer-dependent); min_conf; n_lvl5_conf_le0 and n_lvl5_empty_text (word slots where Tesseract emitted a box and FAILED to read it — a direct, LAYOUT-INDEPENDENT recall signal); and instrument NUMERIC-TOKEN DENSITY (count of parseable VND accounting figures), which is the signal a human used successfully on BOTH documents and is what the BCTC product actually cares about. (AC-2) RE-TEST THE CANDIDATE THAT WAS NEVER ACTUALLY TESTED. AC-1 originally called for 'recognised rows vs the rows THE LAYOUT DETECTOR found', but it was implemented against Tesseract's OWN level-4 line boxes — self-referential by construction (Tesseract emits a line box only where it already found words), which is why it returned 1.0000. DocLayout-YOLO already runs over every page and is INDEPENDENT. Test it properly before calling it dead. (AC-3) SAMPLE: n >= 8 documents, DEDUPLICATED BY CONTENT HASH (data/pdfs holds 324 files but only 188 unique by md5 — DBC_2025_Q4 / DBC_2024_Q4 / DBC_2023_Q4 are byte-identical), stratified >=2 banks (VCB/ACB/SHB/CTG) + >=2 industrials (HPG/DGC/BSR) + >=2 consumer-retail (SAB/FRT/KDC) + >=1 real-estate (DIG/KDH/DXG), with FPT HELD OUT and NOT counted toward n — a discriminator tuned on FPT cannot be validated on FPT. PUBLISH the ids and hashes BEFORE measuring so the sample cannot be revised after seeing results. (AC-4) THE BAR IS SEPARATION, NOT A THRESHOLD. Per signal per document publish the full per-region distribution plus max(score over genuinely-broken) and min(score over legitimate). Ground truth by READING EXTRACTED CELL CONTENT, never by the score under test. PASS requires min(legit) > max(broken) on EVERY document with margin AND one single fixed constant inside that gap on ALL of them at once. A per-document threshold is a lookup table, not a discriminator. FAILING is a valid, valuable outcome — report it and hand back to PO. (AC-5) CARRIED FROM THE CANCELLED PROBE ROW, both unanswered: per-unit sha256 diff of stitched_markdown, tesseract-vie vs auto, on DBC_2025_Q4 and on every sampled document — this is the number that says whether the 6 false-positive fires CHANGED output (replacing correctly-read VND lines with diacritic-degraded PaddleOCR text) or merely burned compute; and table-phase wall clock per document reported WITH its fire count, so cost is stated as marginal-cost-per-fire. Do NOT report a bare percentage-over-baseline: both existing figures (+3.8% and +54.9%) are single-fire measurements of a fire-count-dependent cost and neither is usable. (AC-6) OPTIONAL, EVALUATE AND REPORT AN OPINION, do not build: RESCUE-AND-VERIFY — fire liberally on a cheap signal, then ACCEPT the PaddleOCR result only if it strictly increases an objective content criterion (parseable VND figure count). Under that shape a false-positive fire costs compute and NEVER costs quality, and the discriminator degrades from a correctness gate to a cost filter. Does not dissolve AC-0. (AC-7) MARKET-HOURS GUARD, binding: never exercise pdf-extractor 02:00-08:59 UTC on weekdays.",
-        "status_note": "MEASUREMENT CYCLE 2 COMPLETE (dev-pdf-extractor, commit efc4d6d79). NEGATIVE RESULT: no candidate signal (line_ink_cov, ink_cov, mean_conf, min_conf, n_lvl5_*, numeric_token_count) separates broken from legitimate table regions with one fixed constant across 6 stratified documents. line_ink_cov is the most stable (legit floor 0.688-0.865) but FAILS against the one known broken exemplar (FPT p9 = 0.763, above DBC legit floor 0.688). Broken regions are rare: 1 in 51 FPT regions, 0 in 189 across 6 new documents (~0.4% base rate). AC-0 memory scaling is INDEPENDENTLY DISPOSITIVE: auto-mode saturates the 2.5GiB container cap at just 6 fires on an 18-page doc (peak==max, 914 hard-limit-hit events) — no fire rate is safe under the current architecture regardless of how the discriminator question resolves. Orientation fix 905e32be1 confirmed REAL: DBC p12/p15 were undetected-broken false negatives (conf 0.535/0.586, ABOVE the 0.5 gate, zero real content) and now read correctly. n=6 achieved vs target 8 (bank + consumer-retail each 1 short) — disclosed, time-boxed by market-hours guard + host CPU contention. ROUTED TO PO NOT QA (router, 22:15Z): no code changed — ocr_backends.py untouched, commit is docs+scripts only — so there is nothing to QA-verify; the open question is architectural (retire the confidence-gated auto architecture vs pursue AC-6 rescue-and-verify, gated FIRST on the memory ceiling). Full evidence in detail_ref.",
-        "dedup_checked": "2026-08-25T13:40Z via scripts/po-board-dedup-search.sh over NON-TERMINAL lanes and --all-lanes for /TesseractVie|AutoFallback|confidence.*heuristic|mean.*conf/, /paddle|PaddleOCR|tesseract|OCR/, /PEK-IMPL-OCR|ocr.?backend|OCR_BACKEND/. RE-CHECKED 2026-08-25T17:45Z by po across archive[]/done[]/done_verified[]/closed_sprints[] AND the cold archives docs/data/orch/archive/2026-0{6,7,8}.json .done_tasks[] on /ink.?coverage|recall|discriminat|OCR_TEXT_BACKEND|confidence|paddle/ — every hit read, none owns the OCR recall-proxy or discriminator-generalisation question. No duplicate exists on any lane, hot or cold.",
-        "related": [
-          "FIX-PDFX-PEK-TABLE-REGION-COLLAPSED-TO-ONE-CELL-DISCARDS-PER-LINE-BBOXES",
-          "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE"
-        ],
-        "baseline_pass": true,
-        "promoted_at": "2026-08-25T15:24:03Z",
-        "promoted_by": "po (ruling-20260825T1524Z)",
-        "dispatch_lane": "po",
-        "redispatch_count": 1,
-        "qa_changes_requested_at": "2026-08-25T17:32:16Z",
-        "verify_note": "[QA] Direct-Commit Verify — CHANGES_REQUESTED. Full independent methodology and raw numbers.\n\nSETUP: `git status --short -- apps/pdf-extractor/` clean at HEAD; rebuilt `pdf-extractor:latest` fresh from HEAD (`docker compose build pdf-extractor`, 2026-08-25T16:53Z) so every check below ran against a binary that provably contains e9144ea75 -- confirmed via `docker run --rm --entrypoint sh vn-market-intelligence-mcp-pdf-extractor:latest -c \"grep -n 'RESCUE FIRED' /app/infrastructure/ocr_backends.py\"` (line 603, present). Live container `vn-market-intelligence-mcp-pdf-extractor-1` untouched throughout (still on old image sha256:12ec82d1..., confirmed via `docker inspect`).\n\nZONE HEALTH (independently re-run, not read from the commit message):\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"python3 -m pytest -q\"` -> 1075 passed, 11 skipped, 1 failed (`test_bt3_fix3_real_ocr_fidelity`, AC-12 \"79 rows not in [80,110]\"). Confirmed PRE-EXISTING and NOT caused by this fix: re-ran the identical test with `apps/pdf-extractor/infrastructure/ocr_backends.py` bind-mounted back to its pre-fix content (`git show <e9144ea75^>:...ocr_backends.py`) -- byte-identical failure, same row count (79), same page.\n- `docker compose run --rm --no-deps -T pdf-extractor sh -c \"lint-imports\"` (the real entrypoint, NOT `python3 -m importlinter.cli lint-imports`, which the developer's own notebook correctly flags as printing nothing/evaluating nothing) -> 3 kept, 0 broken. Confirmed the false-green trap is NOT present in my own gate.\n- PDF-Extract-Kit subtree: `cd apps/pdf-extractor/PDF-Extract-Kit && git status --short` -> clean (it is its own nested git repo, HEAD fdb25fd).\n- G12 sandbox (30 green/6 negative-fixture red) NOT independently re-run -- out of scope of the OCR-confidence change (domain-primitive scenario sandbox, unrelated files) and not blocking given pytest + lint-imports were reproduced directly.\n\nAC-2 (page 9 rescue) -- CONFIRMED, two independent paths:\n1. Read live `data/live/market.db` (readonly bun:sqlite, never push-echo): `bctc_layout_units` report_id=e71f845d-...-9be, schema_page=9 -> md_len=452 (was 122), `stitched_markdown` contains all 9 figures verbatim as claimed (Doanh thu thuan 20.225.450/70.112.826; LNTT 3.498.405/13.038.869; LNST 2.988.149/11.225.523, plus 2024 comparatives).\n2. Fresh from-scratch bench run (my own image, my own containers) via `scripts/audits/ocr-backend-bench.sh tesseract-vie auto` against FPT Q4 2025 (e71f845d...) reproduced page 9 md_len 122 (tesseract-vie) -> 452 (auto), sha256 differs only on page 9 of 46 total units / 30 table units.\n\nAC-3 (FPT Q4 2025 negative control) -- CONFIRMED on FPT alone:\n- `unit_digests` diff between the two bench runs above: 29/30 table units byte-identical sha256, page 9 the sole diff. `rescue_fire_count=1`, `rescue_fire_pages=[9]`. Matches the commit's claim.\n\nAC-4 (FPT Q4 2025 memory) -- CONFIRMED on FPT, timing caveat:\n- cgroup memory.peak: tesseract-vie 1235070976 B (1177.9 MiB, 46.0% of the 2,684,354,560 B / 2560 MiB cap); auto 1346867200 B (1284.5 MiB, 50.2%). memory.events.max=0 both. Consistent in magnitude with the commit's claimed 49.8%/0 hard-limit-hits.\n- Timing NOT reproduced at the claimed magnitude: commit claims table-phase +3.8% (117.26s vs 112.97s); my run measured +54.9% (168.45s vs 108.78s auto vs tesseract-vie, same script `ocr_bench_inner.py`, sequential ephemeral containers). Absolute magnitudes are still small and within the 600s page timeout, and this is NOT itself an AC-4 blocker (AC-4's literal text only requires reporting wall-clock + staying under cap with comparable headroom, both of which hold) -- flagged as a reproducibility discrepancy on a claimed number, not a pass/fail criterion.\n\nHIGHEST-VALUE CHECK (per the qa_focus / router dispatch instruction) -- SECOND DOCUMENT, FAILS:\nRan `scripts/audits/ocr-confidence-probe.sh <uuid> /app/data/pdfs/DBC_2025_Q4.pdf` (18pp, 13 table pages; DBC = Dabaco, unrelated issuer, already tracked in docs/analysis-briefs/DBC.md, ordinary file from the same production PDF corpus -- not a cherry-picked adversarial input) plus a full tesseract-vie/auto bench pair via ad hoc `docker compose run --rm --no-deps -e OCR_TEXT_BACKEND=<x> ... ocr_bench_inner.py` (same script the row's own bench uses, just pointed at a different PDF/report_id since ocr-backend-bench.sh hardcodes FPT).\n\n- rescue_fire_count=6 of 13 table regions (46%), pages [4,10,11,13,14,16] -- vs 1/30 (3.3%) on FPT.\n- Read the RAW tesseract text for all 6 pages from the confidence-probe output (never inferred from the score): every one is a coherent, correctly-parsed VND accounting line (e.g. page 16: \"Doanh thu bán thành phẩm sản xuất 14.904.619.255.974\" / revenue line; page 10: \"1. Tiền và các khoản tương đương tiền 439.331.953.874\" / cash equivalents) -- NOT the \"header + garbled residue, zero figures\" shape that characterizes a genuine miss (contrast FPT page 9 pre-fix: 122 chars, headers + stray \"178%\", zero figures). These are real reads being wrongly penalised.\n- ink_coverage for these 6 legitimate regions: 0.443, 0.432, 0.387, 0.356, 0.329, 0.350 (page4-r1, page10, page11, page13, page14, page16 respectively) -- ALL below the 0.5 AutoFallback threshold AND below the FPT-derived \"lowest legitimate = 0.674\" floor the row's whole design argument rests on. The floor collapses to under half its claimed value on ordinary input from a different issuer.\n- Memory: auto run cgroup memory.current/peak = 2,684,354,560 B = memory.max EXACTLY (100.00% of the configured 2.5g docker-compose limit for this service), memory.events.max=494 (oom=0, oom_kill=0 -- did not crash, but repeatedly hit the hard ceiling and had to reclaim). tesseract-vie same document: peak 1,118,744,576 B (41.7%), events.max=0. This is a genuine, previously-undisclosed memory-safety regression under broader rescue firing, not merely a quality concern.\n- This independently reproduces exactly the risk PO already formalised as a hard gate: `PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN` (backlog[], AC-2: \"the lowest LEGITIMATE region's ink coverage must be >= 0.50, and NO legitimate region may score at or below any genuinely-broken region\"). My data shows that bar FAILS (0.329 legitimate vs threshold 0.50). Per that same row's AC-5, retuning the 0.5 constant is explicitly a non-remedy PO already rejected once.\n\nARTIFACTS (scratch, not committed -- reproducible via the exact commands above): bench-fpt-q4-2025.jsonl, probe-dbc-q4-2025.jsonl, bench2-dbc-q4-2025.jsonl under the QA session scratchpad.\n\nVERDICT: CHANGES_REQUESTED. The discriminator (min(precision, ink-coverage)) is mechanically sound and well-tested in isolation, and AC-2/AC-3/AC-4 as narrowly scoped to FPT Q4 2025 all hold -- but the row's implicit claim that this makes `auto` safe to enable does not survive a second, ordinary document from the same corpus. Route to dev-pdf-extractor: either (a) re-derive/augment the discriminator so it generalises (per PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN's own AC bar), or (b) narrow this row's claims to \"FPT Q4 2025 only, not yet proven safe fleet-wide\" and let PROBE-PDFX-OCR-CONFIDENCE-SECOND-DOCUMENT-MARGIN own the generalisation question -- but do not let `auto` become the production default (DECISION-PDFX-OCR-TEXT-BACKEND-DEFAULT-FLIP-TO-AUTO) on FPT-only evidence, since production is unset/tesseract-vie today regardless (OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION, unaffected either way).\n",
-        "detail_ref": "docs/agent-memory/decisions/dev-pdf-extractor-ocr-widen-20260825T2210Z.md",
-        "po_ruling_20260825T1752Z": "NEXT WRITER READ THIS FIRST: this row sits ~1KB under the 12,000B prose ceiling and IS in a measured lane (ready[]), so appending findings inline WILL hard-reject the whole orch-apply write. Put your results in detail_ref (docs/agent-memory/decisions/triage-20260825T1752Z-po.md, or a sibling doc you create and repoint detail_ref at) and keep the row to a pointer. root_cause and qa_verdict_20260825T1730Z were dropped here to make room; both survive in git history and in qa's verify_note, which is ceiling-EXEMPT and stays on the row in full. Held at P1 and placed at ready[0] so the Ready-Lane Consumer's [priority_rank, array-index] sort ranks it first in its band rather than last (priority_rank collapses 'high' and 'P1' into one rank, so the band is ~90 rows and append-order would bury it). Incident-lane expedite REVOKED — there is no outage and inflating a measurement cycle into the incident lane devalues the real P0s. Moved OUT of in_progress[] because NO picker dispatches from that lane (devteam-backlog-claim-{ready-lane,incident-lane,design-router-sweep}.jq and devteam-claim-backlog-task-by-id.jq all read in_progress[] only to COUNT WIP): qa's review[] -> in_progress[] CHANGES_REQUESTED move left this row stranded AND holding one of the two WIP slots permanently. The move required shrinking prose from 13,965B to under the 12,000B ceiling, because orch-row-prose-ceiling-check.mjs measures only backlog/ready/review and scores a row arriving from an unmeasured lane as liveBytes=0 — i.e. net-new growth of its full size, a hard reject. Dropped fields (dev_impl_*, dev_ac_evidence_*, dev_zone_health_*, rebuild_required_*, qa_focus_*, po_priority_ruling_*, po_ac4_baseline_correction_*, po_zone_probe_correction_*) are preserved in git history and their surviving content is re-derived in detail_ref. NOTE the +3.8% table-phase figure from dev_ac_evidence is STRUCK, not merely dropped: unreproduced by qa on the same script and commit (+54.9%), not explicable by host contention (qa's tesseract arm was FASTER while its auto arm was 44% slower — contention slows both), and mechanically implausible against the valid lang=vi benchmark's ~8s/region for PaddleOCR."
-      },
-      {
         "id": "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT",
         "type": "OPS",
         "title": "pdf-extractor is running a PRE-FIX image (built 2026-08-08T11:34:24Z) while the ratified AC3 malloc_trim fix landed on origin/main as c3fd44766 at 2026-08-15T09:0xZ — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM cannot reach DONE_VERIFIED until this ONE ops action (rebuild+redeploy pdf-extractor, then measure AC2/AC4/AC6) happens. Same shape as the rag-service sibling; Docker/infra is out of dev-pdf-extractor charter.",
@@ -23840,18 +23959,15 @@
           "OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND"
         ],
         "sequencing": "DISPATCH ORDER (PO 2026-08-15, still stands): if this row and UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW reach the same ops session, take the rag-service read-only durability sampling FIRST, then this. Never interleave. That row's D1 window cannot close before 2026-08-24T14:37Z; do not touch rag-service 16c59b5e929f.",
-        "updated_at": "2026-08-26T00:28:42Z",
-        "updated_by": "ops-agent-036ceaf1",
-        "status_note": "[po 2026-08-24T08:50Z RULING] Ops' AC-4 verdict is CORRECT (FAILED) but its percentage is wrong (88.37% of cap, not 86.3%; kB is KiB). Ops' AC-5 conclusion is WITHDRAWN: the two memcg OOM kills are on RETIRED container 6ec27ac85c8e, not the live 2edf0c9c9905, and they are the motivating evidence for 6f3577b9f, a fix that has ALREADY shipped and IS running. Live container: 0 OOM kills in 17.5h across 621 real extraction calls. Priority P0 -> P1, expedite rescinded. Remaining work = AC-7/AC-8 passive sampler in po_next_measurement_ac_20260824T0850Z; the AC-4 bar itself is replaced on the sibling row. next_agent=ops, lane=ready[].\n[QA] CHANGES_REQUESTED (direct-commit verify): Deploy re-verified fresh+independent: live container carries all 4 pending fixes (malloc_trim x2, lang=vi, recall-aware confidence, orientation), peers untouched, cgroup snapshot healthy (anon 35.4% cap, oom=0). BUT this row's own governing AC-7/AC-8 (>=12h passive longitudinal sampler + B1-B4 report) was never built/run -- zero pdfx CSVs, no dedicated script; container is only ~70min old so AC-7 cannot complete in any single session. Cannot certify DONE_VERIFIED on a deploy check alone. Full evidence: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md STEP qa-S225.",
-        "po_ruling_20260824T0850Z": "PO RULING 2026-08-24T08:50Z. SUPERSEDES + CONSOLIDATES po_ruling_20260824, po_expedite_20260824T0722Z and the stale `evidence` field, all three DELETED here for prose-ceiling budget (full text in git history at ec0bf1768). Every fact below re-verified live by PO, not relayed.\n(1) AC-5 ATTRIBUTION WAS WRONG; OPS' HEADLINE INFERENCE IS WITHDRAWN. Ops wrote that the two kernel memcg OOM kills prove 'the per-job allocation issue malloc_trim cannot solve'. The kills are real and correctly timestamped (dmesg -T yields absolute UTC directly, VM clock confirmed UTC; buffer spans 2026-08-20T15:43:31Z..now, 961 docker0 lines = non-vacuous). But oom_memcg=/docker/6ec27ac85c8e is NOT the live container: `docker ps -a --no-trunc` lists 13 containers and 6ec27ac85c8e is not among them. It is the RETIRED pdf-extractor created 2026-08-15T09:47:36Z, which QA read as 'Up 8 days' at 2026-08-23T13:50Z on FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE. The live container is 2edf0c9c9905, StartedAt 2026-08-23T15:44:17Z, i.e. 77 min and 45 min AFTER the two kills.\n(2) THE KILLS ARE NOT 'PRE-FIX', THEY ARE MID-FIX. The retired container ran ops' 2026-08-15 image, which DID contain AC-3's malloc_trim (c3fd44766, 2026-08-15T09:07Z) but wired ONLY into the /pek-extract background task (interface/pek_run_helper). /extract never got it. A SECOND trim landed 2026-08-23T15:25:15Z as 6f3577b9f 'trim native alloc after every /extract call (memcg-OOM root cause)' under row FIX-PDFX-LEGACY-EXTRACT-MEMORY-BURST-HEADROOM, and its own commit body cites THESE EXACT TWO KILLS ('twice today, ~31 min apart'; 14:27:11Z to 14:58:52Z is 31m41s) as its motivating evidence. So the kills are POST-AC-3 and PRE-6f3577b9f. They prove AC-3's PEK-path trim was insufficient ALONE, which is a real finding, and they are evidence FOR a fix that has already shipped, not evidence against the fix that is running. The live image 5d7d36db (git_sha 0c9380859) carries BOTH: `git merge-base --is-ancestor` TRUE for c3fd44766 and for 6f3577b9f.\n(3) EFFICACY IS NOT 'UNDETERMINED'; THE NATURAL SAMPLE IS LARGE AND CLEAN. The live container has served 563 POST /extract + 58 POST /pek-extract in 17.5h, ALL HTTP 200, zero non-200. cgroup memory.events oom_kill=0 and oom=0. dmesg carries zero OOM lines across a buffer that fully covers this container's life. Zero MemoryError lines in its own log. The production workload IS the burst test and it has already run 621 times. A synthetic burst would add statistical power, not first-order evidence.\n(4) ARITHMETIC CORRECTION; AC-4 VERDICT UNCHANGED. 'kB' in /proc/PID/status is KiB. VmHWM 2,316,488 KiB = 2,372,083,712 B = 88.37% of the 2,684,354,560 B cap, not 86.3% (ops read kB as decimal 1000). Over the 80% bar of 2,147,483,648 B by 224,600,064 B = 214.2 MiB. FAILED either way, so this is a correction, not a reversal.\n(5) EXPEDITE RESCINDED: P0 -> P1. The expedite rested on 'a LIVE crash source'. There is none: 0 kills in 17.5h under 621 real extraction calls, and the two cited kills are pre-6f3577b9f. HELD at P1 and not lower on two live facts: memory.peak == memory.max exactly (the ceiling was touched in THIS post-fix life) and the idle anon drift in (6).\n(6) THE ONE OPEN AND GENUINELY CONCERNING SIGNAL: IDLE ANON DRIFT. anon 1,447,403,520 B at 03:56Z -> 1,743,306,752 B at 08:33Z = +282 MiB in 4.6h, while `docker logs -t --since 2026-08-24T04:00:00Z` shows ZERO non-/health requests in that window. Both malloc_trim fixes are wired to request finally-blocks, so with no requests NEITHER can have run. If real this is a third mechanism that neither fix addresses. Honest caveat: two samples taken by two different sessions, not one series. Resolving it is the priority of the new AC-7/AC-8.\n(7) THE REST OF THE PICTURE IS HEALTHY, NOT AT THE WALL. At 08:33Z memory.current 2,288,607,232 B = 85.3% of cap, free 395 MB; anon = 64.9% of cap. memory.events.max is 25,115 but FROZEN across 8 samples from 08:30:38Z to 08:32:59Z, i.e. zero reclaim-at-limit events now. pgsteal/pgscan = 4,964,445/5,033,338 = 98.6%, and workingset_refault_anon = 0. That is successful reclaim, not a death spiral. docker-stats MemPerc and 'peak==max' both read alarming for the same reason: they conflate reclaimable file cache (435 MB, 210 MB of it inactive) with irreducible anon.\n(8) TWO PREMISES IN THIS ROW'S OWN non_goals ARE FALSE; DO NOT INHERIT THEM. Measured with the guard's own algorithm (scripts/orch-row-prose-ceiling-check.mjs STRUCTURAL_FIELDS exclusion): FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM is 8,006 prose bytes, 3,994 UNDER the 12,000 ceiling, so it is WRITABLE and the '33,898B / Stage 2.5 hard-rejects' claim is stale. THIS row is the constrained one at 10,424 prose bytes with 1,576 headroom, which is why the three fields named at the top were consolidated rather than appended. The AC-4 bar ruling therefore lives on the sibling, where it belongs.\n(9) SIDE-FINDING, NOT THIS ROW'S SCOPE. 6f3577b9f's commit body asserts 'SemaphoreContendedError=0, FAILED=0 post-rebuild'; on the live container that is now false (33 raises, 6+ _run_pek_extract FAILED). Owned by FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW (backlog, P2). Flagged, not actioned here.",
-        "po_next_measurement_ac_20260824T0850Z": "REPLACES the ABORTED AC-4 burst test. Owner ops. No rebuild, no restart, no synthetic burst; all read-only.\nAC-7 PASSIVE LONGITUDINAL SAMPLER, >=12h, one sample per 5 min appended to a CSV under docs/incidents/data/: ts, memory.current, memory.stat{anon,file,inactive_file,pgscan,pgsteal,workingset_refault_anon}, memory.events{max,oom,oom_kill}, and /proc/1/status VmRSS+VmHWM. Persist it as a script under scripts/ per docs/policies/dev-standards.md Script Persistence; do NOT hand-run it ad hoc. Correlate against `docker logs -t` /extract and /pek-extract lines. Safe at ANY free-memory level: it allocates nothing in the target cgroup.\nAC-8 report B1-B4 from that series. Definitions live on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM field po_ac4_bar_ruling_20260824T0850Z. B4 is the priority question: settle whether the +282 MiB/4.6h zero-traffic anon drift in po_ruling (6) is real or an artifact of two cross-session samples.\nNO SYNTHETIC BURST until the sampler shows sustained free >= 500 MB; the original item-(5) safety gate stands unchanged. If AC-7/AC-8 return clean on all four bars, hand back to po and PO closes the sibling on them: a synthetic burst is NOT required for closure.\nSTILL DO NOT rebuild or restart pdf-extractor: 17.5h of cgroup counters, including the memory.events series, reset on container recreation.",
-        "po_premise_void_20260825T1700Z": "PO 2026-08-25T17:00Z: the 'STILL DO NOT rebuild or restart pdf-extractor' clause in po_next_measurement_ac_20260824T0850Z is VOID, and so is every ops_* field describing the deployed image (all deleted here for prose budget; they described a container that no longer exists), as is consumer_impact ('0 OOM kills in 17.5h', same retired container). Measured live: docker inspect returns e2801b67406c, Created 2026-08-24T13:35:05Z, StartedAt 2026-08-25T06:33:03Z, label vn.market.git_sha='unknown'. The protected container was 2edf0c9c9905. Recreated once, restarted once, and AC-7's CSV was never written (docs/incidents/data/ holds only rag-durability files). Nothing to preserve. NEW ORDER: OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION (ready[0], P1, expedited) rebuilds FIRST, then AC-7 samples the image being kept. AC-7/AC-8 otherwise unchanged, including B4 — the +282 MiB/4.6h zero-traffic anon drift must be re-established on the new container.",
+        "updated_at": "2026-08-26T01:18:34Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "status_note": "PO 2026-08-26T01:16Z — FOLLOWS, NO LONGER GATES. The sibling FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM depends[] on this row is SEVERED; it is now ready[0] under architect. This row keeps AC-7/AC-8 + next_agent=ops with 3 corrections: (C1) AC-7 must stamp the sampled container id on every CSV row and RESTART against 417febec1a03 (StartedAt 2026-08-26T00:33:39Z) — container recreation has silently reset its counters 4x, which is the structural reason this AC never completed; (C2) B3 pgsteal/pgscan is 0/0 undefined at zero reclaim pressure (live now: pgscan=0, pgsteal=0) — AMENDED so pgscan==0 PASSES vacuously and the >=0.90 ratio applies only when pgscan>0; (C3) the sampler is READ-ONLY, allocates nothing in the target cgroup, so it is SAFE THROUGH VN MARKET HOURS and may start now — only a synthetic burst waits for >=09:00Z, and AC-7/AC-8 already say a burst is NOT required for closure. Prior QA verdict stands: CHANGES_REQUESTED, cannot certify on a deploy check alone. FULL text of this ruling and the 3 superseded PO fields are in detail_ref under po_sequencing_20260826T0116Z.",
         "claimed_at": "2026-08-26T00:17:44Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-26T00:28:41Z",
-        "detail_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
       },
       {
         "id": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT",
@@ -23884,41 +24000,6 @@
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-26T00:34:55Z"
-      },
-      {
-        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/po/flow/",
-        "owner": "po",
-        "next_agent": "po",
-        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
-        "created_at": "2026-08-23T12:10:00Z",
-        "created_by": "po/triage-20260823T1157Z",
-        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "related": [
-          "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
-          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
-        ],
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-        "dispatch_lane": "po",
-        "promoted_at": "2026-08-25T20:00:30Z",
-        "promoted_by": "po (triage-20260825T1937Z)",
-        "claimed_at": "2026-08-26T00:48:57Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
-        "occurrence_count": 2,
-        "updated_at": "2026-08-26T01:00:15Z",
-        "updated_by": "agent-father",
-        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains."
       }
     ],
     "qa": [
@@ -24203,511 +24284,9 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-26T01:14:13Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "3930f6457ca08fd0226d1d9aa7d14ce5e69f9b0833756fead02034ebd1143c76",
-        "source": "file",
-        "from": "dev-team",
-        "to": "agents-architect",
-        "type": "recurring-bug",
-        "priority": "WARN",
-        "payload": {
-          "module": "docs/agents/*/flow/ — artifact timestamp discipline",
-          "trigger": "Escalation condition set by the 2026-08-14 note in feedback_hand_typed_iso_timestamps_drift_into_the_future has fired: a 3rd distinct agent type (ops) hit the class, and it hit an artifact-identity field, not merely an informational completion stamp.",
-          "agent_types_confirmed": [
-            "router (2026-07-21)",
-            "architect (2026-08-14)",
-            "ops (2026-08-25)"
-          ],
-          "mechanism_is_new": "Prior cases were forward-rounding guesses. This one is systematic: the host local zone is Europe/Paris (UTC+2); ops read the LOCAL wall-clock and appended Z. Flat +2h offset that also rolled the calendar date forward one day. Reproducible and cheap to detect - any stamp exactly +2h off real UTC on this host is this bug. NOT clock drift: the machine clock is correct, only the label is wrong.",
-          "evidence": {
-            "wrong_label_sites": [
-              "docs/incidents/ops-cycle-20260826-dual-rebuild-mcp-pdf.md title+filename: 2026-08-26T01:13Z",
-              "docs/agent-memory/notebooks/ops.md headings (2 sites): 2026-08-26T01:13Z",
-              "same incident doc, deploys-complete-by line: 2026-08-26T01:13:47Z UTC"
-            ],
-            "real_utc": "2026-08-25T23:13Z (host date -u, cross-checked against docker inspect image Created 2026-08-25T23:12:41Z and StartedAt 23:12:46Z)",
-            "correct_sites_in_same_doc": [
-              "23:12:21Z",
-              "23:13:16Z",
-              "23:13:58Z"
-            ]
-          },
-          "root_cause": "docs/agents/ops/flow/docker.md:101 ALREADY mandates `date -u` copied verbatim, added by FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE (2026-08-05) to close exactly this class. Ops obeyed it inside the named Deploy-Evidence Capture block and violated it in the document title/filename/cycle heading. The mandate is scoped to an evidence block and does not generalise to the artifact identity fields, which are what a reader, an auditor or an ls-by-date keys on FIRST. Result: a committed record that contradicts itself (title 01:13Z vs body 23:13Z) - the same shape that once triggered a false fabricated-timestamp investigation.",
-          "second_order_risk": "A +2h label silently corrupts any reasoning stated in terms of it. Ops concluded it finished >30m before VN market open at 02:00Z; true headroom was 2h47m, not 47m. Conclusion survived by luck of direction. Near the 02:00-08:59Z pdf-extractor prohibition, a +2h misread can place an agent on the WRONG side of the window while it believes it is clear - e.g. real 08:30Z reads as local 10:30 and looks post-window.",
-          "coverage_gap": "`date -u` appears in ZERO of the 30 docs/agents/*/flow/main.md files. It exists only in per-topic sub-flows such as docker.md, so agents whose cycle does not route through such a sub-flow inherit no rule at all.",
-          "candidate_directions": [
-            "(a) hoist a timestamp-capture rule to a fleet-wide standard every flow inherits, covering artifact IDENTITY fields (filename/title/cycle label) explicitly, not just evidence blocks",
-            "(b) cheap post-write check comparing emitted stamps against real UTC, fail loud on nonzero offset",
-            "(c) set the fleet TZ to UTC so local and UTC coincide - narrowest, but leaves the general hand-typing class open and would silently change VN-market date handling, so NOT recommended without review"
-          ],
-          "router_note": "Filed on the FILE plane deliberately, not signal_queue, to avoid racing a PO inbox drain running at the time. Not minting a board row: choosing among (a)/(b)/(c) is an agent-architecture decision. Corrections were NOT applied to the ops artifacts - out of router scope and the evidence body is already correct."
-        },
-        "createdAt": "2026-08-25T23:25:30Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "04026a3dacf46c5b4286640f241cf2ae590ff828c781affb5bc3f722111ffde0",
-        "source": "file",
-        "from": "router",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "ROUTER SCOPE AMENDMENT to the qa signal filed minutes earlier (pdfocr-orientation-corpus-additional-affected-files-20260825T234250Z.json). That signal is CORRECT in direction but understates scope by ~40x: it names 2 additional files and recommends \"a small follow-up FIX/maintenance row\". A full corpus scan I ran during return-verification measures 79 FILES / 312 PAGES still carrying pre-fix rotation garble in data/live/market.db pdf_extracted_text. Mint the row at THAT size, not at 2 files.\n\nMEASUREMENT (router, independent, read-only on data/live/market.db; 15887 pages / 372 filenames scanned):\n- 79 files, 312 garbled pages, spanning 25 tickers: ACB BID BSR DBC DGC DHG DIG DPM DXG GAS HPG HSG HUT KBC KDC MWG SAB SHB VCI VHM VIC VJC VPB (+ long-form CBTT filenames).\n- Worst: VIC_2026_Q2 15/71, VIC_2025_Q4 14/72, KBC_2026_Q2 13/58, GAS-2025-kiem-toan 13/68, KBC_2026_Q1 10/56, KBC_2025_Q4 10/56, KBC.pdf 10/56.\n- All affected rows have extracted_at BETWEEN 2026-04-29 AND 2026-08-24 = all pre-orientation-fix. Consistent with a single root cause, already fixed forward by 905e32be1/8d361eee9; this is purely stored-corpus invalidation.\n\nDISCRIMINATOR (calibrated, hand it to whoever builds the sweep so they do not redo this):\n  garbled  <=> vietnamese_diacritic_density < 0.10 AND reversed_token_hits >= 3\n  Calibration on 4 known-garbled vs 5 known-correct pages gave CLEAN separation with no overlap:\n    garbled : density 0.017-0.058, hits 11-72\n    correct : density 0.222-0.270, hits 0\n  reversed-token regex (case-insensitive, word-bounded):\n    Bu[oộôó]p|yeq|Yu[ilr]y|nes|u[eệ]n[yh]u|eno|enuy|Bugp|Budp|Bud[ií]p|Buoyy|jeos|neq|Aex|oyo|uea|Yury|yueop|Budng|Bunp\n  Guards that matter: skip pages with <200 alpha chars (short/blank pages are a DIFFERENT defect); str()-coerce text_content (some rows store INTEGER, sqlite is dynamically typed and .isalpha() throws on them).\n  KNOWN PRECISION LIMIT, disclosed: 6/6 spot-checked pages were genuinely broken, but 5/6 were orientation garble and 1 (SAB_2026_Q1 p10) was a near-blank total-OCR-miss. The predicate detects \"page is broken\", slightly broader than \"page is rotated\". A separate low-diacritic-but-NO-signature population exists (199 files / 1706 pages) that is mostly legitimate English/numeric pages - do NOT sweep that set blind.\n\nCOST, AND THE REASON TO CHANGE THE SCRIPT FIRST:\n  scripts/migrations/reextract-pdf-ocr-orientation.ts is --filename-scoped and re-extracts EVERY page of a file (it DELETEs by filename then re-inserts all pages). Under that mode the sweep re-OCRs 3786 pages ~= 7.4h @7s/page. Only 312 of those pages are actually broken. Adding an optional --pages <list> (delete+reinsert only the named page_numbers, INSERT OR REPLACE already supports it) cuts the sweep to 312 pages ~= 0.6h, a 12.1x reduction. RECOMMEND: make that script change part of the row, ahead of the sweep - a 7.4h CPU-bound sweep will not fit the pre-market window, a 0.6h one fits comfortably.\n\nSCHEDULING CONSTRAINT: the migration shells pdftoppm+tesseract directly and does NOT route through the pdf-extractor service, so the 02:00-08:59Z pdf-extractor prohibition does not bind it de jure - but a multi-hour CPU-saturating sweep across VN market open is still wrong. Run it in the off-market window.\n\nNOT DONE BY ROUTER, DELIBERATELY: no remediation run, no script edit, no row minted - router is dispatch-only. Detector lives at scratchpad/scan2.py + cost.py for this session only; it is NOT persisted to scripts/ and will be lost, so whoever picks this up should re-home it under scripts/audits/ per dev-standards Script Persistence.",
-        "createdAt": "2026-08-25T23:53:17Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e10336d258cd0134fc204de2bfdc3c3946c27c571651d47c38c166c4a32d3a40",
-        "source": "file",
-        "from": "bctc-analyst",
-        "to": "dev-team",
-        "type": "esc-deep-dive-request",
-        "priority": "HIGH",
-        "payload": {
-          "trigger_id": "ESC-5",
-          "ticker": "FPT",
-          "quarter": "Q1-2026",
-          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-          "context": {
-            "low_confidence_unit_ids": [
-              "unit-0008",
-              "unit-0009",
-              "unit-0010",
-              "unit-0011",
-              "unit-0012",
-              "unit-0013",
-              "unit-0014"
-            ],
-            "min_confidence": 0.45
-          },
-          "all_esc_fired": [
-            "ESC-5"
-          ]
-        },
-        "createdAt": "2026-08-26T00:12:00Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "ESC-DISPATCH"
-      },
-      {
-        "envelope_id": "c28a012090b6e3742124b2558f40f533bb3a168cf00f5db116e2ea6f278b072e",
-        "source": "file",
-        "from": "bctc-analyst",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "record_evidence_fragment failing 9/9 this cycle (FPT/HPG/VCB/DXG) with \"database disk image is malformed\", confirmed on retry (not transient). Correlates with same-window system_status errors: push-news pipeline failed + get_portfolio_conviction disk I/O error — likely shared SQLite corruption. Evidence pipeline (nightly LR accumulator) starved this cycle; core bctc_signal emission unaffected (uses Write tool, not this DB).",
-        "createdAt": "2026-08-26T00:18:00Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "46bf6244d18f907846413c723823a064ab77e7bdd1efdd527bfbc33f31f9b240",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "DXG",
-          "signal_type": "bctc_signal",
-          "quarter": "unavailable",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Phát triển bất động sản khu dân cư/khu đô thị, môi giới (Đất Xanh Services)",
-          "customer": "Người mua nhà ở thực và nhà đầu tư cá nhân tại TP.HCM và các tỉnh vệ tinh",
-          "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (44+ chu kỳ liên tiếp, unresolved); định giá dựa hoàn toàn trên get_sector_comparison",
-          "mgmt": "ROE 1.9% dưới xa trung vị ngành BĐS (7.3%); PE 66.5x cao gấp ~4x trung vị ngành (16.1x)",
-          "valuation": {
-            "pe": 66.5,
-            "ey_spread_pp": -3.5,
-            "verdict": "AVOID"
-          },
-          "valuation_note": "AVOID verdict — bullish signal suppressed per Step-2 rule.",
-          "kd_reading": {
-            "hexagram": "Tuy (45)",
-            "trend": "THUAN_LOI",
-            "signal": "THAN_TRONG",
-            "confidence": 0.75,
-            "note": "Diverges from AVOID valuation verdict — flagged, not reconciled. 4th consecutive near-identical draw."
-          },
-          "esc_gate": {
-            "esc1": "NOT EVALUATED (no BCTC data)",
-            "esc2": "NOT EVALUATED (no BCTC data)",
-            "esc3": "NOT EVALUATED (no BCTC data)",
-            "esc4": "NOT EVALUATED (no BCTC data)",
-            "esc5": "NOT EVALUATED (no BCTC data)"
-          },
-          "escalation_status": "NONE",
-          "data_gaps": [
-            "get_bctc_full 'Chưa có dữ liệu', 44th+ consecutive cycle, unresolved (root_task DXG cash-flow-anomaly c162 still pending dev-team pickup)",
-            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
-          ],
-          "as_of": "2026-08-26T00:20:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6fb6b45e6987e0be4dd05957e1e907a63a44cd389fbc8d36ef6e988365b87ed2",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "FPT",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
-          "customer": "Doanh nghiệp CNTT trong nước và nước ngoài (offshore), thuê bao viễn thông cá nhân, học sinh/sinh viên",
-          "ops": "Biên lợi nhuận gộp 34.0%; lợi nhuận từ công ty liên kết tăng 36% YoY (đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/01/2026)",
-          "mgmt": "ROE 6.2% (raw quý) / 28.3% (annualized, sector-comparison); balance sheet cân đối (balance_check PASSED, imbalance 0.00%)",
-          "valuation": {
-            "pe": 13.8,
-            "ey_spread_pp": 2.25,
-            "verdict": "FAIR"
-          },
-          "kd_reading": {
-            "hexagram": "Tieu Qua (62)",
-            "trend": "TRUNG_TINH",
-            "signal": "GIU",
-            "confidence": 0.37
-          },
-          "esc_gate": {
-            "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-            "esc2": "FALSE (imbalance 0.00%)",
-            "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:FPT:Q1-2026:ESC-3 held by prior session)",
-            "esc4": "FALSE (non_operating_share 2.00%)",
-            "esc5": "TRUE (7/15 refine units <0.50 confidence, min=0.45, unit-0008..0014) — esc-deep-dive-request dispatched to dev-team this cycle"
-          },
-          "escalation_status": "PENDING",
-          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-          "data_gaps": [
-            "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
-            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
-          ],
-          "as_of": "2026-08-26T00:20:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "c21f4c269bc4616042e04c53662f70936ad8fd28839ed4f71de187ceb1fc9b81",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "HPG",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
-          "customer": "Ngành xây dựng, cơ khí chế tạo trong nước; xuất khẩu thép sang ASEAN/EU",
-          "ops": "Biên lợi nhuận gộp 15.8%; operating_profit=0 trong get_bctc_full (dữ liệu OCR nghi lỗi, 40+ chu kỳ liên tiếp) — net_profit (9.055,9 tỷ) > gross_profit (8.365,1 tỷ), validation flag 'possible non-operating income'",
-          "mgmt": "ROE 6.5% (raw quý) / 12.7% (annualized, sector-comparison), trên trung vị ngành thép (2.9%)",
-          "valuation": {
-            "pe": 14.2,
-            "ey_spread_pp": 2.04,
-            "verdict": "FAIR"
-          },
-          "kd_reading": {
-            "hexagram": "Khon (47)",
-            "trend": "BAT_LOI",
-            "signal": "GIU",
-            "confidence": 0.25
-          },
-          "esc_gate": {
-            "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-            "esc2": "FALSE (imbalance 0.00%)",
-            "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:HPG:Q1-2026:ESC-3 held by prior session)",
-            "esc4": "DISCARDED (operating_profit=0 corrupt input, 40th+ consecutive cycle)",
-            "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
-          },
-          "escalation_status": "NONE",
-          "data_gaps": [
-            "operating_profit=0 corrupt in get_bctc_full, 40th+ consecutive cycle, unresolved",
-            "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
-            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
-          ],
-          "as_of": "2026-08-26T00:20:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7a92cd4c9d423cce81d4f07a85b0268a25123339c3bebb265d6895c56579ec16",
-        "source": "file",
-        "from": "unknown",
-        "to": "po",
-        "type": "bctc_signal",
-        "priority": "low",
-        "payload": {
-          "ticker": "VCB",
-          "signal_type": "bctc_signal",
-          "quarter": "Q1-2026",
-          "mode": "routine",
-          "beat_miss": null,
-          "product": "Ngân hàng bán lẻ và doanh nghiệp, tín dụng, tài trợ thương mại, bancassurance",
-          "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, khách hàng SME",
-          "ops": "Thu nhập lãi thuần 17.421 tỷ VND; lợi nhuận từ HĐKD chiếm 80.9% doanh thu; ROE 16.7% (annualized) dưới trung vị ngành ngân hàng (17.6%)",
-          "mgmt": "OCF/NI ratio quý này 1.37x (divergence 36.81%, dưới ngưỡng cảnh báo 40%); balance sheet lệch nhẹ 0.37% (dưới ngưỡng 0.5%)",
-          "valuation": {
-            "pe": 14.1,
-            "ey_spread_pp": 2.09,
-            "verdict": "FAIR"
-          },
-          "kd_reading": {
-            "hexagram": "Tieu Qua (62)",
-            "trend": "TRUNG_TINH",
-            "signal": "GIU",
-            "confidence": 0.37
-          },
-          "esc_gate": {
-            "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-            "esc2": "FALSE (imbalance 0.37%)",
-            "esc3": "FALSE (4/4 quarters, divergence 36.81% < 40% threshold)",
-            "esc4": "N/A (bank — operating_profit > pretax_profit structurally, non_operating_share formula not applicable)",
-            "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
-          },
-          "escalation_status": "NONE",
-          "data_gaps": [
-            "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
-            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
-          ],
-          "as_of": "2026-08-26T00:20:00Z"
-        },
-        "createdAt": "",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "eb3240694482ec01a9776d05aab8269b5e649b833f93e293d51d177a1a677ab4",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md",
-          "line_count": 198,
-          "cap": 600,
-          "byte_count": 52161,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 16161,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-25T23:43:41Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7c478dc0d7a0013566564fc822a1d62ff47aae8ac986e81282e03ab919b39113",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T00:05:49Z",
-          "matched_slots": [
-            "bctc-analyst-slot-4",
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "won_slots": [
-            "bctc-analyst-slot-4",
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/bctc-analyst/flow/main.md",
-            "docs/agents/news-scout/flow/main.md",
-            "docs/agents/market-watcher/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "bctc-analyst-slot-4": "cron",
-            "news-scout-offhours": "cadence",
-            "market-watcher-offhours": "cadence",
-            "alert-commander-critical": "cron"
-          },
-          "cadence_minutes": {
-            "bctc-analyst-slot-4": null,
-            "news-scout-offhours": 30,
-            "market-watcher-offhours": 30,
-            "alert-commander-critical": null
-          },
-          "last_fired_timestamp": "2026-08-26T00:05:35Z",
-          "last_fired_slots": [
-            "bctc-analyst-slot-4",
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "00:00",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 40,
-          "note": "4-slot fan-out, MAX_PARALLEL=4 single batch (headroom 5291MB, load1m=4, cores=12, degraded=false); all 4 claims won; Step 4.7 snapshot written"
-        },
-        "createdAt": "2026-08-26T00:05:49Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d07d8e9bae8232b8e91d8fc9abe3903893a759273ca132cb3419a3c950a1f4af",
-        "source": "file",
-        "from": "news-scout",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "Stage 3 signal post failed: MCP post_agent_signal unavailable — database disk image is malformed. Also affected: record_evidence_fragment tool. Infrastructure corruption prevents cycle completion. 4 high-impact chain_catalyst candidates unable to post (gold_safehaven_risk 10/10 bearish, market_breadth_divergence 10/10 bearish, investor_exodus 8/10 bearish, tech_rally_momentum 8/10 bullish). Cycle blocked at signal dispatch stage.",
-        "createdAt": "2026-08-26T00:05:00Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "b5d247adeee9b01bd34ccd4a23d4b2f5f33b44a7590db528dd406d7786da1bf6",
-        "source": "file",
-        "from": "qa",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "medium",
-        "payload": "FOLLOW-UP TO FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE (commit 8d361eee9, DONE_VERIFIED). During AC-2/AC-3 QA verification I invalidated + re-extracted the two exemplar filenames the dev row itself measured (DBC_2024_Q4.pdf + DBC_2025_Q4.pdf pages 12/15; VIC_2026_Q1.pdf 19 rotated pages) -- all confirmed recovering correct Vietnamese text via direct read (not confidence field). While resolving the real filenames I independently spot-checked adjacent report files NOT in this row's named scope and found the SAME pre-fix rotation garble still live and un-remediated in market.db pdf_extracted_text: VIC_2025_Q4.pdf (pages 10, 65 confirmed garbled) and VIC_2026_Q2.pdf (pages 10, 60, 65 confirmed garbled). I did not re-extract these -- out of scope for the QA row I was dispatched to close, and a full corpus sweep (every DBC/VIC/other-ticker filename x every page) was not attempted given time budget. RECOMMEND: a small follow-up FIX/maintenance row to (1) sweep ALL filenames in pdf_extracted_text for the same signature (very short OR reversed-looking text_content on pages whose neighbours are normal Vietnamese) and (2) run scripts/migrations/reextract-pdf-ocr-orientation.ts --apply per affected filename (script already proven correct+reusable, ~5-10s/page). Full raw evidence in the FIX row's own status_note dated 2026-08-25T23:4x (this QA cycle).",
-        "createdAt": "2026-08-25T23:42:50Z",
-        "drained_at": "2026-08-26T00:13:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3cb2941c860692a842a8ceed8cd724e44cd675843070f4549397de49bb0d8f87",
-        "source": "file",
-        "from": "dev-pdf-extractor",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "critical",
-        "payload": "CRITICAL — data/live/market.db STRUCTURAL CORRUPTION discovered live during the pdf-ocr-orientation corpus sweep (FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE follow-up). Writes to this DB are UNRELIABLE RIGHT NOW — not confirmed self-healed. Needs db-data-integrity / ops eyes before anyone else writes to it.\n\nUPDATE (00:19:48Z, before filing): this is NOT a novel defect — it is (at minimum) the 6th documented occurrence of the already-ESCALATED recurring-bug FIX-SQLITE-DOCKER-VIRT-CORRUPTION (agent-memory project_sqlite_corruption_fix.md: 2026-04-25 root-cause/partial-fix, RECURRED 07-13, 07-30, 08-06). `pdf_extracted_text` (rootpage 96, the exact table I was writing) was ALSO one of the corrupt trees in the 07-30 recurrence (`daily_ohlcv`(59), `pdf_extracted_text`(96)+4idx, `system_logs`(132)+5idx, `cron_job_runs`(57)+1idx, `sqlite_sequence`(3)) — plausibly the same class of hazard resurfacing on the same hot DELETE+INSERT-heavy table, not proof of a new mechanism. CHECKED AND RULED OUT the specific 08-06 recurrence mechanism (Go stock-price re-arming journal_mode WAL): confirmed via `sqlite3 data/live/market.db \"PRAGMA journal_mode;\"` = **delete** right now, and no `-shm`/`-wal` files present — so this is not that same re-armed-WAL vector; more likely the broader host/container advisory-locking gap the original 04-25 finding described, still unresolved, now manifesting under DELETE-mode rollback-journal locking instead of WAL/SHM. RESTORE CANDIDATE ALREADY IDENTIFIED to save ops a triage step: `data/live/market.db.backup` (mtime 2026-08-25 06:30 local ≈ 2026-08-25T04:30Z, i.e. ~20h stale) — `PRAGMA quick_check` = **ok**, `daily_ohlcv` max date 2026-08-25 (plausible/current-looking). Costs of using it: loses ~20h of ALL fleet writes (not just mine) — its own `pdf_extracted_text` row count is 15763 vs the live DB's pre-incident 15887, i.e. ~124 legitimately-added rows in that window would need replay — AND it predates this entire corpus-invalidation effort, so all 5 files/12 pages I fixed today would need to be re-applied afterward (trivial replay: `bash scripts/migrations/sweep-pdf-ocr-orientation-garble.sh --apply` once the DB is healthy again, targeting just the still-affected subset). Presenting this as A candidate for the established recovery pattern (stop the writer → back up the corrupt copy first → restore from a quick_check-verified-clean copy → restart → verify by SERVING VALUE, never just the health badge) — the actual go/no-go and whether a narrower in-place `.recover` is preferable is an ops call, not mine.\n\nALSO ACTIONABLE, SMALL, SAFE (not yet done, flagging for whoever picks this up): every other scripts/migrations/*.ts touching market.db (run-finalize-bctc-refine.ts, dedupe-mislabeled-bctc-period.ts, carry-forward-bctc-orphaned-rows.ts, resync-watchlist-sysmap-2026-07-11.ts) carries a standard comment — \"journal_mode is NOT set here (FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT, 2026-07-30) — market.db's journal_mode is DELETE (schema.ts's getDb(), FIX-SQLITE-JOURNALMODE...)\" — that scripts/migrations/reextract-pdf-ocr-orientation.ts (and my 2 new sibling scripts) do NOT yet carry. Doc-only, no functional change; worth adding for fleet consistency once this incident is closed.\n\nTIMELINE (all times UTC, verified via `date -u`):\n- 00:03:09 — started scripts/migrations/sweep-pdf-ocr-orientation-garble.sh --apply (79-file/312-page targeted --pages sweep; 2 files/3 pages already fixed pre-sweep as validation: DIG_2024_Q4.pdf p33, HSG_2026_Q1.pdf p4+p25 — both clean).\n- Files #1, #2 (20250324-DBC..., 20250326-DIG-BCTC-hop-nhat-kiem-toan-nam-2024-cks.pdf) succeeded fully (4+4 pages each).\n- File #3 (20250331-DXG-BCTC-rieng-kiem-toan-2024_signed.pdf): DELETEd 8 target rows, re-inserted 7, then crashed on the 8th (page 46) insert: `SQLiteError: database disk image is malformed / SQLITE_CORRUPT / errno 11`.\n- 74 of the sweep's 77 file-invocations then crashed the same way (1 more, file #15, 20260420-DHG-BCTC-Quy-1.2026.pdf, succeeded cleanly — the failure is INTERMITTENT, not 100% at that point).\n- 17 files hit the crash AFTER their DELETE committed but BEFORE all target-page re-inserts completed, leaving 28 pages with ZERO rows in pdf_extracted_text right now (previously present, garbled, now ABSENT — a real regression, worse than the pre-sweep state). Full missing list below.\n- The other 57 crashed-and-continued files never reached DELETE (crashed on the DELETE statement itself or earlier) — those files' target pages are UNCHANGED from their original garbled state, confirmed by direct query against a pre-sweep manifest.\n- Sweep loop finished (by design — it logs+continues on a per-file crash) at 00:07:10.\n- 00:07:52 — CONFIRMED the corruption is NOT scoped to my table: the LIVE mcp-server container (vn-market-intelligence-mcp-mcp-server-1, docker logs) hit the identical `SQLITE_CORRUPT`/`database disk image is malformed` error on `post_agent_signal` -> INSERT INTO agent_signals — i.e. this was an active fleet-wide production issue during my sweep window, not something confined to pdf_extracted_text.\n- `PRAGMA integrity_check` direct against data/live/market.db (run twice, both real, no timeout truncation issue — output capped at SQLite's own 100-error default limit, so the true defect count is >= what's shown): `Freelist: size is 0 but should be 1` (DB-header-level defect) + hundreds of `Rowid NNNNNNNN out of order` errors, confirmed spanning TWO different tables by rootpage lookup: `pdf_extracted_text` (rootpage 96) and `intraday_foreign_flow_5m` (rootpage 180) — both show the SAME absurd rowid values (62841914/62841915/62815607), which is far too large for pdf_extracted_text's real row count (~15.8k) and consistent with a physical page being double-referenced by two unrelated b-trees (classic 'freed-but-still-live page got reused' corruption signature, matching the header's freelist-count defect).\n- No new SQLITE_CORRUPT in mcp-server logs since 00:09:00 (checked again at 00:15:12 and 00:17:08) — reads on pdf_extracted_text/agent_signals/intraday_foreign_flow_5m all currently succeed (15814/142/150095 rows respectively).\n- HOWEVER: at ~00:15-00:17 I attempted a narrow, low-risk repair — re-inserting the 28 missing rows verbatim from data/live/market.db.backup (a read-only, independent 19h-stale snapshot, dated 2026-08-25T06:30Z, which still had all 28 original garbled rows) to at least undo my regression back to the pre-sweep (still-garbled, but PRESENT) state. ALL 28 insert attempts failed with the identical SQLITE_CORRUPT error — 28/28, not intermittent this time. I did not retry further and made no other write attempts after that. Net effect: this restore attempt changed nothing (confirmed: pdf_extracted_text count unchanged at 15814 before and after the 28 failed attempts) but it does mean writes are NOT reliably safe right now, more consistently blocked than during the sweep itself.\n\nROOT CAUSE — well-evidenced hypothesis, not fully certain: data/live/market.db is bind-mounted into vn-market-intelligence-mcp-mcp-server-1 (Docker Desktop shared volume) while also being opened directly by host-side scripts (bun:sqlite, mine) at the same time. This is the documented Docker-Desktop-shared-volume SQLite corruption class — the gRPC-FUSE/virtiofs bridge does not reliably honor POSIX advisory (fcntl) locks across the host/container boundary, so two writers with SQLite's normal locking protocol can still race and corrupt the file. This matches the DB's own history: data/live/ already holds 5 distinct dated `market.db.corrupt-*`/`.pre-salvage-*`/`.salvage-attempt-failed-*` snapshots from 2026-07-19, 07-30 (x2), 08-06 — i.e. this is a RECURRING failure mode on this exact file, not a first-time event. My sweep firing many back-to-back write transactions in a ~4-minute window very likely raised collision probability with mcp-server's own concurrent traffic (confirmed concurrent: its 00:01:41 bctcPdfPull/PEK-extraction cycle, plus ongoing agent_signals writes) and is the probable proximate trigger, but the underlying broken-locking defect predates this session and is NOT specific to my script.\n\nWHAT I DID NOT DO: no attempt to repair the corruption itself (VACUUM, .recover, restore-from-backup, or any DB-wide operation) — that decision (in particular, whether to accept ~19h of lost fleet-wide writes by restoring data/live/market.db.backup, vs. attempting an in-place `.recover`+reload, vs. some other path) needs an ops/db-data-integrity call, not a pdf-extractor one. I stopped the moment the pattern was confirmed non-random (28/28 failed) and am not making further write attempts.\n\nNEXT-AGENT ASK: db-data-integrity (or ops) should (1) confirm whether writes are currently blocked fleet-wide or only on specific pages/tables, (2) decide the repair path, (3) if a restore-from-backup is chosen, note the 28 pages listed below would need to be RE-invalidated afterward (they are correctly garbled in the 06:30Z backup, not yet fixed) since the backup predates the orientation-fix invalidation effort entirely.\n\nMISSING PAGES LIST (real, ground-truth-verified against the pre-sweep 79-file/312-page manifest saved before any writes — 28 pages across 17 files, currently ZERO rows in pdf_extracted_text): 20260129-DIG-BCTC-hop-nhat-quy-4-nam-2025-cks.pdf p33; 20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf p29; 20260130-HPG-Bao-cao-tai-chinh-rieng-Cong-ty-me-va-giai-trinh-Q4.2025.pdf p20; DXG_2025_Q2.pdf p9,p28; 20250331-DXG-BCTC-rieng-kiem-toan-2024_signed.pdf p46; VJC_2024_Q4.pdf p12,p43,p50; 20250429-SHB-Bao-cao-tai-chinh-quy-1-nam-2025-Hop-nhat-Tieng-Viet.pdf p29,p39; SHB_2025_Q2.pdf p38,p39; DBC_2025_Q3.pdf p17; DXG_2024_Q2.pdf p9,p28; DGC_2025_Q1.pdf p35; VJC_2023_Q4.pdf p12,p43,p50; DIG_2023_Q4.pdf p33; DBC_2024_Q3.pdf p17; SHB_2024_Q2.pdf p38,p39; VJC_2025_Q4.pdf p12,p43,p50; DIG_2026_Q2.pdf p32.\n\nUNRESOLVED DISCREPANCY (flagged, not investigated further — time-boxed out): pdf_extracted_text total row count dropped from 15887 (pre-sweep baseline, confirmed 3x via the detector's own 'scanned N rows' line) to 15814 as of 00:15Z — a drop of 73, of which only 28 are accounted for by my directly-traced sweep crashes. The other 45-row delta is NOT explained by anything in my sweep log and may be ordinary concurrent mcp-server write traffic on this shared live table (it ingests new BCTC PDFs continuously) OR further corruption-related loss outside my visibility — flagging for whoever picks this up rather than guessing.\n\nCORPUS SWEEP STATUS (separate from the corruption finding — see docs/signals/20260825T235317Z-pdfocr-orientation-corpus-scope-79-files-supersedes-qa-estimate.json for the original 79/312 scope): 5 files / 12 pages conclusively fixed and verified clean (DIG_2024_Q4 p33; HSG_2026_Q1 p4,p25; 20250324-DBC... 4pp; 20250326-DIG-BCTC-hop-nhat-kiem-toan-nam-2024-cks.pdf 4pp; 20260420-DHG-BCTC-Quy-1.2026.pdf p26). 17 files / 28 pages regressed to WORSE (row now absent, see list above). 57 files / ~272 pages untouched, still garbled exactly as before. The --pages targeted-reextract code change (scripts/migrations/reextract-pdf-ocr-orientation.ts) and the two persisted helper scripts (scripts/audits/detect-pdf-ocr-orientation-garble.ts, scripts/migrations/sweep-pdf-ocr-orientation-garble.sh) are landed and validated correct in isolation — the DB corruption is an environmental hazard the sweep exposed, not a defect in that code. DO NOT re-run the sweep until the corruption question is resolved.",
-        "createdAt": "2026-08-26T00:17:19Z",
-        "drained_at": "2026-08-26T00:45:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "21fb39d1c8b178a5f0635ca4447f53b4481e923d91ee99f66a9902aa1ce28c66",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md",
-          "line_count": 207,
-          "cap": 600,
-          "byte_count": 54552,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 18552,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-26T00:28:32Z",
-        "drained_at": "2026-08-26T00:45:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "dd27951c3b1d3ecf81a481b2b047c305e8ba8658652c75c2c16397eb451c6e20",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system-issue",
-        "priority": "high",
-        "payload": {
-          "detected_by": "cowork-team 00:00Z tick — 2 of 4 spawned agents (news-scout, market-watcher) blocked; router verified at runtime layer",
-          "measured": {
-            "quick_check_via_runtime_bun_sqlite": "101 lines, 100 error lines, ALL Tree 180 — no other tree damaged",
-            "tree_180_maps_to": "table intraday_foreign_flow_5m (sqlite_master.rootpage=180)",
-            "error_class": "Rowid 62841915 out of order (repeated across pages 110926-111130)",
-            "table_state": "COUNT(*)=150095, MAX(rowid)=62841915 — every error line names the MAX rowid",
-            "journal_mode": "delete (rollback journal, NOT wal)",
-            "backup_integrity": "/app/data/market.db.backup (Aug 25 04:30, 444563456B) quick_check=ok, daily_ohlcv=789926 — CLEAN and restorable",
-            "error_window": "2026-08-25T23:47:43Z (disk I/O error) through 2026-08-26T00:06:08Z (SQLITE_CORRUPT); none logged after 00:06",
-            "sqlite_codes_seen": [
-              "SQLITE_CORRUPT",
-              "SQLITE_IOERR_DELETE_NOENT"
-            ],
-            "recurrence": "4th+ occurrence — /app/data holds corrupt snapshots dated 2026-07-19, 2026-07-30, 2026-08-06",
-            "blast_radius_evidence": "bctc-analyst: 9 of 9 record_evidence_fragment writes failed, CONFIRMED NON-TRANSIENT ON RETRY within the cycle. market-watcher: 2 succeeded (ids 1562,1563) then 4 failed in the same run. quick_check shows evidence_fragments b-tree is INTACT — so the failures are not that table being damaged."
-          },
-          "why_writer_not_disk": "Disk/bind-mount corruption scatters across trees at random. Here 100/100 error lines are one tree, one error class, on the single MAX rowid, while the 04:30 backup is clean — i.e. damage arose during live writes after 04:30 and is concentrated in one writer's ordering invariant. Strongly indicated, not proven: owner should confirm before acting.",
-          "blast_radius_note": "Unrelated write paths (post_agent_signal, record_evidence_fragment, fetch_and_analyze inserts, push-news, pushBctcLayout) ALSO returned SQLITE_CORRUPT despite their own tables being intact. market-watcher wrote evidence fragments 1562,1563 then had 4 more rejected in the same run — intermittent, not total. Mechanism for that spillover is NOT established; do not assume those tables are damaged.",
-          "investigation_lead": "intraday_foreign_flow_5m is fed by the foreign-flow VPS path, which has a documented clock-drift recheck harness. Non-monotonic rowids derived from a drifting clock would produce exactly this out-of-order signature. Unverified lead, offered so the owner does not rediscover it.",
-          "do_not": "Do NOT run VACUUM, REINDEX, .recover, or a backup restore without owner sign-off — destructive and the live file currently holds writes newer than the 04:30 backup. Router made READ-ONLY probes only; no repair attempted.",
-          "adjacent_open_rows": [
-            "FIX-MARKETDB-BACKUP-NO-INTEGRITY-GATE-SINGLE-GENERATION (backlog, P2, dev-mcp-server) — this signal supplies its missing datum: the single generation is clean AS OF NOW",
-            "FIX-WATCHLIST-ROSTER-RESTORE-23-LOST-TO-CORRUPTION-RESEED (backlog, P1, architect) — downstream cleanup of a PRIOR corruption event"
-          ],
-          "dedup": "THREE files report this ONE incident: docs/signals/news-scout-20260826T000500Z.json (wrong scope: calls it fleet-wide), docs/signals/bctc-analyst-20260826T001800Z.json (bug-escalation, 9/9 evidence writes failed), and this file (carries the measurements). Triage as ONE — do NOT mint three rows.",
-          "poisoned_connection_hypothesis": "SQLite poisons a connection once it returns SQLITE_CORRUPT; mcp-server holds long-lived connections (uptime 57m at detection). That would explain all three observations at once: intermittent across agents (which pooled connection you draw), non-transient within one agent cycle (same poisoned connection), and intact-but-unwritable unrelated tables. TESTABLE PREDICTION AND TRAP: restarting mcp-server will make the symptom disappear while leaving tree 180 corrupt — that is almost certainly how the 07-19 / 07-30 / 08-06 occurrences were each closed, which is why this is now the 4th+. Verify with quick_check AFTER any restart, not with a clean error log."
-        },
-        "createdAt": "2026-08-26T00:13:54Z",
-        "drained_at": "2026-08-26T00:45:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7b300c0f380df51796be2f81581c82f186a8058c4ca8fddb26a16d27d45ab224",
-        "source": "file",
-        "from": "router",
-        "to": "po",
-        "type": "flow-defect",
-        "priority": "high",
-        "payload": {
-          "key_class": "intent:<agent>:<key>",
-          "spec": ".claude/skills/dispatch-claim/CARD.md Phase B — task_claim(..., ttl=600) with no heartbeat and release-in-finally",
-          "observed": "architect run 2026-08-26T00:37Z-01:00Z lasted 1369909ms (~22m50s); task_release at return reported ok:true released:0 — lock already gone. Unguarded window ~12m50s.",
-          "second_instance": "agent-father same tick ran 669440ms (~11m10s), also exceeding 600s — released:1 only because the release raced just inside a re-claim window.",
-          "mechanism": "Identical shape to the already-FIXED S2/ILC resume-key defect (feedback_resume_key_ttl_expires_under_live_agent_inverting_dedup, resolved ecb825731) but on a DIFFERENT key namespace: that fix heartbeats task:<row-id>, it does not touch intent:<agent>:<key>. The PRE-CLAIM guard is the one CARD.md calls the hard gate.",
-          "impact": "A peer session running the same PRE-CLAIM would see the key free and spawn a duplicate of a still-live agent. The router-side harness notice (Background agent still running) is out-of-band and unavailable to a peer terminal.",
-          "suggested_direction": "Either heartbeat the intent key while the spawned agent is live, or raise ttl to exceed realistic agent runtime (architect/agent-father routinely 10-25min). Do NOT simply raise the constant without bounding it — the sibling fix showed an unbounded keepalive inverts the guard the other way; any bound must live outside the renewed lock."
-        },
-        "createdAt": "2026-08-26T01:05:08Z",
-        "drained_at": "2026-08-26T01:12:35Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-26T01:22:22Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
