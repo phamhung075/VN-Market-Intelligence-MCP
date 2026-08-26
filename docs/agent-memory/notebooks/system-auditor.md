@@ -234,3 +234,38 @@ Tier-2 cycle completed. Freshness sweep: all sources healthy per cadence thresho
 - Found: 0
 - Status: CLEAN
 
+
+## c18 · 2026-08-26T14:35Z
+### Audit Run Tier-2 (14:30-14:35 UTC 2026-08-26)
+- Tier: 2 | Freshness sweep (20 data sources, 8 VPS routes) | Pipeline + proxy + service health
+- Anomalies: 0 new (all sources fresh within SLA, all VPS routes healthy, no rate-limit breaches)
+- Status: PASS (all D2 checks green)
+
+### Freshness Findings Summary
+**ALL SOURCES FRESH:**
+- Per-source SLA freshness (B-01): all 20 sources within expected cadence
+  - ssc-iboard: 5m fresh (0.5h SLA)
+  - bctc-discover: 22m fresh (10080h SLA, earnings-window-dependent)
+  - bctc-push: 22m fresh (10080h SLA, same)
+  - foreign-flow: 336m fresh (367m SLA)
+  - sbv-vps: 5m fresh (24h SLA)
+  - news-vps: 14m fresh (3h SLA)
+  - fred/trading-economics/polymarket/yahoo-finance/newsapi/reuters/sbv-circular/vneconomy-rss: all fresh
+- Rate limits (B-14): no sources at 100% utilization
+- BCTC healthy-idle gate (B-05): 67 active queue items; push-age 22m << 10080m threshold → PASS (pipeline actively processing)
+
+**VPS ROUTES HEALTHY (B-06/B-07):**
+- Proxy plane (get_vps_proxy_health): prices|news|sbv|bctc all status=ok, 0 24h errors
+- Service plane (get_vps_service_health): 3 healthy (bctc-fetch|news-fetch|sbv-fetch), 2 idle (price-fetch|foreign-flow — market closed 14:35Z)
+- Cross-plane verdict: all dual-plane routes (ssc-iboard|bctc-discover|bctc-push|sbv-vps|news-vps) = PASS; single-plane foreign-flow = PASS; no-coverage routes (muasamcong|vietstock-agm-plan) = tracked standing gap, no new WARN
+- Cycle verdict: B-06/B-07 PASS (zero unhealthy service entries)
+
+**PIPELINE HEALTH (B-11, B-12):**
+- get_pipeline_health: aggregator last=2026-08-26, 33 tickers TA-ready, 2 non-neutral signals (KDC overbought RSI=70.8; VHM oversold RSI=27.8) — signals are price-driven, not staleness
+- get_macro_snapshot: status=ok, carry/yield/commodity/fx all fresh vs source-tier thresholds
+- DB checks C-06/C-07: covered by D2 callout only (full C-xx battery deferred to Tier-3)
+
+### Status
+Tier-2 cycle complete. No signals posted. No DASHBOARD rows. No dedup-skipped checks. Next run will be Tier-2 at 16:00Z.
+
+**[NOTE on probe output:]** Tier-1 pre-gate returned `heartbeat_age_minutes=null` due to `checks_verdict=FAILURE` (pdf-extractor mem_creep at 92.44%, owned by concurrent tier-1 run). The null is correct by design: age_min is only computed when checks_verdict=ALL_GREEN. The heartbeat file exists (last_healthy_at=2026-08-26T10:35:00Z, 240m old, fresh vs 480m threshold) and parses correctly; null is not a timestamp-parsing defect. No finding filed.
