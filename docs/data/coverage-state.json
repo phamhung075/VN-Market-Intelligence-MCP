@@ -1,8 +1,8 @@
 {
   "_schema": "v1",
   "_ssot": true,
-  "_updated_by": "news-scout",
-  "_updated_at": "2026-08-25T20:09:47Z",
+  "_updated_by": "market-watcher",
+  "_updated_at": "2026-08-26T00:07:57Z",
   "_eod_completed": "2026-07-11T16:06:30Z",
   "tickers": {
     "VNM": {
@@ -27,15 +27,15 @@
     },
     "BID": {
       "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-23T20:05:44Z"
+      "last_covered_market_watcher": "2026-08-26T00:07:57Z"
     },
     "SHB": {
       "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T00:06:16Z"
+      "last_covered_market_watcher": "2026-08-26T00:07:57Z"
     },
     "EIB": {
       "last_covered_news_scout": "2026-08-25T20:09:47Z",
-      "last_covered_market_watcher": "2026-08-24T00:06:16Z"
+      "last_covered_market_watcher": "2026-08-26T00:07:57Z"
     },
     "VHM": {
       "last_covered_news_scout": "2026-08-25T20:09:47Z",
