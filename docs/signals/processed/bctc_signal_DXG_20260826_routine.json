@@ -1,42 +1,45 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "unavailable",
+  "quarter": "Q2-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Phát triển bất động sản khu dân cư/khu đô thị, môi giới (Đất Xanh Services)",
-  "customer": "Người mua nhà ở thực và nhà đầu tư cá nhân tại TP.HCM và các tỉnh vệ tinh",
-  "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (44+ chu kỳ liên tiếp, unresolved); định giá dựa hoàn toàn trên get_sector_comparison",
-  "mgmt": "ROE 1.9% dưới xa trung vị ngành BĐS (7.3%); PE 66.5x cao gấp ~4x trung vị ngành (16.1x)",
-  "valuation": {
-    "pe": 66.5,
-    "ey_spread_pp": -3.5,
-    "verdict": "AVOID"
-  },
-  "valuation_note": "AVOID verdict — bullish signal suppressed per Step-2 rule.",
+  "product": "Bat dong san dan dung/khu do thi (Dat Xanh Group) — phat trien du an, moi gioi, dich vu BDS",
+  "customer": "Nguoi mua nha o thuong mai, nha dau tu ca nhan/to chuc BDS khu vuc phia Nam",
+  "ops": "DATA-GAP: get_bctc_full(DXG) tra ve 'Chua co du lieu BCTC' chu ky nay (45+ chu ky lien tiep, dev-team pickup pending tu c162 cash-flow-anomaly signal) — khong the tinh EY_SPREAD tu BCTC truc tiep hoac cac chi so tai chinh khac; chi co so sanh nganh (sector-comparison, live) va KD reading",
+  "mgmt": "Khong co du lieu quan tri chu ky nay (thieu BCTC)",
+  "ey_spread_pct": -3.5,
+  "ey_spread_source": "sector_comparison_pe_66.5x_not_bctc_direct",
+  "valuation_verdict": "AVOID",
+  "pe_sector": 66.5,
+  "pe_median_sector": 16.1,
+  "roe_sector_comparison_pct": 1.9,
   "kd_reading": {
-    "hexagram": "Tuy (45)",
-    "trend": "THUAN_LOI",
-    "signal": "THAN_TRONG",
-    "confidence": 0.75,
-    "note": "Diverges from AVOID valuation verdict — flagged, not reconciled. 4th consecutive near-identical draw."
+    "que": "Lu (56)",
+    "trend": "TRUNG_TINH",
+    "signal": "BAN",
+    "confidence_pct": 37,
+    "note": "changed vs c182-c185 (was Que Tuy 45, THUAN LOI, THAN TRONG 75% for 4 consecutive cycles) — flipped from favorable-cautious to negative BAN(sell) signal, 4-cycle byte-identical pattern broken this cycle — worth flagging to alert-commander"
   },
   "esc_gate": {
-    "esc1": "NOT EVALUATED (no BCTC data)",
-    "esc2": "NOT EVALUATED (no BCTC data)",
-    "esc3": "NOT EVALUATED (no BCTC data)",
-    "esc4": "NOT EVALUATED (no BCTC data)",
-    "esc5": "NOT EVALUATED (no BCTC data)"
+    "note": "ESC gate not evaluated — no BCTC data this cycle (structural data gap, not this cycle's finding)"
   },
-  "escalation_status": "NONE",
-  "data_gaps": [
-    "get_bctc_full 'Chưa có dữ liệu', 44th+ consecutive cycle, unresolved (root_task DXG cash-flow-anomaly c162 still pending dev-team pickup)",
-    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "insider_signals": "none_significant",
+  "legal_risk_signals": 0,
+  "data_quality_flag": "DXG BCTC 'Chua co du lieu' unresolved 45+ cycles; DXG cash-flow-anomaly (c162) still pending dev-team pickup",
+  "evidence_fragments_recorded": [
+    "bctc_valuation_premium (id=1590)",
+    "bctc_roe_ratio (id=1591)",
+    "bctc_report_overdue (id=1592)"
   ],
-  "as_of": "2026-08-26T00:20:00Z",
+  "generated_at": "2026-08-26T15:20:00Z",
   "_processed": {
-    "fingerprint": "46bf6244d18f907846413c723823a064ab77e7bdd1efdd527bfbc33f31f9b240",
-    "processedAt": "2026-08-26T00:13:49Z",
+    "fingerprint": "39f43b16ee174468d970bfb64fc8a76c6a77d09fb86f89d7d5bf0442cdcf4b65",
+    "processedAt": "2026-08-26T15:41:37Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
