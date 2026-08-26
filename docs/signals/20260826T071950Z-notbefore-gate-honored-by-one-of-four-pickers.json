@@ -1,0 +1,29 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "tooling_defect",
+  "priority": "HIGH",
+  "createdAt": "2026-08-26T07:19:50Z",
+  "payload": {
+    "title": "not-before deferral gate is honored by 1 of 4 pickers — ILC/RLC/SECONDARY dispatch time-gated rows anyway",
+    "evidence": {
+      "gate_keys": [
+        "qa_not_before",
+        "next_recheck_not_before",
+        "qa_new_window_earliest_d1_close"
+      ],
+      "predicate": "scripts/lib/devteam-eligibility.jq :684 gate_not_before_keys / :694 is_gated_not_before($now)",
+      "call_counts": {
+        "scripts/devteam-review-claim-qa-drain.jq": 2,
+        "scripts/devteam-backlog-claim-incident-lane-consumer.jq": 0,
+        "scripts/devteam-backlog-claim-ready-lane-consumer.jq": 0,
+        "scripts/devteam-review-claim-secondary-drain.jq": 0
+      },
+      "note": "All four import devteam-eligibility.jq, so the helper is IN SCOPE for all of them; three simply never invoke it. Importing the lib is not evidence the gate is enforced."
+    },
+    "impact": "A row deliberately time-gated by its author is invisible to only ONE lane. ILC, RLC and SECONDARY-drain will pick and dispatch it immediately. Stamping next_recheck_not_before therefore buys DECORATIVE protection on 3 of 4 dispatch paths — a false sense of deferral.",
+    "live_instance": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE sits P0/READY/next_agent=ops at ready[] head with NO gate field. It is deliberately deferred to 08:00Z (market close; peer db-data-integrity cron sweeps the same recovering DB every 30min). Router held it this tick with a task-lock busy-guard (ttl 2400s) because a gate field would NOT have stopped ILC.",
+    "recommendation": "Either (a) make ILC/RLC/SECONDARY call is_gated_not_before($now) like qa-drain does, or (b) document that task-locks are the ONLY fleet-honored deferral mechanism and stop advertising the gate keys as picker-wide. Do NOT leave both half-true.",
+    "found_by": "router dev-team tick 2026-08-26T07:07Z, grep-verified reader counts before relying on the gate"
+  }
+}
