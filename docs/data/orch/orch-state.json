@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-    "next_agent": "agent-father",
-    "next_action": "Ready-Lane Consumer claim of FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP — spawn agent-father DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-26T00:48:58Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-26T01:00:15Z",
+    "updated_by": "agent-father",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17537,29 +17536,6 @@
         ],
         "title": "ADJUDICATION NEEDED (architect, not implementation): effective_next_agent/effective_owner's board-wins branch in scripts/lib/devteam-eligibility.jq is structurally unreachable whenever the backlog-detail item has a null updated_at, so the stale archived value always wins - 10 live rows mis-route today and 72 of 104 detail items are latently in the same class",
         "status_note": "ROUTED BY PO, NOT DECIDED BY PO. This row asks architect to CHOOSE A DIRECTION; it is deliberately not a build ticket and carries no implementation AC. Source: dev-team signal rtr-20260825T2258-effnextagentnullts (to=architect, WARN, 2026-08-25T22:58:14Z), drained to PO's Step 0-SIG inbox at 23:16:56Z because the dev-team drain routes every envelope to PO regardless of its own `to` field (that drain defect is separately tracked by FIX-DEVTEAM-DRAIN-ROUTES-NON-PO-ENVELOPES-TO-PO-STEP0SIG).\n\n(1) MECHANISM - PO RE-DERIVED IT FROM THE SOURCE, NOT FROM THE SIGNAL PROSE. scripts/lib/devteam-eligibility.jq defines effective_next_agent (and its identical twin effective_owner) with the guard `if ($board_ts != null) and ($detail_ts != null) and ($board_ts > $detail_ts) then $board_na else $raw_detail_na end`. parse_ts returns null for absent/non-string/empty/unparseable input by design. Therefore when the detail item has no updated_at, $detail_ts is null, the conjunct is false, and control falls to $raw_detail_na - the archived value - NO MATTER HOW RECENT THE BOARD ROW IS. The board branch cannot be reached on those rows at all. This is not a data-hygiene nit: it silently reverts the outcome the recency-compare was shipped to produce.\n\n(2) THE SIGNAL'S CORRECTION IS UPHELD. The RESIDUAL noted on review row FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (live at task_board.review[29], status REVIEW, next_agent=qa - id verified by path resolution, not by grep) attributed the residual to 'a board edit without an updated_at bump'. That attribution is FALSIFIED: every one of the 10 divergent rows below carries a perfectly good board updated_at. The missing timestamp is on the DETAIL side.\n\n(3) PO'S OWN MEASUREMENTS, taken 2026-08-25T23:29Z against live docs/data/orch/orch-state.json + docs/data/orch/archive/backlog-detail.json. These differ slightly from the signal's numbers (it said 11 live / 73 of 105); PO could not reproduce 11 or 73 and reports what it actually measured. Detail items total 476, of which 434 have null-or-absent updated_at. Detail items carrying a non-empty next_agent: 104, of which 72 have a null updated_at - so 69% of every routable detail item is in the latent class. Detail items that match a row in a live non-terminal lane: 157, of which 44 have both a null updated_at and a non-empty detail next_agent. Of those 44, exactly 10 currently DISAGREE with their board row and are therefore mis-routing right now: FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (board agent-father vs detail ba), FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY (architect vs ba), FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES (dev-mcp-server vs ba), FIX-SIGNALQUEUE-DUP-ID-GUARD (developer vs dev), FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT (agent-father vs ba), FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (pm vs ba, BLOCKED), QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL (po vs qa, READY), FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (pm vs architect, READY), FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN (developer vs architect, READY), FIX-BCTC-BANK-SUMMARY-MAPPING (architect vs ba, READY). Note the shape of the damage: 'ba' and 'architect' are on the DRS ratified allowlist and 'developer'/'dev-mcp-server' are dev-role, so several of these silently swap a row between the auto-picker planes.\n\n(4) THE THREE CANDIDATE DIRECTIONS, PRESENTED UNRANKED. PO is explicitly NOT choosing; the choice is routing semantics with fleet-wide blast radius across BOUNDED-1, SLS, DRS, the Ready-Lane Consumer and the Review QA-Drain, all of which include this one file. (a) TREAT A NULL DETAIL TIMESTAMP AS INFINITELY OLD - i.e. a present board_ts beats a null detail_ts. Cheapest, one-line, and makes the board authoritative for 44 live rows immediately; but it inverts the deliberate detail-first default that FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE established in July, on 434 items at once, with no per-row review. (b) REQUIRE detail_ts AND FAIL LOUDLY when it is absent. Safest epistemically - no silent wrong answer - but 434 of 476 items would fail on day one, so it is only viable paired with a backfill or a staged WARN tier, and a hard failure inside a shared eligibility predicate can starve every picker at once. (c) BACKFILL updated_at ACROSS THE AFFECTED DETAIL ITEMS. Fixes the data rather than the predicate and leaves July's semantics intact; but there is no evidence-backed value to backfill for items whose real edit time was never recorded, and any synthesized stamp becomes a fabricated fact that this same comparison will later trust.\n\n(5) WHAT ARCHITECT SHOULD RETURN: a direction plus the migration/verification shape for it. If (a) or (b), the change lands in scripts/lib/devteam-eligibility.jq and must be regression-tested against BOTH twins (effective_owner has the identical guard and the identical bug - do not fix only next_agent). If (c), name where the backfill values come from and what makes them evidence-backed. Either way the 10 rows in (3) are the acceptance fixture: after the fix, effective_next_agent on each must return the value the direction says it should, and the count of live divergences must be re-measured, not asserted.\n\n(6) NOT A RE-MINT - dedup evidence. The predecessor FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE is DONE_VERIFIED, closed 2026-08-25T08:24:19Z, and lives in docs/data/orch/archive/2026-08.json - it shipped the recency-compare that this row reports as incomplete, so this is the residual, not the same work. Non-terminal and --all-lanes scans via scripts/po-board-dedup-search.sh for effective_next_agent / devteam-eligibility / DRS-CLAIM-TRUSTS returned no row covering the null-detail-timestamp axis: backlog FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE is the plan_only/disposition axis, FIX-DRS-SWEEP-001-EFFECTIVE-FILES is effective_files, and review[29] is the DRS claim script's cached dispatch_lane - a different plane, left untouched by this tick because it is next_agent=qa and in flight.\n\n(7) DISPATCH REALITY, stated so it is not discovered later: next_agent=architect is on the DRS ratified allowlist so this row is DRS-eligible, but it appends at the tail of backlog[] with 63 P0/P1 rows already ahead of it carrying an allowlist next_agent, against roughly one DRS dispatch per tick. It will not surface on its own in any useful timeframe. PO is returning it in this tick's BATCH for router hand-dispatch to architect."
-      },
-      {
-        "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION",
-        "title": "SQLite corruption (5th recurrence): systemic root-cause fix required — bind-mounted market.db loses advisory-lock enforcement across Docker Desktop host/container boundary",
-        "subject": "Docker Desktop bind-mount locking defect causing recurring SQLite corruption on market.db (04-25, 07-13, 07-30, 08-06, 08-26)",
-        "description": "Recurring corruption on live named-volume market.db (Docker Desktop shared volume via bind-mount). Root cause: virtiofs/FUSE bridge does not reliably honor POSIX advisory locks (fcntl) when SQLite file is accessed concurrently from both host-side scripts (bun:sqlite) and container-side connections (mcp-server long-lived pooled connections). Results in page reuse, rowid ordering defects, index orphaning. Affects intraday_foreign_flow_5m, pdf_extracted_text, agent_signals tables — each incident requires whole-DB restore from backup. 5 occurrences in ~4 months (04-25, 07-13, 07-30, 08-06, 08-26) with 20h-200h data loss per incident — pattern indicates structural defect, not transient failure. Repeated recovery (stop-backup-restore-restart cycle) is cost-justified short-term, but systemic fix required to prevent recurrence. Investigation scope: (1) move market.db to named-volume exclusive-to-container mount (no host-side access), or (2) implement host-side write-serialization gate for PDF extraction/migration scripts to prevent concurrent access, or (3) upgrade Docker Desktop hypervisor/virtiofs layer if update available (low confidence this will be effective alone).",
-        "owner": "architect",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "created_by": "ops",
-        "created_at": "2026-08-26T00:34:44Z",
-        "updated_at": "2026-08-26T00:34:45Z",
-        "tags": [
-          "infrastructure",
-          "docker-desktop",
-          "sqlite",
-          "recurring",
-          "data-integrity"
-        ],
-        "related": [
-          "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730",
-          "project_sqlite_corruption_fix.md"
-        ]
       }
     ],
     "closed_sprints": [
@@ -23294,6 +23270,40 @@
         "detail_ref": "docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md",
         "po_brief_link_20260823": "PO 2026-08-23T14:52Z — detail_ref BACK-FILLED. agents-architect emitted a brief_complete signal at 14:04:55Z naming docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md for this row, but the row's detail_ref was null, so the design was invisible from the board and the assignee would have started from the row prose alone. Read the brief before implementing. Same defect class as the STALE detail_ref just corrected on FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT — briefs are landing without their rows being re-pointed at them. Two occurrences in one triage cycle; if a third appears, mint a systemic row for the brief->row link step in the agents-architect flow.",
         "status_note": "DRS claim REVERTED 2026-08-23T23:05:25Z (dev-team tick 2026-08-23T22:37Z, SELECTED=drs). Claim was not gate-satisfied: next_agent=developer is a DEV role, off the ratified DRS allowlist {architect,ba,pm,po,agents-architect}, and promoted_at=2026-08-14T22:35:15Z is a 9-day-stale stamp the claim script trusted without re-resolving. dispatch_lane was null so .head.next_agent was written null (unspawnable head, double-space tell in next_action). NOT spawned; head reset idle. Tracked root cause: FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (backlog P1). Will recur every ~6 idle ticks until that lands.\n\nDRS claim REVERTED AGAIN 2026-08-25T03:47:51Z (dev-team tick 2026-08-25T03:37Z, SELECTED=drs) — 2nd documented occurrence, exactly as the line above predicted. Identical signature: next_agent=developer (DEV role, off the ratified DRS allowlist), dispatch_lane=null so .head.next_agent was written null (unspawnable head, same double-space tell in next_action), promoted_at=2026-08-14T22:35:15Z now 11 days stale and still trusted without re-resolution. NOT spawned; row restored to ready[] idx 97 with status=READY; head reset idle. Root cause FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT is STILL in backlog[] P1, undispatched 2 days after being named here. The ~6-idle-tick recurrence is now CONFIRMED, not predicted."
+      },
+      {
+        "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION",
+        "title": "SQLite corruption (5th recurrence): systemic root-cause fix required — bind-mounted market.db loses advisory-lock enforcement across Docker Desktop host/container boundary",
+        "subject": "Docker Desktop bind-mount locking defect causing recurring SQLite corruption on market.db (04-25, 07-13, 07-30, 08-06, 08-26)",
+        "description": "Recurring corruption on live named-volume market.db (Docker Desktop shared volume via bind-mount). Root cause: virtiofs/FUSE bridge does not reliably honor POSIX advisory locks (fcntl) when SQLite file is accessed concurrently from both host-side scripts (bun:sqlite) and container-side connections (mcp-server long-lived pooled connections). Results in page reuse, rowid ordering defects, index orphaning. Affects intraday_foreign_flow_5m, pdf_extracted_text, agent_signals tables — each incident requires whole-DB restore from backup. 5 occurrences in ~4 months (04-25, 07-13, 07-30, 08-06, 08-26) with 20h-200h data loss per incident — pattern indicates structural defect, not transient failure. Repeated recovery (stop-backup-restore-restart cycle) is cost-justified short-term, but systemic fix required to prevent recurrence. Investigation scope: (1) move market.db to named-volume exclusive-to-container mount (no host-side access), or (2) implement host-side write-serialization gate for PDF extraction/migration scripts to prevent concurrent access, or (3) upgrade Docker Desktop hypervisor/virtiofs layer if update available (low confidence this will be effective alone).",
+        "owner": "architect",
+        "status": "READY",
+        "priority": "P1",
+        "created_by": "ops",
+        "created_at": "2026-08-26T00:34:44Z",
+        "updated_at": "2026-08-26T00:59:49Z",
+        "tags": [
+          "infrastructure",
+          "docker-desktop",
+          "sqlite",
+          "recurring",
+          "data-integrity"
+        ],
+        "related": [
+          "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730",
+          "project_sqlite_corruption_fix.md"
+        ],
+        "next_agent": "developer",
+        "zone": "multi",
+        "files": [
+          "scripts/run-against-market-db.sh",
+          "apps/mcp-server/src/infrastructure/db/checkpoint.ts",
+          "docs/policies/dev-standards.md",
+          "docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md"
+        ],
+        "detail_ref": "docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md",
+        "architect_review_note": "2026-08-26T00:56Z architect. Brief: docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md. Read-only forensics only (immutable=1 / {readonly:true} against preserved .corrupt-* snapshots + live read-only docker exec probes) — zero writes to market.db or any snapshot. VERDICT: both previously-known mechanisms (04-25 SHM/WAL torn-write; 08-06 Go DSN WAL re-arm) independently re-confirmed EXCLUDED for tonight via header-byte forensics (file-format writer/reader version byte): the 08-26 corrupt file is rollback-journal format (1/1) — the FIRST of the 4 preserved snapshots to be so. 07-19/07-30/08-06 are ALL WAL-format (2/2) sharing ONE scattered multi-tree btreeInitPage()-error-11 signature (SHM torn-write recurring because the DELETE-mode mitigation kept getting silently defeated) — 08-26 is a genuinely NEW, narrower signature instead: 7788 rowid-disorder cells concentrated in Tree 180 (intraday_foreign_flow_5m) + exactly 1 stray Tree-96 pointer + freelist off-by-exactly-1 + 37 orphaned pages = classic non-atomic multi-page-commit fingerprint, not disk-level scatter. NEW FINDING absent from every prior record: host bun (1.3.13 macOS) and container bun (1.3.13 oven/bun:1.3.13-debian) run DIFFERENT embedded SQLite engines (3.43.2 vs 3.51.2) against the SAME bind-mounted file — verified live both directions, twice. Two surviving root-cause candidates (engine-version skew; virtiofs advisory-lock/cache-coherency gap on the ROLLBACK-JOURNAL locking path, not WAL/SHM) are BOTH eliminated by ONE fix, so this is not a blocking ambiguity. RECOMMENDATION (costed, not option-1): do NOT re-migrate to a container-exclusive named volume now — tried once (ffa045e81 04-25), reverted after a VM-rebuild wiped it entirely (5ba622eca 07-15); would also require rewriting all 86 host-invoked script call-sites (52 apps/mcp-server/scripts + 34 scripts/migrations, up from 25 four weeks ago) to docker-exec — same migration cost as the cheaper fix below, for a strictly worse durability tradeoff. INSTEAD: new scripts/run-against-market-db.sh wrapper (mirrors orch-apply.sh SSOT-wrapper convention) that docker-execs every host-invoked market.db script into mcp-servers own container/engine — eliminates both candidates at once, zero mount-type change, zero rewrite of the 86 scripts own code (invocation-only). Also re-flagged STILL-OPEN from the 07-30 brief: backupDatabase() (checkpoint.ts:93) remains unconditional single-generation overwrite with no pre-copy integrity gate — unrelated to root cause but determines next-incident blast radius; not touched this session. Rowid magnitude (62.8M on a ~150K-row table) is a RED HERRING, not evidence of tampering — fully explained by INSERT OR REPLACE churn on a non-AUTOINCREMENT table (verified ~1.51M rowids consumed in the 20h between the clean 04:30Z backup and the corruption). No repair/write action taken this session; forensics only. NEXT: developer implements scripts/run-against-market-db.sh + dev-standards.md CANONICAL wrapper rule + checkpoint.ts backup integrity-gate/multi-generation fix per brief §6.",
+        "updated_by": "architect"
       }
     ],
     "review": [
@@ -24128,6 +24138,41 @@
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-26T00:34:55Z"
+      },
+      {
+        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/po/flow/",
+        "owner": "po",
+        "next_agent": "po",
+        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
+        "created_at": "2026-08-23T12:10:00Z",
+        "created_by": "po/triage-20260823T1157Z",
+        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "related": [
+          "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
+          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
+        ],
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "dispatch_lane": "po",
+        "promoted_at": "2026-08-25T20:00:30Z",
+        "promoted_by": "po (triage-20260825T1937Z)",
+        "claimed_at": "2026-08-26T00:48:57Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
+        "occurrence_count": 2,
+        "updated_at": "2026-08-26T01:00:15Z",
+        "updated_by": "agent-father",
+        "status_note": "TITLE CORRECTION (not renaming — head-pinned, orchStateSchema.ts superRefine enforces head->row referential integrity): this is a FAIL-LOUD ABORT, not a SILENT-NOOP. orch-apply refuses the empty candidate on the control-character parse failure and leaves the live file untouched — no partial drain occurs; impact is still total (CLEAR can never succeed under zsh) but the failure mode is strictly better than the title states. FIXED 2026-08-26 (commit 9434b1b73): both echo\"$var\"|jq call sites (lines 53-54) -> printf '%s' \"$var\"|jq; swept whole file, no other occurrence. Pre-fix zsh repro reproduced the exact live parse error; post-fix repro + full 2-line block dry-run (2-envelope fixture, one payload with a literal \\n) both pass. RELATED CORRECTED: the umbrella id previously cited here (FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire) does not exist on the board (checked all lanes) — replaced with the real sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (same file, routing-table section, genuinely non-conflicting; left untouched in backlog[] this hop — its own status_note spans 10+ historical ticks and a dozen+ unrouted-type gaps, most since superseded by unrelated commits, so terminal-shaping it here risked a false verdict on scope not independently re-measured). Full original desc/AC/occurrence history relocated to detail_ref — row exceeded orch-row-prose-ceiling-check net-new-growth guard crossing in_progress[] (unscanned) -> review[] (scanned). next_agent=po to exercise the fixed CLEAR block on next live tick and confirm the 15-envelope inbox actually drains."
       }
     ],
     "qa": [
@@ -24348,54 +24393,7 @@
     },
     "last_triaged_at": "2026-08-25T22:13:39Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/po/flow/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
-        "created_at": "2026-08-23T12:10:00Z",
-        "created_by": "po/triage-20260823T1157Z",
-        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned for /TRIAGE-INBOX|INBOX-CLEAR|ZSH|ECHO/. No match — FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ (the row that AUTHORED this block) is closed and concerned ownership, not the actuator's correctness. Minted.",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "desc": "FOUND BY EXECUTION, NOT BY REVIEW — this fired live on PO's 2026-08-23T11:57Z tick and cost a retry. docs/agents/po/flow/triage-signals.md § 'Durable-inbox CLEAR (executable ...)' prescribes verbatim:\n  pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' docs/data/orch/orch-state.json)\n  consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')\n  consumed_ids_csv=$(echo \"$consumed_ids\" | jq -r 'join(\",\")')\n  jq --argjson ids \"$consumed_ids\" ... | ORCH_APPLY_DECLARED_INBOX_TRIAGED=\"$consumed_ids_csv\" bash scripts/orch-apply.sh || true\nThe agent shell on this host is /bin/zsh 5.9 (ZSH_VERSION=5.9, BASH_VERSION unset). zsh's `echo` builtin interprets backslash escapes BY DEFAULT (unlike bash's), so `echo \"$pendingSignals\"` rewrites every JSON-escaped \\n inside a payload string into a REAL newline, producing invalid JSON.\n\nMEASURED THIS TICK against the live 10-envelope inbox (fixture copy retained): `jq -c` on the file returns rc=0 and a 15234-char SINGLE line; `echo \"$pendingSignals\" | wc -l` returns 33 — the shell turned 1 line into 33. `echo \"$pendingSignals\" | jq -c '[.[].envelope_id]'` then exits 5 with 'Invalid string: control characters from U+0000 through U+001F must be escaped at line 17, column 98'. Minimal isolated repro: `V='{\"a\":\"x\\ny\"}'; echo \"$V\" | jq -c .` FAILS while `printf '%s' \"$V\" | jq -c .` SUCCEEDS.\n\nWHY IT IS SILENT — THIS IS THE REAL SEVERITY: with consumed_ids empty, `jq --argjson` aborts, the pipeline's jq emits nothing, orch-apply.sh prints 'ERROR: stdin produced empty candidate — aborting (no write)' and exits non-zero, and the block's trailing `|| true` swallows exactly that. A doc-faithful PO tick therefore reports the inbox CLEARED while the envelopes are all still there. That is the narrated-but-never-landed class this fleet has 4+ confirmed instances of, sitting inside the very step that is supposed to be PO's own durable actuator. It also fully explains a re-delivery/backlog-growth pattern that has previously been attributed to drain lag.\n\nWHY IT HAS NOT ALWAYS FIRED: it needs at least one payload containing a \\n escape. This tick, the flow_actuator_fix envelope (agents-architect -> agent-father) carried multi-line jq patch code in payload.proposed_patch, which is the first payload shape large enough to guarantee it. So the defect is INTERMITTENT BY INPUT, not by luck — richer payloads make it certain.",
-        "ac": [
-          "AC-1 REGRESSION (must FAIL before, PASS after): replay the documented block verbatim against a fixture orch-state.json whose inbox contains one payload with a \\n escape, under zsh. Pre-fix it must leave the inbox UNCHANGED while the block exits 0 (that combination — no write, exit 0 — is the whole bug). Post-fix the inbox must be empty.",
-          "AC-2 remove the `echo \"$var\" | jq` round-trip entirely: read the ids straight out of the file with `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json`. Never round-trip full payloads through a shell variable — they are attacker-shaped free text from arbitrary emitters. If any round-trip must remain, it uses `printf '%s'`, never `echo`.",
-          "AC-3 DELETE the trailing `|| true` on the orch-apply pipe, or replace it with an explicit non-zero-exit handler that fails LOUD per docs/protocols/fail-loud-protocol.md. A CLEAR that did not land must never be reportable as success. This AC is independent of AC-2 and must not be dropped if AC-2 alone makes the current input pass.",
-          "AC-4 the block gains a post-write self-verification re-reading the file (`jq '.dev_team_idle_chain.pending_triage_inbox|length'` == 0, or == the count of envelopes that arrived mid-tick), matching the AC-3 persistence-gate shape already in docs/agents/po/flow/main.md. RETURN may not assert 'inbox cleared' without it.",
-          "AC-5 FLEETWIDE AUDIT, opt-IN allowlist (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): grep every docs/agents/**/flow/*.md and .claude/skills/**/SKILL.md for the `echo \"$...\" | jq` idiom and report the full hit list. The shell is zsh for every agent on this host, so any other flow doc using it has the same latent corruption. Fix or explicitly waive each hit; do not validate this on triage-signals.md alone."
-        ],
-        "baseline_pass": "under zsh: run the documented CLEAR block against a fixture whose inbox holds a payload containing a \\n escape; post-fix `jq '.dev_team_idle_chain.pending_triage_inbox|length'` == 0 AND the block exits non-zero if orch-apply.sh refused the write",
-        "related": [
-          "FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire",
-          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
-        ],
-        "status_note": "SAME FILE as the umbrella row FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (docs/agents/po/flow/triage-signals.md) and the same owner (agent-father) — dispatch both in ONE agent-father hop, they do not conflict (routing table vs the CLEAR block, different sections). PO worked around it this tick by reading ids directly from the file, so the 10 envelopes DID clear (verified inbox_len 10 -> 0, _updated_by=po); the doc, however, is still wrong and the next agent to follow it verbatim will silently fail again. Sibling in kind, not in cause: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR is prose-with-no-actuator; this one is an actuator that EXISTS, looks executable, and lies about its exit status — arguably worse, because a reviewer greps for the orch-apply.sh pipe, finds it, and moves on. | [po 2026-08-24T14:40:11Z] REPRODUCED LIVE THIS TICK, and the reproduction CORRECTS THIS ROW'S OWN TITLE. Running the documented CLEAR block verbatim (docs/agents/po/flow/triage-signals.md lines 52-53, `consumed_ids=$(echo \"$pendingSignals\" | jq -c ...)`) against the real 22-envelope inbox under zsh failed with: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1`, then `jq: invalid JSON text passed to --argjson`, then `[orch-apply] ERROR: stdin produced empty candidate — aborting (no write)`. Minimal repro confirmed independently: `zsh -c 'x='{\"a\":\"line1\\nline2\"}'; echo \"$x\" | jq -c .'` reproduces the same parse error, because zsh's builtin echo interprets backslash escapes by default while bash's does not. TITLE CORRECTION: it is NOT a SILENT-NOOP. It is a FAIL-LOUD ABORT — orch-apply refuses the empty candidate and leaves the live file untouched, so the inbox is never half-drained and nothing is silently lost. That is strictly better than the title implies and should be reflected in the row (rename away from -SILENT-NOOP), but the IMPACT is still total: the CLEAR can never succeed under zsh, so the inbox drains to zero only if the operator substitutes printf, which is exactly how it was cleared this tick (22 envelopes, ORCH_APPLY_DECLARED_INBOX_TRIAGED, conservation inbox_row_identity=clean). This is the mechanism behind the documented 64-envelope backlog accumulation. FIX: replace both `echo \"$x\" |` with `printf '%s' \"$x\" |` at lines 52-53.",
-        "updated_at": "2026-08-26T00:48:58Z",
-        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
-        "updated_by": "po (triage-20260825T1937Z promote)",
-        "occurrence_count": 2,
-        "po_occurrence_2_20260824T2052Z": "[po/triage 2026-08-24T20:52Z — OCCURRENCE 2, REPRODUCED LIVE BY A DIFFERENT SESSION running triage-signals.md § Step 0-SIG's CLEAR block VERBATIM. The block is still shipped broken.]\n\nWHAT WAS RUN: the executable CLEAR block as written in docs/agents/po/flow/triage-signals.md, unmodified — `pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' ...)`, then `consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')`, then `--argjson ids \"$consumed_ids\"`.\n\nWHAT HAPPENED, verbatim: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1` on the `echo \"$pendingSignals\" | jq` hop; `pre-CLEAR depth:` printed EMPTY; `declaring  envelope_ids` printed with an empty count; then `jq: invalid JSON text passed to --argjson`. Post-write readback: inbox depth STILL 16, _updated_by still \"dev-team\", _updated_at still 2026-08-24T20:24:01Z. The CLEAR was a complete no-op.\n\nTHE TRIGGER IS IN THE PAYLOADS, WHICH IS WHY THIS IS NOT INTERMITTENT AND WILL RECUR: this tick's inbox held four cowork-team envelopes whose `payload` is a JSON object with a multi-line `note` field (the 19:47Z chef-evening collision note, the 20:06Z 3-slot fan-out note, the 20:21Z tnb-audit note) plus five notebook-auto-prune envelopes whose `tied_sections` field embeds literal newlines. Round-tripping that through a zsh shell variable and back through `echo` is what injects the unescaped control characters. Any tick whose inbox contains a multi-line payload — i.e. essentially every tick that drains cowork-fire telemetry — hits this. The 16-envelope inbox this tick is the normal case, not an edge case.\n\nWHY IT IS A SILENT NO-OP RATHER THAN A LOUD FAILURE, and this is the part that makes it P0: the block ends with `|| true`, so the shell exit status is 0 whatever happens. An agent that trusts the exit code — or that simply does not read back — reports \"inbox cleared\" having cleared nothing, and the same 16 envelopes are re-delivered and re-triaged next tick. That is exactly how a 64-envelope backlog accumulated once already (recorded in this doc's own header).\n\nTHE WORKAROUND THAT ACTUALLY LANDED, this tick, and the shape the fix should take: eliminate the shell round-trip entirely. Derive the id list straight from the file into a file — `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json > ids.json` — then pass it with `--slurpfile ids ids.json` and index `$ids[0]`, and read the CSV for ORCH_APPLY_DECLARED_INBOX_TRIAGED from its own file via `$(cat ids.csv)` (safe: hex ids and commas only, no control characters). Verified: inbox depth 16 -> 0, _updated_by=po. The defensive property the doc requires is preserved — PO compared the 16 freshly-derived ids against the 16 read at the top of Step 0-SIG before writing, all 16 matched by prefix, no envelope had arrived in between.\n\nSECOND, INDEPENDENT INSTANCE OF THE SAME CLASS THE SAME TICK (different call site, same root cause): PO wrote a triage fold note via a zsh single-quoted variable piped to `jq --arg`. orch-apply returned OK, `occurrence_count` landed correctly, and the note field landed as an EMPTY STRING (readback LEN=0). Detected only by reading back the FIELD CONTENT — the exit code, the lane counts and the conservation check were all green. So the blast radius of this defect class is wider than the CLEAR block: it is every `jq --arg` in every PO flow doc that carries agent-authored prose. Whoever fixes the CLEAR block should sweep for the pattern rather than patch the one site.\n",
-        "po_occ3_20260825": "OCC3, first PROOF the CLEAR does not land: 4 envelope_ids from the 16:30Z inbox re-delivered VERBATIM at 18:13Z after the 17:00Z run folded them, though their files sit in processed/ — the subtraction never happened. Cost=1 duplicate triage pass. Detail: decisions/triage-20260825T1815Z-po.md",
-        "dispatch_lane": "agent-father",
-        "promoted_at": "2026-08-25T20:00:30Z",
-        "promoted_by": "po (triage-20260825T1937Z)",
-        "claimed_at": "2026-08-26T00:48:57Z",
-        "claimed_by": "dev-team (ready-lane consumer)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
