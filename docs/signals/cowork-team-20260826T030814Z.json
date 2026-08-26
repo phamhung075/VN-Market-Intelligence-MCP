@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T03:08:14Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T03:00:00Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "03:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 34,
+    "note": "1-slot fan-out. Step 0a drain no-op — sole NEW signal_queue row is to:architect, outside SSOT cowork_signal_recipient set [po,tran-ngoc-bau,alert-commander,unified-agent]; preflight new_signals:0 agrees. Slot claim payload passed as JSON STRING per slot-claim.md Step 4.6 (doc says JSON.stringify — CORRECTION to the 02:45Z tick note, which wrongly reported a doc-vs-schema divergence here; there is none).",
+    "FIELD-PROVENANCE": {
+      "dev_head": "canonical TOP-LEVEL .head (status=busy, active=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE, updated_by=router 03:03:50Z by a PEER session, not this one) — NOT the deprecated .task_board.head passthrough stub",
+      "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 34; matches server emit exactly",
+      "devq": "server-computed dev_queue_depth from emit_pressure_state; NOT ready[]+backlog[]",
+      "last_regime_and_volatility": "passed unknown per telemetry.md Step 6.0 spec clause — both lookup keys (.regime_status/.volatility_level) verified ABSENT from cycle-snapshot-latest.json, which is still tick 00:00 / created 2026-08-23T00:07:50Z (~75h stale). Live regime exists at .macro_snapshot.data.signals.carry.regime but substituting it would desync this emitter from every peer and mask the architect-owned defect."
+    },
+    "carried_defects": {
+      "cycle_snapshot_promoted_false": "39th consecutive. Producer named by wall-clock 03:06, promoter looks up nominal 03:00. Filed + routed to architect; naming fix NOT landed.",
+      "agent_consumer_third_clock": "cycle-bootstrap SKILL.md Step -1 derives TICK from its own POST-spawn wall-clock, so it will look for ~03:07-03:08 against a file named 03:06. Filed 02:57Z as rtr-20260826T0257-snapshotagentconsumerclock (AMENDMENT to the existing producer/promoter row, architect).",
+      "spec_load_parse_locale_comma": "4th confirmation. spawn-fanout.md Step 5.1 LOAD_1MIN uses awk -F, which truncates 3,76 -> 3 on this locale-comma host. Non-binding at threshold 24 (12 cores x2). Bug is IN THE SPEC, not the caller.",
+      "calendar_status_open": "31st+ consecutive computation defect; server-side, architect-owned. Step 4.3 suppression is a SUPERSEDED no-op so it is non-binding here.",
+      "snapshot_prune": "removed exactly 1 prior-day file this tick (36 before -> 36 after, +1 written)."
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T03:08:14Z"
+}
