@@ -87,3 +87,12 @@
 - Spot-check a few hexagrams by eye vs programmatic full-set diff -- chose programmatic (all 64, all fields) since manual spot-check is exactly what missed the diacritics regression the first time.
 **why-decision:** All required gates re-run green, byte-identical full-set diff proves lossless migration, live service cross-check corroborates deployed behavior, mutation-check surfaced a real (if narrow) test-suite weakness worth flagging without blocking (the actual regression was already caught+fixed pre-QA via RAW-verify, and my own independent re-derivation now confirms HEAD is correct).
 **why-change:** no change from plan; verdict vc-approved.
+
+### STEP qa-S236 · qa · 2026-08-26T06:22:51Z
+**task-id:** FACTORY-STOCK-extract-vndirect-mapper
+**what-done:** Direct-Commit Verify on 912a4bf79. Confirmed nil-vs-0 preserved end-to-end (mapper.go:113-126, nil-guarded at :117/:121; mutation-check: collapsed nil->0 in scratch, exactly the 3 discriminating mapper subtests failed, reverted+diff-confirmed identical). Re-ran go build/vet/test (9/9 pkgs green), golangci-lint depguard (0 issues), G12 sandbox (primitive 9/9, module 2/2, matches commit msg), mock-guard PASS, DDD/security scans clean, no orphaned dead copy. Found 2 unmet DoD items: (1) Tier1/Tier2 FetchPrice still share ~44 identical lines (fetchers.go:35-83 vs :104-151, only URL differs) -- no doFetch() helper as DoD specifies; (2) running stock-price image (built 2026-08-06) predates this commit by ~20 days (docker inspect/images) -- no rebuild+RAW-verify occurred, production still serves pre-fix null->0 collapse. Cross-ref: same class as READY row FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER.
+**what-considered:**
+- Approve on nil/0-correctness alone (the router's stated focus) vs hold on the row's own full DoD text -- chose full DoD, per verify-committed mandate to check against the row's own acceptance, not a summary.
+- Rebuild the container myself vs flag and route back -- chose flag+route (ops/infra action, outside qa's not_my_job boundary; also a known unconsumed-marker class, not a one-off).
+**why-decision:** DoD literally requires "collapsed to doFetch" and "RAW-verify...after rebuild"; neither happened. vc-changes, routed to po (row carries no owner/owner_agent).
+**why-change:** no change from plan; verdict vc-changes not vc-approved.
