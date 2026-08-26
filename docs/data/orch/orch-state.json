@@ -1323,6 +1323,25 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "rtr-20260826T1435-pdfxa30dedupoverturned",
+        "ts": "2026-08-26T14:35:04Z",
+        "from": "router",
+        "to": "po",
+        "type": "audit_finding",
+        "severity": "HIGH",
+        "status": "NEW",
+        "provenance": "router-verified",
+        "dedup_key": "pdf_extractor_a30_dedup_overturned_evidence_worsened",
+        "summary": "pdf-extractor A-30 dedup suppression OVERTURNED — corrected cgroup evidence is materially worse than the 2026-08-23 entry it was deduping against",
+        "detail": "Tier-1 fire 2026-08-26T14:19Z, signature mem_creep:vn-market-intelligence-mcp-pdf-extractor-1, 92.44% of a live 2560 MiB cap, spawn #5 since 2026-08-24T12:42:19Z. A first system-auditor run returned DEDUPED against microservice_degraded:pdf-extractor:A-30 (ts 2026-08-23T14:12:27Z) and persisted nothing. That verdict rested on a benign-workload premise the ROUTER supplied and which is FALSE: RestartCount=0 / OOMKilled=false / ExitCode=0 are exactly the residue a killed CHILD process leaves, per the explicit ruling already recorded in docs/data/auditor-launchd-ack.json (two CONSTRAINT_MEMCG kills of pdf-extractor python3 workers on 2026-08-23 at 14:27:11Z and 14:58:52Z; that memo states the mem_creep FAILURE is a TRUE POSITIVE and that an ack here would silence a LIVE CRASH SOURCE). Corrected evidence from docs/incidents/data/pdf-extractor-ac7-sampler.csv, 13:59Z-14:24Z: anon share 96.85% -> 99.88%; file-backed cache 52.6 MiB -> 2.1 MiB (nothing reclaimable); reclaim efficiency pgsteal/pgscan 52.2% -> 29.5% while pgscan tripled; workingset_refault_anon +37,749; memory.events.max 1645 -> 2538; VmHWM 2776 MiB, ABOVE the 2560 MiB cap. Between 14:14Z and 14:19Z pgscan/pgsteal froze while ~124 MiB of anon was released - consistent with a worker process exiting, but NOT discriminable from normal completion without the kernel log. A corrective auditor re-run (notebook c19, commit d05308826) affirmed the FAILURE, OVERTURNED the dedup, and escalated because it could not reach the kernel ring buffer. Note the memo warns that buffer ROLLS, so absence of hits proves nothing beyond its live span.",
+        "action_requested": "PO decision needed: (1) whether the A-30 dedup/ack suppression should be pulled given evidence materially worse than the entry it defers to; (2) a capacity/cap ruling for pdf-extractor (the ack ledger states such churn routes to PO for a capacity decision, never a detector change); (3) authorise a read-only kernel-log probe for CONSTRAINT_MEMCG kills on the CURRENT container instance (started 2026-08-26T00:33:39Z) - the auditor lacked access. CONSTRAINT: container 417febec1a03 must NOT be rebuilt, restarted or recreated before ~17:11Z.",
+        "related": [
+          "microservice_degraded:pdf-extractor:A-30",
+          "pdf_extractor_memory_pressure_investigation:A-30",
+          "FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE"
+        ]
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
