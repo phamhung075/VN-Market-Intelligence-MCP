@@ -1,0 +1,43 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "unavailable",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phát triển bất động sản khu dân cư/khu đô thị, môi giới (Đất Xanh Services)",
+  "customer": "Người mua nhà ở thực và nhà đầu tư cá nhân tại TP.HCM và các tỉnh vệ tinh",
+  "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (44+ chu kỳ liên tiếp, unresolved); định giá dựa hoàn toàn trên get_sector_comparison",
+  "mgmt": "ROE 1.9% dưới xa trung vị ngành BĐS (7.3%); PE 66.5x cao gấp ~4x trung vị ngành (16.1x)",
+  "valuation": {
+    "pe": 66.5,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID"
+  },
+  "valuation_note": "AVOID verdict — bullish signal suppressed per Step-2 rule.",
+  "kd_reading": {
+    "hexagram": "Tuy (45)",
+    "trend": "THUAN_LOI",
+    "signal": "THAN_TRONG",
+    "confidence": 0.75,
+    "note": "Diverges from AVOID valuation verdict — flagged, not reconciled. 4th consecutive near-identical draw."
+  },
+  "esc_gate": {
+    "esc1": "NOT EVALUATED (no BCTC data)",
+    "esc2": "NOT EVALUATED (no BCTC data)",
+    "esc3": "NOT EVALUATED (no BCTC data)",
+    "esc4": "NOT EVALUATED (no BCTC data)",
+    "esc5": "NOT EVALUATED (no BCTC data)"
+  },
+  "escalation_status": "NONE",
+  "data_gaps": [
+    "get_bctc_full 'Chưa có dữ liệu', 44th+ consecutive cycle, unresolved (root_task DXG cash-flow-anomaly c162 still pending dev-team pickup)",
+    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  ],
+  "as_of": "2026-08-26T00:20:00Z",
+  "_processed": {
+    "fingerprint": "46bf6244d18f907846413c723823a064ab77e7bdd1efdd527bfbc33f31f9b240",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

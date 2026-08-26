@@ -36,5 +36,11 @@
       "(c) set the fleet TZ to UTC so local and UTC coincide - narrowest, but leaves the general hand-typing class open and would silently change VN-market date handling, so NOT recommended without review"
     ],
     "router_note": "Filed on the FILE plane deliberately, not signal_queue, to avoid racing a PO inbox drain running at the time. Not minting a board row: choosing among (a)/(b)/(c) is an agent-architecture decision. Corrections were NOT applied to the ops artifacts - out of router scope and the evidence body is already correct."
+  },
+  "_processed": {
+    "fingerprint": "3930f6457ca08fd0226d1d9aa7d14ce5e69f9b0833756fead02034ebd1143c76",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

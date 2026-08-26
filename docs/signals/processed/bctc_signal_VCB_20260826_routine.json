@@ -1,0 +1,41 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng bán lẻ và doanh nghiệp, tín dụng, tài trợ thương mại, bancassurance",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, khách hàng SME",
+  "ops": "Thu nhập lãi thuần 17.421 tỷ VND; lợi nhuận từ HĐKD chiếm 80.9% doanh thu; ROE 16.7% (annualized) dưới trung vị ngành ngân hàng (17.6%)",
+  "mgmt": "OCF/NI ratio quý này 1.37x (divergence 36.81%, dưới ngưỡng cảnh báo 40%); balance sheet lệch nhẹ 0.37% (dưới ngưỡng 0.5%)",
+  "valuation": {
+    "pe": 14.1,
+    "ey_spread_pp": 2.09,
+    "verdict": "FAIR"
+  },
+  "kd_reading": {
+    "hexagram": "Tieu Qua (62)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence": 0.37
+  },
+  "esc_gate": {
+    "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.37%)",
+    "esc3": "FALSE (4/4 quarters, divergence 36.81% < 40% threshold)",
+    "esc4": "N/A (bank — operating_profit > pretax_profit structurally, non_operating_share formula not applicable)",
+    "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+  },
+  "escalation_status": "NONE",
+  "data_gaps": [
+    "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
+    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  ],
+  "as_of": "2026-08-26T00:20:00Z",
+  "_processed": {
+    "fingerprint": "7a92cd4c9d423cce81d4f07a85b0268a25123339c3bebb265d6895c56579ec16",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

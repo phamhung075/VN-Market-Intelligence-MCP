@@ -1,0 +1,14 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Stage 3 signal post failed: MCP post_agent_signal unavailable — database disk image is malformed. Also affected: record_evidence_fragment tool. Infrastructure corruption prevents cycle completion. 4 high-impact chain_catalyst candidates unable to post (gold_safehaven_risk 10/10 bearish, market_breadth_divergence 10/10 bearish, investor_exodus 8/10 bearish, tech_rally_momentum 8/10 bullish). Cycle blocked at signal dispatch stage.",
+  "priority": "high",
+  "createdAt": "2026-08-26T00:05:00Z",
+  "_processed": {
+    "fingerprint": "d07d8e9bae8232b8e91d8fc9abe3903893a759273ca132cb3419a3c950a1f4af",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

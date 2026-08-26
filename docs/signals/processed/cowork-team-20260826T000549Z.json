@@ -63,5 +63,11 @@
     "note": "4-slot fan-out, MAX_PARALLEL=4 single batch (headroom 5291MB, load1m=4, cores=12, degraded=false); all 4 claims won; Step 4.7 snapshot written"
   },
   "priority": "low",
-  "createdAt": "2026-08-26T00:05:49Z"
+  "createdAt": "2026-08-26T00:05:49Z",
+  "_processed": {
+    "fingerprint": "7c478dc0d7a0013566564fc822a1d62ff47aae8ac986e81282e03ab919b39113",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

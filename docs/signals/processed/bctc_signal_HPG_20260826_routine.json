@@ -1,0 +1,42 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+  "customer": "Ngành xây dựng, cơ khí chế tạo trong nước; xuất khẩu thép sang ASEAN/EU",
+  "ops": "Biên lợi nhuận gộp 15.8%; operating_profit=0 trong get_bctc_full (dữ liệu OCR nghi lỗi, 40+ chu kỳ liên tiếp) — net_profit (9.055,9 tỷ) > gross_profit (8.365,1 tỷ), validation flag 'possible non-operating income'",
+  "mgmt": "ROE 6.5% (raw quý) / 12.7% (annualized, sector-comparison), trên trung vị ngành thép (2.9%)",
+  "valuation": {
+    "pe": 14.2,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR"
+  },
+  "kd_reading": {
+    "hexagram": "Khon (47)",
+    "trend": "BAT_LOI",
+    "signal": "GIU",
+    "confidence": 0.25
+  },
+  "esc_gate": {
+    "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.00%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:HPG:Q1-2026:ESC-3 held by prior session)",
+    "esc4": "DISCARDED (operating_profit=0 corrupt input, 40th+ consecutive cycle)",
+    "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+  },
+  "escalation_status": "NONE",
+  "data_gaps": [
+    "operating_profit=0 corrupt in get_bctc_full, 40th+ consecutive cycle, unresolved",
+    "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
+    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  ],
+  "as_of": "2026-08-26T00:20:00Z",
+  "_processed": {
+    "fingerprint": "c21f4c269bc4616042e04c53662f70936ad8fd28839ed4f71de187ceb1fc9b81",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

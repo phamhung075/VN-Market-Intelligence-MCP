@@ -1,0 +1,43 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT trong nước và nước ngoài (offshore), thuê bao viễn thông cá nhân, học sinh/sinh viên",
+  "ops": "Biên lợi nhuận gộp 34.0%; lợi nhuận từ công ty liên kết tăng 36% YoY (đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/01/2026)",
+  "mgmt": "ROE 6.2% (raw quý) / 28.3% (annualized, sector-comparison); balance sheet cân đối (balance_check PASSED, imbalance 0.00%)",
+  "valuation": {
+    "pe": 13.8,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR"
+  },
+  "kd_reading": {
+    "hexagram": "Tieu Qua (62)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence": 0.37
+  },
+  "esc_gate": {
+    "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.00%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:FPT:Q1-2026:ESC-3 held by prior session)",
+    "esc4": "FALSE (non_operating_share 2.00%)",
+    "esc5": "TRUE (7/15 refine units <0.50 confidence, min=0.45, unit-0008..0014) — esc-deep-dive-request dispatched to dev-team this cycle"
+  },
+  "escalation_status": "PENDING",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+  "data_gaps": [
+    "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
+    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  ],
+  "as_of": "2026-08-26T00:20:00Z",
+  "_processed": {
+    "fingerprint": "6fb6b45e6987e0be4dd05957e1e907a63a44cd389fbc8d36ef6e988365b87ed2",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

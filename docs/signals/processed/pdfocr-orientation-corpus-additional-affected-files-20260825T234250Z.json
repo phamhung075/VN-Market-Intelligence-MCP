@@ -7,5 +7,11 @@
   "related": [
     "FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE"
   ],
-  "createdAt": "2026-08-25T23:42:50Z"
+  "createdAt": "2026-08-25T23:42:50Z",
+  "_processed": {
+    "fingerprint": "b5d247adeee9b01bd34ccd4a23d4b2f5f33b44a7590db528dd406d7786da1bf6",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

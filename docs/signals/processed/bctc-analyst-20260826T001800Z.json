@@ -1,0 +1,14 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "record_evidence_fragment failing 9/9 this cycle (FPT/HPG/VCB/DXG) with \"database disk image is malformed\", confirmed on retry (not transient). Correlates with same-window system_status errors: push-news pipeline failed + get_portfolio_conviction disk I/O error — likely shared SQLite corruption. Evidence pipeline (nightly LR accumulator) starved this cycle; core bctc_signal emission unaffected (uses Write tool, not this DB).",
+  "priority": "high",
+  "createdAt": "2026-08-26T00:18:00Z",
+  "_processed": {
+    "fingerprint": "c28a012090b6e3742124b2558f40f533bb3a168cf00f5db116e2ea6f278b072e",
+    "processedAt": "2026-08-26T00:13:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

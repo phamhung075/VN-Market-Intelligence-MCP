@@ -24244,9 +24244,417 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-25T23:34:34Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-26T00:13:49Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "3930f6457ca08fd0226d1d9aa7d14ce5e69f9b0833756fead02034ebd1143c76",
+        "source": "file",
+        "from": "dev-team",
+        "to": "agents-architect",
+        "type": "recurring-bug",
+        "priority": "WARN",
+        "payload": {
+          "module": "docs/agents/*/flow/ — artifact timestamp discipline",
+          "trigger": "Escalation condition set by the 2026-08-14 note in feedback_hand_typed_iso_timestamps_drift_into_the_future has fired: a 3rd distinct agent type (ops) hit the class, and it hit an artifact-identity field, not merely an informational completion stamp.",
+          "agent_types_confirmed": [
+            "router (2026-07-21)",
+            "architect (2026-08-14)",
+            "ops (2026-08-25)"
+          ],
+          "mechanism_is_new": "Prior cases were forward-rounding guesses. This one is systematic: the host local zone is Europe/Paris (UTC+2); ops read the LOCAL wall-clock and appended Z. Flat +2h offset that also rolled the calendar date forward one day. Reproducible and cheap to detect - any stamp exactly +2h off real UTC on this host is this bug. NOT clock drift: the machine clock is correct, only the label is wrong.",
+          "evidence": {
+            "wrong_label_sites": [
+              "docs/incidents/ops-cycle-20260826-dual-rebuild-mcp-pdf.md title+filename: 2026-08-26T01:13Z",
+              "docs/agent-memory/notebooks/ops.md headings (2 sites): 2026-08-26T01:13Z",
+              "same incident doc, deploys-complete-by line: 2026-08-26T01:13:47Z UTC"
+            ],
+            "real_utc": "2026-08-25T23:13Z (host date -u, cross-checked against docker inspect image Created 2026-08-25T23:12:41Z and StartedAt 23:12:46Z)",
+            "correct_sites_in_same_doc": [
+              "23:12:21Z",
+              "23:13:16Z",
+              "23:13:58Z"
+            ]
+          },
+          "root_cause": "docs/agents/ops/flow/docker.md:101 ALREADY mandates `date -u` copied verbatim, added by FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE (2026-08-05) to close exactly this class. Ops obeyed it inside the named Deploy-Evidence Capture block and violated it in the document title/filename/cycle heading. The mandate is scoped to an evidence block and does not generalise to the artifact identity fields, which are what a reader, an auditor or an ls-by-date keys on FIRST. Result: a committed record that contradicts itself (title 01:13Z vs body 23:13Z) - the same shape that once triggered a false fabricated-timestamp investigation.",
+          "second_order_risk": "A +2h label silently corrupts any reasoning stated in terms of it. Ops concluded it finished >30m before VN market open at 02:00Z; true headroom was 2h47m, not 47m. Conclusion survived by luck of direction. Near the 02:00-08:59Z pdf-extractor prohibition, a +2h misread can place an agent on the WRONG side of the window while it believes it is clear - e.g. real 08:30Z reads as local 10:30 and looks post-window.",
+          "coverage_gap": "`date -u` appears in ZERO of the 30 docs/agents/*/flow/main.md files. It exists only in per-topic sub-flows such as docker.md, so agents whose cycle does not route through such a sub-flow inherit no rule at all.",
+          "candidate_directions": [
+            "(a) hoist a timestamp-capture rule to a fleet-wide standard every flow inherits, covering artifact IDENTITY fields (filename/title/cycle label) explicitly, not just evidence blocks",
+            "(b) cheap post-write check comparing emitted stamps against real UTC, fail loud on nonzero offset",
+            "(c) set the fleet TZ to UTC so local and UTC coincide - narrowest, but leaves the general hand-typing class open and would silently change VN-market date handling, so NOT recommended without review"
+          ],
+          "router_note": "Filed on the FILE plane deliberately, not signal_queue, to avoid racing a PO inbox drain running at the time. Not minting a board row: choosing among (a)/(b)/(c) is an agent-architecture decision. Corrections were NOT applied to the ops artifacts - out of router scope and the evidence body is already correct."
+        },
+        "createdAt": "2026-08-25T23:25:30Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "04026a3dacf46c5b4286640f241cf2ae590ff828c781affb5bc3f722111ffde0",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "ROUTER SCOPE AMENDMENT to the qa signal filed minutes earlier (pdfocr-orientation-corpus-additional-affected-files-20260825T234250Z.json). That signal is CORRECT in direction but understates scope by ~40x: it names 2 additional files and recommends \"a small follow-up FIX/maintenance row\". A full corpus scan I ran during return-verification measures 79 FILES / 312 PAGES still carrying pre-fix rotation garble in data/live/market.db pdf_extracted_text. Mint the row at THAT size, not at 2 files.\n\nMEASUREMENT (router, independent, read-only on data/live/market.db; 15887 pages / 372 filenames scanned):\n- 79 files, 312 garbled pages, spanning 25 tickers: ACB BID BSR DBC DGC DHG DIG DPM DXG GAS HPG HSG HUT KBC KDC MWG SAB SHB VCI VHM VIC VJC VPB (+ long-form CBTT filenames).\n- Worst: VIC_2026_Q2 15/71, VIC_2025_Q4 14/72, KBC_2026_Q2 13/58, GAS-2025-kiem-toan 13/68, KBC_2026_Q1 10/56, KBC_2025_Q4 10/56, KBC.pdf 10/56.\n- All affected rows have extracted_at BETWEEN 2026-04-29 AND 2026-08-24 = all pre-orientation-fix. Consistent with a single root cause, already fixed forward by 905e32be1/8d361eee9; this is purely stored-corpus invalidation.\n\nDISCRIMINATOR (calibrated, hand it to whoever builds the sweep so they do not redo this):\n  garbled  <=> vietnamese_diacritic_density < 0.10 AND reversed_token_hits >= 3\n  Calibration on 4 known-garbled vs 5 known-correct pages gave CLEAN separation with no overlap:\n    garbled : density 0.017-0.058, hits 11-72\n    correct : density 0.222-0.270, hits 0\n  reversed-token regex (case-insensitive, word-bounded):\n    Bu[oộôó]p|yeq|Yu[ilr]y|nes|u[eệ]n[yh]u|eno|enuy|Bugp|Budp|Bud[ií]p|Buoyy|jeos|neq|Aex|oyo|uea|Yury|yueop|Budng|Bunp\n  Guards that matter: skip pages with <200 alpha chars (short/blank pages are a DIFFERENT defect); str()-coerce text_content (some rows store INTEGER, sqlite is dynamically typed and .isalpha() throws on them).\n  KNOWN PRECISION LIMIT, disclosed: 6/6 spot-checked pages were genuinely broken, but 5/6 were orientation garble and 1 (SAB_2026_Q1 p10) was a near-blank total-OCR-miss. The predicate detects \"page is broken\", slightly broader than \"page is rotated\". A separate low-diacritic-but-NO-signature population exists (199 files / 1706 pages) that is mostly legitimate English/numeric pages - do NOT sweep that set blind.\n\nCOST, AND THE REASON TO CHANGE THE SCRIPT FIRST:\n  scripts/migrations/reextract-pdf-ocr-orientation.ts is --filename-scoped and re-extracts EVERY page of a file (it DELETEs by filename then re-inserts all pages). Under that mode the sweep re-OCRs 3786 pages ~= 7.4h @7s/page. Only 312 of those pages are actually broken. Adding an optional --pages <list> (delete+reinsert only the named page_numbers, INSERT OR REPLACE already supports it) cuts the sweep to 312 pages ~= 0.6h, a 12.1x reduction. RECOMMEND: make that script change part of the row, ahead of the sweep - a 7.4h CPU-bound sweep will not fit the pre-market window, a 0.6h one fits comfortably.\n\nSCHEDULING CONSTRAINT: the migration shells pdftoppm+tesseract directly and does NOT route through the pdf-extractor service, so the 02:00-08:59Z pdf-extractor prohibition does not bind it de jure - but a multi-hour CPU-saturating sweep across VN market open is still wrong. Run it in the off-market window.\n\nNOT DONE BY ROUTER, DELIBERATELY: no remediation run, no script edit, no row minted - router is dispatch-only. Detector lives at scratchpad/scan2.py + cost.py for this session only; it is NOT persisted to scripts/ and will be lost, so whoever picks this up should re-home it under scripts/audits/ per dev-standards Script Persistence.",
+        "createdAt": "2026-08-25T23:53:17Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e10336d258cd0134fc204de2bfdc3c3946c27c571651d47c38c166c4a32d3a40",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "priority": "HIGH",
+        "payload": {
+          "trigger_id": "ESC-5",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "context": {
+            "low_confidence_unit_ids": [
+              "unit-0008",
+              "unit-0009",
+              "unit-0010",
+              "unit-0011",
+              "unit-0012",
+              "unit-0013",
+              "unit-0014"
+            ],
+            "min_confidence": 0.45
+          },
+          "all_esc_fired": [
+            "ESC-5"
+          ]
+        },
+        "createdAt": "2026-08-26T00:12:00Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "ESC-DISPATCH"
+      },
+      {
+        "envelope_id": "c28a012090b6e3742124b2558f40f533bb3a168cf00f5db116e2ea6f278b072e",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "record_evidence_fragment failing 9/9 this cycle (FPT/HPG/VCB/DXG) with \"database disk image is malformed\", confirmed on retry (not transient). Correlates with same-window system_status errors: push-news pipeline failed + get_portfolio_conviction disk I/O error — likely shared SQLite corruption. Evidence pipeline (nightly LR accumulator) starved this cycle; core bctc_signal emission unaffected (uses Write tool, not this DB).",
+        "createdAt": "2026-08-26T00:18:00Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "46bf6244d18f907846413c723823a064ab77e7bdd1efdd527bfbc33f31f9b240",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "unavailable",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Phát triển bất động sản khu dân cư/khu đô thị, môi giới (Đất Xanh Services)",
+          "customer": "Người mua nhà ở thực và nhà đầu tư cá nhân tại TP.HCM và các tỉnh vệ tinh",
+          "ops": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' (44+ chu kỳ liên tiếp, unresolved); định giá dựa hoàn toàn trên get_sector_comparison",
+          "mgmt": "ROE 1.9% dưới xa trung vị ngành BĐS (7.3%); PE 66.5x cao gấp ~4x trung vị ngành (16.1x)",
+          "valuation": {
+            "pe": 66.5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "valuation_note": "AVOID verdict — bullish signal suppressed per Step-2 rule.",
+          "kd_reading": {
+            "hexagram": "Tuy (45)",
+            "trend": "THUAN_LOI",
+            "signal": "THAN_TRONG",
+            "confidence": 0.75,
+            "note": "Diverges from AVOID valuation verdict — flagged, not reconciled. 4th consecutive near-identical draw."
+          },
+          "esc_gate": {
+            "esc1": "NOT EVALUATED (no BCTC data)",
+            "esc2": "NOT EVALUATED (no BCTC data)",
+            "esc3": "NOT EVALUATED (no BCTC data)",
+            "esc4": "NOT EVALUATED (no BCTC data)",
+            "esc5": "NOT EVALUATED (no BCTC data)"
+          },
+          "escalation_status": "NONE",
+          "data_gaps": [
+            "get_bctc_full 'Chưa có dữ liệu', 44th+ consecutive cycle, unresolved (root_task DXG cash-flow-anomaly c162 still pending dev-team pickup)",
+            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+          ],
+          "as_of": "2026-08-26T00:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6fb6b45e6987e0be4dd05957e1e907a63a44cd389fbc8d36ef6e988365b87ed2",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp CNTT trong nước và nước ngoài (offshore), thuê bao viễn thông cá nhân, học sinh/sinh viên",
+          "ops": "Biên lợi nhuận gộp 34.0%; lợi nhuận từ công ty liên kết tăng 36% YoY (đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/01/2026)",
+          "mgmt": "ROE 6.2% (raw quý) / 28.3% (annualized, sector-comparison); balance sheet cân đối (balance_check PASSED, imbalance 0.00%)",
+          "valuation": {
+            "pe": 13.8,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kd_reading": {
+            "hexagram": "Tieu Qua (62)",
+            "trend": "TRUNG_TINH",
+            "signal": "GIU",
+            "confidence": 0.37
+          },
+          "esc_gate": {
+            "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "esc2": "FALSE (imbalance 0.00%)",
+            "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:FPT:Q1-2026:ESC-3 held by prior session)",
+            "esc4": "FALSE (non_operating_share 2.00%)",
+            "esc5": "TRUE (7/15 refine units <0.50 confidence, min=0.45, unit-0008..0014) — esc-deep-dive-request dispatched to dev-team this cycle"
+          },
+          "escalation_status": "PENDING",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "data_gaps": [
+            "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
+            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+          ],
+          "as_of": "2026-08-26T00:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c21f4c269bc4616042e04c53662f70936ad8fd28839ed4f71de187ceb1fc9b81",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+          "customer": "Ngành xây dựng, cơ khí chế tạo trong nước; xuất khẩu thép sang ASEAN/EU",
+          "ops": "Biên lợi nhuận gộp 15.8%; operating_profit=0 trong get_bctc_full (dữ liệu OCR nghi lỗi, 40+ chu kỳ liên tiếp) — net_profit (9.055,9 tỷ) > gross_profit (8.365,1 tỷ), validation flag 'possible non-operating income'",
+          "mgmt": "ROE 6.5% (raw quý) / 12.7% (annualized, sector-comparison), trên trung vị ngành thép (2.9%)",
+          "valuation": {
+            "pe": 14.2,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kd_reading": {
+            "hexagram": "Khon (47)",
+            "trend": "BAT_LOI",
+            "signal": "GIU",
+            "confidence": 0.25
+          },
+          "esc_gate": {
+            "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "esc2": "FALSE (imbalance 0.00%)",
+            "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:HPG:Q1-2026:ESC-3 held by prior session)",
+            "esc4": "DISCARDED (operating_profit=0 corrupt input, 40th+ consecutive cycle)",
+            "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+          },
+          "escalation_status": "NONE",
+          "data_gaps": [
+            "operating_profit=0 corrupt in get_bctc_full, 40th+ consecutive cycle, unresolved",
+            "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
+            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+          ],
+          "as_of": "2026-08-26T00:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7a92cd4c9d423cce81d4f07a85b0268a25123339c3bebb265d6895c56579ec16",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng bán lẻ và doanh nghiệp, tín dụng, tài trợ thương mại, bancassurance",
+          "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, khách hàng SME",
+          "ops": "Thu nhập lãi thuần 17.421 tỷ VND; lợi nhuận từ HĐKD chiếm 80.9% doanh thu; ROE 16.7% (annualized) dưới trung vị ngành ngân hàng (17.6%)",
+          "mgmt": "OCF/NI ratio quý này 1.37x (divergence 36.81%, dưới ngưỡng cảnh báo 40%); balance sheet lệch nhẹ 0.37% (dưới ngưỡng 0.5%)",
+          "valuation": {
+            "pe": 14.1,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kd_reading": {
+            "hexagram": "Tieu Qua (62)",
+            "trend": "TRUNG_TINH",
+            "signal": "GIU",
+            "confidence": 0.37
+          },
+          "esc_gate": {
+            "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
+            "esc2": "FALSE (imbalance 0.37%)",
+            "esc3": "FALSE (4/4 quarters, divergence 36.81% < 40% threshold)",
+            "esc4": "N/A (bank — operating_profit > pretax_profit structurally, non_operating_share formula not applicable)",
+            "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+          },
+          "escalation_status": "NONE",
+          "data_gaps": [
+            "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
+            "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+          ],
+          "as_of": "2026-08-26T00:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "eb3240694482ec01a9776d05aab8269b5e649b833f93e293d51d177a1a677ab4",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-29.md",
+          "line_count": 198,
+          "cap": 600,
+          "byte_count": 52161,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 16161,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-25T23:43:41Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7c478dc0d7a0013566564fc822a1d62ff47aae8ac986e81282e03ab919b39113",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T00:05:49Z",
+          "matched_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md",
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-4": "cron",
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-4": null,
+            "news-scout-offhours": 30,
+            "market-watcher-offhours": 30,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-26T00:05:35Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "00:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 40,
+          "note": "4-slot fan-out, MAX_PARALLEL=4 single batch (headroom 5291MB, load1m=4, cores=12, degraded=false); all 4 claims won; Step 4.7 snapshot written"
+        },
+        "createdAt": "2026-08-26T00:05:49Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d07d8e9bae8232b8e91d8fc9abe3903893a759273ca132cb3419a3c950a1f4af",
+        "source": "file",
+        "from": "news-scout",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "Stage 3 signal post failed: MCP post_agent_signal unavailable — database disk image is malformed. Also affected: record_evidence_fragment tool. Infrastructure corruption prevents cycle completion. 4 high-impact chain_catalyst candidates unable to post (gold_safehaven_risk 10/10 bearish, market_breadth_divergence 10/10 bearish, investor_exodus 8/10 bearish, tech_rally_momentum 8/10 bullish). Cycle blocked at signal dispatch stage.",
+        "createdAt": "2026-08-26T00:05:00Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b5d247adeee9b01bd34ccd4a23d4b2f5f33b44a7590db528dd406d7786da1bf6",
+        "source": "file",
+        "from": "qa",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": "FOLLOW-UP TO FIX-MCPSERVER-PDFOCRWORKER-OCRONEPAGE-NO-ORIENTATION-4TH-OCR-SITE (commit 8d361eee9, DONE_VERIFIED). During AC-2/AC-3 QA verification I invalidated + re-extracted the two exemplar filenames the dev row itself measured (DBC_2024_Q4.pdf + DBC_2025_Q4.pdf pages 12/15; VIC_2026_Q1.pdf 19 rotated pages) -- all confirmed recovering correct Vietnamese text via direct read (not confidence field). While resolving the real filenames I independently spot-checked adjacent report files NOT in this row's named scope and found the SAME pre-fix rotation garble still live and un-remediated in market.db pdf_extracted_text: VIC_2025_Q4.pdf (pages 10, 65 confirmed garbled) and VIC_2026_Q2.pdf (pages 10, 60, 65 confirmed garbled). I did not re-extract these -- out of scope for the QA row I was dispatched to close, and a full corpus sweep (every DBC/VIC/other-ticker filename x every page) was not attempted given time budget. RECOMMEND: a small follow-up FIX/maintenance row to (1) sweep ALL filenames in pdf_extracted_text for the same signature (very short OR reversed-looking text_content on pages whose neighbours are normal Vietnamese) and (2) run scripts/migrations/reextract-pdf-ocr-orientation.ts --apply per affected filename (script already proven correct+reusable, ~5-10s/page). Full raw evidence in the FIX row's own status_note dated 2026-08-25T23:4x (this QA cycle).",
+        "createdAt": "2026-08-25T23:42:50Z",
+        "drained_at": "2026-08-26T00:13:49Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
