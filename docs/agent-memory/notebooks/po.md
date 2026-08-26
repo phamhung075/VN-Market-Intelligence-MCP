@@ -48,3 +48,46 @@ outside the block window — it would have stopped none). Pacing is the fix.
   unhealthy" — folded, NOT closed as clean FP. Tier-1 probe not re-run (it mutates its own verdict). My
   orch-state writes were swept into peer commit `9dc224dc3`; verified in HEAD by content, not my own `--stat`.
   PUSH-BACKSTOP skipped — push DISARMED, CI RED.
+
+## 2026-08-26T11:20Z — inbox 30→0, 5 mints, 9 folds, 1 close, 3 board fixes, 1 caller item refuted
+
+Journal: `docs/agent-memory/decisions/triage-20260826T1120Z-po.md`. **Inbox 30→0 · 5 mints · 9 folds · 1
+backlog→done_verified · 3 `.signal_queue` rows closed.** Two `orch-apply` pipes (`scripts/po-triage-
+20260826T1120Z-inbox30-folds-mints-board-fixes.jq`, then the declared CLEAR); conservation clean
+(task_total 889→894), `inbox_row_identity=clean`, prose-ceiling 0 net-new-growth, `.head` untouched.
+
+### 1. The caller's own HIGH signal was false — check it before minting the P1 it asks for
+`rtr-...1116` claimed SECONDARY-Drain had dispatched ZERO agents in 25 days on a `claimed_at` vs
+`secondary_claimed_at` readback mismatch. `main.md:1214` filters on `secondary_claimed_at`/`_by`, all lanes;
+the claim script stamps exactly those (`:162-163,:174-175`). Tell was internal: the same signal cited
+`183e1ad8f` as an incomplete fix, and `git show` said that commit did the missing thing. Author retracted
+independently. **Nothing minted.** The lane's one real claim (`FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58`,
+target=po) was discharged inline — no second PO spawned.
+
+### 2. That row was deadlocked by construction, and `grep` said otherwise
+Its `blocked_by` named `TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX`. `grep` finds 3 hits in orch-state.json;
+`po-board-dedup-search.sh` resolves **no `task_board.<lane>[i]` path** — all 3 hits are inside this row's own
+`blocked_by`/`children`/ruling fields. Self-referential dangling dep, unresolvable forever. Sibling
+`TASK_002` was `status=BLOCKED` — a freeze no picker admits, so it could never REACH the DONE_VERIFIED the
+parent waits on. Verified the defect is still live (`system-map.json .project.watchlist` = 34 vs 58) before
+unwedging: dep dropped, `TASK_002` BLOCKED→BACKLOG. Real critical path is `TASK_001` (ready[], ops).
+
+### 3. Envelope payloads lied in BOTH directions — measure the disk
+5 `context_bloat_breach` were STALE (fixed by `98f20610b` after firing): SKILL.md 199L/11432B,
+register.md 167L/11555B, standalone 200L/11728B — all clear. Closed the satisfied row to `done_verified[]`
+with a real `verification.raw_probe` (RC-VERIF §8A). Inverse: `tran-ngoc-bau.md` reported 12860B, measures
+**43100B** — a split sized off the payload would be sized wrong by 30KB. `qa-30.md` was not DEFER-eligible
+because `qa-31.md` exists, i.e. frozen not live.
+
+### 4. QA-drain `blocked_by` gap is per-CALL-SITE, not manual-vs-auto
+`grep -c deps_satisfied`: qa-drain **0**, secondary-drain **0**; the two backlog-lane pickers **do** call it.
+So `FIX-DEVTEAM-MANUAL-DISPATCH-BYPASSES-DEPS-SATISFIED-GATE`'s title premise ("auto-pickers are covered")
+is false — corrected on that row, new row minted for the two drains. Defused the armed 14:00Z re-burn by
+flipping `FACTORY-STOCK` `next_agent` qa→developer: that also MOVES it into the SECONDARY-drain set
+(`next_agent!="qa"`), so it gains a dispatch path rather than just a later alarm.
+
+### Carry-over
+- `FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-...` is 11738B/12000B — **cannot absorb any further evidence.**
+  Needs `detail_ref` cold-store migration before the next fold. One fold rehosted this tick because of it.
+- `observability_defect` has no row in EITHER routing table; add alongside recurring-bug when that row ships.
+- `cron-detect-loop/register.md` 173L/12349B is a REAL open breach — do NOT close with the cron-skill family.
