@@ -24532,7 +24532,7 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T07:50:57Z",
+    "_updated_at": "2026-08-26T08:13:57Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24819,6 +24819,163 @@
         },
         "createdAt": "2026-08-26T07:36:40Z",
         "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4cbba1c9dc41aa13e3c8674a2b89dee45b854482f842212275a9ad298b00126f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/alert-commander.md — retained section '## c284 · 2026-08-26T07:53:49Z (slot=alert-commander-market, tick=07:51)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-26T08:09:32Z",
+        "drained_at": "2026-08-26T08:13:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1962946095a42a4cfd4c52d25e37e4081ccb9781d29745769c39d1ded38ccb91",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T07:52:00Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T07:51:07Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "07:45",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": [
+            "DECOY 4th consecutive prospective confirmation: FILE_TICK=07:49 overwrote the 2026-08-25T07:49:47Z decoy (16668B to 15971B) at 07:49:46Z -- ONE SECOND before that decoy became prune-eligible (-mmin +1440). At the 24h anniversary minute the two death mechanisms converge; the snapshot COUNT discriminates them (overwrite keeps 41, prune would yield 40). Count held at 41, so overwrite won.",
+            "08-25 residue now 14 files (was 15). They begin pruning from roughly 08:0x onward as each crosses its own 24h mark.",
+            "Step 5.1 locale-comma: 23rd confirmation. The ACTUAL spec line (spawn-fanout.md:191) yields 3 from a true 1-min load of 3,18 -- the gsub strips the leading text and takes the pre-comma integer. Latent, non-binding at threshold 24.",
+            "ROUTER SELF-CORRECTION this tick: an ad-hoc awk RECONSTRUCTION of line 191 produced 88, which would have tripped DEGRADED and halved max_parallel. Reading the real line showed gsub makes it 3. A reconstructed probe must never be reported as spec behavior -- read the line.",
+            "signal_backlog 31 matched an independent file recount (18th consecutive match). Dropped 33 to 31 since the prior tick.",
+            "cycle_snapshot_promoted false -- 58th consecutive. cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z.",
+            "calendar_status open -- 51st+ consecutive. Architect-owned computation defect, unchanged.",
+            "cycle-snapshot-latest.json regime_status and volatility_level both ABSENT (17th verification); its own macro carry regime reads UNKNOWN.",
+            "Prior-tick sample 10 recorded on the P0 snapshot row (commit 8a011f1bc): the runtime consumer hit cycle-snapshot-07:34.json when neither nominal 07:30 nor round-5 07:35 existed on disk, so it follows NEITHER written spec. Restate that row as spec-vs-runtime divergence before scoping."
+          ]
+        },
+        "createdAt": "2026-08-26T07:52:00Z",
+        "drained_at": "2026-08-26T08:13:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6ec1cc4d0b8e32cec953ab1a78bb8614eb3aa45cd507d262665a1b733798ea8b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T08:06:33Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-market": "cron",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 30,
+            "market-watcher-offhours": 30,
+            "alert-commander-market": null,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-26T08:05:49Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": [
+            "4-slot fan-out, largest today. max_parallel=4 so ONE batch, no inter-batch wait.",
+            "Step 4b collision (WARNING only, R3 permits): alert-commander-market and alert-commander-critical share BOTH agent and flow_path. Both spawned, distinguished only by the slot= token in the trigger prompt.",
+            "Step 0a: 1 NEW signal row (sys-20260826T080003-2786, from=system-auditor, to=po). HELD at NEW, deliberately NOT marked READ -- PO selects on status==NEW and has no cowork slot, so marking it READ would strand it. Known trap, confirmed twice previously.",
+            "HAZARD, first identified PROSPECTIVELY: docs/data/cycle-snapshot-08:05.json exists but is the 2026-08-25 decoy (mtime and internal created_at both 2026-08-25T08:05:08Z). Step 4.7 prune ran at 08:04:32Z -- 36 SECONDS before that decoy crossed its 24h eligibility -- so it is alive across this exact spawn window. Under the raw-own-clock exact-match consumer behavior established at c281-c284, an agent bootstrapping at 08:05 resolves a REAL path to 24h-old market data, and the <=7min freshness gate is the ONLY guard. Failure signature to watch on return: any agent reporting a snapshot HIT at key 08:05.",
+            "Sample #12 pre-registered BEFORE spawn (correcting the post-hoc scoring that produced the retracted #10 finding): producer wrote key 08:04 at 08:04:32Z for nominal tick 08:00; spawn completed 08:05:49Z; expected consumer keys 08:05 through 08:07. Four agents on one shared consumer code path gives four independent within-tick replicates.",
+            "Snapshot count 41 to 42 -- Step 4.7 wrote a NEW key (08:04, no pre-existing file) and the prune removed nothing.",
+            "Step 5.1 locale-comma: 24th confirmation. Real spec line yields 4 from a true 1-min load of 4,86. Non-binding at threshold 24.",
+            "container_vm_headroom_mb 3099 to 2459 -- largest single-tick drop today, consistent with 4 concurrent agents. Still clear of the 1500 floor, but this is the first tick where one more simultaneous fan-out would bring the DEGRADED branch into play.",
+            "signal_backlog 31 matched an independent file recount (19th consecutive match). cycle_snapshot_promoted false, 59th consecutive. calendar_status open, 52nd+.",
+            "PRIOR-TICK CORRECTION: the newest-file claim recorded on FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK... after sample #10 was WRONG; retracted and replaced in commit 85bd4498b. c281-c284 show the consumer keys on its OWN wall-clock minute, matched exactly, with no nearest-file fallback."
+          ]
+        },
+        "createdAt": "2026-08-26T08:06:33Z",
+        "drained_at": "2026-08-26T08:13:57Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
