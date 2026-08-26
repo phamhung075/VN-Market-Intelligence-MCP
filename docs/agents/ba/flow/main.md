@@ -57,6 +57,8 @@ feature priority | VN term translation | data source availability | historical v
 - Data quality: [Vietnamese-specific issue]
 ```
 
+**FR behavior predicate (P0/P1 `apps/` FRs only, FIX-BEHAVIORAL-VERIFICATION-GATE-MINT-SIDE 2026-08-26):** for any FR above whose DDD-layer implementation lands in an `apps/<service>/` zone AND whose eventual task row will carry `priority: P0`/`P1`, add one line under that FR: `Behavior predicate: <shell one-liner> expect <value>`. This is the same `verification.behavior_predicate:{cmd,expect}` field PO mints onto the row at kickoff (`docs/agents/po/flow/main.md`, `docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md` §5a/§9) — ba supplies the candidate command here so PO does not have to invent one cold. **Cutoff:** `BEHAVIOR_PREDICATE_CUTOFF = "2026-08-26T19:57:54Z"` — FRs whose dispatching row was minted before that instant are exempt, the field did not exist yet. NFR-only FRs and non-`apps/` FRs never need one.
+
 **5.** If the task row that dispatched you already exists in `.task_board` (the normal case — dev-team/po promoted it with `next_agent: "ba"`), UPDATE that SAME row in place: add `ba_spec_complete: true`, `ba_handoff: "<spec path>"`, `ba_completed_at: "<ISO-8601 UTC now>"`, and set `next_agent` to `"po"` (if blockers) or `"architect"` (if clean). Do NOT mint a duplicate row in `.task_board.backlog[]` — a prior cycle (BA-IND-P1-MOMENTUM-RS) did this and left the real `ready[]` row un-transitioned, requiring router reconciliation to remove the dup. Only create a brand-new `.task_board.backlog[]` row when BA is originating a requirement with no existing dispatching row (rare — e.g. an unprompted discovery).
 
 ## Output to `docs/data/orch/orch-state.json .task_board`
