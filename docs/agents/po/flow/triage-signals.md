@@ -50,8 +50,8 @@ ACK each processed signal by writing the result into your notebook entry (no fil
 
 **Durable-inbox CLEAR (executable — FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ, 2026-08-22):** run once, as the LAST action of Pipeline-A processing, after every entry in the `pendingSignals[]` read at the top of this step has been routed (including the "any unknown type" catch-all row — routed, not necessarily task-minted). Subtracts by `envelope_id`, never a blind `= []` — defensive against an entry landing between the read at the top of this step and this write. Skip entirely if `pendingSignals` was empty at the top of this step (nothing to clear). Duplicate-safe, not loss-safe (deliberate asymmetry, matches the prior dev-team-owned design this supersedes): if this write never lands (PO crashes mid-triage before reaching here), the SAME envelope_ids simply get re-delivered and re-triaged next invocation — a low-cost duplicate this doc's own per-signal dedup guards above (e.g. `zone_missing_tier3` dedup on `taskId`, `ci_red` file-scoped dedup) already absorb, never a silent loss.
 ```bash
-consumed_ids=$(echo "$pendingSignals" | jq -c '[.[].envelope_id]')
-consumed_ids_csv=$(echo "$consumed_ids" | jq -r 'join(",")')
+consumed_ids=$(printf '%s' "$pendingSignals" | jq -c '[.[].envelope_id]')
+consumed_ids_csv=$(printf '%s' "$consumed_ids" | jq -r 'join(",")')
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 jq --argjson ids "$consumed_ids" --arg now "$NOW" \
   '.dev_team_idle_chain.pending_triage_inbox |= map(select(.envelope_id as $i | ($ids|index($i))|not))
