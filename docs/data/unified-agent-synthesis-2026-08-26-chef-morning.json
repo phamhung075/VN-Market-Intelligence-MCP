@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "date_vn": "2026-08-26",
+    "cycle_date_utc": "2026-08-26",
+    "dish_type": "morning",
+    "slot": "chef-morning",
+    "scheduled_utc": "2026-08-26T05:15:00Z",
+    "executed_at": "2026-08-26T05:18:04Z",
+    "analysis_layers": 6,
+    "data_sources": ["bootstrap", "macro_snapshot", "portfolio_conviction", "bctc_signals"],
+    "signal_count": 9,
+    "ticker_convergence": ["FPT", "VCB"],
+    "publication_status": "published"
+  },
+  "layer_1_macro": {
+    "regime": "CORE_VN",
+    "macro_score": 8,
+    "assessment": "Macro backdrop supportive: equities remain cheap vs bank deposits (3.2pp spread). Safe-haven flows into gold reflect risk-off, but VND depreciation pressure partially offsets foreign inflows. VN market positioned for selective opportunities amid macro caution."
+  },
+  "layer_2_fii_flows": {
+    "foreign_room_status": "monitoring",
+    "sector_rotation": "defensive_pivot",
+    "assessment": "FII sentiment mixed. Banking sector diverging - VCB maintains pricing power as strong credit provider, while weaker names face margin pressure. Risk-off flows support defensive sectors."
+  },
+  "layer_3_asset_allocation": {
+    "breadth_assessment": "Index concentration risk",
+    "signal": "VN-Index gains despite majority stock decline",
+    "assessment": "Market breadth deteriorating. VN-Index climbs on large-cap carry while 60% of stocks decline. This concentration pattern amplifies tail risk in index sell-off scenarios."
+  },
+  "layer_4_valuation": {
+    "fpt_analysis": {
+      "ticker": "FPT",
+      "conviction": "FAIR",
+      "valuation_gate": "CLEAR",
+      "conviction_call": "HOLD-with-reduction"
+    },
+    "vcb_analysis": {
+      "ticker": "VCB",
+      "conviction": "FAIR",
+      "valuation_gate": "CAUTION",
+      "conviction_call": "HOLD"
+    },
+    "dxg_analysis": {
+      "ticker": "DXG",
+      "conviction": "AVOID",
+      "valuation_gate": "DO-NOT-POST",
+      "conviction_call": "NONE"
+    }
+  },
+  "layer_5_conviction": {
+    "portfolio_state": "Mixed signals with defensive rotation",
+    "sector_conviction": "Banking HOLD, Tech HOLD-REDUCE, Real-estate CAUTION",
+    "risk_chains": "Macro contradiction solvable via quality selection"
+  },
+  "layer_6_gaps": {
+    "data_gaps": [
+      "BCTC DXG unavailable 44 quarters",
+      "Yield computed as estimate (tier-4)"
+    ],
+    "quality_verdict": "DEGRADED-VALID"
+  },
+  "market_message": "Vietnamese equities trade in risk-off mode as gold climbs and broad participation narrows. Large-cap support masks deteriorating breadth. Banking sector credit quality diverging: Vietcombank maintains defensive positioning with ROE 16.7%. FPT benefits from US Treasury yield decline supporting IT services demand. Real-estate valuations stretched. Equity earnings yield 8.2% significantly exceeds bank deposits 5% - a 3.2pp spread signals relative value. Conviction: HOLD quality (VCB, FPT); AVOID stretched (DXG); monitor sector consolidation risk.",
+  "publication_markers": {
+    "marker_key": "published:chef-morning:2026-08-26",
+    "marker_claimed_at": "2026-08-26T05:18:04Z",
+    "marker_ttl_seconds": 100800
+  }
+}
