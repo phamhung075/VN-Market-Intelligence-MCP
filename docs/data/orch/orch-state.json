@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-25T23:16:56Z",
+    "_updated_at": "2026-08-26T02:54:16Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1121,7 +1121,7 @@
         "type": "detector_defect",
         "summary": "system-auditor tier-DATA emitted [OUTPUT-CONTRACT] dedup_skipped=0 on the 2026-08-26T02:30:33Z run while its OWN history entry records 3 findings with dedup_check.already_open=true and its OWN prose narration says 2 — three different values for one quantity inside a single return; the prior DATA entry (scan_ts 2026-08-25T22:35:28Z) likewise records 2 already_open findings, so the emitted counter is not a one-off slip",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-verification",
         "dedup_key": "detector_defect:system-auditor-output-contract:dedup_skipped-emitted-zero-while-history-records-nonzero",
@@ -24284,9 +24284,22 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-26T02:28:16Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-26T02:54:16Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "d7a5e915306d21dc1937ad5616f1dc9682e759e75ef51dd05fd9ddc98a078ea1",
+        "source": "dashboard",
+        "from": "router",
+        "to": "architect",
+        "type": "detector_defect",
+        "priority": "WARN",
+        "payload": "system-auditor tier-DATA emitted [OUTPUT-CONTRACT] dedup_skipped=0 on the 2026-08-26T02:30:33Z run while its OWN history entry records 3 findings with dedup_check.already_open=true and its OWN prose narration says 2 — three different values for one quantity inside a single return; the prior DATA entry (scan_ts 2026-08-25T22:35:28Z) likewise records 2 already_open findings, so the emitted counter is not a one-off slip",
+        "createdAt": "2026-08-26T02:34:10Z",
+        "drained_at": "2026-08-26T02:54:16Z",
+        "routed_to": "PO Step 0-SIG (fallback — type detector_defect has NO row in drain-signals.md §0a-3 routing table)"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
