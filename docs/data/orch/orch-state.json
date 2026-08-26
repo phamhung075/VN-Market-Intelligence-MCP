@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-26T15:13:01Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-26T15:21:12Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24499,6 +24498,29 @@
         "router_note_qadrain_revert_20260826T0754Z": "Router reverted a qa-drain lane-move this tick WITHOUT dispatching qa. Reason: blocked_by=OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT is ready[]/READY/next_agent=ops, gated next_recheck_not_before=2026-08-26T09:00:00Z — NOT landed. PO adjudication 0650Z is explicit: qa re-verifies once that row AC-2 lands; only arrival in the running binary is outstanding. The qa-drain selects on effective_next_agent==qa alone and is blind to both blocked_by and this prose, so it will re-pick this row every tick until the redeploy lands. Not charged to redispatch_count (no qa work happened).",
         "qa_not_before": "2026-08-27T09:00:00Z",
         "router_note_qa_gate_20260826T0817Z": "2026-08-26T08:18:05Z router: qa_not_before set to 2026-08-26T09:30:00Z. This is a TIME PROXY for the real condition, which is blocker OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT reaching a terminal DONE state — that blocker is still ready[]/READY/next_agent=ops, itself gated next_recheck_not_before=2026-08-26T09:00:00Z. PO adjudication 0650Z: qa re-verifies only once the redeploy lands in the running binary. The qa-drain selects on effective_next_agent==qa alone and is blind to blocked_by and to prose, so without a gate key it re-picks this row EVERY tick (observed 07:37Z and 08:07Z, reverted both times). qa_not_before is one of the three keys is_gated_not_before() honors (scripts/lib/devteam-eligibility.jq:684/694) and the qa-drain is the ONE picker that calls it. If the redeploy slips past 09:30Z this row becomes eligible again and must be re-gated or reverted once more — the gate is a churn brake, not a dependency check."
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
+        "type": "FIX",
+        "title": "system-auditor notebook-compose bypass has no mechanical forcing function -- add a NEW commit-msg git hook (not pre-commit, which cannot read the commit message) rejecting/warning any commit to docs/agent-memory/notebooks/system-auditor.md lacking a notebook-compose OK/WARN marker",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "scripts/git-hooks/",
+        "next_agent": "qa",
+        "created_at": "2026-08-26T12:26:38Z",
+        "created_by": "architect (FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED split, child A)",
+        "dedup_key": "auditor-notebook-compose-commitmsg-marker-gate",
+        "files": [
+          "scripts/git-hooks/commit-msg",
+          "scripts/git-hooks/install.sh",
+          "scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "status_note": "Implemented per docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A. scripts/git-hooks/commit-msg (new, this repos first commit-msg hook) + install.sh wiring (4 hooks: pre-push/pre-commit/post-commit/commit-msg, verified re-run) + commit-msg-notebook-compose-marker.test.sh (5/5 pass) + dev-standards.md CANONICAL pointer. Committed 16e2096bb. DEVIATION FROM BRIEF (found+fixed): the briefs literal regex fails to match the real nested-bracket marker shape (live commit efe62d83d, double-bracket form) because the negated-bracket-class cannot cross the inner closing bracket. Widened to tolerate one level of nesting, re-verified against all 4 real observed shapes plus negative controls (bare [skip ci], OK-substring words TOKEN/BROKEN outside brackets). AC-1 (5 test cases) and AC-4 (install.sh links 4 hooks) both verified this cycle. AC-2 (live WARN observed on stderr for the next narrated notebook commit) NOT yet observable: no commit has touched docs/agent-memory/notebooks/system-auditor.md since hook install (2026-08-26T~15:16Z) -- the most recent such commit (56f41ab1c) predates install. Mechanism verified via isolated scratch-repo regression suite only; QA/next tick should confirm the live WARN fires on the next real system-auditor notebook commit lacking a marker. AC-3 (48h adoption-ratio trend) is explicitly out of this cycles scope per the briefs own Verification Gate #3.",
+        "updated_at": "2026-08-26T15:21:12Z",
+        "reviewed_ready_at": "2026-08-26T15:21:12Z",
+        "implemented_by": "developer"
       }
     ],
     "qa": [],
@@ -24574,32 +24596,6 @@
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128.",
         "po_lanefix_20260826T0536Z": "LANE MOVE ATTEMPTED AND REFUSED, po 2026-08-26T05:36Z — recorded so this is not re-attempted blindly. The row is BLOCKED while parked in the WIP lane, the STATUSFLIP-LANEMOVE straggler shape that docs/agents/dev-team/flow/execute-tier.md CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) says must move out. Moving it in_progress[] -> backlog[] made orch-apply's row-prose-ceiling check abort the entire write: 'live=0B -> candidate=18774B'. The 0B is false — PROSE_CEILING_LANES omits in_progress[], so the pre-move baseline reads zero and the move looks like 18.7KB of brand-new prose. Owning row already exists and is already dispatchable: TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES (ready[], READY, P1, developer). Re-attempt the move only AFTER that lands. Harmless meanwhile: BLOCKED rows are excluded from wip_in_progress (devteam-eligibility.jq:117) and claimed_by/claimed_at/owner_client_session are all null, so it holds no claim and consumes no dispatch budget. Its BLOCKED status is CORRECT, not stale: blocker TASK-COWORK-MUTEX-001 is genuinely still at REVIEW."
-      },
-      {
-        "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE",
-        "type": "FIX",
-        "title": "system-auditor notebook-compose bypass has no mechanical forcing function -- add a NEW commit-msg git hook (not pre-commit, which cannot read the commit message) rejecting/warning any commit to docs/agent-memory/notebooks/system-auditor.md lacking a notebook-compose OK/WARN marker",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "scripts/git-hooks/",
-        "next_agent": "developer",
-        "created_at": "2026-08-26T12:26:38Z",
-        "created_by": "architect (FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED split, child A)",
-        "dedup_key": "auditor-notebook-compose-commitmsg-marker-gate",
-        "files": [
-          "scripts/git-hooks/commit-msg",
-          "scripts/git-hooks/install.sh",
-          "scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh",
-          "docs/policies/dev-standards.md"
-        ],
-        "status_note": "Child of FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (see docs/data/orch/orch-state.json task_board.archive[] for that row's full closure note). THE mechanical forcing function: a NEW scripts/git-hooks/commit-msg hook (this repo has none today -- only pre-commit/pre-push/post-commit). PO named pre-commit as host; architect corrected that (githooks(5): pre-commit fires before git obtains the proposed commit message, so it structurally cannot read the [notebook-compose OK|WARN ...] marker this gate checks for -- that marker only exists in the commit MESSAGE, per the existing Commit-step template in docs/agents/system-auditor/flow/main.md ~line 1165). Full design incl. exact bash, regex tolerant of the 4 observed real marker shapes, default mode=warn (opt-in GIT_NOTEBOOK_COMPOSE_MARKER_MODE=reject once validated -- mirrors _check_notebook_immutability/_check_notebook_uuid_provenance precedent, NOT the hard-reject heartbeat-shape guard, because a legitimate no-marker bypass class exists: AC-5-style data-repair/renumber commits, precedent 35be008d0) + escape-hatch trailer (notebook-compose-marker-allow: <reason>, mirrors notebook-uuid-lint-allow:) + install.sh wiring (add commit-msg to the pre-push/pre-commit/post-commit loop) + test file (scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh, 5 cases) + docs/policies/dev-standards.md CANONICAL pointer (same convention as the FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK entry): docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A. Scope PILOT-ONLY: docs/agent-memory/notebooks/system-auditor.md only (sole live caller of scripts/notebook-compose.sh today; fleet-wide rollout FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS is still un-merged in task_board.review[] -- do not widen ahead of that landing). AC: all 5 test cases pass; live WARN observed on stderr for the next narrated notebook commit; install.sh re-run links 4 hooks not 3. TRAP TO REJECT AT IMPLEMENTATION (dev-team router, 2026-08-26T12:07Z tick, measured): do NOT 'rescue' PO's pre-commit host by having a pre-commit guard read .git/COMMIT_EDITMSG. That file is NOT empty during pre-commit -- it still holds the PREVIOUS commit's message (verified live: during this tick it read 'chore(memory/architect): notebook + journal cycle ... (S54)', the subject of the immediately preceding commit ad2e21b73). A pre-commit guard reading it would therefore validate the WRONG message and PASS, and because auditor notebook commits usually DO carry a [notebook-compose ...] marker, that false green would be near-permanent -- strictly worse than no gate, and exactly the manufactured-PASS class this row exists to end. commit-msg is the only host that receives the proposed message (as $1). Corroboration: the existing scripts/git-hooks/pre-commit references COMMIT_EDITMSG zero times, so no sibling guard sets a contrary precedent.",
-        "updated_at": "2026-08-26T15:13:01Z",
-        "promoted_at": "2026-08-26T15:12:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-26T15:12:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
