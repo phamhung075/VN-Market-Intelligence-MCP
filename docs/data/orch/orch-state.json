@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-26T19:34:19Z",
-    "updated_by": "architect",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-MDH-P2",
+    "next_agent": "pm",
+    "next_action": "Design-Router Sweep claim of UC-MDH-P2 — spawn pm DIRECTLY (no zone-detect indirection; lane resolved at CLAIM time via effective_next_agent(), never a cached promote-time value). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-26T19:44:17Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6685,27 +6686,6 @@
         "created_at": "2026-07-10T06:50:00Z",
         "created_by": "po-triage-20260710T0650Z",
         "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "BA-ANALYSIS-QUALITY-CONVERGENCE",
-        "title": "Requirement spec for ANALYSIS-QUALITY-CONVERGENCE — Phase-1: audit + rewire the 6 analysis-agent flows so every LIVE data plane converges into the synthesized result (subsumes IND-P1-MOMENTUM-CONSUMER-WIRING + GAP-CHEF-SYNTHESIS-B + CCATO-T3-FLOW-WIRING); Phase-2 data-depth sequencing + feasibility-gate earnings-revisions & valuation-percentile per roadmap §4.",
-        "owner": "ba",
-        "status": "BACKLOG",
-        "zone": "docs/agents/",
-        "type": "SPRINT-M",
-        "priority": "high",
-        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
-        "created_at": "2026-07-11T07:22:56Z",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md",
-        "ba_completed_at": "2026-07-11T07:36:59Z",
-        "next_agent": "agents-architect",
-        "po_approved": true,
-        "po_approved_at": "2026-07-11T07:37:30Z",
-        "po_approval_note": "spec APPROVED — zero PO blockers, respects honest-NULL/additive-only/zone-discipline/PLAN-ONLY-phase2/feasibility-recon precedents; resume SPRINT-M cascade at agents-architect, do NOT re-run BA",
-        "supervised": true,
-        "supervised_by": "po-groom-20260713T0937Z",
-        "supervised_note": "po_approved SPRINT-M cascade (BA spec done, next=agents-architect). Declassified from BOUNDED-1 idle auto-pickup -> resume via router supervised dispatch. Stops 5th-hole non-dev-owner board-class per-tick re-pick churn (3rd consecutive idle tick)."
       },
       {
         "id": "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
@@ -23222,42 +23202,6 @@
         "status_note": "PO Step 0-SIG 2026-08-24T00:12:36Z: RETARGETED OUT OF qa[]. qa already refused this row on the merits (commit 6163fecee, 2026-08-23T22:08:36Z) and it was re-picked by the review-lane QA-drain 81 minutes later (claimed_at 2026-08-23T23:29:49Z) — so re-dispatching qa reproduces the same refusal indefinitely. PO RE-VERIFIED THE REFUSAL AT SOURCE, not from the handoff prose: `docker image inspect vn-market-intelligence-mcp-mcp-server --format {{.Created}}` = 2026-08-23T13:52:50Z (container created 2026-08-23 15:53:58 +0200 = 13:53:58Z), while the dev commit ce1f52127 landed at 2026-08-23 17:11:08 +0200 = 15:11:08Z. The running image PREDATES the code by 1h18m, so AC-7 (docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md:65,126,148 — bind-mount round-trip via a real add_to_watchlist call from OUTSIDE the container) is not merely unverified, it is structurally unrunnable. NEXT ACTION IS A DEPLOY, NOT A VERIFY: single-service rebuild of mcp-server only. NEVER `docker compose down` (feedback_rebuild_recreate_destroys_peers — it kills every peer container) and verify the new image ID actually changed before claiming the deploy landed (feedback_docker_rebuild_race_pgrep_deadlock). After the rebuild, hand back to qa for AC-5/AC-7. WHY THE LANE MOVED AND NOT JUST THIS NOTE: the QA-drain picker selects on lane + next_agent and is blind to prose it cannot read (feedback_pickers_blind_to_prose_status_note_autoclaim_contraindicated_row) — leaving the row in qa[] with a note would have changed nothing. next_agent=ops is off the DRS-ratified auto-dispatch allowlist, so this row is reachable by manual/PO dispatch; that is deliberate and is the same class as the 10 other live next_agent=ops rows."
       },
       {
-        "id": "UC-MDH-P2",
-        "type": "SPRINT-S",
-        "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P2",
-        "note": "SCOPE=verifier Rescope note. FALSE-PREMISE corrected: 9+ live doc consumers still instruct agents to CALL the tool (digest-predict is cron-armed) — sweep AGENT_STARTUP/INDEX/README/digest-predict/market-analyst/tools-list/briefings before deregistering. De-conflict TE-T05 (drop its append-session-record deletion clause via orch-apply, see TE-T05 audit_ref). Regenerate tool-registry.json (3-way count sync). Fix 1300b test root cause too. Bulk stub cleanup via scripts/.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "pm",
-        "related": [
-          "TE-T05"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "deploy_gate": "user-approved-off-market",
-        "deploy_gate_note": "ops-rebuild-gated — lands only after a user-approved off-market deploy; next_agent=ba already holds it OUT of BOUNDED-1 auto-pickup, so no supervised flag needed. Bumped P2->P1 with the band 2026-07-17T04:54:03Z",
-        "promoted_at": "2026-08-23T10:53:01Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "pm",
-        "updated_at": "2026-08-25T22:30:08Z",
-        "claimed_at": "2026-08-24T15:46:41Z",
-        "claimed_by": "dev-team (design-router sweep)",
-        "owner": "architect",
-        "status_note": "BA spec DONE 2026-08-23T17:0xZ (dev-team DRS tick 16:37Z). Deliverable: docs/handoffs/UC-MDH-P2-BA-spec.md (commit 5e1015444, 98L) — FR-1..FR-7 + NFR-1..NFR-3 + DDD-layer table. Journal/notebook: 16879b851. Router re-verified at source: both commits landed, exact file sets, orch-state.json untouched (0 hits). LIVE-CONSUMER COUNT CORRECTED 9 -> 13 (classified subset of 34 raw grep hits); router independently confirmed the 4 newly-found consumers at their stated lines: docs/standards/mcp-tools.md:103, docs/protocols/smart-compact-protocol.md:31, docs/protocols/smart-compact-protocol-offload.md:16/18/25, docs/data/system-map.json:29 (the latter is the 3-way count-sync source). Also confirmed: docs/agents/digest-predict/flow/ and docs/agents/market-analyst/flow/ have ZERO hits — both already migrated to end-0-cowork/notebook-write post-TE-T05; only their init.md + tools/package docs are stale. TE-T05 DE-CONFLICTION IS MOOT, not deferred: TE-T05 landed DONE_VERIFIED 2026-08-08 and a full per-lane jq scan returns ZERO board matches for that id — there is no live deletion clause to drop, so the row scope-note item (b) is closed with no orch-apply needed. ZERO FRs IMPLEMENTED, and NOT (only) because of deploy_gate: every FR target file (agent init.md, tools/package grant docs, skill dir, guides, protocols, briefings) falls under BA forbidden_outputs docs/agents/ba/init.md:59 NEVER modify agent files, flow files, or knowledge files — router verified that line is real and structural, and ba/init.md:61 token_rule Blocked = report + EXIT, so the agent honoured its own contract exactly. FR split per spec: FR-1/2/5/7 need NO rebuild; FR-3/4/6 are deploy-gated and must land atomically in one user-approved off-market window. DISPATCH_LANE UPDATED ba -> architect IN THIS WRITE: the row still carries promoted_by=dev-team (design-router sweep), so leaving the stale lane would have let a future DRS turn re-dispatch to ba — the exact stale-cache defect tracked by FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT. OPEN BLOCKERS: B1 (-> po, PARALLEL, does not block architect) does deploy_gate=user-approved-off-market cover the whole row or only the rebuild-requiring FRs? B2 (-> architect to adjudicate) do digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md fall in agent-father exclusive lane, splitting FR-5 across two owners? NEXT: architect designs the atomic FR-3/4/6 deploy-gated bundle + adjudicates B2, then pm decomposes per-owner. ARCHITECT DESIGN DONE 2026-08-24T15:57Z: appended [Architect] Brownfield Findings to docs/handoffs/UC-MDH-P2-BA-spec.md (journal STEP architect-S9). Designed atomic FR-3/FR-4/FR-6 deploy-gated bundle with exact line-range deletes (agentMemoryUpdateTools.ts L29-44/49-55/70-77/79-109/151-166/197-296; registry.ts:218 comment) + a 5-step regen sequence (gen-tool-registry.ts -> gen-project-stats.ts -> gen-tools-index.sh -> git rm tools/list/append_session_record.md -> manual system-map.json:29 delete) + FR-6 test-file corrections (6 delete + 2 surgical-edit it() blocks, not BA's literal \"2\"). CORRECTED BA SCOPE: FR-5's 13-file consumer list conflated instructional docs (safe-now) with structural-inventory docs (must land atomically w/ FR-3) -- reclassified docs/agents/tools/list/append_session_record.md + tools/list/INDEX.md from FR-5 to FR-4-extended (deploy-gated); real FR-5 safe-now scope = 10 files, not 13. B2 RULING: YES -- digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md all fall inside agent-father's exclusive lane (evidence: agent-father commit_zone.allowed=docs/agents/ + its own create.md/edit-prepare.md/scaffold-files.md explicitly author tools/package/<agent>.md + live precedent dev-standards.md:1987 already ruled the identical file class exclusive on a different row). FR-5 splits 3 files (agent-father) / 7 files (developer). B1 (does deploy_gate cover the whole row or only FR-3/4/6?) is PO's, runs in parallel -- not answered here, not blocking. Did NOT build/deploy/rebuild anything this cycle (design-only dispatch). NEXT: pm decomposes into per-owner tasks per B2's split (developer: FR-1/2/3/4/6/7 + 7 FR-5 files, size M; agent-father: FR-5's 3 agent-identity files). FR-6 COUNT CORRECTION 2026-08-24T16:0xZ (router post-return verify): the handoff's FR-6 test-file totals were wrong -- file has 14 it() blocks (not 17), 5 pure-append_session_record blocks to delete at L74/87/115/128/215 (not 6), net 14->9 (not 17->12). The per-block classification (which 5 delete, which 2 surgically edit at L67/L240) was already correct -- only the summary integers were off (internally inconsistent: 17-6=11 was written as 12, the tell). Fixed at docs/handoffs/UC-MDH-P2-BA-spec.md:115,131,136. No phantom 6th delete existed in the enumerated list -- only the totals needed correcting.",
-        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
-        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
-      },
-      {
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
         "type": "FIX",
         "status": "READY",
@@ -23742,6 +23686,32 @@
         "occurrence_count": 3,
         "po_occ3_20260826T0729Z": "OCCURRENCE 3 + P1->P0 ESCALATION + backlog[]->ready[] PROMOTE, po 2026-08-26T07:29Z (triage-20260826T0707Z). Envelope 4428bf45 (type=recurring-bug, from=dev-team, priority=low — the LOW priority is the envelope's, not this row's). THIRD measured runtime confirmation in under 12 hours, and the first on `po` itself: intent:po:main + intent:po:triage were both claimed ttl_seconds=600 at ~06:00:30Z; po ran 1,009,293ms (16m49s) and returned ~06:17:20Z; BOTH task_release calls returned ok:true released:0 — i.e. already expired. Unguarded window ~7 minutes, during which session-presence held 2 live peer router sessions, either of which would have read the key as free. Second po sample the same day: 937s. So po, like architect (22m50s) and agent-father (11m10s) already recorded on this row, is unguarded for the TAIL OF ESSENTIALLY EVERY INVOCATION. WHY P0 (not impact-this-time — no duplicate po was actually spawned): 3/3 sampled runs across 3 different agent types measured the guard expired before the agent returned. This is not a tail risk, it is the steady state — the Phase B mutex is a duplicate-spawn ENABLER for the majority of every long run, fleet-wide, on the router's own hot path. Same inversion shape as the already-recorded S2/ILC resume-key ttl=3600 defect, but at 600s it fires far more often. WHY PROMOTED TO ready[]: the row sat at backlog[582] of 597. DRS's in-band tiebreak is ARRAY INDEX, not age, so a P0 minted at the tail of backlog[] ranks effectively last and would not have been reached. next_agent=architect is on the DRS-ratified allowlist, so ready[] is genuinely dispatchable for it. NEGATIVE CONTROL carried forward from the envelope, must survive into the fix: raising the ttl or heartbeating the intent lock MUST NOT make a genuinely dead session's lock un-reclaimable — orphan reclamation via the presence/Phase-A reaper path has to keep working.",
         "architect_review_note": "Brief: docs/architecture-briefs/2026-08-26-fix-preclaim-intent-key-ttl600-spawned-agent-self-renewal.md.\nRoot cause: dev-team's task:<row-id> resume-key keepalive (sibling fix, already shipped) cannot\ntransfer to intent:<agent>:<key> because dev-team cannot itself call the spawn tool a level deeper\n(nested-spawn limitation) and exits within ms after handing off -- its own liveness proof is a LATER\ncron tick. intent: is claimed by the party that runs the REAL blocking spawn; that context is inert\n(no interleaved tool-call slot) for the agent's entire measured runtime (10-25min, 4 samples), so ONLY\nthe spawned agent is provably live throughout -- it must self-renew, nothing on the router side can.\nDesign: the claiming dispatcher embeds a SELF_RENEW_BLOCK text instruction into the spawn prompt it\nalready builds (reusing the already-passed coordination_session value -- no new plumbing); the spawned\nagent issues ONE task_heartbeat(intent:<agent>:<key>, owner_client_session=<dispatcher's session>,\nttl_seconds=3600) as one of its first tool calls. Base claim ttl (600s) UNCHANGED -- never simply\nraised. Single-shot, bounded, non-recurring: never makes a dead session's lock permanently unreclaimable\n(row's own negative control preserved); an agent that never reaches the instruction degrades\nbyte-identically to today's pre-fix behavior. Exact CARD.md (+1L) / SKILL.md (new Step 2.5b) diffs are\nin the brief, ready to apply verbatim. Verification plan (scratch coordination.db replay, never live)\nis brief section 4. NEXT: agent-father applies the two diffs and runs the verification plan."
+      },
+      {
+        "id": "BA-ANALYSIS-QUALITY-CONVERGENCE",
+        "title": "Requirement spec for ANALYSIS-QUALITY-CONVERGENCE — Phase-1: audit + rewire the 6 analysis-agent flows so every LIVE data plane converges into the synthesized result (subsumes IND-P1-MOMENTUM-CONSUMER-WIRING + GAP-CHEF-SYNTHESIS-B + CCATO-T3-FLOW-WIRING); Phase-2 data-depth sequencing + feasibility-gate earnings-revisions & valuation-percentile per roadmap §4.",
+        "owner": "ba",
+        "status": "READY",
+        "zone": "docs/agents/",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
+        "created_at": "2026-07-11T07:22:56Z",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md",
+        "ba_completed_at": "2026-07-11T07:36:59Z",
+        "next_agent": "agents-architect",
+        "po_approved": true,
+        "po_approved_at": "2026-07-11T07:37:30Z",
+        "po_approval_note": "spec APPROVED — zero PO blockers, respects honest-NULL/additive-only/zone-discipline/PLAN-ONLY-phase2/feasibility-recon precedents; resume SPRINT-M cascade at agents-architect, do NOT re-run BA",
+        "supervised": true,
+        "supervised_by": "po-groom-20260713T0937Z",
+        "supervised_note": "po_approved SPRINT-M cascade (BA spec done, next=agents-architect). Declassified from BOUNDED-1 idle auto-pickup -> resume via router supervised dispatch. Stops 5th-hole non-dev-owner board-class per-tick re-pick churn (3rd consecutive idle tick).",
+        "promoted_at": "2026-08-26T19:44:15Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect",
+        "updated_at": "2026-08-26T19:44:16Z"
       }
     ],
     "review": [
@@ -24493,9 +24463,46 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T18:13:24Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-26T19:44:15Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
+    "in_progress": [
+      {
+        "id": "UC-MDH-P2",
+        "type": "SPRINT-S",
+        "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "multi",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P2",
+        "note": "SCOPE=verifier Rescope note. FALSE-PREMISE corrected: 9+ live doc consumers still instruct agents to CALL the tool (digest-predict is cron-armed) — sweep AGENT_STARTUP/INDEX/README/digest-predict/market-analyst/tools-list/briefings before deregistering. De-conflict TE-T05 (drop its append-session-record deletion clause via orch-apply, see TE-T05 audit_ref). Regenerate tool-registry.json (3-way count sync). Fix 1300b test root cause too. Bulk stub cleanup via scripts/.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "pm",
+        "related": [
+          "TE-T05"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "deploy_gate": "user-approved-off-market",
+        "deploy_gate_note": "ops-rebuild-gated — lands only after a user-approved off-market deploy; next_agent=ba already holds it OUT of BOUNDED-1 auto-pickup, so no supervised flag needed. Bumped P2->P1 with the band 2026-07-17T04:54:03Z",
+        "promoted_at": "2026-08-23T10:53:01Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "pm",
+        "updated_at": "2026-08-26T19:44:17Z",
+        "claimed_at": "2026-08-26T19:44:15Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "owner": "architect",
+        "status_note": "BA spec DONE 2026-08-23T17:0xZ (dev-team DRS tick 16:37Z). Deliverable: docs/handoffs/UC-MDH-P2-BA-spec.md (commit 5e1015444, 98L) — FR-1..FR-7 + NFR-1..NFR-3 + DDD-layer table. Journal/notebook: 16879b851. Router re-verified at source: both commits landed, exact file sets, orch-state.json untouched (0 hits). LIVE-CONSUMER COUNT CORRECTED 9 -> 13 (classified subset of 34 raw grep hits); router independently confirmed the 4 newly-found consumers at their stated lines: docs/standards/mcp-tools.md:103, docs/protocols/smart-compact-protocol.md:31, docs/protocols/smart-compact-protocol-offload.md:16/18/25, docs/data/system-map.json:29 (the latter is the 3-way count-sync source). Also confirmed: docs/agents/digest-predict/flow/ and docs/agents/market-analyst/flow/ have ZERO hits — both already migrated to end-0-cowork/notebook-write post-TE-T05; only their init.md + tools/package docs are stale. TE-T05 DE-CONFLICTION IS MOOT, not deferred: TE-T05 landed DONE_VERIFIED 2026-08-08 and a full per-lane jq scan returns ZERO board matches for that id — there is no live deletion clause to drop, so the row scope-note item (b) is closed with no orch-apply needed. ZERO FRs IMPLEMENTED, and NOT (only) because of deploy_gate: every FR target file (agent init.md, tools/package grant docs, skill dir, guides, protocols, briefings) falls under BA forbidden_outputs docs/agents/ba/init.md:59 NEVER modify agent files, flow files, or knowledge files — router verified that line is real and structural, and ba/init.md:61 token_rule Blocked = report + EXIT, so the agent honoured its own contract exactly. FR split per spec: FR-1/2/5/7 need NO rebuild; FR-3/4/6 are deploy-gated and must land atomically in one user-approved off-market window. DISPATCH_LANE UPDATED ba -> architect IN THIS WRITE: the row still carries promoted_by=dev-team (design-router sweep), so leaving the stale lane would have let a future DRS turn re-dispatch to ba — the exact stale-cache defect tracked by FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT. OPEN BLOCKERS: B1 (-> po, PARALLEL, does not block architect) does deploy_gate=user-approved-off-market cover the whole row or only the rebuild-requiring FRs? B2 (-> architect to adjudicate) do digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md fall in agent-father exclusive lane, splitting FR-5 across two owners? NEXT: architect designs the atomic FR-3/4/6 deploy-gated bundle + adjudicates B2, then pm decomposes per-owner. ARCHITECT DESIGN DONE 2026-08-24T15:57Z: appended [Architect] Brownfield Findings to docs/handoffs/UC-MDH-P2-BA-spec.md (journal STEP architect-S9). Designed atomic FR-3/FR-4/FR-6 deploy-gated bundle with exact line-range deletes (agentMemoryUpdateTools.ts L29-44/49-55/70-77/79-109/151-166/197-296; registry.ts:218 comment) + a 5-step regen sequence (gen-tool-registry.ts -> gen-project-stats.ts -> gen-tools-index.sh -> git rm tools/list/append_session_record.md -> manual system-map.json:29 delete) + FR-6 test-file corrections (6 delete + 2 surgical-edit it() blocks, not BA's literal \"2\"). CORRECTED BA SCOPE: FR-5's 13-file consumer list conflated instructional docs (safe-now) with structural-inventory docs (must land atomically w/ FR-3) -- reclassified docs/agents/tools/list/append_session_record.md + tools/list/INDEX.md from FR-5 to FR-4-extended (deploy-gated); real FR-5 safe-now scope = 10 files, not 13. B2 RULING: YES -- digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md all fall inside agent-father's exclusive lane (evidence: agent-father commit_zone.allowed=docs/agents/ + its own create.md/edit-prepare.md/scaffold-files.md explicitly author tools/package/<agent>.md + live precedent dev-standards.md:1987 already ruled the identical file class exclusive on a different row). FR-5 splits 3 files (agent-father) / 7 files (developer). B1 (does deploy_gate cover the whole row or only FR-3/4/6?) is PO's, runs in parallel -- not answered here, not blocking. Did NOT build/deploy/rebuild anything this cycle (design-only dispatch). NEXT: pm decomposes into per-owner tasks per B2's split (developer: FR-1/2/3/4/6/7 + 7 FR-5 files, size M; agent-father: FR-5's 3 agent-identity files). FR-6 COUNT CORRECTION 2026-08-24T16:0xZ (router post-return verify): the handoff's FR-6 test-file totals were wrong -- file has 14 it() blocks (not 17), 5 pure-append_session_record blocks to delete at L74/87/115/128/215 (not 6), net 14->9 (not 17->12). The per-block classification (which 5 delete, which 2 surgically edit at L67/L240) was already correct -- only the summary integers were off (internally inconsistent: 17-6=11 was written as 12, the tell). Fixed at docs/handoffs/UC-MDH-P2-BA-spec.md:115,131,136. No phantom 6th delete existed in the enumerated list -- only the totals needed correcting.",
+        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
+        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -24518,7 +24525,7 @@
         "last_served_tick": "2026-08-26T19:12:37Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-26T16:42:54Z"
+        "last_served_tick": "2026-08-26T19:42:11Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-26T17:13:49Z"
@@ -24527,7 +24534,7 @@
         "last_served_tick": "2026-08-26T17:44:06Z"
       }
     },
-    "_updated_at": "2026-08-26T19:12:37Z",
+    "_updated_at": "2026-08-26T19:42:11Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
