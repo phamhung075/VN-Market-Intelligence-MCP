@@ -10,7 +10,8 @@
     "spike_1951a_date": "2026-05-18",
     "phase2_residual_2026_05_20": "12 server-side RemoteTriggers from sprint 1957a stopgap still exist on claude.ai (no platform delete action — RemoteTrigger MCP exposes only list|get|create|update|run). Idempotent at worst (duplicate fan-outs only — agents are notebook-overwrite). Live path is master */15 CronCreate dispatcher via .claude/skills/cron-cowork-team/SKILL.md. Reconcile when claude.ai ships delete action or workspace UI cleanup. 1951d closed DONE per po c216-mini-triage.",
     "layer_a_deletion_locked": false,
-    "layer_a_deletion_gate": "RESOLVED 2026-07-07 (DOC-COWORK-CRON-RUNBOOK-FRESHEN): RemoteTrigger Layer A is retired per STANDING feedback_no_remote_trigger_all_local (2026-06-22) — the deletion lock is moot, there is nothing left to guard once the mechanism itself is retired, not merely paused. The stability_log in docs/protocols/cowork-master-cron-runbook.md §9 was never filled before retirement made it moot. See docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md §1 for the current architecture (single session-scoped */15 CronCreate dispatcher; F1-LAUNCHD-COWORK-BACKSTOP in flight as the new session-independent layer)."
+    "layer_a_deletion_gate": "RESOLVED 2026-07-07 (DOC-COWORK-CRON-RUNBOOK-FRESHEN): RemoteTrigger Layer A is retired per STANDING feedback_no_remote_trigger_all_local (2026-06-22) — the deletion lock is moot, there is nothing left to guard once the mechanism itself is retired, not merely paused. The stability_log in docs/protocols/cowork-master-cron-runbook.md §9 was never filled before retirement made it moot. See docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md §1 for the current architecture (single session-scoped */15 CronCreate dispatcher; F1-LAUNCHD-COWORK-BACKSTOP in flight as the new session-independent layer).",
+    "guaranteed_field_semantics": "TASK-COWORK-CATCHUP-9 (FR-10), re-scoped 2026-08-26 to state the VERIFIED-against-disk status, not the sprint's original design intent. `guaranteed:true` on a slot today enables 3 independently-shipped mechanisms: (1) parallel_group=chef mutex prioritization in cowork-chef-mutex.js; (2) inclusion in scripts/agents-flow/cowork-guaranteed-slot-firer.sh's OS-level launchd backstop (F1-LAUNCHD-COWORK-BACKSTOP, re-fires the CURRENT tick even with no live CLI session, but only while the host itself is awake — see 2026-07-07 durability brief); (3) inclusion in cowork-catchup-predicate.js's computeCatchupCandidates(), surfaced as the matcher's `catchup_raw` array (TASK-COWORK-CATCHUP-1/-2, DONE_VERIFIED). `guaranteed:true` does NOT (yet) mean the slot is delivered within a bounded catch-up window across a host-standby/multi-hour gap, and does NOT (yet) produce a structured miss record — `catchup_raw` is computed every tick and consumed by NOTHING: the planned Step 4.55 consumer `docs/agents/cowork-team/flow/catchup-check.md` was never built (its row TASK-COWORK-CATCHUP-3 was CANCELLED 2026-08-23), and the other 2 planned callers (`cowork-tick-preflight.sh` Step 6.5, `cowork-guaranteed-slot-firer.sh` task_list_held check) were never wired (TASK-COWORK-CATCHUP-4/-5, BLOCKED pending re-spec). See docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md for the full current layer inventory and docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md for the (partially-shipped) FR-1..10 design this note supersedes the optimistic reading of."
   },
   "_open_questions": [
     "OQ-1: ANSWERED — RemoteTrigger supports full cron range/step syntax (e.g. '*/15 2-8 * * 1-5'). See spike_1951a_oq1.",
@@ -260,7 +261,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "gatherer-standard",
-      "last_fired": "2026-08-26T08:05:49Z",
+      "last_fired": "2026-08-26T12:06:03Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
@@ -302,7 +303,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "gatherer-standard",
-      "last_fired": "2026-08-26T08:05:49Z",
+      "last_fired": "2026-08-26T12:06:03Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
@@ -487,7 +488,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "alert-commander-critical",
-      "last_fired": "2026-08-26T08:05:49Z",
+      "last_fired": "2026-08-26T12:06:03Z",
       "trigger_id": null,
       "_note": "Event-driven CRITICAL-always: verified_chain or legal_risk or crisis_velocity (no conditions, always fires). 24/7 off-hours coverage for regulatory/legal/crisis events.",
       "_superseded_by": "cowork-dispatcher",
