@@ -234,3 +234,83 @@ func TestQueReferenceMapInvariant(t *testing.T) {
 		}
 	}
 }
+
+// TestQueReferenceProseInvariant verifies localized prose fields are non-empty for all 64 hexagrams.
+func TestQueReferenceProseInvariant(t *testing.T) {
+	refs := GetAllQueReferences()
+
+	for _, ref := range refs {
+		// CoreMeaning must be non-empty in both languages
+		if ref.CoreMeaning.En == "" {
+			t.Errorf("ID=%d: CoreMeaning.En is empty", ref.ID)
+		}
+		if ref.CoreMeaning.Vi == "" {
+			t.Errorf("ID=%d: CoreMeaning.Vi is empty", ref.ID)
+		}
+
+		// HoverSummary must be non-empty in both languages
+		if ref.HoverSummary.En == "" {
+			t.Errorf("ID=%d: HoverSummary.En is empty", ref.ID)
+		}
+		if ref.HoverSummary.Vi == "" {
+			t.Errorf("ID=%d: HoverSummary.Vi is empty", ref.ID)
+		}
+
+		// StateInterpretation must be non-empty in both languages
+		if ref.StateInterpretation.En == "" {
+			t.Errorf("ID=%d: StateInterpretation.En is empty", ref.ID)
+		}
+		if ref.StateInterpretation.Vi == "" {
+			t.Errorf("ID=%d: StateInterpretation.Vi is empty", ref.ID)
+		}
+
+		// Favorable must be non-empty in both languages
+		if ref.Favorable.En == "" {
+			t.Errorf("ID=%d: Favorable.En is empty", ref.ID)
+		}
+		if ref.Favorable.Vi == "" {
+			t.Errorf("ID=%d: Favorable.Vi is empty", ref.ID)
+		}
+
+		// Warning must be non-empty in both languages
+		if ref.Warning.En == "" {
+			t.Errorf("ID=%d: Warning.En is empty", ref.ID)
+		}
+		if ref.Warning.Vi == "" {
+			t.Errorf("ID=%d: Warning.Vi is empty", ref.ID)
+		}
+
+		// Each of 6 phases must have non-empty Gloss
+		for j, phase := range ref.Phases {
+			if phase.Gloss.En == "" {
+				t.Errorf("ID=%d Phases[%d]: Gloss.En is empty", ref.ID, j)
+			}
+			if phase.Gloss.Vi == "" {
+				t.Errorf("ID=%d Phases[%d]: Gloss.Vi is empty", ref.ID, j)
+			}
+		}
+	}
+}
+
+// TestQueReferenceHexagram1Snapshot verifies hexagram 1 prose matches known values.
+func TestQueReferenceHexagram1Snapshot(t *testing.T) {
+	ref := GetQueReference(1)
+	if ref == nil {
+		t.Fatal("GetQueReference(1) returned nil")
+	}
+
+	// CoreMeaning EN snapshot
+	wantCoreMeaningEn := "Pure creative force, strong yang energy advancing without rest"
+	if ref.CoreMeaning.En != wantCoreMeaningEn {
+		t.Errorf("ID=1 CoreMeaning.En:\ngot  %q\nwant %q", ref.CoreMeaning.En, wantCoreMeaningEn)
+	}
+
+	// First phase gloss snapshot
+	if len(ref.Phases) != 6 {
+		t.Fatalf("ID=1 Phases: got %d, want 6", len(ref.Phases))
+	}
+	wantPhase1GlossEn := "Hidden potential phase — accumulate resources, do not act yet"
+	if ref.Phases[0].Gloss.En != wantPhase1GlossEn {
+		t.Errorf("ID=1 Phases[0].Gloss.En:\ngot  %q\nwant %q", ref.Phases[0].Gloss.En, wantPhase1GlossEn)
+	}
+}
