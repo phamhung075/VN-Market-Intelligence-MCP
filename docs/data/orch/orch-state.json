@@ -23934,40 +23934,6 @@
         "qa_changes_requested_at": "2026-08-25T20:31:50Z"
       },
       {
-        "id": "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT",
-        "type": "OPS",
-        "title": "pdf-extractor is running a PRE-FIX image (built 2026-08-08T11:34:24Z) while the ratified AC3 malloc_trim fix landed on origin/main as c3fd44766 at 2026-08-15T09:0xZ — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM cannot reach DONE_VERIFIED until this ONE ops action (rebuild+redeploy pdf-extractor, then measure AC2/AC4/AC6) happens. Same shape as the rag-service sibling; Docker/infra is out of dev-pdf-extractor charter.",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/pdf-extractor/",
-        "next_agent": "ops",
-        "owner": "ops",
-        "created_at": "2026-08-15T09:22:28Z",
-        "created_by": "po/triage-20260815T0915Z-pdfx-ops-deploy",
-        "source": "PO Step-0 blocked-tasks pre-check on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, 2026-08-15, plus PO own live at-source verification each ruling tick (never relayed).",
-        "dedup_key": "pdfx-ops-rebuild-deploy-malloc-trim-ac3",
-        "dedup_checked": "PO 2026-08-15T09:15Z grepped all task_board lanes for id matching (pdfx|pdf-extractor) AND (deploy|ops|rebuild): zero hits. Not a duplicate.",
-        "acceptance": "AC-1 rebuild from main HEAD (single service only) and verify by IMAGE ID -- DISCHARGED 2026-08-15, re-verified live: image sha256:5d7d36db, git_sha 0c9380859. AC-2 malloc_trim physically present in the running container -- DISCHARGED, and now doubly so: BOTH c3fd44766 (pek path) and 6f3577b9f (/extract path) are ancestors of 0c9380859. AC-3 container healthy, no peer restarted -- DISCHARGED: healthy 17.5h, RestartCount 0, every peer StartedAt unchanged. AC-4 sibling-row burst / DB-floor / idle-floor measurement -- SUPERSEDED by AC-7/AC-8 in po_next_measurement_ac_20260824T0850Z; the <=80%-of-cap bar itself is REPLACED on the sibling row. AC-5 VmHWM from inside the container plus kernel dmesg from inside the Docker VM (docker inspect OOMKilled is a documented false negative) -- MEASURED, but see po_ruling (1)-(2): the dmesg kills belong to a RETIRED container. AC-6 on completion hand back to po with the numbers; PO, not ops, closes FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
-        "non_goals": "Do NOT rewrite or re-review the pdf-extractor fix itself; the code passed. This row is MEASURE-ONLY now: AC-1/AC-2 rebuild+deploy are DISCHARGED, do NOT re-run them. Do NOT rebuild, restart or recreate the container. Do NOT consolidate containers or touch the multi-container topology. CORRECTED 2026-08-24T08:50Z: the prior claim here that FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM is 33,898B and hard-rejects inline writes is STALE and FALSE. Measured against the guard's own algorithm it is 8,006 prose bytes, 3,994 under the 12,000 ceiling, and it IS writable. THIS row is the tight one (10,424 prose bytes). Put bar/AC changes on the sibling; put measurement results here.",
-        "related": [
-          "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-          "UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW",
-          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
-          "OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND"
-        ],
-        "sequencing": "DISPATCH ORDER (PO 2026-08-15, still stands): if this row and UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW reach the same ops session, take the rag-service read-only durability sampling FIRST, then this. Never interleave. That row's D1 window cannot close before 2026-08-24T14:37Z; do not touch rag-service 16c59b5e929f.",
-        "updated_at": "2026-08-26T01:18:34Z",
-        "updated_by": "po (adjudication-20260826T0116Z)",
-        "status_note": "PO 2026-08-26T01:16Z — FOLLOWS, NO LONGER GATES. The sibling FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM depends[] on this row is SEVERED; it is now ready[0] under architect. This row keeps AC-7/AC-8 + next_agent=ops with 3 corrections: (C1) AC-7 must stamp the sampled container id on every CSV row and RESTART against 417febec1a03 (StartedAt 2026-08-26T00:33:39Z) — container recreation has silently reset its counters 4x, which is the structural reason this AC never completed; (C2) B3 pgsteal/pgscan is 0/0 undefined at zero reclaim pressure (live now: pgscan=0, pgsteal=0) — AMENDED so pgscan==0 PASSES vacuously and the >=0.90 ratio applies only when pgscan>0; (C3) the sampler is READ-ONLY, allocates nothing in the target cgroup, so it is SAFE THROUGH VN MARKET HOURS and may start now — only a synthetic burst waits for >=09:00Z, and AC-7/AC-8 already say a burst is NOT required for closure. Prior QA verdict stands: CHANGES_REQUESTED, cannot certify on a deploy check alone. FULL text of this ruling and the 3 superseded PO fields are in detail_ref under po_sequencing_20260826T0116Z.",
-        "claimed_at": "2026-08-26T00:17:44Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review",
-        "redispatch_count": 1,
-        "qa_changes_requested_at": "2026-08-26T00:28:41Z",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT"
-      },
-      {
         "id": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT",
         "type": "FIX",
         "title": "DRS claim script sets head.next_agent from the CACHED dispatch_lane field instead of re-resolving effective_next_agent at claim time — 2 live mis-dispatches same day (FIX-CHEF-BIZCTX 02:21Z, UC-CDC-P1 22:35Z), both caught only by router hand-correction",
@@ -24396,6 +24362,41 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128."
+      },
+      {
+        "id": "UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT",
+        "type": "OPS",
+        "title": "pdf-extractor is running a PRE-FIX image (built 2026-08-08T11:34:24Z) while the ratified AC3 malloc_trim fix landed on origin/main as c3fd44766 at 2026-08-15T09:0xZ — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM cannot reach DONE_VERIFIED until this ONE ops action (rebuild+redeploy pdf-extractor, then measure AC2/AC4/AC6) happens. Same shape as the rag-service sibling; Docker/infra is out of dev-pdf-extractor charter.",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "ops",
+        "owner": "ops",
+        "created_at": "2026-08-15T09:22:28Z",
+        "created_by": "po/triage-20260815T0915Z-pdfx-ops-deploy",
+        "source": "PO Step-0 blocked-tasks pre-check on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, 2026-08-15, plus PO own live at-source verification each ruling tick (never relayed).",
+        "dedup_key": "pdfx-ops-rebuild-deploy-malloc-trim-ac3",
+        "dedup_checked": "PO 2026-08-15T09:15Z grepped all task_board lanes for id matching (pdfx|pdf-extractor) AND (deploy|ops|rebuild): zero hits. Not a duplicate.",
+        "acceptance": "AC-1 rebuild from main HEAD (single service only) and verify by IMAGE ID -- DISCHARGED 2026-08-15, re-verified live: image sha256:5d7d36db, git_sha 0c9380859. AC-2 malloc_trim physically present in the running container -- DISCHARGED, and now doubly so: BOTH c3fd44766 (pek path) and 6f3577b9f (/extract path) are ancestors of 0c9380859. AC-3 container healthy, no peer restarted -- DISCHARGED: healthy 17.5h, RestartCount 0, every peer StartedAt unchanged. AC-4 sibling-row burst / DB-floor / idle-floor measurement -- SUPERSEDED by AC-7/AC-8 in po_next_measurement_ac_20260824T0850Z; the <=80%-of-cap bar itself is REPLACED on the sibling row. AC-5 VmHWM from inside the container plus kernel dmesg from inside the Docker VM (docker inspect OOMKilled is a documented false negative) -- MEASURED, but see po_ruling (1)-(2): the dmesg kills belong to a RETIRED container. AC-6 on completion hand back to po with the numbers; PO, not ops, closes FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
+        "non_goals": "Do NOT rewrite or re-review the pdf-extractor fix itself; the code passed. This row is MEASURE-ONLY now: AC-1/AC-2 rebuild+deploy are DISCHARGED, do NOT re-run them. Do NOT rebuild, restart or recreate the container. Do NOT consolidate containers or touch the multi-container topology. CORRECTED 2026-08-24T08:50Z: the prior claim here that FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM is 33,898B and hard-rejects inline writes is STALE and FALSE. Measured against the guard's own algorithm it is 8,006 prose bytes, 3,994 under the 12,000 ceiling, and it IS writable. THIS row is the tight one (10,424 prose bytes). Put bar/AC changes on the sibling; put measurement results here.",
+        "related": [
+          "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+          "UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW",
+          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
+          "OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND"
+        ],
+        "sequencing": "DISPATCH ORDER (PO 2026-08-15, still stands): if this row and UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW reach the same ops session, take the rag-service read-only durability sampling FIRST, then this. Never interleave. That row's D1 window cannot close before 2026-08-24T14:37Z; do not touch rag-service 16c59b5e929f.",
+        "updated_at": "2026-08-26T05:09:50Z",
+        "updated_by": "po (adjudication-20260826T0116Z)",
+        "status_note": "PO 2026-08-26T01:16Z — FOLLOWS, NO LONGER GATES. The sibling FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM depends[] on this row is SEVERED; it is now ready[0] under architect. This row keeps AC-7/AC-8 + next_agent=ops with 3 corrections: (C1) AC-7 must stamp the sampled container id on every CSV row and RESTART against 417febec1a03 (StartedAt 2026-08-26T00:33:39Z) — container recreation has silently reset its counters 4x, which is the structural reason this AC never completed; (C2) B3 pgsteal/pgscan is 0/0 undefined at zero reclaim pressure (live now: pgscan=0, pgsteal=0) — AMENDED so pgscan==0 PASSES vacuously and the >=0.90 ratio applies only when pgscan>0; (C3) the sampler is READ-ONLY, allocates nothing in the target cgroup, so it is SAFE THROUGH VN MARKET HOURS and may start now — only a synthetic burst waits for >=09:00Z, and AC-7/AC-8 already say a burst is NOT required for closure. Prior QA verdict stands: CHANGES_REQUESTED, cannot certify on a deploy check alone. FULL text of this ruling and the 3 superseded PO fields are in detail_ref under po_sequencing_20260826T0116Z.",
+        "claimed_at": "2026-08-26T05:09:49Z",
+        "claimed_by": "router (hand-dispatch, AC-7 passive sampler per po_sequencing_20260826T0116Z C3)",
+        "drain_source_lane": "review",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-26T00:28:41Z",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT",
+        "owner_client_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb"
       }
     ]
   },
