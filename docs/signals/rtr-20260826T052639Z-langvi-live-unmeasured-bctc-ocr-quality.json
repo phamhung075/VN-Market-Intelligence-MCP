@@ -1,0 +1,24 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "P1",
+  "createdAt": "2026-08-26T05:26:39Z",
+  "payload": {
+    "subject": "lang=vi is LIVE in production pdf-extractor but its BCTC quality effect is UNMEASURED",
+    "verified_live": {
+      "container": "417febec1a03",
+      "method": "docker exec grep of the RUNNING image, not the repo",
+      "sites": [
+        "/app/infrastructure/pek_engine_adapter.py:420",
+        "/app/infrastructure/ocr_adapter.py:609",
+        "/app/infrastructure/ocr_worker.py:224"
+      ]
+    },
+    "why_it_matters": "This is the user standing-goal phrase support-vietnamese-language actually shipped, on the tesseract-primary architecture. The en rec-model dictionary cannot represent Vietnamese diacritics at all; the vi selection routes to the latin rec model which can. Production BCTC OCR quality has plausibly moved for the FIRST time.",
+    "the_gap": "No before/after measurement on production documents exists. OPS-PDFX-REDEPLOY-DEBT-LANG-VI-FIX-INERT-IN-PRODUCTION was discharged without a closing row and exists in NO board lane and NO archive record (live=0, archive-detail=0), so the discharge left no trace and the stale INERT caveat survived in agent memory until corrected today.",
+    "ask": "Mint a row to measure production BCTC extraction quality post-lang=vi (before/after on real documents, e.g. the known-bad DXG and FPT p9 exemplars). Gate it >=09:00Z weekday - measuring requires RUNNING the extractor, which is barred 02:00-08:59Z.",
+    "do_not_conflate": "This does NOT reopen wholesale tesseract->PaddleOCR replacement, which stays rejected on the valid lang=vi benchmark (2.4x latency, pinned at memory.max). Separate track: the auto/per-page RESCUE path, whose no-fire-rate-is-safe blocker is being re-measured now by the AC-7 sampler (series completes ~2026-08-26T17:11Z).",
+    "caution": "Do NOT cite a quality improvement until the measurement exists. Asserting one now repeats the exact error the PaddleOCR memory file was opened to correct."
+  }
+}
