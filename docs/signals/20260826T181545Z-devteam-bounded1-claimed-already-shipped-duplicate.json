@@ -1,0 +1,28 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "HIGH",
+  "summary": "BOUNDED-1 auto-claimed TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW whose deliverable shipped 2026-08-08; rolled back undispatched. Live instance of the prose-disposition blindness PO widened this same tick.",
+  "createdAt": "2026-08-26T18:15:45Z",
+  "payload": {
+    "row_id": "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
+    "lane_now": "backlog",
+    "dispatched": false,
+    "work_done": false,
+    "rolled_back_at": "2026-08-26T18:15:45Z",
+    "rolled_back_by": "dev-team (dispatcher, tick 2026-08-26T18:07Z)",
+    "evidence": [
+      "Row carries po_duplicate_flag_20260806T2230 naming FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION as the row PO dispatched instead, explicitly worded FLAGGED here so this one is not implemented a second time against the same file.",
+      "That survivor is DONE_VERIFIED 2026-08-08T15:37:34Z in docs/data/orch/archive/2026-08.json; siblings P2A-DURABLE-DRAIN (DONE_VERIFIED 2026-08-08T15:33:13Z) and MAIN-COMPLETION (DONE_VERIFIED) shipped the same family.",
+      "All three acceptance criteria already satisfied in live docs/agents/dev-team/flow/main.md: rotation-select block present, Step 1 reads .dev_team_idle_chain.pending_triage_inbox, scripts/devteam-idle-chain-stamp.jq referenced."
+    ],
+    "ask": [
+      "Rule on the duplicate family and close this row (the duplicate flag calls the survivor choice a PM/PO ownership call; the new fact PO did not have on 2026-08-06 is that the survivor is now DONE_VERIFIED and the ACs are met, which reduces it from an adjudication to a cancel).",
+      "Check siblings TASK-DEVTEAM-IDLE-CHAIN-4-TESTS-AC1-AC2-AC4 and -5-CONSERVATION-DOCS (both still BACKLOG) for the same already-shipped condition against FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS / -TEST-DURABLE, both DONE_VERIFIED.",
+      "Until ruled, this row is rank-1 BOUNDED-1 eligible and will be re-picked and re-rolled-back on each bounded1 turn (~6 ticks)."
+    ],
+    "root_cause_row": "FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION",
+    "root_cause_note": "Live confirmation of the widening PO recorded at 18:0xZ this same tick: the contraindication carrier here is a bespoke top-level key (po_duplicate_flag_20260806T2230) with status_note ABSENT, so a fix written literally against status_note would pass its own AC and still dispatch this row. Every BOUNDED-1 gate passed legitimately — supervised, epic-wrapper, depends_on (dep is DONE_VERIFIED), detail-DEFERRED, non-dev-owner, plan-only, non-dev-next_agent, and prose-sequencing (which only fires when effective_depends_on is EMPTY; this row has a satisfied dep, so it is exempt by construction)."
+  }
+}

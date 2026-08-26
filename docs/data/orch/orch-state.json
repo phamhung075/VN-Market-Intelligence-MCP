@@ -23932,15 +23932,15 @@
         "zone": "multi",
         "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-        "updated_at": "2026-08-25T04:23:32Z",
+        "updated_at": "2026-08-26T18:17:59Z",
         "next_agent": "po",
         "owner": "po",
         "updated_by": "dev-mcp-server",
         "po_fold_20260823T1157Z": "DISPATCHABILITY FIX (next_agent was null in review[] — no drain resolves that) + FOLD of the entire 2026-08-22 BCTC telegram cluster; no new row minted for any of it. Folded evidence, all from read_telegram_reports/list_unresolved_reports this tick: (1) 11x [BCTC] write/reparse BLOCKED on total_assets=0 — FRT 2024-Q4/2025-Q4/2026-Q1, KDH 2025-Q4/2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. The guard is behaving correctly (refusing to overwrite good rows and refusing to create corrupt ones); the unaddressed defect is the zero-extraction upstream. (2) [bctcExtractReconcile] CIRCUIT BREAKER TRIPPED 2026-08-22T17:05Z — 4 rows exhausted to enrich_failed in one run (VIX 2024-Q2, BSR 2024-Q1, DGC 2024-Q1, VIX 2024-Q1) >= dormancy threshold 3, shared symptom 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after cap-8 passes; its own text says treat as a SYSTEMIC incident and do NOT triage row-by-row. (3) 2 further RECONCILE EXHAUSTED: HUT 2025-Q3 (report_id dab264ae-9702-4045-b488-bbf5d13f97fc, 12 passes vs cap 8) and SHB 2023-Q4 (fallback-SHB-2023-Q4). Common denominator across all three groups is the pdf-extractor/PEK pipeline producing zero extractable rows. Sibling rows already open, do not duplicate: FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write (ready, P0, dev-mcp-server), FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (blocked, P0), FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (blocked), FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET.",
         "occurrence_count": 2,
-        "secondary_claimed_at": "2026-08-25T04:16:23Z",
+        "secondary_claimed_at": "2026-08-26T18:17:58Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "dev-mcp-server",
+        "secondary_dispatch_target": "po",
         "dev_mcp_server_20260825": "SECONDARY-drain live re-verify: AC-1/AC-2/AC-3 all DONE_VERIFIED; 08-11 cap-not-enforced residual = same defect as FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS, DONE_VERIFIED 08-12, RAW-confirmed fixed live today (post-fix terminations cap exactly at 8). 08-22 telegram cluster already folded to 4 live sibling rows, none of them this SPIKE. Zero remaining diagnostic/dev work under this row. Recommend DONE_VERIFIED -- routing to po for final sign-off per this rows own 07-17 disposition (close = PO call, supervised:true). Full write-up: docs/data/orch/archive/backlog-detail.json .items[id=this] .dev_mcp_server_verification_20260825 + docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md addendum."
       },
       {
