@@ -1,3 +1,6 @@
+## d4-auto · 2026-08-26T03:00:01.935Z
+D4 candidates: none
+
 ## c8 · 2026-08-25T22:45Z
 ### Audit Run Tier-2 (22:33–22:46 UTC 2026-08-25) — stale-green respawn, A-29 re-run + B-xx spot-check
 - Tier: 2 | Sources: 6 spot-checked | DB checks: 4 (C-06,C-07,B-09,B-13)
@@ -149,3 +152,70 @@ Recommended investigation vector: check Docker container logs, memory/CPU pressu
 
 ### History Entry
 Recorded to `docs/data/db-integrity-history.json` as entry #200 (at cap, rotated oldest). No new signal rows written (2 deduped, 3 by-design).
+
+## c10 · 2026-08-26T03:00:24Z
+### Audit Run Tier-DATA (02:56–03:00 UTC 2026-08-26)
+- Tier: DATA | Tables checked: 12 | Scan: 02:59:55Z
+- Anomalies: 3 dedup-skipped findings (all already-open) | 1 BY-DESIGN
+- Status: NO NEW SIGNALS
+
+### Findings Summary
+
+**Scanner:** `db-integrity-counts.sh` + deterministic table-by-table audit
+
+**Canonical anomalies (deterministic counts):**
+```json
+{
+  "ohlc_violations_count": 336,
+  "scale_gt100x_count": 0,
+  "vnindex_cache_rows_count": 1,
+  "low_confidence_reports_count": 52,
+  "ohlc_violation_distinct_dates": 20,
+  "fresh_ohlc_violations_last_2d": 0
+}
+```
+
+**Key findings:**
+
+1. **[HIGH] cron_job_runs crashes** — `already-open:FIX-CRON-RUNS-NULL-ERRORMSG`
+   - 211 crashed + 7 error = 218 total failures
+   - Most recent crash: 2026-08-26T03:00:06Z
+   - Same coordinated crash event at 00:33:41Z (6 concurrent jobs):
+     - intelligenceCycleJob, alertScanParallelJob, vnIndexRefreshJob
+     - freshnessSlaMonitorJob, newsHeadlinesRefreshJob, walCheckpointJob
+   - Dedup-skipped: already tracked in FIX-CRON-RUNS-NULL-ERRORMSG task
+
+2. **[MED] deep_fetch_queue stale** — `already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD`
+   - 30 pending jobs stuck since 2026-08-18 (185+ hours)
+   - 2505 expired, 34 vps-failed
+   - Fetch worker unable to clear queue
+   - Correlated with cron crash at 00:33:41Z
+   - Dedup-skipped: already tracked in FIX-DEEPFETCH-PIPELINE task
+
+3. **[WARN] fred_series_daily stale** — `already-open:FIX-MACRO-ISM-FRED-API-KEY-MISSING`
+   - 8415 rows, newest date 2026-08-24 (2 days stale)
+   - FRED feed not updated in 48 hours
+   - freshnessSlaMonitorJob (one of 6 crashed jobs) responsible for this feed
+   - Likely victim of coordinated failure at 00:33:41Z
+   - Dedup-skipped: already tracked in FIX-MACRO-ISM-FRED-API-KEY-MISSING task
+
+4. **[BY-DESIGN] OHLC violations** (no signal)
+   - 336 violations across 20 dates (not concentrated)
+   - Zero fresh violations in last 2 days
+   - No escalation this cycle
+
+### Dedup Status
+- 3 REAL findings all dedup-skipped (already-open tasks)
+- 1 BY-DESIGN finding (no signal needed)
+- 0 new signal rows written
+
+### History Entry Reference
+Recorded to `docs/data/db-integrity-history.json` entry #200 (at cap). Scan timestamp: 2026-08-26T03:00:24Z.
+
+### Root Cause Continuity
+Same core issue identified in c9 (02:30:33Z scan): coordinated crash event at 2026-08-26 00:33:41Z affecting 6 concurrent cron jobs. This run (3:00 UTC) confirms persistent state — stale queues and feed remain unresolved. Awaiting FIX tasks to complete root-cause investigation and remediation.
+
+### Observations
+- Database changes detected since last sweep (probe returned SPAWN): daily_ohlcv +1 row, market_prices timestamp advanced ~30min
+- No NEW anomalies discovered (same patterns as c9)
+- Count noise within tolerance (±1-2 rows on multi-million-row tables)
