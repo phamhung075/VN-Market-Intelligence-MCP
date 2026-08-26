@@ -4,11 +4,26 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-26T04:07:33Z",
-    "matched_slots": ["news-scout-offhours","market-watcher-offhours","alert-commander-market","alert-commander-critical"],
-    "won_slots": ["news-scout-offhours","market-watcher-offhours","alert-commander-market","alert-commander-critical"],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/news-scout/flow/main.md","docs/agents/market-watcher/flow/main.md","docs/agents/alert-commander/flow/main.md","docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +33,25 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": {"news-scout-offhours":"cadence","market-watcher-offhours":"cadence","alert-commander-market":"cron","alert-commander-critical":"cron"},
-    "cadence_minutes": {"news-scout-offhours":"30","market-watcher-offhours":"30","alert-commander-market":null,"alert-commander-critical":null},
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-market": "cron",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "30",
+      "market-watcher-offhours": "30",
+      "alert-commander-market": null,
+      "alert-commander-critical": null
+    },
     "last_fired_timestamp": "2026-08-26T04:00:00Z",
-    "last_fired_slots": ["news-scout-offhours","market-watcher-offhours","alert-commander-market","alert-commander-critical"],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -31,21 +61,21 @@
     "devq": 5,
     "signal_backlog": 33,
     "note": "4-slot fan-out — the 0 */4 top-of-hour block (news-scout-offhours, market-watcher-offhours, alert-commander-critical) converged with the */15 alert-commander-market slot. Largest batch this session.",
-
     "FIELD-PROVENANCE": {
       "dev_head": "resolved from CANONICAL top-level .head (status=idle, updated_by=qa @03:31:04Z) — NOT the deprecated .task_board.head passthrough stub",
       "signal_backlog": "independently recomputed by the dispatcher as a FILE count (docs/signals/*.json excluding cowork-team-*) = 33; server emit returned 33 — EXACT MATCH, 3rd consecutive tick",
       "devq": "server-computed by emit_pressure_state; NOT ready[]+backlog[]",
       "last_regime / last_volatility_level": "passed 'unknown' — both lookup keys verified genuinely ABSENT from cycle-snapshot-latest.json (top-level keys are exactly [created_at, macro_snapshot, market_context, tick]). Deliberately did NOT substitute the live value at .macro_snapshot.data.signals.carry.regime — that is a different key and substituting it would fabricate telemetry."
     },
-
     "STEP-4B-COLLISION": {
       "agent_id": "alert-commander",
-      "slots": ["alert-commander-market","alert-commander-critical"],
+      "slots": [
+        "alert-commander-market",
+        "alert-commander-critical"
+      ],
       "declared_supersedes_pair": false,
       "detail": "Verified against docs/data/cowork-schedule.json: NEITHER slot declares supersedes over the other; the only supersedes edge in the whole schedule is market-watcher-eod -> [market-watcher-offhours], which does not apply. This is therefore an UNDECLARED same-agent collision — precisely the residual case match-slots.md Step 4b says its WARN survives to catch post-FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION. WARN telegram sent to work channel; both slots spawned per R3 (WARNING only, never blocks)."
     },
-
     "PREDICTIONS-RECORDED-BEFORE-RETURNS": {
       "_why": "Both spawns are backgrounded, so these are written strictly before any evidence arrives. Recording them here is what makes the next tick's check a falsification rather than hindsight — the method that overturned my own asserted mechanism on the marker-key row at 03:45Z.",
       "P1_scope_gap_4th_consecutive": {
@@ -62,9 +92,7 @@
         "status": "OPEN — resolve next tick"
       }
     },
-
     "HONEST-LIMIT-ON-P1": "news-scout and market-watcher also stamp wall-clock-ish times (news-scout c283 '2026-08-25T16:07:00Z' for a nominal 16:00 fire; market-watcher '## Metrics (cycle 2026-08-26 00:07 UTC)' for a nominal 00:00). That is suggestive but NOT the same defect and must not be counted toward P1: neither agent has a tick= KEY field, so their timestamps are legitimately 'when I ran', not a mis-derived nominal-tick key. Only alert-commander publishes a tick= key that is specified to be nominal. Do not let this tick's larger sample tempt a generalization the evidence does not carry.",
-
     "carried_defects": {
       "cycle_snapshot_promoted_false": "43rd consecutive. Do NOT 'fix' by rounding the producer — po_fold_20260825 withdrew that shape.",
       "cycle_snapshot_latest_stale": "still tick=00:00, created_at=2026-08-23T00:07:50Z (~76h stale)",
@@ -74,5 +102,11 @@
     }
   },
   "priority": "low",
-  "createdAt": "2026-08-26T04:07:33Z"
+  "createdAt": "2026-08-26T04:07:33Z",
+  "_processed": {
+    "fingerprint": "5d52a1c6eba76eb9a9f39b172b2edbd75955d0c0d7f7b75d47c2c60cbe658f45",
+    "processedAt": "2026-08-26T04:09:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

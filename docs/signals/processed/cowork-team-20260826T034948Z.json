@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-26T03:49:48Z",
-    "matched_slots": ["alert-commander-market"],
-    "won_slots": ["alert-commander-market"],
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "alert-commander-market": "cron" },
-    "cadence_minutes": { "alert-commander-market": null },
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-26T03:45:00Z",
-    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "1-slot fan-out. Step 0a drain no-op — ZERO NEW rows queue-wide this tick (the 3 architect-bound rows present at 03:30Z were drained by dev-team in the interval). Watch item on return: rtr-20260826T0325-markerkeynominaltickderiv predicts alert-commander will write tick=03:50 (floor-5 of its bootstrap wall clock) instead of the nominal 03:45. If it does, that is a THIRD consecutive occurrence and the row's severity should rise from WARN."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T03:49:48Z"
+  "createdAt": "2026-08-26T03:49:48Z",
+  "_processed": {
+    "fingerprint": "5d6fab10eb86a5506ddd255e842cb765355bc3647902087b4e940d31da1dab61",
+    "processedAt": "2026-08-26T04:09:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -89,10 +89,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FACTORY-KINHDICH-extract-hexagram-data",
-    "next_agent": "developer",
+    "next_agent": "dev-kinh-dich",
     "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-KINHDICH-extract-hexagram-data — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-26T04:10:38Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "updated_at": "2026-08-26T04:11:45Z",
+    "updated_by": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24318,9 +24318,13 @@
         "promoted_at": "2026-08-26T04:10:36Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-26T04:10:38Z",
+        "updated_at": "2026-08-26T04:11:45Z",
         "claimed_at": "2026-08-26T04:10:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-kinh-dich",
+        "owner": "dev-kinh-dich",
+        "owner_client_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
+        "updated_by": "router (specialist resolved from detail dev_agent + zone)"
       }
     ]
   },
