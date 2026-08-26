@@ -24631,9 +24631,296 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T07:32:41Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-26T07:50:57Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "31000d163852f94da40ccf409affef4ba1c49ed771a9d734f8b409098809c58c",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "tooling_defect",
+        "priority": "HIGH",
+        "payload": {
+          "title": "not-before deferral gate is honored by 1 of 4 pickers — ILC/RLC/SECONDARY dispatch time-gated rows anyway",
+          "evidence": {
+            "gate_keys": [
+              "qa_not_before",
+              "next_recheck_not_before",
+              "qa_new_window_earliest_d1_close"
+            ],
+            "predicate": "scripts/lib/devteam-eligibility.jq :684 gate_not_before_keys / :694 is_gated_not_before($now)",
+            "call_counts": {
+              "scripts/devteam-review-claim-qa-drain.jq": 2,
+              "scripts/devteam-backlog-claim-incident-lane-consumer.jq": 0,
+              "scripts/devteam-backlog-claim-ready-lane-consumer.jq": 0,
+              "scripts/devteam-review-claim-secondary-drain.jq": 0
+            },
+            "note": "All four import devteam-eligibility.jq, so the helper is IN SCOPE for all of them; three simply never invoke it. Importing the lib is not evidence the gate is enforced."
+          },
+          "impact": "A row deliberately time-gated by its author is invisible to only ONE lane. ILC, RLC and SECONDARY-drain will pick and dispatch it immediately. Stamping next_recheck_not_before therefore buys DECORATIVE protection on 3 of 4 dispatch paths — a false sense of deferral.",
+          "live_instance": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE sits P0/READY/next_agent=ops at ready[] head with NO gate field. It is deliberately deferred to 08:00Z (market close; peer db-data-integrity cron sweeps the same recovering DB every 30min). Router held it this tick with a task-lock busy-guard (ttl 2400s) because a gate field would NOT have stopped ILC.",
+          "recommendation": "Either (a) make ILC/RLC/SECONDARY call is_gated_not_before($now) like qa-drain does, or (b) document that task-locks are the ONLY fleet-honored deferral mechanism and stop advertising the gate keys as picker-wide. Do NOT leave both half-true.",
+          "found_by": "router dev-team tick 2026-08-26T07:07Z, grep-verified reader counts before relying on the gate"
+        },
+        "createdAt": "2026-08-26T07:19:50Z",
+        "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "16c8571f771e9ccd76fcadec9d59aeef4d41367d597442fd0cbb303810009336",
+        "source": "file",
+        "from": "dev-pdf-extractor",
+        "to": "po",
+        "type": "task_proposal",
+        "priority": "P3",
+        "payload": {
+          "title": "mcp-server bctcExtractReconcileJob re-fires a 20-request batch every 30min with no pacing against pdf-extractor's single extraction slot — AC-3/AC-4 companions of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+          "origin_row": "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+          "why_deferred": "Fix lives in apps/mcp-server/ — outside apps/pdf-extractor/ (dev-pdf-extractor's zone_restricted boundary). Cannot be implemented by this agent.",
+          "evidence": {
+            "ac3_answer": "threading.Semaphore(1) in PekEngineAdapter was DELIBERATELY chosen (REQ-PEK-9d/AC-PEK-4d, docs/architecture-briefs/2026-05-26-pek-integrate-design.md §2.x: 'prevents two concurrent model instances from doubling RAM' against the Docker --memory 2.5g cap; measured +845.4 MiB RSS growth per single extraction per pek_engine_adapter.py's own FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM comment). It was never a default value.",
+            "capacity_mismatch": "43 POST /pek-extract requests arrived in the 01Z hour on 2026-08-26 against 1 server-side slot. pek_engine_adapter.py's own comment names the caller: bctcExtractReconcileJob.ts (mcp-server) re-fires its whole still-pek_triggered batch (DEFAULT_BATCH_SIZE=20) every 30-min tick with no pacing.",
+            "which_side_should_change": "The CALLER, not the server. Raising server concurrency risks the container's OOM-kill threshold (see ac3_answer). Raising PEK_SEMAPHORE_WAIT_SECONDS was explicitly ruled out as a non-fix by PO on the origin row (po_ruling_20260826T0650Z)."
+          },
+          "recommendation": "File a P3 row for dev-mcp-server: give bctcExtractReconcileJob.ts either (a) a client-side market-hours gate (it currently burns pointless round-trips into the 02:00-07:59 UTC block window the guard already refuses), or (b) honor the detail.retry_after field the 503 response already carries, plus add inter-request/inter-batch pacing so a 20-request re-fire does not queue 19 requests behind pdf-extractor's single slot.",
+          "found_by": "dev-pdf-extractor, while closing AC-3/AC-4 of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S (session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb)"
+        },
+        "createdAt": "2026-08-26T07:27:21Z",
+        "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a137cc211b85a96ff4a6521244ab7e81a0d3228dcc6a56db6a24f8ea115224af",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "tooling_defect",
+        "priority": "HIGH",
+        "payload": {
+          "title": "task_board.qa[] has NO picker — qa dispatch is coupled to the review->qa MOVE, so any row resident in qa[] is unreachable by every dispatch path",
+          "evidence": {
+            "drain_source_lanes": "scripts/devteam-review-claim-qa-drain.jq :41 — 'candidate lanes: .task_board.review[] UNION .task_board.done[]'. qa[] appears only as the MUTATION TARGET (:215 .task_board.qa = ... + [batch]), never as a selection source.",
+            "picker_scan": "grep -l 'task_board.qa' over scripts/devteam-*.jq + scripts/lib/devteam-eligibility.jq matches only devteam-review-claim-qa-drain.jq (target) and devteam-qadrain-skip-revert.jq (revert path). No selector reads qa[] for dispatch.",
+            "dispatch_coupling": "The caller derives $picked_batch by re-reading .task_board.qa[] for rows carrying THIS invocation's claimed_at/claimed_by stamp (main.md :966-968 and :1291-1293). Dispatch therefore fires only for rows the drain itself just moved — never for rows already sitting there.",
+            "stranded_rows_observed": [
+              {
+                "id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
+                "priority": "P0",
+                "claimed_at": "2026-08-14T08:32:49Z",
+                "age_days": 12,
+                "claimed_by": "dev-team (review-lane qa-drain)",
+                "note": "Drained CORRECTLY through the intended path. Still stranded 12 days. This is the load-bearing evidence: the defect is not about hand-placed rows, it is that nothing re-selects qa[] once the moving tick ends."
+              },
+              {
+                "id": "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+                "priority": "P1",
+                "arrived": "2026-08-26T07:32Z",
+                "claimed_by_before_router_stamp": null,
+                "note": "Moved ready[]->qa[] directly by dev-pdf-extractor on return, bypassing the drain entirely, so it never received a claimed_by stamp and no qa was ever dispatched."
+              }
+            ],
+            "cap_is_not_the_bug": "QA_CAP=10 (main.md :953 and :1279), NOT the 'qa[] < 1' asserted by devteam-review-claim-qa-drain.jq :123 — that comment is stale since the 08-23 retune. With qa[]=2 the drain had headroom 8, so the review lane was NOT dammed. Do not re-file this as a cap-saturation issue."
+          },
+          "impact": "Any row that reaches qa[] without being moved there by the drain in that same tick is permanently unowned. A row the drain DID move is also unowned from the next tick onward if its qa agent never completes the move out — which is what happened to a P0 for 12 days. qa[] is currently a terminal parking lot, not a work lane.",
+          "recommendation": "Add a qa[]-resident re-dispatch path: select rows in qa[] with status=QA and next_agent=qa whose claimed_at is older than one tick and for which no live task:<id> lock is held, then dispatch qa for them. Note this is the SAME shape as the not-before finding filed at 07:19:50Z — a guarantee advertised board-wide but implemented on one path only. Verify by per-file selector count against qa[], NOT by grepping for the string 'task_board.qa' (both the target write and the revert script match it and would score this GREEN today).",
+          "router_action_taken": "Hand-dispatched qa for BOTH rows at 2026-08-26T07:42:56Z under task: locks (ttl 3600) after confirming no live lock existed on either. Stamped the PDFX row's claimed_by to mirror the drain's idiom. This unblocks the two rows; it does NOT fix the class defect.",
+          "found_by": "router dev-team tick 2026-08-26T07:07Z post-return verification — grepped the qa[] READER before assuming the next tick would pick the row up"
+        },
+        "createdAt": "2026-08-26T07:42:56Z",
+        "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a6bdd3bfa34e8fdcc12ff85e0e385de9f380dddc3e0241e4c2f8502fca55fdad",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "tooling_defect",
+        "priority": "HIGH",
+        "payload": {
+          "title": "status=BLOCKED is being used as a CLOCK-based deferral, but nothing ever releases it — the 17:11Z gate on the PaddleOCR critical path has no actuator",
+          "not_a_complaint_about_the_gate": "PO's freeze is DELIBERATE, documented and correct. Each row carries a gate_note saying so verbatim: 'status=BLOCKED is the market-hours gate, NOT a dependency - blocked_by and depends_on are both empty by design. next_recheck_not_before is the real condition. BLOCKED is used because next_recheck_not_before is currently honoured only by the qa-drain consumer.' The engineering call (do not run the extractor while the AC-7 cgroup-memory series is in flight) is sound. This signal is ONLY about the missing release path.",
+          "evidence": {
+            "actuator_scan": "Files mentioning BOTH 'BLOCKED' and 'not_before' across scripts/: exactly 4 — devteam-review-claim-qa-drain.jq (gate reader, sources review[]/done[]), lib/devteam-eligibility.jq (the predicate itself), test-devteam-donelane-drain.sh (a test), and po-triage-20260826T0536Z-blocked-freeze-and-langvi-ruling.jq (PO's one-shot transform that SET the freeze). None of them scans for BLOCKED rows whose clock has passed and returns them to a live status.",
+            "why_the_one_gate_reader_cannot_help": "The four frozen rows sit in task_board.backlog[]. The only picker that honours not-before keys sources review[] UNION done[]. It can never see them. Separately, BLOCKED is excluded from every positive status allowlist, so no backlog picker will touch them either.",
+            "frozen_rows": [
+              {
+                "id": "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE",
+                "priority": "P1",
+                "next_recheck_not_before": "2026-08-26T17:11:00Z",
+                "depends_on": [
+                  "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S"
+                ]
+              },
+              {
+                "id": "DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH",
+                "priority": "P1",
+                "next_recheck_not_before": "2026-08-26T17:11:00Z",
+                "depends_on": [
+                  "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE"
+                ]
+              },
+              {
+                "id": "FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE",
+                "priority": "P1",
+                "next_recheck_not_before": "2026-08-26T17:11:00Z",
+                "depends_on": null
+              },
+              {
+                "id": "FIX-BCTC-CTG-BALANCE-SHEET-REFINE",
+                "priority": "high",
+                "next_recheck_not_before": "2026-08-26T17:11:00Z",
+                "depends_on": [
+                  "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD"
+                ]
+              }
+            ],
+            "gate_is_well_founded": "17:11:30Z = AC-7 sampler first sample 05:11:30Z + 12h. NOT container start (00:33:39Z) — do not recompute it from the container. Sampler healthy at 33 rows, last sample 07:42:32Z, container restarts=0.",
+            "board_wide_population_NOT_verified": "49 rows board-wide carry status=BLOCKED; only 11 carry any blocked_by. The other 38 were NOT individually inspected — I read only the 4-row batch stamped updated_at=2026-08-26T06:51:41Z. Do NOT treat '38 rows frozen with no blocker' as 38 defects; several may encode a real gate in prose exactly as these four do. Someone must actually read them before any sweep. A bulk unfreeze would be the prose-blind auto-claim failure mode."
+          },
+          "impact": "The user's standing goal — replace tesseract OCR with Vietnamese PaddleOCR to improve BCTC extraction quality — routes entirely through MEASURE-PDFX-... -> DECIDE-PDFX-.... Both are frozen behind a clock with no reader. Absent manual intervention the goal stalls indefinitely, and the stall is SILENT: the rows look deliberately managed, not stuck.",
+          "recommendation": "Give the clock an actuator. Either (a) add a backlog-side sweep that returns BLOCKED rows to READY once next_recheck_not_before has passed AND depends_on is satisfied, or (b) stop using BLOCKED for clock deferrals and use a task-lock, which is the only fleet-honored deferral mechanism today. Note this is the THIRD finding of the same shape filed in this tick alone (not-before honored by 1 of 4 pickers, 07:19:50Z; qa[] has no picker, 07:42:56Z; this one) — a guarantee advertised board-wide with zero or one implementing reader. That recurrence is itself worth a root-cause look.",
+          "router_action_taken": "Armed one-shot session cron 00545d31 for 2026-08-26T17:13Z (local 19:13) to verify the AC-7 window actually closed and then spawn po to release the freeze. NOTE THE WEAKNESS: session crons are in-memory and die with this CLI session, so this actuator does not survive a restart. It is a stopgap, not the fix.",
+          "found_by": "router dev-team tick 2026-08-26T07:07Z, tracing the standing goal's dependency chain while qa ran"
+        },
+        "createdAt": "2026-08-26T07:48:09Z",
+        "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d126a50afe536008a3edbcdce9d9da96d890082dd9532b9187166d32995c9ed3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T07:22:29Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": "60",
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T07:21:36Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "07:15",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 32,
+          "note": [
+            "Step 4.7 FILE_TICK=07:20 overwrote prior-day decoy cycle-snapshot-07:20.json (created_at 2026-08-25T07:20:55Z); count 40->40 net zero. SECOND consecutive prospective confirmation of the same-key overwrite death mechanism (07:05 last tick, 07:20 this tick). 2 decoys remain: 07:34, 07:49.",
+            "Step 0a: NEW=0, nothing to drain. The 2 auditor rows held at NEW last tick (sys-20260826T065952-3c3e / sys-20260826T070016-7c23) are now READ — consumed by a peer PO directly off the queue. 2nd confirmation that holding to=po rows at NEW is correct and the dev-team drain path is not required for delivery.",
+            "_fanout SSOT is docs/data/cadence-policy.json ._fanout, NOT cowork-schedule.json (jq ._fanout on cowork-schedule.json returns null). Correcting a dispatcher-side shorthand; values unchanged: default 4 / degraded 2 / floor 1500 / factor 2.",
+            "Step 5.1 locale-comma defect 21st confirmation: spec awk -F, parses host load as 7, true value 7,75. Non-binding at threshold 24 (12 cores x 2).",
+            "cycle_snapshot_promoted:false 56th consecutive; cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z.",
+            "calendar_status=open 49th+ consecutive (architect-owned computation defect).",
+            "regime_status / volatility_level keys ABSENT from cycle-snapshot-latest.json 16th verification; only live path is macro_snapshot.data.signals.carry.regime (=UNKNOWN in the stale latest). Step 6.0 last_regime/last_volatility_level structurally pinned to unknown.",
+            "signal_backlog 32 == independent file recount 32 (16th match).",
+            "2 slots this tick, both guaranteed=false; per-slot scheduled_utc_time differs (chef 07:13:00Z, alert-commander 07:15:00Z) — both propagated verbatim into ENTRY_PROMPT."
+          ]
+        },
+        "createdAt": "2026-08-26T07:22:29Z",
+        "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e1a31b5db3fff7b6cb53401befa5b7b2f397baf67257ff546ed5e8e0b645bf2f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T07:36:40Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T07:35:48Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "07:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 33,
+          "note": [
+            "Step 4.7 FILE_TICK=07:34 overwrote the 2026-08-25T07:34Z decoy (16659B -> 15958B). THIRD consecutive prospectively-predicted same-key overwrite; mechanism confirmed. Next decoy due: 07:49.",
+            "Snapshot count reconciled: 25 today + 15 of 2026-08-25 vintage + cycle-snapshot-latest = 41 via the *.json glob. A prior tick reported 40 by counting dated files only — bookkeeping inconsistency, not a missing or extra artifact.",
+            "2026-08-25 residue is 15 files (07:49 .. 21:05), not the 3 near-term ones previously tracked. Each dies by EITHER the 24h prune OR a same-key overwrite, whichever lands first.",
+            "Step 5.1 locale-comma: true 1-min load 2,86; spec awk -F comma parse yields 2. 22nd confirmation. Non-binding at threshold 24 (12 cores x factor 2). Defect is in the spec, not the host.",
+            "signal_backlog 33 == independent recount of docs/signals/*.json excluding cowork-team-* (17th consecutive match).",
+            "cycle_snapshot_promoted:false — 57th consecutive. cycle-snapshot-latest.json still tick=00:00 / 2026-08-23T00:07:50Z. Do NOT remedy by rounding the producer filename.",
+            "calendar_status=open — 50th+ consecutive; architect-owned computation defect, unchanged.",
+            "PRIOR-TICK FINDING (07:15Z chef-intraday): unified-agent wrote its synthesis JSON to docs/agents/unified-agent/output/ — a new untracked dir. chef-dish.md:890 mandates docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json; all 5 siblings incl. yesterday same-slot are there. FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON (backlog P1 agent-father) owns the own_paths half, but its fix adds docs/data/unified-agent-synthesis-*.json and would NOT have caught this file. Recorded on that row; no new row minted.",
+            "PRIOR-TICK FINDING (07:15Z chef-intraday): notebook write left uncommitted despite chef-dish.md:1095-1096 carrying it in own_paths; agent return narrated Notebook-updated with no commit mentioned. 2nd orphaned chef notebook write today (436b2e48a cleaned the 06:13Z one ~1h earlier). Committed as 0621e246d under commit-mutex; misplaced JSON deliberately left untracked to avoid ratifying the path."
+          ]
+        },
+        "createdAt": "2026-08-26T07:36:40Z",
+        "drained_at": "2026-08-26T07:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,

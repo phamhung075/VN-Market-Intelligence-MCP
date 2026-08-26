@@ -25,5 +25,11 @@
     "live_instance": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE sits P0/READY/next_agent=ops at ready[] head with NO gate field. It is deliberately deferred to 08:00Z (market close; peer db-data-integrity cron sweeps the same recovering DB every 30min). Router held it this tick with a task-lock busy-guard (ttl 2400s) because a gate field would NOT have stopped ILC.",
     "recommendation": "Either (a) make ILC/RLC/SECONDARY call is_gated_not_before($now) like qa-drain does, or (b) document that task-locks are the ONLY fleet-honored deferral mechanism and stop advertising the gate keys as picker-wide. Do NOT leave both half-true.",
     "found_by": "router dev-team tick 2026-08-26T07:07Z, grep-verified reader counts before relying on the gate"
+  },
+  "_processed": {
+    "fingerprint": "31000d163852f94da40ccf409affef4ba1c49ed771a9d734f8b409098809c58c",
+    "processedAt": "2026-08-26T07:50:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

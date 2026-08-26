@@ -33,5 +33,11 @@
     "recommendation": "Add a qa[]-resident re-dispatch path: select rows in qa[] with status=QA and next_agent=qa whose claimed_at is older than one tick and for which no live task:<id> lock is held, then dispatch qa for them. Note this is the SAME shape as the not-before finding filed at 07:19:50Z — a guarantee advertised board-wide but implemented on one path only. Verify by per-file selector count against qa[], NOT by grepping for the string 'task_board.qa' (both the target write and the revert script match it and would score this GREEN today).",
     "router_action_taken": "Hand-dispatched qa for BOTH rows at 2026-08-26T07:42:56Z under task: locks (ttl 3600) after confirming no live lock existed on either. Stamped the PDFX row's claimed_by to mirror the drain's idiom. This unblocks the two rows; it does NOT fix the class defect.",
     "found_by": "router dev-team tick 2026-08-26T07:07Z post-return verification — grepped the qa[] READER before assuming the next tick would pick the row up"
+  },
+  "_processed": {
+    "fingerprint": "a137cc211b85a96ff4a6521244ab7e81a0d3228dcc6a56db6a24f8ea115224af",
+    "processedAt": "2026-08-26T07:50:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

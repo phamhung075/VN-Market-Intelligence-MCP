@@ -15,5 +15,11 @@
     },
     "recommendation": "File a P3 row for dev-mcp-server: give bctcExtractReconcileJob.ts either (a) a client-side market-hours gate (it currently burns pointless round-trips into the 02:00-07:59 UTC block window the guard already refuses), or (b) honor the detail.retry_after field the 503 response already carries, plus add inter-request/inter-batch pacing so a 20-request re-fire does not queue 19 requests behind pdf-extractor's single slot.",
     "found_by": "dev-pdf-extractor, while closing AC-3/AC-4 of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S (session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb)"
+  },
+  "_processed": {
+    "fingerprint": "16c8571f771e9ccd76fcadec9d59aeef4d41367d597442fd0cbb303810009336",
+    "processedAt": "2026-08-26T07:50:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

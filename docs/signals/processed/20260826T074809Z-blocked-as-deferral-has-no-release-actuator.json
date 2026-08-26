@@ -11,10 +11,36 @@
       "actuator_scan": "Files mentioning BOTH 'BLOCKED' and 'not_before' across scripts/: exactly 4 — devteam-review-claim-qa-drain.jq (gate reader, sources review[]/done[]), lib/devteam-eligibility.jq (the predicate itself), test-devteam-donelane-drain.sh (a test), and po-triage-20260826T0536Z-blocked-freeze-and-langvi-ruling.jq (PO's one-shot transform that SET the freeze). None of them scans for BLOCKED rows whose clock has passed and returns them to a live status.",
       "why_the_one_gate_reader_cannot_help": "The four frozen rows sit in task_board.backlog[]. The only picker that honours not-before keys sources review[] UNION done[]. It can never see them. Separately, BLOCKED is excluded from every positive status allowlist, so no backlog picker will touch them either.",
       "frozen_rows": [
-        {"id": "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE", "priority": "P1", "next_recheck_not_before": "2026-08-26T17:11:00Z", "depends_on": ["FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S"]},
-        {"id": "DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH", "priority": "P1", "next_recheck_not_before": "2026-08-26T17:11:00Z", "depends_on": ["MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE"]},
-        {"id": "FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE", "priority": "P1", "next_recheck_not_before": "2026-08-26T17:11:00Z", "depends_on": null},
-        {"id": "FIX-BCTC-CTG-BALANCE-SHEET-REFINE", "priority": "high", "next_recheck_not_before": "2026-08-26T17:11:00Z", "depends_on": ["TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD"]}
+        {
+          "id": "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE",
+          "priority": "P1",
+          "next_recheck_not_before": "2026-08-26T17:11:00Z",
+          "depends_on": [
+            "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S"
+          ]
+        },
+        {
+          "id": "DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH",
+          "priority": "P1",
+          "next_recheck_not_before": "2026-08-26T17:11:00Z",
+          "depends_on": [
+            "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE"
+          ]
+        },
+        {
+          "id": "FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE",
+          "priority": "P1",
+          "next_recheck_not_before": "2026-08-26T17:11:00Z",
+          "depends_on": null
+        },
+        {
+          "id": "FIX-BCTC-CTG-BALANCE-SHEET-REFINE",
+          "priority": "high",
+          "next_recheck_not_before": "2026-08-26T17:11:00Z",
+          "depends_on": [
+            "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD"
+          ]
+        }
       ],
       "gate_is_well_founded": "17:11:30Z = AC-7 sampler first sample 05:11:30Z + 12h. NOT container start (00:33:39Z) — do not recompute it from the container. Sampler healthy at 33 rows, last sample 07:42:32Z, container restarts=0.",
       "board_wide_population_NOT_verified": "49 rows board-wide carry status=BLOCKED; only 11 carry any blocked_by. The other 38 were NOT individually inspected — I read only the 4-row batch stamped updated_at=2026-08-26T06:51:41Z. Do NOT treat '38 rows frozen with no blocker' as 38 defects; several may encode a real gate in prose exactly as these four do. Someone must actually read them before any sweep. A bulk unfreeze would be the prose-blind auto-claim failure mode."
@@ -23,5 +49,11 @@
     "recommendation": "Give the clock an actuator. Either (a) add a backlog-side sweep that returns BLOCKED rows to READY once next_recheck_not_before has passed AND depends_on is satisfied, or (b) stop using BLOCKED for clock deferrals and use a task-lock, which is the only fleet-honored deferral mechanism today. Note this is the THIRD finding of the same shape filed in this tick alone (not-before honored by 1 of 4 pickers, 07:19:50Z; qa[] has no picker, 07:42:56Z; this one) — a guarantee advertised board-wide with zero or one implementing reader. That recurrence is itself worth a root-cause look.",
     "router_action_taken": "Armed one-shot session cron 00545d31 for 2026-08-26T17:13Z (local 19:13) to verify the AC-7 window actually closed and then spawn po to release the freeze. NOTE THE WEAKNESS: session crons are in-memory and die with this CLI session, so this actuator does not survive a restart. It is a stopgap, not the fix.",
     "found_by": "router dev-team tick 2026-08-26T07:07Z, tracing the standing goal's dependency chain while qa ran"
+  },
+  "_processed": {
+    "fingerprint": "a6bdd3bfa34e8fdcc12ff85e0e385de9f380dddc3e0241e4c2f8502fca55fdad",
+    "processedAt": "2026-08-26T07:50:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
