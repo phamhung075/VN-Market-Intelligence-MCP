@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T07:07:52Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T07:06:46Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 33,
+    "note": [
+      "SNAPSHOT DECOY OVERWRITE — PROSPECTIVELY CONFIRMED. Last tick I named 07:05/07:20/07:34/07:49 as the only surviving prior-day decoys (the keys today had not yet reached). This tick Step 4.7 reached 07:05: the key held a 2026-08-25T07:05:09Z file and today write clobbered it. Count 40->40, net zero (one overwrite, nothing prune-eligible). A decoy dies by EITHER the 24h prune OR a same-key overwrite, whichever lands first — the prediction held on the first key to come due. 3 decoys remain (07:20/07:34/07:49).",
+      "DEDUP_KEY WRITTEN BUT NOT ENFORCED (new, needs an owner). Both NEW rows this tick carry the IDENTICAL dedup_key auditor-cycle-missing:tier2:2026-08-26T04:00Z and were BOTH minted, 24 seconds apart (06:59:52Z / 07:00:16Z), same from/to/type/summary/severity. Not isolated: fleet-wide the signal_queue holds 9 distinct dedup_keys with 2-3 rows each (auditor-a29-fire-gap x3 keys, auditor-cycle-loss:malformed-key x3 rows, auditor-cycle-missing:tier1 x2, data_stale:polymarket/ssc-iboard, detector_defect:mem_creep). Most pairs are hours apart and could be legitimate re-emission of a still-true condition; the 24s pair cannot be. The field is emitted by the producer and consumed by nobody on the write path.",
+      "SAMPLE #7 SCORED (snapshot key, pre-registered before the 06:45Z spawn). Producer wrote cycle-snapshot-06:50.json at 06:50:33Z for nominal tick 06:45; 06:45 and 06:55 both verified ABSENT beforehand. Committed c280 states it probed tick 06:45 — the NOMINAL tick, i.e. the scheduled_utc token, matching NEITHER live consumer spec (Copy A rounds wall clock -> 06:50 HIT; Copy B raw -> MISS). Corroborates rtr-20260826T0325-markerkeynominaltickderiv verbatim: three plausible tick sources, none named authoritative, run picks one. FILED NOTHING — already characterized there as nondeterministic. Additional detail worth architect note: spawn-fanout.md Step 5.2 consumer contract says derive the window key from the token LEADING 10 CHARACTERS (the DATE), so using its HH:MM as a snapshot key exceeds the documented contract rather than following it.",
+      "STALE PREMISE ACROSS ROWS. P0 arm (b) and rtr-20260826T0257-snapshotagentconsumerclock both still assert consumer rounds to 5-min multiples; the newer rtr-20260826T0325 explicitly WITHDREW round-5 as falsified by c267. Ordering saves an architect who reads both, but scoping from arm (b) alone starts from a falsified premise.",
+      "STEP 5.3 on c280: 0/6 distinct off-flow markers, negative control 6/6 — PASS on a proven-live detector. Notebook immutability verified FROM THE REPO (commit 8298b7fbf, notebook-only pathspec, 9/9 numstat): c277 dropped, c278 byte-identical 2526B, c279 six content lines byte-identical plus one appended blank separator (hexdump: lone 0a), c280 appended, no H3, 31L/8303B within AC-5.",
+      "0a DEVIATION (unchanged, deliberate): 2 NEW rows both to=po held at NEW. Premise re-verified at source this tick — jq over cowork-schedule.json gives po 0 slots, so Step 0a route-to-slot branch is structurally unreachable; PO selects on status==NEW. Last tick a peer PO picked the held rows up directly off the queue (pending_triage_inbox stayed len=0 throughout), vindicating the hold and showing PO consumption does not require the dev-team drain path.",
+      "COUNTERS: signal_backlog 33 == independent recount 33 (15th consecutive match). cycle_snapshot_promoted=false (55th consecutive); cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z. calendar_status=open (47th+, architect-owned). Step 5.1 locale-comma: host load 4,31 parsed as 4 by the spec awk -F, (20th confirmation, non-binding at threshold 24). regime_status and volatility_level keys BOTH ABSENT from cycle-snapshot-latest.json (15th verification); only live regime path is macro_snapshot.data.signals.carry.regime — so Step 6.0 last_regime/last_volatility_level are structurally pinned to unknown.",
+      "headroom 3455 -> 3238 across the tick."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T07:07:52Z"
+}
