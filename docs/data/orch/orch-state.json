@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T03:25:44Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-08-26T03:40:39Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -1143,7 +1143,7 @@
         "type": "system-issue",
         "summary": "Step 2.4 Axis C (landed 4f72c694c) promotes the Phase A.5 presence roster — a read its own SKILL.md labels \"advisory; non-blocking\" — into a PERMISSIVE gate: a current-period cowork-slot marker whose owner_client_session is absent from the roster is skipped as \"abandoned, not live\", allowing the dispatch to proceed. Presence-absence is a known-ambiguous oracle in this fleet (a live session between presence renewals reads identical to a dead one), and here the ambiguity resolves in the direction whose failure mode is a DOUBLE PUBLISH to a real channel.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-verification",
         "dedup_key": "step24:axis_c_presence_absent_treated_as_dead_permissive",
@@ -1162,7 +1162,7 @@
         "type": "system-issue",
         "summary": "QA-Drain is self-deadlocking. scripts/devteam-review-claim-qa-drain.jq deliberately unions .task_board.done[] into its candidate set (its own line 41), selecting status==\"DONE\" && effective_next_agent==\"qa\". scripts/orch-conservation-check.mjs derives LANE_RANK from FLAT_TASK_LANES = [backlog,ready,in_progress,review,qa,done,done_verified], so done(5)->qa(4) is rank-decreasing and scores as a BACKWARD lane move. CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES defaults to 1, so as soon as TWO done[]-origin rows are eligible the whole orch-apply write ABORTS — taking the legitimately-forward review[]-origin rows in the same batch down with it. The done[] rows can only leave done[] via this drain, so their own presence is what blocks the drain that would clear them. Once done_qa >= 2 the lane is dead until someone intervenes.",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-reproduced",
         "dedup_key": "qadrain:done_to_qa_scored_backward_conservation_deadlock",
@@ -1179,7 +1179,7 @@
         "to": "architect",
         "type": "system-issue",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-tick-verification",
         "summary": "alert-commander derives <nominal_tick> INCONSISTENTLY for its published-marker key and notebook header — c263/c264 floored to the 15-min cron boundary correctly, c265 wrote 03:20 (the 5-min snapshot-lookup key) where nominal was 03:15. MARKER_KEY is a cross-tick dedup mechanism, so a mis-derived key silently stops the gate from gating. No damage yet (c265 exited silently, marker not claimed). Same one-line consumer fix as rtr-20260826T0257 would close both arms.",
@@ -1199,7 +1199,7 @@
         "to": "architect",
         "type": "detector_defect",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "router-tick-verification",
         "summary": "AUDIT_TIER=DATA writes LLM-narrated elapsed-time deltas into the durable trail and they are wrong in a severity-REDUCING direction. Scan 2026-08-26T03:30:22Z: signal_outcomes detail says 'no outcome checks in 2+ days' — real age 31.14 days (15.6x understated); macro_indicators says 'approximately 14+ hours old' — real 39.3 hours (2.8x). Both details state the CORRECT raw timestamp and then contradict it in the same sentence, so each record falsifies itself on its face.",
@@ -1217,7 +1217,7 @@
         "to": "architect",
         "type": "detector_defect",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "router-tick-verification",
         "summary": "DATA-tier dedup matches on TABLE NAME with no discrimination of what KIND of row it matched, so a HIGH defect finding was suppressed under an unowned P2 FEATURE epic. signal_outcomes STALE/HIGH (outcome evaluation stalled 31 days) was deduped into ALPHA-S5-TRUTH-LEDGER-BACKTEST — a backlog feature row about building backtest calibration ON TOP of signal_outcomes, next_agent unset, untouched since 2026-07-14. That row will never fix the stall, so the finding now has no owner and no actionable row anywhere.",
@@ -24394,10 +24394,10 @@
         "last_served_tick": "2026-08-26T03:22:06Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-25T21:41:32Z"
+        "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T03:22:06Z",
+    "_updated_at": "2026-08-26T03:41:18Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24913,6 +24913,130 @@
         },
         "createdAt": "2026-08-26T02:30:25Z",
         "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "847066d1d74ef5d791eb9f5f5cf0b0ad6beadb873a93829aa2c868c772ed6e3d",
+        "source": "dashboard",
+        "from": "router",
+        "to": "architect",
+        "type": "system-issue",
+        "priority": "WARN",
+        "payload": "Step 2.4 Axis C (landed 4f72c694c) promotes the Phase A.5 presence roster — a read its own SKILL.md labels \"advisory; non-blocking\" — into a PERMISSIVE gate: a current-period cowork-slot marker whose owner_client_session is absent from the roster is skipped as \"abandoned, not live\", allowing the dispatch to proceed. Presence-absence is a known-ambiguous oracle in this fleet (a live session between presence renewals reads identical to a dead one), and here the ambiguity resolves in the direction whose failure mode is a DOUBLE PUBLISH to a real channel.",
+        "createdAt": "2026-08-26T03:19:35Z",
+        "drained_at": "2026-08-26T03:40:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d5eabd0c02c7a76af09862e0d70d9d1a41a4d5ee135cb6265380430272906854",
+        "source": "dashboard",
+        "from": "router",
+        "to": "architect",
+        "type": "system-issue",
+        "priority": "CRITICAL",
+        "payload": "QA-Drain is self-deadlocking. scripts/devteam-review-claim-qa-drain.jq deliberately unions .task_board.done[] into its candidate set (its own line 41), selecting status==\"DONE\" && effective_next_agent==\"qa\". scripts/orch-conservation-check.mjs derives LANE_RANK from FLAT_TASK_LANES = [backlog,ready,in_progress,review,qa,done,done_verified], so done(5)->qa(4) is rank-decreasing and scores as a BACKWARD lane move. CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES defaults to 1, so as soon as TWO done[]-origin rows are eligible the whole orch-apply write ABORTS — taking the legitimately-forward review[]-origin rows in the same batch down with it. The done[] rows can only leave done[] via this drain, so their own presence is what blocks the drain that would clear them. Once done_qa >= 2 the lane is dead until someone intervenes.",
+        "createdAt": "2026-08-26T03:25:44Z",
+        "drained_at": "2026-08-26T03:40:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e7bd57fd421f9dbdc967abe04a1d071b534f6ca4ebcea31f163b4e4a73e37c6e",
+        "source": "dashboard",
+        "from": "router",
+        "to": "architect",
+        "type": "system-issue",
+        "priority": "WARN",
+        "payload": "alert-commander derives <nominal_tick> INCONSISTENTLY for its published-marker key and notebook header — c263/c264 floored to the 15-min cron boundary correctly, c265 wrote 03:20 (the 5-min snapshot-lookup key) where nominal was 03:15. MARKER_KEY is a cross-tick dedup mechanism, so a mis-derived key silently stops the gate from gating. No damage yet (c265 exited silently, marker not claimed). Same one-line consumer fix as rtr-20260826T0257 would close both arms.",
+        "createdAt": "2026-08-26T03:25:00Z",
+        "drained_at": "2026-08-26T03:40:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8dbffd56aa4080bdf2cb9679829ef68c4d0681cb0e5c20d515c3bb312f68abbb",
+        "source": "dashboard",
+        "from": "router",
+        "to": "architect",
+        "type": "detector_defect",
+        "priority": "WARN",
+        "payload": "AUDIT_TIER=DATA writes LLM-narrated elapsed-time deltas into the durable trail and they are wrong in a severity-REDUCING direction. Scan 2026-08-26T03:30:22Z: signal_outcomes detail says 'no outcome checks in 2+ days' — real age 31.14 days (15.6x understated); macro_indicators says 'approximately 14+ hours old' — real 39.3 hours (2.8x). Both details state the CORRECT raw timestamp and then contradict it in the same sentence, so each record falsifies itself on its face.",
+        "createdAt": "2026-08-26T03:36:00Z",
+        "drained_at": "2026-08-26T03:40:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c3cd107d36ff31a1d87e7a3d896cd8070598abcf9cee4da6eac55a05a345752",
+        "source": "dashboard",
+        "from": "router",
+        "to": "architect",
+        "type": "detector_defect",
+        "priority": "MED",
+        "payload": "DATA-tier dedup matches on TABLE NAME with no discrimination of what KIND of row it matched, so a HIGH defect finding was suppressed under an unowned P2 FEATURE epic. signal_outcomes STALE/HIGH (outcome evaluation stalled 31 days) was deduped into ALPHA-S5-TRUTH-LEDGER-BACKTEST — a backlog feature row about building backtest calibration ON TOP of signal_outcomes, next_agent unset, untouched since 2026-07-14. That row will never fix the stall, so the finding now has no owner and no actionable row anywhere.",
+        "createdAt": "2026-08-26T03:36:00Z",
+        "drained_at": "2026-08-26T03:40:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "22c7420e1f8d2246d55f0cb78bdecd3266cafd85df67b12fed459fde35d85746",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T03:36:11Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T03:30:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "03:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "1-slot fan-out. Step 0a drain no-op: 3 NEW signal_queue rows this tick, ALL to=architect, zero to a cowork_signal_recipient (po/tran-ngoc-bau/alert-commander/unified-agent per system-map SSOT). Step 5b first invocation was a CALLER error by this dispatcher (invented --fired-at/--slots flags; contract is FIRED_AT=<iso> env + positional slot ids) — script correctly failed loud rc=2 with updated:[], NO partial write, re-run succeeded. Not a script defect; recorded so the rc=2 in any log is not later mis-read as a last-fired regression.",
+          "FIELD-PROVENANCE": {
+            "dev_head": "resolved from CANONICAL top-level .head (idle, updated_by=qa 03:31:04Z) — NOT the deprecated .task_board.head passthrough stub",
+            "signal_backlog": "independently recomputed by this dispatcher as a FILE count (docs/signals/*.json excluding cowork-team-*) = 31; server-computed value in pressure-state.json also 31 — exact match, not copied",
+            "devq": "server-computed dev_queue_depth from emit_pressure_state (5); NOT ready[]+backlog[]",
+            "last_regime/last_volatility_level": "passed 'unknown' after verifying BOTH lookup keys (.regime_status, .volatility_level) are genuinely ABSENT from cycle-snapshot-latest.json (top-level keys are only created_at/macro_snapshot/market_context/tick). Declined to substitute the live value at .macro_snapshot.data.signals.carry.regime — that is a different key and would fabricate provenance."
+          },
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "41st consecutive. cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z (~75h stale). Producer wrote cycle-snapshot-03:34.json (wall-clock) for nominal tick 03:30 — the name-space mismatch already filed as rtr-20260826T0257-snapshotagentconsumerclock (status READ, architect). Do NOT fix by rounding the producer — po_fold_20260825 withdrew that shape.",
+            "calendar_status_open": "33rd+ consecutive computation defect, architect-owned. Emitted as-is, not trusted.",
+            "step51_locale_comma_parse": "6th confirmation. Spec line uptime|awk -F',' truncates true_load '3,18' to '3' on this locale-comma host. Bug is IN THE SPEC, not the host. Non-binding at threshold 24 (12 cores x factor 2) so still not filed."
+          }
+        },
+        "createdAt": "2026-08-26T03:36:11Z",
+        "drained_at": "2026-08-26T03:40:51Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
