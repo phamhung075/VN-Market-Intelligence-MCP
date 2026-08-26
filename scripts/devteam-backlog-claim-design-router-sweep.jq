@@ -121,28 +121,79 @@
 #     -f scripts/devteam-backlog-claim-design-router-sweep.jq \
 #     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 #
+# FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH
+# (2026-08-26; caught pre-spawn at the 10:07Z dev-team tick, before any
+# agent was mis-dispatched). DRS auto-dispatch is safe ONLY because of the
+# ratified agent-identity allowlist (scripts/devteam-backlog-promote-
+# design-router-sweep.jq's compensating control for the fact that DRS fires
+# on rows carrying no deliberate-dispatch flag) — this script never applied
+# it. The claim-time re-resolution above
+# (FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT) is
+# correct in isolation but is what made this reachable: a row promoted
+# while its resolved agent was on-allowlist can re-resolve OFF-allowlist by
+# claim time (owner/next_agent correction between promote and claim) and
+# was still claimed, because this script's ONLY candidate filter was
+# `promoted_by == "dev-team (design-router sweep)"` then a non-empty
+# resolved lane — never an allowlist check. LIVE EVIDENCE: promote correctly
+# moved an on-allowlist P0 (architect); claim ignored it and took a
+# different DRS-stamped P0 whose claim-time next_agent resolved to
+# `developer` — the dev-role class BOUNDED-1/SLS/RLC own and DRS is
+# explicitly built never to touch.
+# FIX: gate the `$resolvable` candidate set on `is_design_router_allowed`
+# (scripts/lib/devteam-eligibility.jq), the SAME predicate the promote
+# script already applies — never a re-derived copy. Uses
+# `design_router_default_allowlist` (same file) directly rather than
+# threading a NEW `--argjson allowlist` through this script's own CLI
+# invocation: every existing call site of this script (main.md's DRS claim
+# block, and 8+ fixture invocations in
+# scripts/audits/devteam-dispatch-gate-satisfiability.sh) passes no
+# `--argjson allowlist` at all today, and jq raises a hard compile error on
+# any `$name` referenced but never CLI-bound — adding that flag here would
+# require updating every one of those call sites in lockstep, reintroducing
+# the exact "two call sites carry their own copy, and can drift" failure
+# this fix is closing. Calling the library default directly means there is
+# now exactly ONE ratified-allowlist value in the whole repo that this
+# script's behavior can possibly depend on. A row whose claim-time
+# resolution falls off-allowlist is excluded from `$resolvable` entirely —
+# it falls out of the claim set as a silent no-op (same "skip, try the next
+# priority-ranked candidate" handling as the null-lane refuse case below),
+# never downgraded or dispatched to the off-allowlist agent, never
+# error-block-clobbered either — the stamp is left in place for a human/
+# router to notice and fold via the mechanism its own class already gets
+# (BOUNDED-1/SLS/manual-dispatch-sweep), same disposition an off-allowlist
+# row already had at BACKLOG time before this DRS-stamp existed.
+#
 # Acceptance / regression: scripts/audits/devteam-dispatch-gate-satisfiability.sh
 # § Design-Router Sweep (DRS) claim — AC-DRS-CLAIMTIME-RESOLVE (stale cache
 # superseded by a later next_agent), AC-DRS-NULL-LANE-REFUSE (dispatch_lane
 # null never yields head.next_agent=null), AC-DRS-PRIORITY-ORDER (a fresh P0
-# stamp outranks an older stamp regardless of array position).
+# stamp outranks an older stamp regardless of array position),
+# AC-DRS-ALLOWLIST-GATE (a promote-time-allowed row that re-resolves
+# off-allowlist at claim time is NEVER claimed), AC-DRS-ALLOWLIST-SKIP-TO-NEXT
+# (an off-allowlist row at a lower array index does not starve an
+# allowlisted candidate ranked behind it).
 #
 # Pointer: docs/agents/dev-team/flow/main.md § Design-Router Sweep (DRS).
 
 include "scripts/lib/devteam-eligibility";
 
 (detail_items_from($detail)) as $detail_items
+| (design_router_default_allowlist) as $al
 | ( [ (.task_board.ready // []) | to_entries[]
       | select(.value.promoted_by == "dev-team (design-router sweep)")
       | { idx: .key, row: .value, rank: (.value | priority_rank),
           lane: (.value | effective_next_agent($detail_items)) }
     ] | sort_by([.rank, .idx])
   ) as $swept
-| ( [ $swept[] | select((.lane | length) > 0) ] ) as $resolvable
+| ( [ $swept[] | select((.lane | length) > 0)
+              | select(.row | is_design_router_allowed($detail_items; $al)) ] ) as $resolvable
 | if ($resolvable | length) == 0 then
     .   # nothing design-router-sweep-promoted is waiting in ready[], OR
         # every stamped candidate's claim-time effective_next_agent resolves
-        # empty (AC-3 refuse) — no-op either way, never a partial/null write
+        # empty (AC-3 refuse), OR every stamped candidate's claim-time
+        # effective_next_agent resolves OFF the ratified allowlist
+        # (FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH)
+        # — no-op either way, never a partial/null write
   else
     ($resolvable[0]) as $picked
     | ($picked.row.id) as $picked_id

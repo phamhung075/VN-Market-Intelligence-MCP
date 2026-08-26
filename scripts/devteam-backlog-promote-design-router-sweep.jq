@@ -120,9 +120,16 @@
 
 include "scripts/lib/devteam-eligibility";
 
+# FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH
+# (2026-08-26): the ratified-default fallback used to re-type the literal
+# array HERE (a 2nd hand-typed copy alongside this file's own `--argjson`
+# usage-doc above and main.md's invocation) — now defers to
+# `design_router_default_allowlist`, the single library-owned SSOT (see
+# `is_design_router_allowed`'s doc comment in scripts/lib/devteam-
+# eligibility.jq). No behavior change: same ratified set, same value.
 (detail_items_from($detail)) as $detail_items
 | dep_status_map($archive) as $status_map
-| ($allowlist // ["architect", "ba", "pm", "po", "agents-architect"]) as $al
+| ($allowlist // design_router_default_allowlist) as $al
 | ( [ .task_board.backlog
     | to_entries[]
     | select(.value.status == "BACKLOG" or .value.status == "TODO")

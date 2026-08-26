@@ -623,6 +623,65 @@ DRS_ORDER_PICKED=$(jq -r '.task_board.in_progress[0].id // empty' "$WORK/drs-ord
 assert "AC-DRS-PRIORITY-ORDER (2nd, separable defect fixed same commit): the fresh P0 at the HIGHER array index is claimed, not the stale P1 at the LOWER index (got '${DRS_ORDER_PICKED:-<none>}')" \
   "$([ "$DRS_ORDER_PICKED" = "GATESAT-DRS-ORDER-FRESH-P0" ] && echo true || echo false)"
 
+# =============================================================================
+# ---- FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH
+# (2026-08-26; caught pre-spawn at the 10:07Z dev-team tick) ----
+# scripts/devteam-backlog-claim-design-router-sweep.jq never applied the
+# ratified agent-identity allowlist (promote always has) — its ONLY
+# candidate filter was `promoted_by == "dev-team (design-router sweep)"`
+# then a non-empty claim-time-resolved lane. A row that re-resolves
+# OFF-allowlist by claim time (the claim-time re-resolution fix above is
+# what makes this reachable — re-resolving fresh is necessary but not
+# sufficient) was still blind-claimed.
+#   AC-DRS-ALLOWLIST-GATE: an isolated DRS-stamped row whose claim-time
+#     next_agent resolves to 'developer' (off the ratified allowlist) is
+#     NEVER claimed.
+#   AC-DRS-ALLOWLIST-SKIP-TO-NEXT: reproduces the live incident shape
+#     exactly — an off-allowlist P0 at a LOWER array index (promoted
+#     earlier) must not starve an on-allowlist P0 ranked behind it; claim
+#     skips the off-allowlist stamp and takes the allowlisted one instead.
+# =============================================================================
+echo ""
+echo "=== FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH (DRS claim allowlist) ==="
+
+# --- DRS: AC-DRS-ALLOWLIST-GATE, isolated off-allowlist row is never claimed ---
+DRS_OFFALLOWLIST_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-DRS-OFFALLOWLIST", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "developer",
+        dispatch_lane: "developer", promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null, updated_at: $now, updated_by: "test" }
+  }')
+echo "$DRS_OFFALLOWLIST_FIXTURE" > "$WORK/drs-offallowlist.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/drs-offallowlist.json" > "$WORK/drs-offallowlist-out.json"
+DRS_OFFALLOWLIST_HEAD_STATUS=$(jq -r '.head.status' "$WORK/drs-offallowlist-out.json")
+DRS_OFFALLOWLIST_INPROG_N=$(jq '.task_board.in_progress|length' "$WORK/drs-offallowlist-out.json")
+DRS_OFFALLOWLIST_STILL_READY=$(jq '[.task_board.ready[]?.id] | index("GATESAT-DRS-OFFALLOWLIST") != null' "$WORK/drs-offallowlist-out.json")
+assert "AC-DRS-ALLOWLIST-GATE: a DRS-stamped row whose claim-time next_agent resolves to 'developer' (off the ratified allowlist) is NEVER claimed -- .head stays idle, in_progress stays 0, row remains parked in ready[] (got head.status='$DRS_OFFALLOWLIST_HEAD_STATUS', in_progress=$DRS_OFFALLOWLIST_INPROG_N, still_ready=$DRS_OFFALLOWLIST_STILL_READY)" \
+  "$([ "$DRS_OFFALLOWLIST_HEAD_STATUS" = "idle" ] && [ "$DRS_OFFALLOWLIST_INPROG_N" -eq 0 ] && [ "$DRS_OFFALLOWLIST_STILL_READY" = "true" ] && echo true || echo false)"
+
+# --- DRS: AC-DRS-ALLOWLIST-SKIP-TO-NEXT, off-allowlist P0 at lower idx does not starve an allowlisted P0 behind it ---
+DRS_ALLOWLIST_SKIP_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [
+        { id: "GATESAT-DRS-ALLOWLIST-SKIP-OFF-P0", status: "READY", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "developer", dispatch_lane: "developer",
+          promoted_by: "dev-team (design-router sweep)", promoted_at: "2026-08-24T15:46:41Z" },
+        { id: "GATESAT-DRS-ALLOWLIST-SKIP-ON-P0", status: "READY", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+          promoted_by: "dev-team (design-router sweep)", promoted_at: $now }
+      ]
+    } }')
+echo "$DRS_ALLOWLIST_SKIP_FIXTURE" > "$WORK/drs-allowlist-skip.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/drs-allowlist-skip.json" > "$WORK/drs-allowlist-skip-out.json"
+DRS_ALLOWLIST_SKIP_PICKED=$(jq -r '.task_board.in_progress[0].id // empty' "$WORK/drs-allowlist-skip-out.json")
+DRS_ALLOWLIST_SKIP_OFF_STILL_READY=$(jq '[.task_board.ready[]?.id] | index("GATESAT-DRS-ALLOWLIST-SKIP-OFF-P0") != null' "$WORK/drs-allowlist-skip-out.json")
+assert "AC-DRS-ALLOWLIST-SKIP-TO-NEXT: an off-allowlist P0 at the LOWER array index (promoted earlier, mirrors live FIX-FLEETPUSH-DISARM-... incident) is skipped; the on-allowlist P0 behind it is claimed instead, and the off-allowlist stamp is left parked in ready[] (got picked='${DRS_ALLOWLIST_SKIP_PICKED:-<none>}', off-allowlist still_ready=$DRS_ALLOWLIST_SKIP_OFF_STILL_READY)" \
+  "$([ "$DRS_ALLOWLIST_SKIP_PICKED" = "GATESAT-DRS-ALLOWLIST-SKIP-ON-P0" ] && [ "$DRS_ALLOWLIST_SKIP_OFF_STILL_READY" = "true" ] && echo true || echo false)"
+
 # --- SLS-PRIMARY: AC-1/AC-2, stale cache superseded (identical shape, sibling script) ---
 SLS_STALECACHE_FIXTURE=$(jq -n --arg now "$NOW" '
   { task_board: {

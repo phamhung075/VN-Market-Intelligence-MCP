@@ -598,11 +598,25 @@ def has_hold_reason($detail_items):
 # fires on rows a human/PO already double-marked supervised+plan_only at
 # mint time — 86/122 of DRS's candidate rows carry neither flag). `.` = the
 # candidate row object (same convention as every def above). `$allowlist` =
-# the ratified fixed set, threaded by the CALLER via
-# `--argjson allowlist '["architect","ba","pm","po","agents-architect"]'` —
-# NEVER hardcoded inside this def, so a future PO ruling widening/narrowing
-# the set only touches the caller's `--argjson` literal, not this shared
-# library file.
+# the ratified fixed set — historically threaded by the CALLER via
+# `--argjson allowlist '["architect","ba","pm","po","agents-architect"]'`
+# (`scripts/devteam-backlog-promote-design-router-sweep.jq` still does, for
+# per-call-site auditability). CORRECTED 2026-08-26
+# (FIX-DRS-CLAIM-HAS-NO-ALLOWLIST-GATE-OFF-ALLOWLIST-BLIND-DISPATCH): the
+# ratified VALUE itself now lives ONLY here
+# (`design_router_default_allowlist` below), not duplicated per-caller. The
+# original "never hardcoded inside this def" design (2026-07-30) assumed
+# exactly ONE caller (promote); once a SECOND caller (claim) needed the same
+# gate, requiring every caller to carry its own copy of the literal became
+# the drift vector itself — `scripts/devteam-backlog-claim-design-router-
+# sweep.jq` shipped 2026-07-30 with NO allowlist gate at all (never called
+# this def), and the gap went undetected for 27 days until a live
+# blind-dispatch (see the FIX row above). A caller MAY still pass an
+# explicit `$allowlist` override; passing `null` (or omitting the CLI flag
+# entirely, at the jq-function-argument level — NOT the same as jq's
+# `--argjson` CLI binding, which still requires a bound value) engages the
+# ratified default below. A future PO ruling widening/narrowing the set
+# needs exactly ONE edit, here.
 # RATIFIED 2026-07-30 default set: `architect`, `ba`, `pm`, `po`,
 # `agents-architect`. Explicitly NOT on the default allowlist:
 # `agent-father` (fleet-wide blast radius — edits the files that define
@@ -619,9 +633,11 @@ def has_hold_reason($detail_items):
 # exact match against `effective_next_agent` — no normalization, since every
 # ratified allowlist entry is already a canonical lower-case agent id
 # (`docs/data/system-map.json` `.project.agents[].id`).
+def design_router_default_allowlist: ["architect", "ba", "pm", "po", "agents-architect"];
+
 def is_design_router_allowed($detail_items; $allowlist):
   (effective_next_agent($detail_items)) as $na
-  | ($allowlist // []) as $al
+  | ($allowlist // design_router_default_allowlist) as $al
   | ($na | length) > 0 and (($al | index($na)) != null);
 
 # ---- Design-Router Sweep (DRS) full eligibility (composed)
