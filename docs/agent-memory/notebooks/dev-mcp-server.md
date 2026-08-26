@@ -24,24 +24,6 @@
 
 Zone health: bun test 15486 pass/51 fail (baseline noise, file-set unchanged, own test file 0 fail), tsc clean, lint clean, 184 tools / 88 cron jobs intact, pdfOcrWorker.ts +18L (psm fix + export + comment) | HEALTHY.
 
-## 2026-08-25 — FACTORY-APP-split-pollNews stage 2+3 (dev-team review-lane secondary-drain) → qa[]
-
-**Session:** 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb. Row was in `review[]` (redispatch_count=2), NOT a quality rejection — QA's 2026-08-15 status_note verified stage 1 as genuine progress and explicitly instructed: "continue the same ladder: stage 2 (dedup/insert), then stage 3 (cascade/alert-generation/mention-velocity)". Read that status_note before touching anything.
-
-**Fix:** two commits, one per stage. Stage 2 (`1a7fca8b2`): extracted the normalize/sentiment-classify/dedup/insert/RAG-embed/deep-fetch-gate loop into `ingestEntries.ts` (111L) + `ragEmbed.ts` (93L) + `deepFetchEnqueue.ts` (81L). pollNews.ts 670L→518L. Stage 3 (`82029f65b`): extracted the causal-chain-build/signal-generation/trade-relationship/mention-velocity block into `prefetchCascadeContext.ts` (70L) + `buildSignalsForEntry.ts` (93L) + `cascadeImpactSignals.ts` (118L) + `tradeRelationshipSignals.ts` (82L) + `mentionVelocityAggregator.ts` (92L), plus a same-pass shell trim `defaultRagInsertFn.ts` (39L). pollNews.ts 518L→269L. Pure code motion: `allSignals`/`stockSignalCount` threaded by reference exactly as before (accumulate across the WHOLE newEntries batch, not per-entry) so the trade-relationship cross-entry `alreadyCovered` check and the per-stock signal cap keep their original semantics.
-
-**Incident encountered (not caused by this task):** the 3 stage-2 files were briefly untracked on disk when a peer bare-commit (chef-intraday, `dca608eb2`, 02:26:25Z) swept them into an unrelated commit — `commit-sweep-guard` had already warned (#3, escalated to po) and the actor proceeded anyway. Content was unaffected (verified `git diff HEAD` clean before adding my own remaining pollNews.ts wiring change on top) — disclosed in the stage-2 commit message per the multi-writer-file discipline, no data lost, only mis-attributed.
-
-**Full DoD (pollNews.ts ≤120L) still NOT met — 269L.** All 5 extraction targets named in the row's own `approach` field are now done (sourceFetchers/sourceHealth stage 1, ingestEntries stage 2, buildSignals stage 3 [factored into 5 files to respect the ≤120L-per-module rule], insiderSignalDetector pre-existing). Remaining mass: provenance header (~65L), imports/re-exports (~35L), the all-sources-dark cooldown state box (~25L, deliberately caller-owned per `allSourcesDarkAlert.ts`'s own stage-1 docstring — not re-opened here), and the orchestration body itself (~90L, zero inline business logic left). Disclosed honestly to QA, same as stage 1/2.
-
-**Tests:** targeted pollNews bundle (26 files) 144/144 pass, re-verified after both stages. Full `bun test`: 15467 pass / 40 skip / 51 fail / 498.78s — within the documented ~40-53 noise band; visible failure context (SLA-monitor, OHLCV aggregator, orchStateSchema, fetchDeadline) has zero overlap with pollNews/cascade/signal/trade/mention-velocity. `bun tsc --noEmit` clean both stages. Server boot healthy (`PORT=3099`/`3098` `/health` → `toolCount:184`), tool count 184 / cron count 88 unchanged. `size-lint-justification.sh --check`: 1 pre-existing unrelated offender (`bctcScalarAggregator.ts`). `mock-guard.sh` PASS on all 10 touched/added files.
-
-**Board:** `review[]` → `qa[]` (`status:QA`, `next_agent:qa`, `redispatch_count` 2→3) via `orch-apply.sh`. `.head` untouched (was already idle, not pointed at this row).
-
-**Evidence:** commits `1a7fca8b2` (stage 2) + `82029f65b` (stage 3) + decision-journal STEP `dev-mcp-server-S94` in `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md`.
-
-Zone health: bun test 15467 pass/51 fail (baseline noise), targeted pollNews bundle 144/144, tsc clean, 184 tools / 88 cron jobs intact, pollNews.ts 1444L (original)→269L (this task's exit) | HEALTHY.
-
 ## 2026-08-26 — FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS (review-lane secondary-drain, INDEPENDENT VERIFICATION not implementation) → qa[]
 
 **Session:** 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb. Row router-held (`task:FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS`, sprint-task ttl3600), not re-claimed/released. This same agent type (dev-mcp-server) authored the fix under review — explicit brief hazard: do NOT self-certify. Verified independently, did not trust status_note/review_note narration.

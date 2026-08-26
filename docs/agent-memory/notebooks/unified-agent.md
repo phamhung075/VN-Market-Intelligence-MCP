@@ -64,79 +64,6 @@
 
 ---
 
-## 2026-08-25T07:24Z — chef-intraday convergence scan (PUBLISHED)
-
-**Slot:** chef-intraday | **Dish window:** convergence_scan | **Scheduled UTC:** 2026-08-25T07:13:00Z
-
-**Marker claimed:** published:chef-intraday:2026-08-25:14 (TTL 3600s)
-
-**Clusters detected:** 3 qualifiers
-- Extreme signals: HUT RSI 22.5 (oversold <30), DAG RSI 15.4 (deeply oversold), VHM RSI 26.8 (oversold)
-- Sector convergence: Real estate 4-ticker (KDH, VHM, VIC, DXG) vs -0.25% sector delta
-- Ticker convergence: HPG (price_anomaly + BCTC signal)
-
-**Signal summary:**
-- Price anomaly: 34 watchlist tickers, 5 anomalies flagged
-- BCTC signals: 4 tickers (DXG/FPT/HPG/VCB) from processed drain
-- Macro snapshot: live source Tier-2, FAIRLY_VALUED equity yield (6.7pp > deposit 5pp), USDVND 25950 bearish, carry 1.37pp neutral
-
-**Conviction calls:** 4 tickers HOLD (medium conviction)
-- HPG: FII support countered by BCTC ROE gap (1.9% vs median 7.3%)
-- VCB: Banking sector weak vs VN Index, carry spread neutral
-- DXG: Valuation gate AVOID overridden (oversold level + sector convergence warrants HOLD, no BUY shipped)
-- FPT: US earnings headwind, technical support hold
-
-**Business context citations:**
-- DXG: product = "Residential real estate, southern Vietnam", ops = "40th+ cycle BCTC extraction gap", verdict = AVOID (Kinh Dịch Quan 20 THAN TRONG)
-- FPT: product = "IT services, cloud, AI", earnings pressure US easing cycle
-- HPG: valuation premium +312% vs sector, ROE underperformance 1.9% vs median 7.3%
-- VCB: carry spread baseline, banking sector liquidity floor
-
-**Quality verdict:** FULL (all 7 quality checks passed)
-- Schema OK, direction defensible, valuation gate respected
-- Layer 2 data discipline: state transitions cited
-- Layer 3 macro stack: complete (US + VN + carry + FII thesis)
-- Layer 4 conviction: medium-only consensus (no high-confidence BUY/SELL shipped)
-- Layer 5 Kinh Dịch: overlay confirms sector oversold, no extreme hexagrams
-- Layer 6 gap catalogue: insider sentiment API gap (non-fatal, 502 during call)
-
-**Outputs published:**
-- MARKET channel: Vietnamese narrative (414 chars, dual-paragraph)
-- WORK channel: TNB audit trail (682 chars, cluster summary + conviction reasoning)
-- Synthesis JSON: docs/data/unified-agent-synthesis-2026-08-25-chef-intraday.json (2.2KB)
-
-**Telemetry:** All steps completed, no degraded-floor triggers, full dish published.
-
-### 2026-08-26 04:13:00Z — chef-intraday (SILENT)
-
-**Cycle:** Intraday convergence scan (slot=chef-intraday, scheduled=04:13Z, VN local 11:13)
-
-**Signals gathered (24h window):**
-- price_anomaly: 1 file (DBC volume spike +407%, RSI 63.4, overbought)
-- bctc_signal: 4 tickers (DXG=AVOID, FPT=FAIR, HPG=FAIR, VCB=FAIR)
-- news_impact: 0 files
-- Total signal count: 5 distinct sources
-
-**Convergence analysis:**
-- Ticker convergence (≥2 types/ticker): NONE (price anomaly tickers ≠ bctc tickers)
-- Sector convergence (≥3/sector): NONE (each sector has ≤1 signal)
-- Macro-micro contradiction: NOT EVALUATED (macro unavailable, expected)
-- Extreme individual signal: NONE (DBC RSI 63.4 within 2-sigma, no CRITICAL)
-- Geopolitical/war convergence: NONE
-
-**Verdict:** 0 clusters qualify → Silent exit per Step 1 intraday gate
-
-**PIPELINE:** complete | **QUALITY:** silent-intraday
-
-### Cycle 2026-08-26T06:21Z (intraday) — SILENT
-- Status: SILENT (intraday gate: 0 convergence clusters)
-- Signals collected: 13 (5 price_anomaly with anomaly=true, 8 bctc_signal)
-- Tickers: FPT(6), HPG(5), VCB(5), DXG(5), BSR(1), DBC(1), HUT(1), VIC(1)
-- Convergence check: NO (0 clusters qualify — no ticker-level multi-type convergence)
-- Exit: DONE: intraday-silent | PIPELINE: complete
-
----
-
 ## Chef Intraday Cycle 2026-08-26T07:13Z
 
 **Convergence:** 4 clusters (MACRO-extreme, real-estate-sector, tech-convergence, ag-breakout)
@@ -219,4 +146,3 @@ Marker claimed: published:chef-intraday:2026-08-26:14 (TTL 3600s)
 - DXG not included (AVOID valuation verdict + 1/4 pillars)
 
 **Exit status:** DONE: publication complete | PIPELINE: full | QUALITY: full
-
