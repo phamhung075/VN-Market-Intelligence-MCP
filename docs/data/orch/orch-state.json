@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787764353,
-    "last_linecount": 67
+    "last_mtime": 1787766162,
+    "last_linecount": 69
   },
   "decision_journal": [
     {
@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T17:37:33Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-26T17:42:52Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -139,7 +139,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: digest-predict claimed no financials for SHB; compare_financials returned: | YoY | {\"current\":null,\"previous\":3,…",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "dedup_key": "narrative_contradiction:digest-predict:compare_financials:SHB:2026-08-26",
         "payload": {
@@ -161,7 +161,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: digest-predict claimed no financials for VIX; compare_financials returned: | YoY | {\"current\":null,\"previous\":0,…",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "dedup_key": "narrative_contradiction:digest-predict:compare_financials:VIX:2026-08-26",
         "payload": {
@@ -24595,7 +24595,7 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T17:13:49Z",
+    "_updated_at": "2026-08-26T17:42:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24968,6 +24968,30 @@
         "payload": "DRS claim auto-claimed a contraindicated row: FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY carries po_consolidation_ruling_20260728 (do NOT route until epic BA-COWORK-GUARANTEED-SLOT-CATCHUP closes; close all 6 together per AC-9) and subsumed_by pointing at that epic, which is still BACKLOG. is_design_router_eligible reads status_note (null here) but not bespoke prose keys, so the ruling is invisible to both promote and claim. Caught pre-spawn at the 16:37Z tick and reverted unspawned (row back in backlog[], DRS stamps cleared, head reset idle); it had been DRS-stamped since 2026-08-24T03:02Z, so it was re-claimable on every DRS rotation turn. 3 sibling rows carry the same ruling and are currently unstamped but equally invisible to the predicate. Recurrence of the known picker-blind-to-prose class. Suggested direction (PO to rule): a generic contraindication predicate keyed on subsumed_by-still-open plus any po_*_ruling_* key, applied at BOTH promote and claim like the allowlist gate already is.",
         "createdAt": "2026-08-26T16:46:54Z",
         "drained_at": "2026-08-26T17:12:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "96eb3d9aeee7ccd783efe9d0877237fc1aa1fed1a95fdb2936b7b582bd87d64e",
+        "source": "dashboard",
+        "from": "digest-predict",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": "CCATO: digest-predict claimed no financials for SHB; compare_financials returned: | YoY | {\"current\":null,\"previous\":3,…",
+        "createdAt": "2026-08-26T17:37:33Z",
+        "drained_at": "2026-08-26T17:42:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "046e6b52c8a4a715b41436856cc7f51b70d200fdff97ba9e568ec2bd12d69043",
+        "source": "dashboard",
+        "from": "digest-predict",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": "CCATO: digest-predict claimed no financials for VIX; compare_financials returned: | YoY | {\"current\":null,\"previous\":0,…",
+        "createdAt": "2026-08-26T17:37:31Z",
+        "drained_at": "2026-08-26T17:42:13Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
