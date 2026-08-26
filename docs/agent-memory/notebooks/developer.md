@@ -41,3 +41,19 @@
 **Verification:** commits — code (`scripts/devteam-backlog-claim-design-router-sweep.jq`, `scripts/devteam-backlog-claim-supervised-lane-sweep.jq`, `scripts/audits/devteam-dispatch-gate-satisfiability.sh`, `docs/agents/dev-team/flow/main.md`) and board-state (`docs/data/orch/orch-state.json`, 2 orch-apply.sh writes: AC-4 re-stamp + row move) — see commit SHAs in RETURN. Board row `IN_PROGRESS` → `REVIEW`, `next_agent`=qa. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md` STEP developer-S127.
 
 ---
+
+## Session  — FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS AC-3 (cross-service/, developer, P0 M, session 036ceaf1, review-lane SECONDARY-drain dispatch)
+
+**QA's "permanently unrecovered" verdict was about live+archive absence, not blob absence — the parent blob (`git show 38c013342e^`) still held all 4 remaining victims.** Decided per row on evidence, no shortcuts: 3 restored, 1 retired.
+
+**Restored to done_verified[]:** FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (commits f51ed9ede2/e000e91f1 re-confirmed ancestor-OK + still live at HEAD; dropped a dangling `blocks` ref whose target archived via the normal non-defective evict path) and FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL (commit 9fe706fa2 re-confirmed, conditional `.head` guard still live). Both carry `verification.raw_probe` honestly reconstructed from their own historical QA status_note, never fabricated.
+
+**Restored to done[]:** FIX-FB-WEEKEND-DEDUP-GATE (status DONE, no RC-VERIF gate; its own secondary_triage_result is its raw evidence; dedup gate spot-re-checked still present at HEAD).
+
+**Retired (not restored) to archive[] as CANCELLED, superseded_by=CONTAM-10-WRITER-H:** FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0. Its own verify_note (written ~13h BEFORE the destructive evict) already said SUPERSEDED — a verbatim DONE_VERIFIED restore would need a raw_probe this row's history never captured; fabricating one is forbidden, so CANCELLED is the honest shape. CONTAM-10-WRITER-H confirmed live+DONE_VERIFIED with its own raw-probe record.
+
+**LESSON — a supersession note is not a probe.** Restoring a DONE_VERIFIED row verbatim is only safe when the row's own history contains something reconstructible as raw_probe; when it only contains a "this was superseded" note, the honest move is CANCELLED + superseded_by, not a manufactured probe.
+
+**Verification:** single orch-apply.sh write (all 4 rows + FIX-ORCHCOLDEVICT next_agent flip in one transform), commit 7320028e1. FIX-ORCHCOLDEVICT stays in review[], next_agent=qa for a final AC-3-focused re-verify (AC-1/AC-2/AC-4 untouched, already QA-confirmed). Lock task:FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS left held for the dispatcher.
+
+(header timestamp correction: the empty "## Session  —" heading above is session start 2026-08-26T00:27:27Z — printf %s arg was dropped when authoring it, appending here since notebooks are append-only)
