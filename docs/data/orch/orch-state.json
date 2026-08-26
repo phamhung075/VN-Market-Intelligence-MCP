@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-26T08:36:17Z",
-    "updated_by": "router (qa-drain closeout — FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS reached DONE_VERIFIED, head left pinned by the vc-approved path)"
+    "status": "in_progress",
+    "active_task_id": "TASK-CRON-SKILLMD-PROBE-WIRING",
+    "next_agent": "agent-father",
+    "next_action": "Ready-Lane Consumer claim of TASK-CRON-SKILLMD-PROBE-WIRING — spawn agent-father DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-26T09:03:05Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22406,33 +22407,6 @@
         "pm_decomposition_note": "Split by owner per brief S6: developer (#1 last_fired write-back, #2 miss detector, #4 predicate code), agent-father (#3 on_miss + #4 schedule data folded - same file, #5 doc-truth), ops (#6 pmset), qa (S7 disposition table = the row verification_gate, given an owner). #1->#2 encoded as depends_on per R1 (detector on today last_fired reports 4 false misses)."
       },
       {
-        "id": "TASK-CRON-SKILLMD-PROBE-WIRING",
-        "title": "Rewrite Step 1b.1 in all three cron SKILL.md to invoke the probe, add the v2 registering_process fingerprint to Step 1c in all three, demote orphan_threshold_seconds to a uniform 120 write-side CAS guard, rewrite standalone S1.4 rationale",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "status": "TODO",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "zone": ".claude/skills/",
-        "depends_on": [
-          "TASK-CRON-LIVENESS-PROBE-SCRIPT",
-          "TASK-CRON-LIVENESS-PROBE-TESTS",
-          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY"
-        ],
-        "files": [
-          ".claude/skills/cron-cowork-team/SKILL.md",
-          ".claude/skills/cron-detect-loop/SKILL.md",
-          ".claude/skills/cron-standalone-team/SKILL.md"
-        ],
-        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
-        "note": "MUST land after the probe script + tests - docs citing a script that does not exist is the exact FIX-CRONCREATE-CONTRACT-DIVERGENCE failure class already dep-gated behind this row on these same 3 files. Also depends on TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (same file cron-cowork-team/SKILL.md, different section, sequential per conflict-check matrix). AC F5: grep -c 'orphan_threshold_seconds: 7200' across .claude/skills/cron-*/SKILL.md returns 0. Do not fix one family and leave two divergent.",
-        "created_at": "2026-08-23T09:47:24Z",
-        "created_by": "pm",
-        "handoff": "docs/handoffs/TASK-CRON-SKILLMD-PROBE-WIRING.md",
-        "updated_at": "2026-08-23T09:47:25Z"
-      },
-      {
         "id": "TASK-CRON-AMEND-DEDUP-BRIEF-S13",
         "title": "Amend docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md S1.3 - both load-bearing claims are measurably false (presence is a participation signal; force_release_orphan is not an independent liveness check)",
         "owner": "architect",
@@ -24634,6 +24608,36 @@
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128.",
         "po_lanefix_20260826T0536Z": "LANE MOVE ATTEMPTED AND REFUSED, po 2026-08-26T05:36Z — recorded so this is not re-attempted blindly. The row is BLOCKED while parked in the WIP lane, the STATUSFLIP-LANEMOVE straggler shape that docs/agents/dev-team/flow/execute-tier.md CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) says must move out. Moving it in_progress[] -> backlog[] made orch-apply's row-prose-ceiling check abort the entire write: 'live=0B -> candidate=18774B'. The 0B is false — PROSE_CEILING_LANES omits in_progress[], so the pre-move baseline reads zero and the move looks like 18.7KB of brand-new prose. Owning row already exists and is already dispatchable: TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES (ready[], READY, P1, developer). Re-attempt the move only AFTER that lands. Harmless meanwhile: BLOCKED rows are excluded from wip_in_progress (devteam-eligibility.jq:117) and claimed_by/claimed_at/owner_client_session are all null, so it holds no claim and consumes no dispatch budget. Its BLOCKED status is CORRECT, not stale: blocker TASK-COWORK-MUTEX-001 is genuinely still at REVIEW."
+      },
+      {
+        "id": "TASK-CRON-SKILLMD-PROBE-WIRING",
+        "title": "Rewrite Step 1b.1 in all three cron SKILL.md to invoke the probe, add the v2 registering_process fingerprint to Step 1c in all three, demote orphan_threshold_seconds to a uniform 120 write-side CAS guard, rewrite standalone S1.4 rationale",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "zone": ".claude/skills/",
+        "depends_on": [
+          "TASK-CRON-LIVENESS-PROBE-SCRIPT",
+          "TASK-CRON-LIVENESS-PROBE-TESTS",
+          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY"
+        ],
+        "files": [
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md",
+          ".claude/skills/cron-standalone-team/SKILL.md"
+        ],
+        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "note": "MUST land after the probe script + tests - docs citing a script that does not exist is the exact FIX-CRONCREATE-CONTRACT-DIVERGENCE failure class already dep-gated behind this row on these same 3 files. Also depends on TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (same file cron-cowork-team/SKILL.md, different section, sequential per conflict-check matrix). AC F5: grep -c 'orphan_threshold_seconds: 7200' across .claude/skills/cron-*/SKILL.md returns 0. Do not fix one family and leave two divergent.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-CRON-SKILLMD-PROBE-WIRING.md",
+        "updated_at": "2026-08-26T09:03:05Z",
+        "claimed_at": "2026-08-26T09:03:04Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "agent-father"
       }
     ]
   },
