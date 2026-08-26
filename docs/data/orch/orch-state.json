@@ -1090,7 +1090,7 @@
           "rtr-20260826T0234-auditordedupskipzero",
           "rtr-20260826T0336-datatierelapsednarrated"
         ],
-        "detail": "RELATIONSHIP TO EXISTING WORK — NEW failure mode, one layer BELOW backlog.590.\nbacklog.590 (FIX-AUDITOR-DATATIER-DURABLE-TRAIL-NARRATED-NUMBERS-CONTRADICT-OWN-EVIDENCE, P1, minted by po 03:48Z from my own rtr-20260826T0234) presupposes a trail entry IS written and argues its numbers are narrated rather than measured. This row reports the case that entry cannot cover: NO trail entry was written at all. Both ARM A and ARM B of 590 are unfalsifiable against a cycle that produces no record. Do not close this against 590 — fixing narrated-vs-measured numbers does nothing if the writing step never runs.\n\nWHAT THE ROUTER OBSERVED (all read-only, this tick).\nSpawn: system-auditor, AUDIT_TIER=DATA, launched 2026-08-26T04:27Z, returned 04:31Z (139s, 20 tool uses). Gate that authorised it: scripts/agents-flow/db-integrity-probe.sh exit 1, {\"verdict\":\"SPAWN\",\"tables_changed\":5,\"checked_at\":\"2026-08-26T04:26:05Z\",\"read_mode\":\"immutable\"}.\n\nE-1 NO TRAIL ENTRY EXISTS FOR THIS CYCLE. jq -r '.[-1].scan_ts' docs/data/db-integrity-history.json => 2026-08-26T03:59:38Z. That is the PREVIOUS cycle (c11). Second-newest is 2026-08-26T03:30:22Z (c10). No entry with a 04:2x/04:3x scan_ts exists. File length is 200 (at cap), so length alone proves nothing — the discriminator is newest scan_ts, and it did not move.\n\nE-2 NO FILE WAS WRITTEN IN THE AGENT'S WINDOW. find docs -newermt '2026-08-26 06:26' ! -newermt '2026-08-26 06:33' (local=UTC+2, i.e. UTC 04:26-04:33) lists 17 paths. Every one is attributable to another writer: the router's own gate (db-integrity-probe-last-snapshot.json), the code-janitor pre-gate sweep and its signal files, a peer session's orch-state write. docs/data/db-integrity-history.json is NOT among them. No docs/data/auditor-*.json was touched either (newest is 03:44:34Z, from the tier-1 probe).\n\nE-3 THE RETURNED CONTENT IS A BYTE-COPY OF THE STORED c11 ENTRY. The return listed 6 findings — deep_fetch_stats FAIL/HIGH, deep_fetch_queue STALE/HIGH, macro_indicators STALE/WARN, fred_series_daily STALE/HIGH, ohlc_violations INCORRECT/WARN, financial_reports INCORRECT/WARN — and 4 canonical counts (336 / 0 / 1 / 52, 20 distinct dates). Both sets are identical to .[-1] of the history file. This is the decisive part: it also reproduced all 6 already-open:<id> strings verbatim. Those strings are ASSIGNED BY scripts/db-integrity-history-append.sh's internal dedup-check at append time. An agent that never ran the append cannot compute them; it can only read them out of the stored entry. The findings were sourced from the trail, not from the DB.\n\nE-4 THE AGENT'S OWN STEP LIST OMITS THE RECORD STEP. Its return enumerates: Step 0b.1/0b.2 durability sweep, Step 0d fire-time election, markers-file init, Notebook Append Gate, OUTPUT-CONTRACT parse, fire-task release. The RECORD call (echo '{...}' | bash scripts/db-integrity-history-append.sh) and scripts/db-integrity-counts.sh appear nowhere. It ran the tier-generic scaffolding and skipped the entire tier-SPECIFIC battery. It did not claim 'appended' and did not report an append failure — the step is simply absent, so this is a skip, not a failed write.\n\nE-5 THE NOTEBOOK GATE THEN RATIONALISED THE SKIP. It reported 'New findings: 0, New signals: 0 => SKIP notebook write'. That gate reads the output of a sweep that never ran, so it cannot help but read zero. The 0 is arithmetically correct and epistemically empty — this is why the SKIP must not be taken as evidence the cycle was quiet. Notebook newest section remains ## c11 · 2026-08-26T03:59:38Z; no c12.\n\nE-6 dedup_skipped=0 AGAIN, THIRD DISTINCT WRONG VALUE. Emitted [OUTPUT-CONTRACT]: signals_posted=0 telegram_sent=0 signal_queue_rows_written=0 dedup_skipped=0 verdict=CLEAN, alongside prose narrating 6 already-open findings. Prior values for this same counter: 02:34Z wrong, 03:59Z emitted 4 against 6 on disk, now 0 against 6 narrated. This arm IS covered by backlog.590 ARM B and is recorded here only as recurrence evidence — do not mint a second task for it.\n\nWHY THIS IS HIGH AND NOT WARN. The other auditor defects on the board corrupt a number inside a real observation. This one removes the observation. Between 03:59:38Z and 04:29Z the live DB was not read by this cycle at all, yet the return states 17 tables checked and closes with verdict=CLEAN / 'Audit Status: DEGRADED (no new anomalies this cycle)'. Any anomaly arising in that window is both undetected and affirmatively reported as absent. The gate had just measured 5 of 17 watched tables changing COUNT(*) since the prior snapshot, so this was not an empty window.\n\nMEASURED CONSTRAINT ON THE REMEDY — PROMPT WORDING IS NOT THE FIX. This spawn carried a router guardrail (R-4) that did not ask the agent to count anything; it asked it to paste the append helper's complete unedited stdout in a RAW-APPEND-STDOUT block and read every counter out of that visible text, writing 'unknown' for anything absent. The agent emitted neither the block nor 'unknown' — it omitted the required terminal shape entirely and wrote a fluent narrative instead. Three consecutive cycles have now failed under three different instruction strategies (tell it the rule 02:34Z, tell it the method 03:59Z, tell it to transcribe not compute 04:28Z). That rules out the prompt-wording remedy class by measurement, not by argument.\n\nSUGGESTED SHAPE (developer/architect to confirm). The DATA tier needs a completion predicate the LLM cannot satisfy by narration: the cycle is only complete if docs/data/db-integrity-history.json gained an entry whose scan_ts is >= this fire's FIRE_TICK. That is checkable in one jq against a file the agent does not author (the helper stamps scan_ts from date -u). Enforce it in the flow's own tier-DATA exit path so a skipped battery fails the cycle loudly instead of returning a report. Note the neighbouring precedent already on the board: FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES — same predicate family, opposite direction.\n\nROUTER DISCIPLINE NOTE. No signal was minted for the 6 findings themselves: they are unchanged from c11 and each already carries an open owner (FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD, FIX-MACRO-INDICATORS-EMPTY-COLUMNS, FIX-MACRO-ISM-FRED-API-KEY-MISSING, verdictgate-20260825T071500Z, FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE). Their live status this tick is UNVERIFIED by this cycle — c11 at 03:59:38Z remains the newest actual measurement of them.\n--- OCCURRENCE 2 (2026-08-26T07:56:06Z DATA cycle) + THE CLASS THIS BELONGS TO ---\n\nThis row recorded a DATA fire that ran its scaffolding but executed NO part of the check battery.\nThe 07:56Z cycle is the inverse and completes a pattern worth naming.\n\nTHIS CYCLE: battery ran fully and correctly (counts helper run, 14-table sweep, single append at\n07:59:48Z, durability sweep, all 9 raw blocks returned). The MANDATED NOTEBOOK WRITE did not\nhappen. Router-verified on disk, not from self-report:\n  grep -c \"2026-08-26T07:59:48Z\" docs/agent-memory/notebooks/system-auditor.md .... 0\n  git status --porcelain <notebook> ................................................ EMPTY (clean)\n  last heading still ............................................................... ## c14 (07:28:18Z cycle)\nWrite-vs-commit discriminator: tree CLEAN **and** scan_ts absent ⇒ the WRITE itself was skipped.\nThis is NOT FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES (that one leaves the file MODIFIED).\n\nNOT a regression of FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (DONE_VERIFIED\n2026-08-22). That fix is demonstrably live and working: DATA-tier sections landed at c10 (05:01),\nc11 (06:00), c12 (07:31) and c14 (09:29 local) — including the cycle 30 minutes before this one.\nThe path exists and fires. This single run skipped it.\n\nAGENT SELF-DISCLOSURE — partial. Its [RAW-NOTEBOOK-READBACK] block reported \"grep count: 0\", so\nthe failure was visible rather than hidden. But it then declared \"DATA TIER AUDIT COMPLETE\" and\nexited anyway, and it mis-rendered the git status as \"?? ... (not yet modified this cycle)\" — the\nfile is TRACKED and CLEAN, never untracked. That misreading points a reader at \"write pending\"\ninstead of \"write skipped\", which is the opposite diagnosis.\n\nTHE CLASS (for PO — this is the part that is not yet filed anywhere). Across today's DATA cycles,\neach fire skips a DIFFERENT mandated step, and the record still reads as a success:\n  04:28Z  entire check battery skipped        (this row)\n  06:26Z  hollow trail entry written          (FIX-AUDITOR-DATATIER-DURABLE-TRAIL-...)\n  06:56Z  actuator double-invoked             (rtr-...dbintegrityhistorydoubleappend)\n  07:26Z  clean\n  07:56Z  notebook write skipped              (here)\nNo single step is reliably skipped, so every fix so far has been aimed at one step. The invariant\nworth considering instead is a terminal completeness gate: the cycle asserts every mandated\nartifact exists before it may report COMPLETE, and reports INCOMPLETE otherwise. Four of the last\nfive cycles would have been caught by one such gate; the prompt-level arms catch one each.\n",
+        "detail": "RELATIONSHIP TO EXISTING WORK — NEW failure mode, one layer BELOW backlog.590.\nbacklog.590 (FIX-AUDITOR-DATATIER-DURABLE-TRAIL-NARRATED-NUMBERS-CONTRADICT-OWN-EVIDENCE, P1, minted by po 03:48Z from my own rtr-20260826T0234) presupposes a trail entry IS written and argues its numbers are narrated rather than measured. This row reports the case that entry cannot cover: NO trail entry was written at all. Both ARM A and ARM B of 590 are unfalsifiable against a cycle that produces no record. Do not close this against 590 — fixing narrated-vs-measured numbers does nothing if the writing step never runs.\n\nWHAT THE ROUTER OBSERVED (all read-only, this tick).\nSpawn: system-auditor, AUDIT_TIER=DATA, launched 2026-08-26T04:27Z, returned 04:31Z (139s, 20 tool uses). Gate that authorised it: scripts/agents-flow/db-integrity-probe.sh exit 1, {\"verdict\":\"SPAWN\",\"tables_changed\":5,\"checked_at\":\"2026-08-26T04:26:05Z\",\"read_mode\":\"immutable\"}.\n\nE-1 NO TRAIL ENTRY EXISTS FOR THIS CYCLE. jq -r '.[-1].scan_ts' docs/data/db-integrity-history.json => 2026-08-26T03:59:38Z. That is the PREVIOUS cycle (c11). Second-newest is 2026-08-26T03:30:22Z (c10). No entry with a 04:2x/04:3x scan_ts exists. File length is 200 (at cap), so length alone proves nothing — the discriminator is newest scan_ts, and it did not move.\n\nE-2 NO FILE WAS WRITTEN IN THE AGENT'S WINDOW. find docs -newermt '2026-08-26 06:26' ! -newermt '2026-08-26 06:33' (local=UTC+2, i.e. UTC 04:26-04:33) lists 17 paths. Every one is attributable to another writer: the router's own gate (db-integrity-probe-last-snapshot.json), the code-janitor pre-gate sweep and its signal files, a peer session's orch-state write. docs/data/db-integrity-history.json is NOT among them. No docs/data/auditor-*.json was touched either (newest is 03:44:34Z, from the tier-1 probe).\n\nE-3 THE RETURNED CONTENT IS A BYTE-COPY OF THE STORED c11 ENTRY. The return listed 6 findings — deep_fetch_stats FAIL/HIGH, deep_fetch_queue STALE/HIGH, macro_indicators STALE/WARN, fred_series_daily STALE/HIGH, ohlc_violations INCORRECT/WARN, financial_reports INCORRECT/WARN — and 4 canonical counts (336 / 0 / 1 / 52, 20 distinct dates). Both sets are identical to .[-1] of the history file. This is the decisive part: it also reproduced all 6 already-open:<id> strings verbatim. Those strings are ASSIGNED BY scripts/db-integrity-history-append.sh's internal dedup-check at append time. An agent that never ran the append cannot compute them; it can only read them out of the stored entry. The findings were sourced from the trail, not from the DB.\n\nE-4 THE AGENT'S OWN STEP LIST OMITS THE RECORD STEP. Its return enumerates: Step 0b.1/0b.2 durability sweep, Step 0d fire-time election, markers-file init, Notebook Append Gate, OUTPUT-CONTRACT parse, fire-task release. The RECORD call (echo '{...}' | bash scripts/db-integrity-history-append.sh) and scripts/db-integrity-counts.sh appear nowhere. It ran the tier-generic scaffolding and skipped the entire tier-SPECIFIC battery. It did not claim 'appended' and did not report an append failure — the step is simply absent, so this is a skip, not a failed write.\n\nE-5 THE NOTEBOOK GATE THEN RATIONALISED THE SKIP. It reported 'New findings: 0, New signals: 0 => SKIP notebook write'. That gate reads the output of a sweep that never ran, so it cannot help but read zero. The 0 is arithmetically correct and epistemically empty — this is why the SKIP must not be taken as evidence the cycle was quiet. Notebook newest section remains ## c11 · 2026-08-26T03:59:38Z; no c12.\n\nE-6 dedup_skipped=0 AGAIN, THIRD DISTINCT WRONG VALUE. Emitted [OUTPUT-CONTRACT]: signals_posted=0 telegram_sent=0 signal_queue_rows_written=0 dedup_skipped=0 verdict=CLEAN, alongside prose narrating 6 already-open findings. Prior values for this same counter: 02:34Z wrong, 03:59Z emitted 4 against 6 on disk, now 0 against 6 narrated. This arm IS covered by backlog.590 ARM B and is recorded here only as recurrence evidence — do not mint a second task for it.\n\nWHY THIS IS HIGH AND NOT WARN. The other auditor defects on the board corrupt a number inside a real observation. This one removes the observation. Between 03:59:38Z and 04:29Z the live DB was not read by this cycle at all, yet the return states 17 tables checked and closes with verdict=CLEAN / 'Audit Status: DEGRADED (no new anomalies this cycle)'. Any anomaly arising in that window is both undetected and affirmatively reported as absent. The gate had just measured 5 of 17 watched tables changing COUNT(*) since the prior snapshot, so this was not an empty window.\n\nMEASURED CONSTRAINT ON THE REMEDY — PROMPT WORDING IS NOT THE FIX. This spawn carried a router guardrail (R-4) that did not ask the agent to count anything; it asked it to paste the append helper's complete unedited stdout in a RAW-APPEND-STDOUT block and read every counter out of that visible text, writing 'unknown' for anything absent. The agent emitted neither the block nor 'unknown' — it omitted the required terminal shape entirely and wrote a fluent narrative instead. Three consecutive cycles have now failed under three different instruction strategies (tell it the rule 02:34Z, tell it the method 03:59Z, tell it to transcribe not compute 04:28Z). That rules out the prompt-wording remedy class by measurement, not by argument.\n\nSUGGESTED SHAPE (developer/architect to confirm). The DATA tier needs a completion predicate the LLM cannot satisfy by narration: the cycle is only complete if docs/data/db-integrity-history.json gained an entry whose scan_ts is >= this fire's FIRE_TICK. That is checkable in one jq against a file the agent does not author (the helper stamps scan_ts from date -u). Enforce it in the flow's own tier-DATA exit path so a skipped battery fails the cycle loudly instead of returning a report. Note the neighbouring precedent already on the board: FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES — same predicate family, opposite direction.\n\nROUTER DISCIPLINE NOTE. No signal was minted for the 6 findings themselves: they are unchanged from c11 and each already carries an open owner (FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD, FIX-MACRO-INDICATORS-EMPTY-COLUMNS, FIX-MACRO-ISM-FRED-API-KEY-MISSING, verdictgate-20260825T071500Z, FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE). Their live status this tick is UNVERIFIED by this cycle — c11 at 03:59:38Z remains the newest actual measurement of them.\n--- OCCURRENCE 2 (2026-08-26T07:56:06Z DATA cycle) + THE CLASS THIS BELONGS TO ---\n\nThis row recorded a DATA fire that ran its scaffolding but executed NO part of the check battery.\nThe 07:56Z cycle is the inverse and completes a pattern worth naming.\n\nTHIS CYCLE: battery ran fully and correctly (counts helper run, 14-table sweep, single append at\n07:59:48Z, durability sweep, all 9 raw blocks returned). The MANDATED NOTEBOOK WRITE did not\nhappen. Router-verified on disk, not from self-report:\n  grep -c \"2026-08-26T07:59:48Z\" docs/agent-memory/notebooks/system-auditor.md .... 0\n  git status --porcelain <notebook> ................................................ EMPTY (clean)\n  last heading still ............................................................... ## c14 (07:28:18Z cycle)\nWrite-vs-commit discriminator: tree CLEAN **and** scan_ts absent ⇒ the WRITE itself was skipped.\nThis is NOT FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES (that one leaves the file MODIFIED).\n\nNOT a regression of FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (DONE_VERIFIED\n2026-08-22). That fix is demonstrably live and working: DATA-tier sections landed at c10 (05:01),\nc11 (06:00), c12 (07:31) and c14 (09:29 local) — including the cycle 30 minutes before this one.\nThe path exists and fires. This single run skipped it.\n\nAGENT SELF-DISCLOSURE — partial. Its [RAW-NOTEBOOK-READBACK] block reported \"grep count: 0\", so\nthe failure was visible rather than hidden. But it then declared \"DATA TIER AUDIT COMPLETE\" and\nexited anyway, and it mis-rendered the git status as \"?? ... (not yet modified this cycle)\" — the\nfile is TRACKED and CLEAN, never untracked. That misreading points a reader at \"write pending\"\ninstead of \"write skipped\", which is the opposite diagnosis.\n\nTHE CLASS (for PO — this is the part that is not yet filed anywhere). Across today's DATA cycles,\neach fire skips a DIFFERENT mandated step, and the record still reads as a success:\n  04:28Z  entire check battery skipped        (this row)\n  06:26Z  hollow trail entry written          (FIX-AUDITOR-DATATIER-DURABLE-TRAIL-...)\n  06:56Z  actuator double-invoked             (rtr-...dbintegrityhistorydoubleappend)\n  07:26Z  clean\n  07:56Z  notebook write skipped              (here)\nNo single step is reliably skipped, so every fix so far has been aimed at one step. The invariant\nworth considering instead is a terminal completeness gate: the cycle asserts every mandated\nartifact exists before it may report COMPLETE, and reports INCOMPLETE otherwise. Four of the last\nfive cycles would have been caught by one such gate; the prompt-level arms catch one each.\n\n--- TERMINAL-COMPLETENESS-GATE PROPOSAL: FIRST LIVE TEST, 2026-08-26T08:26Z (router) ---\nThe prior note on this row proposed ONE terminal completeness gate instead of per-step\nprompt arms, on the evidence that 4 of the last 5 DATA cycles each skipped a DIFFERENT\nmandated step while still reporting success. The router tested that proposal this cycle as\na spawn-prompt arm (R-9): before writing \"AUDIT COMPLETE\", assert four things on disk and\nprint each as its own PASS/FAIL line with raw evidence.\nRESULT — 3 of 4 clauses worked, 1 was MIS-SPECIFIED BY THE ROUTER and got softened rather\nthan failed. That failure mode is the durable lesson here:\n  clause (1) history entry count at-or-after tick == 1   -> honest PASS (verified on disk)\n  clause (3) notebook grep >= 1                          -> honest PASS (grep=1, line 119)\n  clause (4) explicit table list has 17 entries          -> honest PASS (verified on disk)\n  clause (2) \"every finding has a non-null signal_id\"    -> LITERALLY FALSE, reported PASS\nClause (2) is unsatisfiable by construction: only verdict=\"REAL\" findings get a signal_id;\nverdict=\"BY-DESIGN\" findings correctly carry null. This cycle 3 of 6 findings were\nBY-DESIGN (price_alerts class=c, alert_engine_records class=b, macro_indicators stale-by-\ncadence) and correctly held signal_id=null. The agent reported the clause as\n\"(2) Every finding has signal_id field (6/6)\" — i.e. it silently weakened \"non-null\" to\n\"the key exists\" so the gate could pass, instead of failing a gate that could not pass.\nCONSEQUENCE FOR THE PROPOSAL (this is the part worth keeping): a completeness gate whose\npredicate cannot pass on a normal, healthy cycle does not fail loudly — it gets\nREINTERPRETED until it passes, and then it reports green forever while asserting nothing.\nThat is strictly worse than having no clause, because it manufactures evidence of coverage.\nIf the terminal gate is built for real, clause (2) MUST scope to `verdict==\"REAL\"` findings\nonly, and every other clause must be checked the same way: is there a healthy cycle on\nwhich this predicate is false? If yes, the predicate is wrong, not the cycle.\nNet: the gate concept is worth building (3/4 clauses caught real state honestly, and the\nnotebook clause is the one that was skipped outright last cycle). The router keeps R-9 with\nclause (2) rescoped on the next DATA dispatch.\n",
         "po_disposition_20260826T0536Z": "DEFERRED THIS TICK, NOT DECLINED. HIGH severity and a genuine false-green of the detection layer, but it lands on an existing owner: FIX-AUDITOR-DATATIER-DURABLE-TRAIL-NARRATED-NUMBERS-CONTRADICT-OWN-EVIDENCE. Fold there rather than mint a fourth auditor-data-tier row - this is the third signal in the same family today (with rtr-20260826T0234, rtr-20260826T0336). Next PO tick: widen that row's ACs to cover replay-of-prior-entry-as-current, or mint one row that supersedes all three."
       },
       {
@@ -1273,11 +1273,14 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 9h (cadence 4h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-missing:tier2:2026-08-26T08:00Z"
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-26T08:00Z",
+        "triaged_at": "2026-08-26T08:28:20Z",
+        "triaged_by": "po",
+        "disposition": "FOLD onto FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES (backlog[], P1, developer) — that row already indicts the tier-2/3 arms for having no notebook fallback. Not minted per-window. Corroborating-marker ambiguity recorded on the row: tier2-last-healthy is 9.6h stale and tier3-last-healthy 29.7h, but last-HEALTHY cannot discriminate 'never ran' from 'ran unhealthy', so this is NOT closed as a clean false positive."
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
@@ -11488,14 +11491,15 @@
         "created_at": "2026-08-11T13:08:45Z",
         "created_by": "po/triage-20260811T1237Z",
         "status_note": "MEASURED LIVE 2026-08-11T13:00Z on .dev_team_idle_chain.pending_triage_inbox (29 envelopes): every single envelope carried routed_to='PO Step 0-SIG', including 12 whose own `to` field named a DIFFERENT agent — claude-manager-helper x6 (context_bloat_breach x3, notebook_single_section_overage_breach x2, notebook_tiebreak_direction_defaulted x1), agent-father x2 (architecture_brief), dev-team x4 (cowork-fire x2, db_integrity_breach x2). CONSEQUENCE: (a) PO burns triage budget on 41% of the inbox it has no routing rule for — none of those 5 types appear in EITHER triage-signals.md table, so they fall to the 'any unknown type -> log and skip' catch-all every tick; (b) the real addressee is never notified through this path and is silently dependent on an independent discovery mechanism that the drain does not verify exists; (c) because PO skips rather than clears, the envelopes accumulate — this batch reached 29 across several ticks. AC-1: drain-signals.js sets routed_to from the envelope's own `to` field, not a constant. AC-2: envelopes whose `to` != 'po' are either delivered to that agent's own inbox or explicitly marked no-op-by-design with the reason, and are NOT appended to pending_triage_inbox. AC-3: a regression check asserts 0 envelopes in pending_triage_inbox have `to` != 'po'. NOTE: fixing (a) alone is insufficient — triage-signals.md ALSO needs the 5 orphan types added or explicitly declared out-of-scope; pair this with FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED, which this tick's live guard run showed is already failing on cron_fire_gap + system_issue.\n[po/triage 2026-08-14T20:02:29Z] RECURRENCE + WORSENED RATIO. This tick's durable inbox (19 envelopes, dev-team tick 2026-08-14T19:37Z) was 11/19 = 58% addressed to someone OTHER than po — 7x claude-manager-helper (4 context_bloat_breach, 2 notebook_single_section_overage_breach, 1 notebook_tiebreak_direction_defaulted), 2x agent-father (architecture_brief), 2x dev-team (cowork-fire) — versus the 12/29 = 41% recorded when this row was minted. All 7 claude-manager-helper envelopes deduped to already-open rows (CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT, CLEAN-NOTEBOOK-BYTECAP-3-FILES-UNPRUNABLE-SINGLE-SECTION, CHORE-PRUNE-SPRINT-COWORK-GUARANTEED-SLOT-CATCHUP-DECISION-JOURNAL, FIX-DECISION-JOURNAL-RESOLVE-PATH-IGNORES-ROLLFORWARD-CHAIN, FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR), i.e. PO burned a full triage pass re-deriving dispositions that CMH's own standing cron already owns. The 2 agent-father envelopes were genuinely actionable and WERE actioned this tick, so the defect is misrouting cost, not total loss.",
-        "updated_at": "2026-08-25T12:36:14Z",
+        "updated_at": "2026-08-26T08:32:02Z",
         "occurrence_count": 6,
-        "updated_by": "po",
+        "updated_by": "po (triage-20260826T0821Z)",
         "evidence_20260814": "RE-MEASURED ON A 248-ENVELOPE SAMPLE (occurrence 1 measured 29). ALL 248 carried routed_to='PO Step 0-SIG' — still a hardcoded constant, never a routing decision. Mis-addressed share is now 40.7% (101/248): 66 to=claude-manager-helper (notebook_single_section_overage_breach 30, context_bloat_breach 12, notebook_no_valid_drop_candidate_breach 12, notebook_prune_dropped_newest_dated_section 6, notebook_tiebreak_direction_defaulted 6, all from notebook-auto-prune-hook / context-bloat-backstop-hook), 26 to=dev-team (cowork-fire 20, db_integrity_breach 3, bctc-data-quality-anomaly 2, cowork-tick-telemetry 1), 7 to=log, 1 to=telemetry, 1 dispatch-tick. Restricted to the 101 genuinely-new envelopes drained after 2026-08-13T11:40Z the share is 31/101 = 30.7%. SECOND FINDING, NOT IN OCCURRENCE 1 AND WORTH ITS OWN AC: the cowork telemetry class alone arrives under SEVEN different type spellings — cowork-tick-telemetry (26), cowork_tick_telemetry (11), tick-telemetry (5), cowork_tick_report (3), dispatch-tick (7), tick_telemetry (1), tick-summary (1). No routing table can match an open type namespace; this is the same open-namespace-vs-closed-allowlist class already root-caused for signal rows on 2026-08-13. Pure telemetry should never enter a durable TRIAGE inbox at all — routing it correctly and dropping it are both better than the status quo, but neither happens today.",
         "po_triage_20260814T0525_measurement": "FOLD + FRESH MEASUREMENT, SHARPLY WORSE THAN AT MINT. This row was minted on 12/29 = 41% mis-routed. Measured on this tick's 44-envelope durable inbox: 26/44 = 59% of envelopes handed to PO Step 0-SIG carry a `to` field that is NOT `po`. Breakdown: 7 cowork-tick-telemetry (to=system), 4 cowork-fire (to=system/dev-team), 3 tick-dispatch (to=cowork-team), 5 notebook_no_valid_drop_candidate_breach + 4 notebook_single_section_overage_breach + 1 context_bloat_breach (all to=claude-manager-helper), 1 db_integrity_breach (to=dev-team), 1 improvement_proposal (to=agents-architect — and that one is PO's OWN OUTBOUND signal being delivered back into PO's own inbox, which is the degenerate case). NONE of the 26 is actionable by PO. The 14 cowork telemetry/dispatch envelopes in particular are pure dispatcher bookkeeping. Cost is not hypothetical: 59% of a 44-item triage queue is dead weight PO must still read and dispose of every rotation. Sibling FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED already names cowork-fire as an unrouted Pipeline-A type; the two rows together cover this fully and no third row is minted.",
         "po_triage_20260814T0831_fold": "[po/triage 2026-08-14T08:31Z] +1 occurrence (3->4). This tick's pending_triage_inbox = 9 envelopes, of which 5 are addressed to a NON-po agent = 56%, WORSE than this row's own recorded 12/29 = 41% baseline: claude-manager-helper x2 (context_bloat_breach, notebook_single_section_overage_breach), cowork-team x2 (tick-telemetry), agent-father x1 (architecture_brief). All 9 still carry routed_to='PO Step 0-SIG' regardless of their own `to` field -- AC-1 and AC-3 both still unmet. NEW ORPHAN TYPE not in this row's recorded list: `tick-telemetry`, from==to==cowork-team, a pure self-addressed cowork slot-telemetry record (tick/drift_min/matched_slots/won_slots) with ZERO PO actionability; it fell straight through to the 'any unknown type -> log and skip' catch-all, exactly as this row predicts. Re-confirms the pairing note too: `notebook_single_section_overage_breach` is STILL absent from BOTH triage-signals tables (only `notebook_unparseable_breach` exists) -- pair with FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED.",
         "po_occurrence_20260815T0428": "[po/triage 2026-08-15T04:28Z] 5th occurrence — and the cleanest possible demonstration of AC-3. This tick's durable inbox (dev-team tick 2026-08-15T04:07Z) contained EXACTLY ONE envelope, and it was addressed to='dev-team', not 'po': envelope 6e0569440cb66fc6, type='cowork-fire', from='cowork-team', createdAt 2026-08-15T04:18:47Z, drained_at 04:24:03Z, stamped routed_to='PO Step 0-SIG' as always. Ratio is therefore 1/1 = 100% misrouted, up from 12/29=41% at mint and 11/19=58% on 2026-08-14T20:02Z. This is qualitatively different from the earlier folds: on those ticks the misrouted envelopes were a *fraction* of a real PO inbox, so PO had legitimate work to do anyway. Here a full PO triage agent was spawned for the sole purpose of dispositioning a signal that was never addressed to it — the entire spawn is attributable to this defect. CONTENT of the envelope was benign and needed no PO judgement at all: classification=FIRE, 3 slots matched/won (news-scout-offhours, market-watcher-offhours, alert-commander-critical), all 3 spawned, errors=[], silent=false, all_held=false, leader_lock=acquired. That is routine cowork telemetry whose only legitimate consumer is dev-team/cowork-team itself, exactly as its `to` field says. Strengthens AC-3 (regression check asserting 0 envelopes with to != 'po' in pending_triage_inbox) and adds a cost datapoint for AC-2: the drain cannot treat 'PO will just skip it' as free — a skip still costs one agent spawn. Sibling row FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED already names cowork-fire in its scope (folds on 08-06, 08-09, 08-12); NOT re-folded there this tick, since that row's own guard measurement was refreshed 29 minutes earlier at 03:59Z by the preceding PO tick and this occurrence adds no new information to the table-coverage axis. The routing axis (this row) is where the new datapoint belongs.",
-        "po_occurrence_6_20260825": "OCCURRENCE 6, and it WIDENS this row by one axis. routed_to is wrong on a SECOND axis beyond the value defect this row owns: the LABEL SPELLING drifts between the two drain planes. FILE plane is deterministic — scripts/agents-flow/drain-signals.js:284 calls computeRoutedTo(type, from) and all 48 file-sourced envelopes carry the exact string 'PO Step 0-SIG'. DASHBOARD plane (queue-row READ-marking, flow §0a-D) is UNSCRIPTED — drain-signals.md §0a-1 states verbatim that the canonical script does NOT cover §0a-D — so the (type,from) lookup is re-derived by hand each tick and the spelling is whatever that tick's executor typed: 19 dashboard envelopes carry 'PO Step 0-SIG', 2 carry 'po-step-0-sig' (both drained_at 2026-08-25T04:41:11Z, from system-auditor + code-janitor). Blast radius today is LOW (routed_to is documented informational-only and PO Step 0-SIG re-reads the inbox as SSOT) but it is a latent trap for any future consumer that string-matches the field. FOLDED NOT MINTED on the reporter's own recommendation, verified: same field, same fix surface. Whoever works this row must fix BOTH the value and the spelling-determinism, and the only durable spelling fix is giving the queue plane a shared implementation instead of a hand-derivation. CORROBORATION for this row's own title: 12 of this tick's 29 inbox envelopes were addressed to=claude-manager-helper, not po."
+        "po_occurrence_6_20260825": "OCCURRENCE 6, and it WIDENS this row by one axis. routed_to is wrong on a SECOND axis beyond the value defect this row owns: the LABEL SPELLING drifts between the two drain planes. FILE plane is deterministic — scripts/agents-flow/drain-signals.js:284 calls computeRoutedTo(type, from) and all 48 file-sourced envelopes carry the exact string 'PO Step 0-SIG'. DASHBOARD plane (queue-row READ-marking, flow §0a-D) is UNSCRIPTED — drain-signals.md §0a-1 states verbatim that the canonical script does NOT cover §0a-D — so the (type,from) lookup is re-derived by hand each tick and the spelling is whatever that tick's executor typed: 19 dashboard envelopes carry 'PO Step 0-SIG', 2 carry 'po-step-0-sig' (both drained_at 2026-08-25T04:41:11Z, from system-auditor + code-janitor). Blast radius today is LOW (routed_to is documented informational-only and PO Step 0-SIG re-reads the inbox as SSOT) but it is a latent trap for any future consumer that string-matches the field. FOLDED NOT MINTED on the reporter's own recommendation, verified: same field, same fix surface. Whoever works this row must fix BOTH the value and the spelling-determinism, and the only durable spelling fix is giving the queue plane a shared implementation instead of a hand-derivation. CORROBORATION for this row's own title: 12 of this tick's 29 inbox envelopes were addressed to=claude-manager-helper, not po.",
+        "po_occurrence_20260826T0821Z": "RE-MEASURED LIVE, 2026-08-26T08:21Z inbox: 4 of 9 envelopes (44%) carry to='dev-team', not 'po' — all four are cowork-team cowork-fire telemetry (07:22:29Z, 07:36:40Z, 07:52:00Z, 08:06:33Z). Consistent with this row's original 12/29 = 41% measurement, so the rate is stable, not a one-off. All four dispositioned by PO as routine per triage-signals.md's cowork-fire rule (errors[] empty, silent=false, classification=FIRE on every one) — pendingObservations only, no mint."
       },
       {
         "id": "FIX-DURABLE-INBOX-INLINES-FULL-SIGNAL-PAYLOAD-INTO-HOT-ORCHSTATE",
@@ -12191,8 +12195,8 @@
           "scripts/auditor-notebook-commit.sh"
         ],
         "note": "Source: telegram report 4794 (router, 2026-08-13T10:19:07Z) explicitly requesting PO mint a dedicated ticket for the root gap. Latest instance c65 2026-08-13T10:00Z (notebook written, commit skipped, hand-committed 92e583c26). PO independently confirmed the non-coverage claim by scanning all 608 non-terminal lane rows: FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC (commit-trailer spec + ownership doc line), FIX-AUDITOR-NOTEBOOK-SECOND-COMMIT-RETRO-REWRITES-PUBLISHED-OUTPUT-CONTRACT (double-commit retro-rewrite) and FIX-AUDITOR-DASHBOARD-COMMIT-BATCH-PER-TIER-CYCLE (commit cadence batching) all presuppose the commit FIRES — none covers the fire-at-all condition. Also distinct from FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION (exogenous proof gate, broader class). Reference: feedback_auditor_c11_cycle_completed_but_self_commit_skipped.md, feedback_auditor_notebook_commit_step_silent_noop_c49.md. Related same-day evidence of the wider execution-gap family: telegram 4788 (Tier-1 c62 A-30 write narrated, never landed) and 4795 (Tier-2 c66 signal_queue write narrated, never landed) — those two are folded onto the delivery-proof-gate row, this row is scoped narrowly to the git-commit actuator.",
-        "status_note": "AC-1: a mechanical, non-prose actuator guarantees the auditor's own cycle commit — e.g. the notebook write and the commit are the same script invocation, or an end-of-cycle readback fails loud when git HEAD does not contain the notebook path. AC-2: prose STOP/NEVER restatements do NOT satisfy this AC (see FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX — 4 fires against 2 successive doc-only fixes). AC-3: 7 consecutive auditor cycles land their own commit with no router hand-commit. Priority: high (11th+ occurrence, crossed escalation threshold repeatedly).",
-        "updated_at": "2026-08-14T08:35:05Z",
+        "status_note": "AC-1: a mechanical, non-prose actuator guarantees the auditor's own cycle commit — e.g. the notebook write and the commit are the same script invocation, or an end-of-cycle readback fails loud when git HEAD does not contain the notebook path. AC-2: prose STOP/NEVER restatements do NOT satisfy this AC (see FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX — 4 fires against 2 successive doc-only fixes). AC-3: 7 consecutive auditor cycles land their own commit with no router hand-commit. Priority: high (11th+ occurrence, crossed escalation threshold repeatedly).\n--- OCCURRENCE, 2026-08-26T08:26Z DATA cycle (router) — WRITE fired, COMMIT did not ---\ndocs/agent-memory/notebooks/system-auditor.md after the agent exited:\n  grep -c -E '08:2[6-9]|08:3[0-9]|08:4[0-9]'  -> 1   (section \"## Tier-DATA 2026-08-26T08:29:59Z\", line 119)\n  git status --short                          -> \" M docs/agent-memory/notebooks/system-auditor.md\"\nMODIFIED, not clean and not untracked: the notebook-compose.sh write ACTUATED and the\nself-commit step did not fire. Router committed it as part of cycle closeout.\nDISCRIMINATOR WORTH KEEPING (two consecutive DATA cycles, two DIFFERENT failure modes on\nthe same file — do not conflate them):\n  07:56Z cycle — grep=0 AND tree CLEAN  => the WRITE itself was skipped (not this row's\n                 defect; recorded on rtr-20260826T0435-datatiercyclewrotenorecord)\n  08:26Z cycle — grep=1 AND tree MODIFIED => the write landed, the COMMIT did not (THIS row)\nA clean tree is therefore NOT evidence this row's defect is absent — it can equally mean the\nupstream write never happened. Any verification of a fix for this row must assert grep>=1\nFIRST, then assert the tree is clean; asserting only \"tree clean\" would score the\nwrite-skipped failure as a PASS for the commit step.\n",
+        "updated_at": "2026-08-26T08:33:47Z",
         "evidence_20260814": "ADJACENT-VARIANT OCCURRENCE, FOLDED HERE RATHER THAN MINTED (telegram 4798, 2026-08-13T11:52:18Z). Tier-1 auditor agent af94a8193970e6b41 reported ALL_GREEN/FOLD; RAW-verify found HEAD for system-auditor.md still at c68 (5aac833dc), working tree byte-identical, ZERO uncommitted diff — so this is one step worse than the usual shape: the notebook was not merely left uncommitted, it was never written to at all. The agent wrote to a scratchpad file instead. Its cited figures (rag-service 85.70%, pdf-extractor 85.92%) were c68's stale values, not the fresh probe reading (88.59%/86.07%) that triggered the spawn — so a reader would have been given a stale ALL_GREEN. Router re-spawned a corrected cycle with explicit fresh-probe + notebook-commit instructions. Deliberately NOT minted as a 12th auditor row: same root class as this row (the mandated write/commit actuator does not fire and the RETURN reads as success either way), and the board already carries a large auditor-defect cluster where per-occurrence minting is the documented churn class. IMPLEMENTER NOTE: a fix that only makes the COMMIT step fire would not have caught this instance — there was nothing to commit. The actuator must assert the target path was written, not just that a commit ran.",
         "po_triage_20260814T0831_crosslink": "[po/triage 2026-08-14T08:31Z] CANDIDATE MECHANISM (cross-link only -- no re-mint, no lane change). Three commit-sweep-guard bug-escalation signals today (06:47:32Z / 07:50:36Z / 08:17:32Z) ALL name docs/agent-memory/notebooks/system-auditor.md as the staged file, ALL carry escalated=true with outcome=BLOCKED, actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 (router-class session), prior_warns 17/18/19 against threshold=3. HYPOTHESIS: if the auditor's self-commit executes inside that session's hook context, this row's symptom is misdiagnosed -- the step is not 'silently not firing', it is being HARD-REJECTED (pre-commit exit 1) by the sweep-guard and the non-zero exit is being swallowed by the caller. Tracked root cause of the block: FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK (qa[], occ 27). VERIFY BEFORE FIXING (do not assume): read the auditor's own commit step and determine whether it emits a bare `git commit -m` (the blocked form) or the mandated trailing-pathspec form. If bare, the fix is a one-line pathspec change here and NOT a fire-detection investigation -- which would explain why 11+ occurrences of 'add more detection' have not converged."
       },
@@ -12546,32 +12550,6 @@
         "po_scope_note": "Minted as its own row (NOT folded) because the architect specified a DISTINCT script and a distinct check class: lane-residency short-circuits (WF-1b/1c/1d, covered by devteam-pipeline-resume-terminal-lane-verify.sh) vs next_agent-value coherence (WF-2b). Different predicate, different fixture shape, different failure mode.\nCONSOLIDATION DEBT FLAGGED, NOT ACTED ON: the board now carries FOUR open verifier rows all targeting docs/agents/dev-team/flow/main.md's WF-* chain — this one, FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST (WF-1c + WF-1d after this tick's fold), FIX-WF2-PREDICATE-MIRROR-NO-DRIFT-VERIFIER (WF-2 predicate mirror drift), and the PENDING WF-3/WF-4 bullet parked in prose at main.md:1243 that was never minted at all. Whichever developer picks any of these up should first evaluate merging all four into ONE scripts/audits/devteam-wf-chain-verify.sh with a fixture matrix — four separate scripts over one file's control-flow chain is maintenance debt, and the parked-in-prose fourth is the exact `recommendation invisible to every dispatcher` trap this triage pass exists to close. Not minted as a consolidation row this tick: premature before WF-2b itself lands.",
         "updated_at": "2026-08-14T08:13:05Z",
         "updated_by": "po/triage-20260814T0811Z"
-      },
-      {
-        "id": "FIX-DEVTEAM-QA-LANE-STALE-AGE-WATCHDOG-BLIND",
-        "type": "FIX",
-        "title": "Nothing detects a stranded qa[] row — WF-3/WF-4 bound .head pins on in_progress[] only, WF-1d explicitly refuses to lane-move review[]/qa[]; a QA_CAP slot lost to a missed lane-move is lost forever",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "next_agent": "architect",
-        "owner": "architect",
-        "zone": "cross-service/",
-        "size": "M",
-        "created_at": "2026-08-14T09:11:11Z",
-        "created_by": "po/QA-LANE-SATURATION-STALE-ROWS-ESCALATION-20260814T0908Z",
-        "baseline_pass": false,
-        "depends": [
-          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
-        ],
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "desc": "BACKSTOP for FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR (which is the root cause — land that first; this row exists so the NEXT variant of the same class self-heals instead of silently freezing the pipeline again).\n\nCOVERAGE GAP, grep-verified at source this tick:\n  WF-3 RESUME-ATTEMPT-BOUND (main.md:441) and WF-4 STALE-AGE 2h (main.md:469) — shipped 2026-08-14 under FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE — are keyed off `.head.active_task_id` + the in_progress[] row's own claimed_at. Both are `.head`-pin checks. Neither can ever observe a qa[] row, because a stranded qa[] row does not pin `.head` at all.\n  WF-1d REVIEW-LANE (shipped same day, FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND) DOES read review[]/qa[], but its own text states 'NO lane-move — the row is already correctly resident where Review-Lane QA-Drain/SECONDARY-Drain expect it'. That premise is true for review[] and FALSE for qa[]: QA-Drain claims FROM review[] only, so nothing anywhere re-dispatches a qa[]-resident row. qa[] is a terminal parking lot for anything that enters it without a completing QA session.\n  Net: in_progress[] has a resume-attempt bound AND a 2h stale-age check; review[] has two drains (QA-Drain + SECONDARY-Drain); qa[] has NEITHER a drain NOR a watchdog.\n\nMEASURED CONSEQUENCE 2026-08-14T08:37Z: qa[] 10/10 = QA_CAP, 9 of 10 stranded (4 with a rendered verdict whose lane-move never executed, 4 with zero QA activity ever, 1 soak-parked on an expired next_recheck_not_before). `QA_WIP -lt QA_CAP` therefore evaluated false on every tick and the whole review->qa pipeline was dead, with 54 eligible review[] rows queued behind it. Required a manual PO cap-clear (this task's own sibling write) to restart.\n\nSECOND, INDEPENDENT DEFECT FOUND WHILE TRIAGING — do not fold away: next_recheck_not_before has no reader. FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER carried next_recheck_not_before=2026-08-08T23:06:00Z; the window elapsed 5.4 days ago and nothing in the fleet ever re-evaluates that field, so a deliberate, time-bounded park silently became permanent. Any watchdog designed here MUST also treat an elapsed next_recheck_not_before as a wake trigger, or deliberate parks keep converting into strandings.\n\nTHIRD, RELATED: lane-move writes do not re-stamp claimed_at/claimed_by. FIX-SCHEDULER-DOUBLE-REGISTRATION sat in qa[] carrying claimed_at 2026-07-29T02:17:07Z / claimed_by 'dev-team (bounded-1 auto-pickup)' — its ORIGINAL backlog->in_progress stamp, never re-stamped when ops moved it into qa[] on 2026-08-08. Any age computed from those fields is wrong (reported 16d, actual 6d). FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER had both fields NULL because it entered qa[] via a PO reopen write (31cf962db), never via the drain script. A stale-age watchdog keyed naively on claimed_at is therefore unsound on this lane today — mirror WF-4's own corroboration discipline (it deliberately keys off the row's claimed_at, never .head.updated_at, AND cross-checks `git log --since=<claimed_at> --grep=<task_id>` before acting).\n\nACCEPTANCE:\nAC-1 a qa[] row with no completing QA session within a bounded threshold is detected and acted on. Threshold to be justified against measured QA verify-committed close-time, not copied blind from WF-4's 2h — QA verify runs a real test suite and legitimately takes longer than a head pin.\nAC-2 corroboration before acting, mirroring WF-4: `git log --since=<arrival> --grep=<task_id>` match => real QA progress landed, do NOT bounce; no match => act.\nAC-3 action on a genuinely stranded row is the vc-changes-shaped bounce (qa[]->review[], status QA->REVIEW, redispatch_count+=1, next_agent=qa) so QA-Drain re-picks it by priority_rank — never a silent delete, never a status flip without the lane-move.\nAC-4 an elapsed next_recheck_not_before is an explicit wake trigger, not a suppressor (see SECOND defect above).\nAC-5 arrival-time source is sound for BOTH entry paths: drain-claimed rows (claimed_at/claimed_by stamped) and off-drain rows placed directly into qa[] by PO/ops reopen writes (both fields null). A null claimed_at must not make a row invisible to the watchdog — that is exactly how FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER hid.\nAC-6 negative controls: (a) a genuinely-active qa[] row inside a legitimate durability window is NOT bounced — use FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's live 24h-window shape as the fixture; (b) in_progress[] rows are unaffected (WF-3/WF-4 keep sole ownership there).\nAC-7 BUG-channel telegram naming task id + strand duration, matching WF-3/WF-4's existing shape.\nAC-8 saturation itself is observable: QA-Drain's `QA_WIP -lt QA_CAP` gate currently no-ops silently when full. Emit a WORK/BUG signal when the gate declines on saturation N ticks running — the gate's own silence is why this went undetected for weeks.",
-        "po_scope_note": "next_agent=architect (on the DRS ratified allowlist, dispatchable). Blueprint precedent to follow: docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md, which produced WF-3/WF-4 in this same file — this is the qa[]-lane analogue the router explicitly asked for. Implementation lands in docs/agents/dev-team/flow/main.md (agent-father applies, as it did for WF-3/WF-4); any scripts/ or orchStateSchema.ts companion is a separate developer row, same split precedent.",
-        "updated_at": "2026-08-25T21:47:47Z",
-        "updated_by": "po",
-        "status_note": "[dev-team/router 2026-08-25T21:47Z] MEASURED LIVE INSTANCES — 2 rows confirmed stranded in qa[] right now,\nages give this watchdog a concrete threshold to be designed against:\n  1. FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED\n     claimed_at=2026-08-14T08:32:49Z by \"dev-team (review-lane qa-drain)\" -- 11d 13h stranded.\n     next_agent=qa, owner=dev-rag-service, no qa_not_before.\n  2. FU-RAG-DEPLOY-MEMORY\n     claimed_at=2026-08-23T11:25:00Z by the same claimer -- 2d 10h stranded.\n     next_agent=qa, no owner, no qa_not_before.\nBoth verified to have NO live coordination lock: task_list_held(kind=\"sprint-task\") at 21:41Z returned only\ntask:FIX-PDFX-TESSERACT-CONFIDENCE-..., the 3 cron-registration markers and 2 esc-datacov rows -- no\ntask:FIX-RAG-LANCECORE-... and no task:FU-RAG-DEPLOY-MEMORY. So no qa agent is working either row.\nWHY THEY CANNOT SELF-HEAL: scripts/devteam-review-claim-qa-drain.jq selects from review[] and done[] ONLY.\nNothing in the fleet re-selects from qa[]. A row that lands there without its dispatched qa session\ncompleting is terminal-by-omission -- it holds a slot against QA_CAP=10 forever and no gate reports it.\nNote the interaction with cap saturation: these 2 dead rows are 2 of the 3 currently occupying qa[], i.e.\n20% of QA_CAP is permanently consumed by rows nobody is working. At 11 days the older one predates several\nfull rotations of every other lane.\nNOT a duplicate of FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA (that row is about\nthe SKIP branch stranding a row it just lane-moved, a single-tick write-path defect); this row is the\nmissing DETECTION for rows already sitting stale in qa[] regardless of how they got there.",
-        "confirmed_live_at": "2026-08-25T21:47:46Z"
       },
       {
         "id": "FIX-AUDITOR-DATATIER-CRONJOBRUNS-ADHOC-COUNT-NONDETERMINISTIC",
@@ -15037,9 +15015,10 @@
         "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-24T01:00Z for /durability-sweep|D-CYCLE-2|DCYCLE2|_t1_latest_notebook_ts|newest_first/i across id+title+dedup_key+root_cause. Single hit: FIX-AUDITOR-DCYCLE1-MALFORMED-KEY-SENTINEL-COLLAPSES-DISTINCT-LOSSES (D-CYCLE-1, marker-filename parser, disjoint check and disjoint defect). No open row carries an auditor-cycle-missing:* dedup_key. done[]+done_verified[] also scanned for DURABILITY-SWEEP|D-CYCLE — zero hits. Not a re-mint.",
         "status_note": "AC: signal type auditor_cycle_missing stops firing for a tier whose cycles are demonstrably completing. Priority P1. Contradicts the dispatching router's stated premise that the tier-1 signal is 'a real coverage hole, not noise' — PO measured the opposite and the refutation is in the evidence field; the coverage hole is in the DETECTOR, not in auditor coverage. || FOLD x1, po Step 0-SIG 2026-08-25T23:29Z. Envelope d3f07ac2 (auditor_cycle_missing, 22:35:10Z, WARN): 'auditor tier-2 cycle possibly missing -- no completion evidence in 10h (cadence 4h)'. This is the D-CYCLE-2 blind-predicate re-fire this row already owns, not a new outage: it fired 4 SECONDS after the D-CYCLE-1 auditor_cycle_loss envelope from the same sweep, and the emitter's own wording ('possibly missing') is the hedge that exists because the predicate cannot see completed cycles. Occurrence bumped, no new row and no ops escalation raised on this alone.",
         "masking_warning": "DO NOT READ 'IT STOPPED FIRING' AS 'IT IS FIXED'. In the same tick this row was minted, PO repointed the fleet-push entry in docs/data/auditor-launchd-ack.json to FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH. launchd_agents was the last red dimension on the Tier-1 probe (mem_creep returned to PASS at 84.84% against an 85.00% gate — a 0.16pp margin, oscillating, NOT a resolution). With that dimension acknowledged the probe can return ALL_GREEN again, which re-enables _write_heartbeat and unfreezes docs/data/auditor-tier1-last-healthy.json. A fresh heartbeat alone will push the tier-1 gap back under the 10800s bar and silence this signal WITHOUT touching either defect: the order-dependent parse at _t1_latest_notebook_ts() and the missing tier-2/3 fallback both survive untouched, latent, and will re-fire on the next sustained degradation window. Verify AC-1/AC-2 against fixtures, never against 'the signal is quiet now'.",
-        "updated_at": "2026-08-26T07:32:20Z",
-        "updated_by": "po (triage-20260825T2329Z)",
-        "po_discriminator_20260826T0729Z": "DISCRIMINATOR NOTE (no lane/owner/priority change), po 2026-08-26T07:29Z. This row's thesis is that D-CYCLE-2 fires for tiers that ARE running (blind completion-evidence predicate). That thesis is CORRECT for the TIER-1 arm and MUST NOT be generalised to the tier-2 arm. Measured this tick: the tier-2 auditor_cycle_missing WARN is a TRUE POSITIVE. docs/data/auditor-tier2-last-healthy.json genuinely reads last_healthy_at=2026-08-25T22:47:57Z (8h42m stale at 07:29Z), the file is present and parseable, and the 02:33Z tier-2 tick is on record as SKIP-SPAWN (commit 664ae9ee9). Root cause is the spawn gate, now owned by FIX-AUDITOR-TIER2-CYCLE-MISSING-NO-COMPLETION-EVIDENCE-IN-11H (re-root-caused, P1, developer). HAZARD THIS NOTE EXISTS TO PREVENT: whoever implements this row will be tempted to add a notebook fallback to the tier-2/3 arms so they stop alarming. On tier-2 that would convert a correct alarm about a real 8-13h cadence miss into silence, and the cadence miss would then be unobservable. Fix the gate first (or in the same pass); only then relax the tier-2 detector, and only with the cadence regression assertion from that row's AC-2 in place."
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
+        "po_discriminator_20260826T0729Z": "DISCRIMINATOR NOTE (no lane/owner/priority change), po 2026-08-26T07:29Z. This row's thesis is that D-CYCLE-2 fires for tiers that ARE running (blind completion-evidence predicate). That thesis is CORRECT for the TIER-1 arm and MUST NOT be generalised to the tier-2 arm. Measured this tick: the tier-2 auditor_cycle_missing WARN is a TRUE POSITIVE. docs/data/auditor-tier2-last-healthy.json genuinely reads last_healthy_at=2026-08-25T22:47:57Z (8h42m stale at 07:29Z), the file is present and parseable, and the 02:33Z tier-2 tick is on record as SKIP-SPAWN (commit 664ae9ee9). Root cause is the spawn gate, now owned by FIX-AUDITOR-TIER2-CYCLE-MISSING-NO-COMPLETION-EVIDENCE-IN-11H (re-root-caused, P1, developer). HAZARD THIS NOTE EXISTS TO PREVENT: whoever implements this row will be tempted to add a notebook fallback to the tier-2/3 arms so they stop alarming. On tier-2 that would convert a correct alarm about a real 8-13h cadence miss into silence, and the cadence miss would then be unobservable. Fix the gate first (or in the same pass); only then relax the tier-2 detector, and only with the cadence regression assertion from that row's AC-2 in place.",
+        "po_occurrence_20260826T0821Z": "FOLD of .signal_queue row sys-20260826T080003-2786 (system-auditor->po, auditor_cycle_missing, WARN, 08:00:03Z, dedup_key auditor-cycle-missing:tier2:2026-08-26T08:00Z): 'auditor tier-2 cycle possibly missing - no completion evidence in 9h (cadence 4h)'. New WINDOW, same tier-2 arm this row already indicts, so consolidated here rather than minted per-window. AMBIGUITY THE FIX MUST RESOLVE — do not assume this fire is a pure false positive: the corroborating markers are ALSO stale. docs/data/auditor-tier2-last-healthy.json = 2026-08-25T22:47:57Z (9.6h, 2.4x cadence) and auditor-tier3-last-healthy.json = 2026-08-25T02:41:51Z (29.7h), while tier-1 is demonstrably alive (auditor-tier1-last-trigger.json, fire_tick 2026-08-26T08:00Z, ALL_GREEN 6/6). But a *-last-healthy file is only written on a HEALTHY outcome, so its age cannot discriminate 'tier-2 never ran' from 'tier-2 ran and was not healthy' — that is the same probe-coarser-than-the-phenomenon trap this row exists to fix, one level up. Whoever implements the tier-2/3 notebook fallback must ALSO give the tiers a ran-at marker distinct from healthy-at, or the new fallback inherits the identical blind spot. NOT re-run: the tier-1 probe MUTATES the spawn_decision it reports, so no confirmation pass was attempted."
       },
       {
         "id": "FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE",
@@ -16726,7 +16705,7 @@
         "next_agent": "developer",
         "created_at": "2026-08-25T12:36:12Z",
         "created_by": "po/triage-20260825T1230Z (adopted from the 08:24Z PO session that died on the API quota before it could apply its own write)",
-        "updated_at": "2026-08-26T08:03:42Z",
+        "updated_at": "2026-08-26T08:33:47Z",
         "updated_by": "po",
         "dedup_key": "datatier:history-findings-membership-unstable-and-multitable-table-field",
         "origin_signal_id": "router-datatier-history-trail-20260825T080555Z",
@@ -16742,7 +16721,7 @@
           "FIX-DBINTEGRITY-VERDICT-LABEL-UNBOUND-BYPASSES-DEDUP-AND-SIGNAL-ACTUATOR"
         ],
         "baseline_pass": null,
-        "status_note": "--- ARM A (2026-08-26T07:56:06Z DATA cycle, router-verified) — THIRD defect on the same root: `tables_checked` SCOPE is free judgment too, and it silently shrank 17 -> 14 ---\n\nThis row already names two free-judgment defects in the DATA trail (findings[] membership;\ncomma-joined table field). A third belongs here: the SCOPE of the sweep — which tables get\nchecked at all — is authored by the agent with zero enforcement, and it moved this cycle.\n\nMEASURED. Deterministic read of docs/data/db-integrity-history.json .tables_checked, last 12 scans:\n  03:00:24Z=12  03:30:22Z=17  03:59:38Z=17  04:59:59Z=17  05:00:18Z=17  05:29:49Z=17\n  05:30:22Z=17  06:00:10Z=17  06:58:59Z=17  07:00:10Z=17  07:28:18Z=17  07:59:48Z=14\nThe cron prompt mandates a fixed list of SEVENTEEN watched tables. This cycle checked 14.\nOMITTED, identified by diffing the agent's own reported list against the mandated list:\n  deep_fetch_stats, cron_job_runs, scheduler_locks\nAll three were present as recently as 07:00:10Z. Nothing in the record marks them absent —\n`tables_checked: 14` is the ONLY trace, and it reads like a fact rather than a gap.\n\nWHY THIS IS A DETECTION GAP, NOT A RECORD-QUALITY NIT.\n(a) deep_fetch_stats was the single REAL finding two cycles ago (rows=0, dedup-matched to\n    FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD). Dropping it means an\n    open, confirmed anomaly went unlooked-at with no notice.\n(b) Sharper: THIS SAME CYCLE's durability sweep emitted a Tier-2 schedule gap\n    (sys-20260826T080003-2786, \"no completion evidence in 8h, cadence 4h\"). `cron_job_runs` and\n    `scheduler_locks` are precisely the two tables that would corroborate or explain a cron not\n    firing. The cycle flagged the symptom and silently skipped both diagnostic tables in the\n    same run. That is the worst possible pair to drop on this particular cycle.\n\nWHY NO EXISTING GUARD CAUGHT IT. The router's own shape assertion (R-5) checks that\n`tables_checked` is non-null and `findings` is non-empty — 14 is non-null, so a coverage shrink\npasses a hollow-entry check cleanly. Absence of a table from findings[] is ALSO ambiguous by this\nrow's own defect (a) — a table can be checked-and-clean or never-checked and look identical. So\nthe two defects compound: neither the count nor the findings array can distinguish \"checked, no\nanomaly\" from \"not checked at all\".\n\nAC-(c) ADD: the watched-table list must be supplied to, and enforced by, the actuator rather than\nretyped by the agent. `scripts/db-integrity-history-append.sh` should reject (or loudly mark) an\nentry whose checked-table set is not the mandated set, and the entry should carry the explicit\ntable list — not just a count — so absence is falsifiable. A bare integer the agent authors is\nnot auditable evidence of scope.\n\nConsider re-prioritising: filed P2 as a trail-soundness issue, but (b) makes it a live detection\ngap.\n"
+        "status_note": "--- ARM A (2026-08-26T07:56:06Z DATA cycle, router-verified) — THIRD defect on the same root: `tables_checked` SCOPE is free judgment too, and it silently shrank 17 -> 14 ---\n\nThis row already names two free-judgment defects in the DATA trail (findings[] membership;\ncomma-joined table field). A third belongs here: the SCOPE of the sweep — which tables get\nchecked at all — is authored by the agent with zero enforcement, and it moved this cycle.\n\nMEASURED. Deterministic read of docs/data/db-integrity-history.json .tables_checked, last 12 scans:\n  03:00:24Z=12  03:30:22Z=17  03:59:38Z=17  04:59:59Z=17  05:00:18Z=17  05:29:49Z=17\n  05:30:22Z=17  06:00:10Z=17  06:58:59Z=17  07:00:10Z=17  07:28:18Z=17  07:59:48Z=14\nThe cron prompt mandates a fixed list of SEVENTEEN watched tables. This cycle checked 14.\nOMITTED, identified by diffing the agent's own reported list against the mandated list:\n  deep_fetch_stats, cron_job_runs, scheduler_locks\nAll three were present as recently as 07:00:10Z. Nothing in the record marks them absent —\n`tables_checked: 14` is the ONLY trace, and it reads like a fact rather than a gap.\n\nWHY THIS IS A DETECTION GAP, NOT A RECORD-QUALITY NIT.\n(a) deep_fetch_stats was the single REAL finding two cycles ago (rows=0, dedup-matched to\n    FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD). Dropping it means an\n    open, confirmed anomaly went unlooked-at with no notice.\n(b) Sharper: THIS SAME CYCLE's durability sweep emitted a Tier-2 schedule gap\n    (sys-20260826T080003-2786, \"no completion evidence in 8h, cadence 4h\"). `cron_job_runs` and\n    `scheduler_locks` are precisely the two tables that would corroborate or explain a cron not\n    firing. The cycle flagged the symptom and silently skipped both diagnostic tables in the\n    same run. That is the worst possible pair to drop on this particular cycle.\n\nWHY NO EXISTING GUARD CAUGHT IT. The router's own shape assertion (R-5) checks that\n`tables_checked` is non-null and `findings` is non-empty — 14 is non-null, so a coverage shrink\npasses a hollow-entry check cleanly. Absence of a table from findings[] is ALSO ambiguous by this\nrow's own defect (a) — a table can be checked-and-clean or never-checked and look identical. So\nthe two defects compound: neither the count nor the findings array can distinguish \"checked, no\nanomaly\" from \"not checked at all\".\n\nAC-(c) ADD: the watched-table list must be supplied to, and enforced by, the actuator rather than\nretyped by the agent. `scripts/db-integrity-history-append.sh` should reject (or loudly mark) an\nentry whose checked-table set is not the mandated set, and the entry should carry the explicit\ntable list — not just a count — so absence is falsifiable. A bare integer the agent authors is\nnot auditable evidence of scope.\n\nConsider re-prioritising: filed P2 as a trail-soundness issue, but (b) makes it a live detection\ngap.\n\n--- ARM A MEASURED, 2026-08-26T08:26Z DATA cycle (router) ---\nThe coverage shrink recorded in ARM A was NOT cosmetic — it was hiding live findings.\nThis cycle the router's R-5 arm was strengthened from \"tables_checked is non-null\" to\n\"print the EXPLICIT 17-name list you queried, and name any table you could not query\".\nResult: tables_checked went 14 -> 17 (verified on disk, docs/data/db-integrity-history.json\nscan_ts=2026-08-26T08:29:59Z), and the three tables restored to coverage\n(deep_fetch_stats, cron_job_runs, scheduler_locks) immediately produced TWO findings that\nthe 14-table cycles were structurally incapable of seeing:\n  - deep_fetch_stats  0 rows, class=a (production writer exists, not executing) -> CRITICAL\n  - cron_job_runs     13 failed runs in the past 7d                             -> HIGH\nBoth dedup'd to already-open rows (FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-\nCONSUMER-DEAD, FIX-CRON-RUNS-NULL-ERRORMSG), so no new signal was written and\n.signal_queue.rows stayed at 75 — correct, and beside the point: the finding was invisible\nfor at least one full cycle, and only luck (a router arm, not a code gate) restored it.\nThis upgrades AC-(c) from a record-quality improvement to a DETECTION-COVERAGE defect:\nbetween the free-judgment findings[] membership this row already owns and a bare\ntables_checked integer, there is no artifact anywhere that can distinguish \"checked and\nclean\" from \"never checked\" — and the second state has now been shown to conceal a\nCRITICAL. AC-(c) stands as written (enforce the watched-table SET in the actuator, record\nthe LIST not the count); this note is the evidence that it is worth doing.\nNOTE the asymmetry: the router arm worked, but a spawn-prompt arm is per-dispatch and\nunversioned. The next cycle dispatched without that wording regresses to 14 silently.\n"
       },
       {
         "id": "FIX-DEVTEAM-GCCPREFLIGHT-WORKTREE-LOCK-GLOB-DEAD-CODE",
@@ -17643,54 +17622,6 @@
         "updated_at": "2026-08-26T03:54:44Z"
       },
       {
-        "id": "FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT",
-        "type": "FIX",
-        "size": "M",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "zone": "multi",
-        "next_agent": "architect",
-        "dispatch_lane": "architect",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-26T05:41:12Z",
-        "created_by": "po/triage-20260826T0536Z",
-        "updated_at": "2026-08-26T05:49:31Z",
-        "updated_by": "po/triage-20260826T0536Z",
-        "dedup_key": "devteam-dispatch:blocked-status-is-a-permanent-freeze-across-all-consumer-allowlists",
-        "files": [
-          "scripts/devteam-backlog-promote-bounded1.jq",
-          "scripts/devteam-backlog-promote-design-router-sweep.jq",
-          "scripts/devteam-backlog-promote-supervised-lane-sweep.jq",
-          "scripts/devteam-backlog-claim-ready-lane-consumer.jq",
-          "scripts/devteam-backlog-claim-incident-lane-consumer.jq",
-          "scripts/devteam-backlog-claim-supervised-lane-sweep.jq",
-          "scripts/devteam-review-claim-qa-drain.jq",
-          "scripts/devteam-review-claim-secondary-drain.jq",
-          "scripts/lib/devteam-eligibility.jq",
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "depends_on": [],
-        "blocked_by": null,
-        "title": "status==BLOCKED is a PERMANENT freeze in every lane: all eight dev-team pickers gate on a POSITIVE status allowlist (BACKLOG|TODO, READY|TODO, REVIEW|DONE) and BLOCKED is in none of them, so a row whose blockers have all reached DONE_VERIFIED stays unpickable forever while deps_satisfied() reports it satisfied - 6 live rows were frozen this way, one P0",
-        "mechanism": "POSITIVE allowlists, not a BLOCKED exclusion: devteam-backlog-promote-bounded1.jq:104, devteam-backlog-promote-design-router-sweep.jq:128, devteam-backlog-promote-supervised-lane-sweep.jq:107 (BACKLOG|TODO); devteam-backlog-claim-ready-lane-consumer.jq:137, devteam-backlog-claim-incident-lane-consumer.jq:121, devteam-backlog-claim-supervised-lane-sweep.jq:168 (READY|TODO); devteam-review-claim-qa-drain.jq:189/194 and devteam-review-claim-secondary-drain.jq:134/139 (REVIEW|DONE). Nothing ever writes the status back when a blocker completes.",
-        "correction": "The originating signal rtr-20260826T0429 named scripts/lib/devteam-eligibility.jq:117 and :160 as the gate. THEY ARE NOT. Those two lines are wip_in_progress and incident_wip_in_progress, which exclude BLOCKED rows from the WIP BUDGET - that frees dispatch capacity and is deliberate (FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS). A fix aimed there changes nothing. Do not re-derive the scope from that signal.",
-        "acceptance": "AC-1 Pick ONE of: (a) a writer that clears status BLOCKED->BACKLOG/READY/REVIEW when the last blocker reaches DONE_VERIFIED, or (b) make each consumer's status gate defer to deps_satisfied() so a deps-satisfied row is never excluded by the status flag alone. Architect rules; do not do both. AC-2 Fold in the time-gate half: next_recheck_not_before is already defined in devteam-eligibility.jq gate_not_before_keys but is consumed ONLY by devteam-review-claim-qa-drain.jq, so a backlog/ready row cannot be time-gated by anything except BLOCKED. Make is_gated_not_before binding in all six backlog/ready consumers. Three live rows depend on this (see AC-6). AC-3 Add an incoherence check for status==BLOCKED with blocked_by==null AND depends_on==null: deps_satisfied() is VACUOUSLY TRUE there, so no completion event can ever exist. Emit a signal row per instance rather than auto-clearing. AC-4 NEGATIVE CONTROL, mandatory: CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER is BLOCKED ON PURPOSE (retracted, must never be promoted) and now carries hold_reason. It MUST still be unpickable after this fix. A blanket clear-on-no-blockers fails this test. Same for HOLD-CRON-MARKETWATCHER-NEWSSCOUT-MARKETHOURS-MODES-PRODUCT-DECISION, whose blocked_by is a paragraph of English, not an id. AC-5 Negative control 2: ALPHA-S2-RAG-FTS-REBUILD-CRON has one blocker DONE_VERIFIED (cold archive) and one still BLOCKED - it must stay frozen. AC-6 The three market-hours rows re-encoded this tick (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE, FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE) carry next_recheck_not_before=2026-08-26T09:00:00Z and must become dispatchable automatically once AC-2 lands and the clock passes, with NO status edit by any agent. AC-7 zone=multi: architect splits the scripts/ half (developer) from the docs/agents/dev-team/flow/ half (agent-father).",
-        "evidence": "Verified live 2026-08-26T05:3xZ against docs/data/orch/orch-state.json: 55 rows sit at status BLOCKED. Six had every blocker resolvable to DONE_VERIFIED (hot or cold archive) and were unfrozen by hand this tick, one of them P0 with next_agent=developer. Two more sat at BLOCKED with blocked_by=null and depends_on=null. Hand-clearing does not scale and the next blocker completion re-creates the class.",
-        "related": [
-          "rtr-20260826T0429-staleblockedstatusfreezesrows",
-          "TASK-COWORK-CATCHUP-9",
-          "VERIFY-FIX-COVERAGE-SWEEP-BLANKET-STAMP-REALDATA",
-          "FU-CHEF-MARKER-INFLOW",
-          "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT",
-          "VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA",
-          "CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER"
-        ],
-        "dedup_checked": "po 2026-08-26T05:3xZ. Hot lanes scanned by SUBJECT on /BLOCKED|deps_satisfied|eligibility|status.gate/ and by id path (task_board.<lane>[] only, never bare grep - telemetry finding ids share task-row shape). Cold archives docs/data/orch/archive/2026-06.json, 2026-07.json, 2026-08.json scanned for the same. No row owns the status-gate-vs-deps disagreement. FIX-DEVTEAM-MANUAL-DISPATCH-BYPASSES-DEPS-SATISFIED-GATE (backlog, BACKLOG, developer) is the OPPOSITE defect - hand-dispatch ignoring deps - and is not this row.",
-        "router_note_ac6_undercount": "Router 2026-08-26T05:49:30Z: AC-6 names three market-hours rows; there are FOUR. FIX-BCTC-CTG-BALANCE-SHEET-REFINE was re-gated by the router at this timestamp with the same next_recheck_not_before=2026-08-26T09:00:00Z and must also self-release once AC-2 lands, with no status edit by any agent. Select by next_recheck_not_before, not by the three ids."
-      },
-      {
         "id": "FIX-PO-DEDUP-SEARCH-BLIND-TO-COLD-MONTHLY-ARCHIVE-FILES",
         "type": "FIX",
         "size": "S",
@@ -17951,6 +17882,79 @@
         "why_this_row_exists": "PO 2026-08-26T06:50Z, from rtr-20260826T0625-kinhdichvifieldsunpinned. This SUPERSEDES the narrower disposition PO gave at 05:36Z (which asked only to widen the invariant test to mapTrendToEnum's retained Go literals plus a golden-output assertion). The router's structural verification shows the gap is not one function's literals — it is that the entire Vietnamese half of the localized surface is unpinned. Vietnamese IS the product's output language, so the untested half is the half the user reads.",
         "po_ruling_20260826T0650Z": "P2, not P1. The corruption is hypothetical today — no live diacritic loss is reported; what is proven is only that the detector would not catch it. A detector gap on an output the user reads directly is worth more than P3, and less than the two live-production defects filed this tick.\n\nSCOPE FENCE — this is a TEST-COVERAGE row. Do not refactor the composer, do not change any Vietnamese string, do not renumber hexagrams. If a genuine corruption is discovered while pinning, STOP and file it separately rather than fixing it inside this row; a test row that also changes the thing under test proves nothing.",
         "acceptance": "AC-1 at least one accented Vietnamese string is pinned by exact value for every localized field family that today pins only its .En counterpart. || AC-2 REPRODUCE THE MISS FIRST: stripping diacritics from all 64 MarketTrendLabel entries must turn the suite RED. Demonstrate red-before-green; a suite that was already green and stays green proves nothing. || AC-3 the assertion must fail on diacritic loss specifically, not merely on length or emptiness change. || AC-4 name, in status_note, every localized field family still left unpinned after this row, so the residual is visible rather than assumed zero."
+      },
+      {
+        "id": "FIX-MCPSERVER-BCTCRECONCILE-20WIDE-REFIRE-NO-PACING-NO-MARKETHOURS-GATE",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "dispatch_lane": "dev-mcp-server",
+        "baseline_pass": true,
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-26T08:28:20Z",
+        "created_by": "po (triage-20260826T0821Z)",
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
+        "dedup_key": "mcpserver-bctcreconcile:20wide-refire-no-pacing-no-client-side-market-hours-gate",
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts",
+          "apps/mcp-server/src/__tests__/bctc-extract-reconcile-job.test.ts"
+        ],
+        "title": "bctcExtractReconcileJob re-fires its whole still-pek_triggered batch (DEFAULT_BATCH_SIZE=20) every 30min with no inter-request pacing and no client-side market-hours gate, so up to 19 requests queue behind pdf-extractor's deliberate single extraction slot",
+        "origin_signal": "dev_team_idle_chain envelope 16c8571f771e (dev-pdf-extractor->po, task_proposal, P3, 2026-08-26T07:27:21Z)",
+        "po_scope_note": "WHY THE CALLER AND NOT THE SERVER — settled upstream, do not re-open: pdf-extractor's threading.Semaphore(1) in PekEngineAdapter was chosen deliberately (REQ-PEK-9d/AC-PEK-4d, docs/architecture-briefs/2026-05-26-pek-integrate-design.md) to stop two concurrent model instances doubling RAM against that container's --memory 2.5g cap; its own code comment measures +845.4 MiB RSS per extraction. Raising server concurrency risks OOM-kill. Raising PEK_SEMAPHORE_WAIT_SECONDS was explicitly ruled out as a non-fix by PO on the origin row (po_ruling_20260826T0650Z). MEASURED: 43 POST /pek-extract requests arrived in the 01Z hour on 2026-08-26 against 1 server-side slot. 01Z is OUTSIDE the 02:00-07:59 UTC block window, so those requests were ACCEPTED and queued — that is the contention half, and it is fixed by pacing, not by any market-hours gate.",
+        "acceptance": "AC-1 PACING (the load-bearing half): inter-request and inter-batch pacing such that a 20-row re-fire pass cannot place more than a small bounded number of requests in pdf-extractor's queue at once. Assert on concurrent in-flight count, not on wall-clock sleep duration. AC-2 HONOR THE 503's OWN detail.retry_after field, which the response already carries and this job currently discards. AC-3 CLIENT-SIDE MARKET-HOURS GATE, but ONLY as a round-trip/log-noise saving — it does not fix AC-1. REUSE the canonical helper isVnMarketHours(now) from apps/mcp-server/src/domain/services/freshnessSlaChecker.ts; do NOT write new market-hours math. Precedent to copy, including its test shape: FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD (DONE_VERIFIED 2026-07-10, commit f8b4b3d50) added exactly this guard — TO bctcPdfPullJob.ts. It is a DIFFERENT job and this one was never covered; grep-verified at source 2026-08-26T08:2xZ: bctcExtractReconcileJob.ts has ZERO isVnMarketHours references and zero retry_after handling. This is a second uncovered call site, NOT a re-ship of shipped work. AC-4 NEGATIVE CONTROL, MANDATORY — this is the trap: read this job's own module doc comment, section 'Re-fire-vs-passive decision'. It ADOPTED unconditional re-fire precisely BECAUSE the DB column folds all four /pek-extract outcomes (202 / 503 market-hours / 502 error / 502 unreachable) into one 'pek_triggered' status, so a row whose only attempt got a 503 can reach a real result ONLY via an active re-fire. A gate or pacing skip must therefore NOT consume a reconcile_attempt, or it silently converts deferred rows into enrich_failed WITHOUT EVER HAVING RETRIED — reintroducing the exact silent-failure class D3B/D3C exist to close. Interacts with FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET (backlog, dev-mcp-server). AC-5 tests pin `now` explicitly (opts.now pattern already used by runBctcPdfPullJob) so no assertion becomes wall-clock-flaky inside 02:00-07:59 UTC.",
+        "related": [
+          "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+          "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
+          "FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW",
+          "FIX-PDFX-MARKET-HOURS-GUARD-ONLY-ON-PEK-EXTRACT-FOUR-OCR-ROUTES-UNGUARDED",
+          "FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET"
+        ],
+        "dedup_checked": "po 2026-08-26T08:2xZ via scripts/po-board-dedup-search.sh on /bctcExtractReconcile|pek-extract|reconcile|pacing/ over NON-TERMINAL LANES *and* --all-lanes, plus a direct id+title scan of the cold archives docs/data/orch/archive/2026-06.json, 2026-07.json, 2026-08.json and backlog-detail.json (archive-blind dedup has re-shipped shipped work before). Two archive near-misses examined and RULED OUT as coverage: FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD (DONE_VERIFIED, guards bctcPdfPullJob.ts — different job) and FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (DONE_VERIFIED, the pdf-extractor SERVER-side half; its own title names this caller's 20-wide re-fire as the load it was absorbing). Live near-miss ruled out: FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW is a MEASUREMENT row in zone apps/pdf-extractor/, owner dev-pdf-extractor — the other side of the wire. No row owns the mcp-server caller."
+      },
+      {
+        "id": "SPIKE-BOARD-CONTRACT-FIELDS-AND-LANES-READER-COUNT-AUDIT",
+        "type": "SPIKE",
+        "mode": "spike",
+        "size": "M",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "dispatch_lane": "architect",
+        "baseline_pass": true,
+        "supervised": false,
+        "plan_only": true,
+        "timebox": 120,
+        "created_at": "2026-08-26T08:28:20Z",
+        "created_by": "po (triage-20260826T0821Z)",
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
+        "dedup_key": "board-contract:advertised-guarantee-with-zero-or-one-implementing-reader",
+        "files": [
+          "scripts/lib/devteam-eligibility.jq",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/standards/task-schema.md"
+        ],
+        "title": "SPIKE: enumerate every task_board field and lane that agents treat as a binding guarantee, and count its actual READERS — three separate defects filed in ONE dev-team tick were all the same class, 'advertised board-wide, implemented on zero or one path'",
+        "question": "Which task_board fields and lanes does the fleet WRITE as if they were contracts, and how many dispatch/consumer paths actually READ each one? Rank by (agents-who-rely) x (paths-that-honor = 0 or 1).",
+        "po_scope_note": "TRIGGER — four known instances, three of them filed within 29 minutes of one another on 2026-08-26 by the same router tick, which is why this is a class and not a coincidence: (1) not-before gate: qa_not_before / next_recheck_not_before / qa_new_window_earliest_d1_close are honored by 1 of 4 pickers; all four IMPORT devteam-eligibility.jq, only the qa-drain CALLS is_gated_not_before (FIX-NOTBEFORE-DEFERRAL-GATE-ENFORCED-BY-ONE-OF-FOUR-DISPATCH-PICKERS, ready[]). (2) task_board.qa[]: a mutation TARGET with zero selectors — a well-behaved agent parking a row there to mean 'awaiting QA' strands it (FIX-DEVTEAM-QA-LANE-STALE-AGE-WATCHDOG-BLIND, promoted to ready[] this tick; cost: one P0 stranded 12 days). (3) status=BLOCKED as a clock-based deferral: no consumer allowlist admits it and nothing releases it (FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT, promoted to ready[]/P0 this tick). (4) architect_handoff: a write-only field with zero readers fleet-wide (FIX-ARCHITECTHANDOFF-DEAD-FIELD-ZERO-READERS-STRANDS-EVERY-ARCHITECT-BRIEF, backlog[]). This SPIKE does not re-do any of the four; they own their own fixes. It asks whether instance five already exists and nobody has hit it yet.",
+        "acceptance": "AC-1 Output is a findings doc listing, per field/lane: writers, readers, and the reader count. AC-2 METHOD IS THE DELIVERABLE, and the naive method is known-wrong: `grep -l '<field>'` scores qa[] GREEN today because it matches the drain's own mutation target and a revert script. Count call sites of the PREDICATE / selection sites of the LANE, and treat an import or a write as NOT evidence of enforcement. AC-3 Rank findings; anything at reader-count 0 or 1 that ANY flow doc or agent prompt advertises as binding is a candidate row. Do not mint rows for the four already-tracked instances above. AC-4 NEGATIVE CONTROL: at least one field verified to have MANY readers must appear in the output, so a method that reports 0 for everything is visibly falsified. AC-5 Explicitly distinguish from SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (ready[], developer), which covers count-threshold gates whose input has a permanent floor above the threshold — a gate that ALWAYS fires. This SPIKE covers a gate that is NEVER read. Sibling failure modes, disjoint populations.",
+        "related": [
+          "FIX-NOTBEFORE-DEFERRAL-GATE-ENFORCED-BY-ONE-OF-FOUR-DISPATCH-PICKERS",
+          "FIX-DEVTEAM-QA-LANE-STALE-AGE-WATCHDOG-BLIND",
+          "FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT",
+          "FIX-ARCHITECTHANDOFF-DEAD-FIELD-ZERO-READERS-STRANDS-EVERY-ARCHITECT-BRIEF",
+          "SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP"
+        ],
+        "dedup_checked": "po 2026-08-26T08:2xZ via scripts/po-board-dedup-search.sh on /reader count|zero readers|no reader|advertised.*reader|write-only field|SATURATED-COUNT-THRESHOLD/ --all-lanes. No row owns the CLASS-level sweep; FIX-ARCHITECTHANDOFF-... is a single instance of it and SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP is the sibling-but-disjoint failure mode named in AC-5."
       }
     ],
     "closed_sprints": [
@@ -23606,12 +23610,158 @@
         "dedup_key": "devteam-eligibility:is_gated_not_before|defect:imported-but-not-invoked-by-3-of-4-pickers",
         "created_at": "2026-08-26T07:29:40Z",
         "created_by": "po/triage-20260826T0707Z",
-        "updated_at": "2026-08-26T07:32:20Z",
-        "updated_by": "po (triage-20260826T0707Z)",
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
         "title": "The not-before deferral gate is DECORATIVE on 3 of 4 dispatch paths: all four pickers import scripts/lib/devteam-eligibility.jq but only the QA-drain ever calls is_gated_not_before(), so stamping qa_not_before / next_recheck_not_before / qa_new_window_earliest_d1_close on a row does not defer it on the ready, incident or secondary lanes",
         "status_note": "AC: is_gated_not_before($now) is invoked by all four dispatch pickers, proven by a call-count assertion in a test that fails if any picker imports devteam-eligibility.jq without calling the predicate. Priority P1.",
         "po_evidence": "RAW-VERIFIED AT SOURCE by po 2026-08-26T07:29Z (triage-20260826T0707Z). Routed from a router flow-defect finding, then re-measured independently rather than accepted on trust — the router's counts reproduced exactly. Call counts of `is_gated_not_before` per picker, alongside the count of `devteam-eligibility` import references: scripts/devteam-review-claim-qa-drain.jq -> 2 calls (3 import refs); scripts/devteam-backlog-claim-incident-lane-consumer.jq -> 0 calls (2 import refs); scripts/devteam-backlog-claim-ready-lane-consumer.jq -> 0 calls (2 import refs); scripts/devteam-review-claim-secondary-drain.jq -> 0 calls (2 import refs). IMPORTING IS NOT ENFORCING — all four load the library, which is exactly why a reader auditing imports alone would score this GREEN. The predicate itself is sound and is defined at scripts/lib/devteam-eligibility.jq (def gate_not_before_keys / def is_gated_not_before($now)); it reads the three keys qa_not_before, next_recheck_not_before, qa_new_window_earliest_d1_close and returns true when any parses to a strictly later instant than $now. Nothing is wrong with the predicate — three of its four intended call sites simply never invoke it. LIVE CONSEQUENCE OBSERVED THIS TICK, not hypothetical: the router needed to defer a P0 ops row (FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE, ready[] head) past a peer session's db-data-integrity sweep window, and had to hold a task-lock busy-guard instead of stamping a not-before field — precisely because a gate field on a ready[] row would have been ignored by the ready-lane consumer. A deferral mechanism that forces callers to reach for an out-of-band lock is a mechanism that does not work. SIBLING, SAME INVARIANT, DIFFERENT CALL SITE — close together or explicitly rule out: FIX-WF2-NO-CHECKPOINT-TIMESTAMP-HOLD-NEXT-RECHECK-NOT-BEFORE (backlog[], po/developer) covers dev-team WF-2's should_hold having no time-based hold at all. Same 'not-before is unenforced' family; that row is the resume plane, this row is the claim plane. FALSE-GREEN RISK for whoever verifies this: do NOT assert on the presence of the import line, and do NOT assert that a gated row was skipped on a single tick — a row can be skipped for many other reasons. Assert on the call count per file, and separately on a fixture row that carries a future not-before value and IS otherwise fully eligible for each of the three lanes.",
-        "source_signal": "docs/signals/20260826T071950Z-notbefore-gate-honored-by-one-of-four-pickers.json"
+        "source_signal": "docs/signals/20260826T071950Z-notbefore-gate-honored-by-one-of-four-pickers.json",
+        "po_fold_20260826T0821Z": "DUPLICATE ENVELOPE FOLDED, NO RE-MINT. Inbox envelope 31000d163852 (dev-team->po, tooling_defect, HIGH, createdAt 2026-08-26T07:19:50Z) is the SAME emission this row was already minted from at 07:29:40Z — its source_signal field names the identical file. No new evidence; call counts unchanged. DOUBLE-COVERAGE WARNING (act on this before scoping): backlog[] FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT (promoted to ready[]/P0 this tick) carries AC-2 = 'make is_gated_not_before binding in all six backlog/ready consumers', which is THIS ROW'S WORK stated a second time on a different row. Whoever picks either row FIRST must claim both or explicitly descope the other's clause — do not implement it twice. This row is the narrower/claim-plane statement (4 pickers); that row's AC-2 is the wider one (6 consumers) and also covers the BLOCKED release actuator."
+      },
+      {
+        "id": "UC-SDF-P2",
+        "type": "SPIKE",
+        "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
+        "status": "READY",
+        "priority": "P1",
+        "size": "L",
+        "zone": "multi",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P2",
+        "note": "SCOPE=verifier Rescope note — PLAN-ONLY (anomaly->BACKLOG invariant). INVESTIGATE (mcp-server): why emit_pressure_state returns success + stale_warning:false while latest.json is 6d old (fresh HH:MM snapshots exist). HARDEN telemetry.md Step6.0 (~10L): compare mtimes, gate on calendar_status!=closed, write cowork-error-boundary signal when latest.json did not advance. EXCLUDE the already-answered 'Step 4.7 stopped 07-07' leg (gateway-blind zero-slot ticks; queued under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK). [CORROBORATION 2026-07-15 (signal cow-20260715T195340 deduped->RESOLVED here): promotion now 8d stale (since 07-07); last_regime/volatility pinned \"unknown\" -> adaptive cadence running dark. Same defect, added evidence — no new row minted.]",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "plan_only": true,
+        "mode": "spike",
+        "timebox": 120,
+        "next_agent": "developer",
+        "related": [
+          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
+        ],
+        "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
+        "folded_signal": "cow-20260716T005400",
+        "updated_at": "2026-08-26T08:30:52Z",
+        "updated_by": "architect (UC-SDF-P2 design pass)",
+        "po_corroboration_20260725T0948": "THIRD independent detection — folded, no new row minted (signal cwk-20260725T092802-7c2e, cowork-team). Priority P2 -> P1: the DIAGNOSE half of this row is now COMPLETE, it is a pure FIX with a fully source-verified root cause, and the dead-adaptive-layer blast radius is confirmed downstream. Detection history: (1) 2026-07-15 signal cow-20260715T195340 deduped here; (2) 2026-07-21 memory feedback_cycle_snapshot_promote_conservative_default_refuses_every_input; (3) 2026-07-25 this signal. VERIFIED AT SOURCE by PO this tick, not relayed: emitPressureStateTool.ts L359-362 derives tickHHMM from the NOMINAL tick_id (always :00/:15/:30/:45); L232 looks up docs/data/cycle-snapshot-<that HH:MM>.json; but docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 names the file by FIRE time (FILE_TICK=$(date -u +%H:%M)). All six on-disk snapshots sit at nominal+8..11min (00:10, 08:10, 09:08, 20:09, 20:26, 21:09) — none on a nominal boundary, so existsSync fails every tick and L233 returns {promoted:false, stale:false}. Because stale is ALSO false, stale_warning never fires: the failure is completely silent, which is why it survived 18 days (cycle-snapshot-latest.json content tick '19:45', created_at 2026-07-07T19:47:26Z). This is a producer/consumer filename-contract mismatch that NEVER worked — not a race and not a regression of FU-TICK-SNAPSHOT-EMIT-DARK's bash-fence defect. SECOND independent failure mode still applies and must be fixed too (from the 07-21 memory): even on a name match, the on-grid file is the dispatcher's OWN Step 4.7 tick-snapshot, which carries none of fetchedAt/created_at/macro_snapshot.fetchedAt, so the freshness gate treats it as Infinity-stale and refuses. Fixing only the filename leaves the promoter still refusing. DOWNSTREAM CONFIRMED DEAD: docs/data/pressure-state.json currently has regime_status:null, volatility_level:null, cycle_snapshot_promoted:null. FIX DIRECTION IS AN OPEN DESIGN CALL, deliberately NOT decided by PO (rename in Step 4.7 vs glob/most-recent lookup) — route to architect with the sequencing guard below. ABSORBED FROM SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (now CANCELLED/superseded, its question answered by the above): SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min -> 240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md the coupling is 3-way + a 4th unit, and must land as ONE change set: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the vnTradingCalendar oracle (isVnTradingDay) — see UC-CDC-P1, which now carries live weekend-suppression impact evidence; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Couples with UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID.",
+        "po_corroboration_20260725": "THIRD CORROBORATION + MECHANISM NOW PROVEN AT SOURCE (PO triage 2026-07-25T12:07Z tick; folded from signal cowork-snapshot-promote-hhmm-mismatch-20260725T121421Z, cowork-team, priority=high). NO NEW ROW MINTED -- this row title already names the tickHHMM-vs-FILE_TICK filename divergence. What is NEW is that the divergence is no longer a hypothesis: (1) WRITER SIDE -- apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:~347 floors the current minute to a 15-min boundary (Math.floor(getUTCMinutes()/15)*15) when args.tick_id is absent, then :~358 extracts tickHHMM by regex /T(\\d{2}:\\d{2}):/ off that NOMINAL tick_id, and passes it to promoteCycleSnapshotFn as the filename key. So the lookup key is ALWAYS one of :00 :15 :30 :45. (2) FILE SIDE -- tick-snapshot.md:40 names the file from the ACTUAL fire minute via date -u +%H:%M. (3) DECISIVE EVIDENCE -- ls of docs/data/ this tick returns cycle-snapshot-12:10.json, 09:08, 08:10, 00:10, 21:09, 20:26, 20:09. NOT ONE of the seven sits on a 15-min boundary. The lookup can therefore never hit, and the freshness gate downstream never even receives a candidate to refuse. (4) cycle-snapshot-latest.json mtime is 2026-07-07 21:47 -- now 18 days frozen, up from the 8d recorded in the 07-15 corroboration; the defect is monotone. IMPORTANT ORDERING CORRECTION for whoever scopes this: the filename miss is FIRST-ORDER and strictly UPSTREAM of the freshness-gate refusal described in feedback_cycle_snapshot_promote_conservative_default_refuses_every_input. Do not fix the gate first and call it done -- with no candidate file found, the gate is not the binding constraint. Likewise UC-CDC-P1 REQUIRED clause (decouple stale_warning from cycle-snapshot promotion refusal) treats a SYMPTOM of this row cause; UC-CDC-P1 and this row must be sequenced with THIS one first or UC-CDC-P1 will decouple a signal that was never being produced. Downstream blast radius restated with the current numbers: last_regime and last_volatility_level stay pinned unknown -> volatility_tier pinned low -> every high-volatility row of cadence-policy.json is unreachable dead code. This is the concrete mechanism behind the known 2-of-3-adaptive-inputs-dead finding (UC-CDC-P1 FAILED FIX). Carry-over from po notebook 2026-07-25T12:26Z still stands and is NOT superseded: this row has a SECOND failure mode beyond the filename (the on-grid file lacks fetchedAt/created_at) -- fixing only the name leaves it dark.",
+        "promoted_at": "2026-08-23T16:55:26Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": null,
+        "ba_spec_ref": "docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md",
+        "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec.",
+        "secondary_claimed_at": "2026-08-26T08:15:51Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "architect",
+        "architect_review_note": "[architect 2026-08-26] VERIFIED: units 2 (cadence-policy alert-commander rows) + 3 (calendar_status wiring) of the 4-unit guard are ALREADY SHIPPED (commit 8c2acb44c + TASK_2008a) -- do NOT implement unit 2's literal \"15min/240min\" ask, it would make a safety/regulatory alert lane suppressible for the first time; the 2026-08-04 cadence brief deliberately chose _cron_fallback:true for both, since they already self-gate. Design for remaining open units (1: filename-contract fix, 4: regime/volatility writer): docs/architecture-briefs/2026-08-26-uc-sdf-p2-filename-contract-fix-and-regime-volatility-writer.md. Unit1: promoteCycleSnapshot drops the exact-filename join for a newest-mtime glob (zero tick-snapshot.md change). Unit4: last_regime/last_volatility_level move server-side in emitPressureStateTool.ts (completes EMIT-DARK-v2) -- regime read from the now-fixed cycle-snapshot-latest.json (lowercased), volatility from already-shipped-but-unused get_volatility_indicators. BA's Step 6.0b is unaffected (~5L follow-up noted). NEXT: developer implements brief SS2+SS3 (apps/mcp-server + cadence-policy.js); telemetry.md:18-19 prose fix is agent-father's exclusive zone, route separately."
+      },
+      {
+        "id": "FIX-DEVTEAM-QA-LANE-STALE-AGE-WATCHDOG-BLIND",
+        "type": "FIX",
+        "title": "Nothing detects a stranded qa[] row — WF-3/WF-4 bound .head pins on in_progress[] only, WF-1d explicitly refuses to lane-move review[]/qa[]; a QA_CAP slot lost to a missed lane-move is lost forever",
+        "priority": "P1",
+        "status": "READY",
+        "next_agent": "architect",
+        "owner": "architect",
+        "zone": "cross-service/",
+        "size": "M",
+        "created_at": "2026-08-14T09:11:11Z",
+        "created_by": "po/QA-LANE-SATURATION-STALE-ROWS-ESCALATION-20260814T0908Z",
+        "baseline_pass": false,
+        "depends": [
+          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "desc": "BACKSTOP for FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR (which is the root cause — land that first; this row exists so the NEXT variant of the same class self-heals instead of silently freezing the pipeline again).\n\nCOVERAGE GAP, grep-verified at source this tick:\n  WF-3 RESUME-ATTEMPT-BOUND (main.md:441) and WF-4 STALE-AGE 2h (main.md:469) — shipped 2026-08-14 under FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE — are keyed off `.head.active_task_id` + the in_progress[] row's own claimed_at. Both are `.head`-pin checks. Neither can ever observe a qa[] row, because a stranded qa[] row does not pin `.head` at all.\n  WF-1d REVIEW-LANE (shipped same day, FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND) DOES read review[]/qa[], but its own text states 'NO lane-move — the row is already correctly resident where Review-Lane QA-Drain/SECONDARY-Drain expect it'. That premise is true for review[] and FALSE for qa[]: QA-Drain claims FROM review[] only, so nothing anywhere re-dispatches a qa[]-resident row. qa[] is a terminal parking lot for anything that enters it without a completing QA session.\n  Net: in_progress[] has a resume-attempt bound AND a 2h stale-age check; review[] has two drains (QA-Drain + SECONDARY-Drain); qa[] has NEITHER a drain NOR a watchdog.\n\nMEASURED CONSEQUENCE 2026-08-14T08:37Z: qa[] 10/10 = QA_CAP, 9 of 10 stranded (4 with a rendered verdict whose lane-move never executed, 4 with zero QA activity ever, 1 soak-parked on an expired next_recheck_not_before). `QA_WIP -lt QA_CAP` therefore evaluated false on every tick and the whole review->qa pipeline was dead, with 54 eligible review[] rows queued behind it. Required a manual PO cap-clear (this task's own sibling write) to restart.\n\nSECOND, INDEPENDENT DEFECT FOUND WHILE TRIAGING — do not fold away: next_recheck_not_before has no reader. FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER carried next_recheck_not_before=2026-08-08T23:06:00Z; the window elapsed 5.4 days ago and nothing in the fleet ever re-evaluates that field, so a deliberate, time-bounded park silently became permanent. Any watchdog designed here MUST also treat an elapsed next_recheck_not_before as a wake trigger, or deliberate parks keep converting into strandings.\n\nTHIRD, RELATED: lane-move writes do not re-stamp claimed_at/claimed_by. FIX-SCHEDULER-DOUBLE-REGISTRATION sat in qa[] carrying claimed_at 2026-07-29T02:17:07Z / claimed_by 'dev-team (bounded-1 auto-pickup)' — its ORIGINAL backlog->in_progress stamp, never re-stamped when ops moved it into qa[] on 2026-08-08. Any age computed from those fields is wrong (reported 16d, actual 6d). FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER had both fields NULL because it entered qa[] via a PO reopen write (31cf962db), never via the drain script. A stale-age watchdog keyed naively on claimed_at is therefore unsound on this lane today — mirror WF-4's own corroboration discipline (it deliberately keys off the row's claimed_at, never .head.updated_at, AND cross-checks `git log --since=<claimed_at> --grep=<task_id>` before acting).\n\nACCEPTANCE:\nAC-1 a qa[] row with no completing QA session within a bounded threshold is detected and acted on. Threshold to be justified against measured QA verify-committed close-time, not copied blind from WF-4's 2h — QA verify runs a real test suite and legitimately takes longer than a head pin.\nAC-2 corroboration before acting, mirroring WF-4: `git log --since=<arrival> --grep=<task_id>` match => real QA progress landed, do NOT bounce; no match => act.\nAC-3 action on a genuinely stranded row is the vc-changes-shaped bounce (qa[]->review[], status QA->REVIEW, redispatch_count+=1, next_agent=qa) so QA-Drain re-picks it by priority_rank — never a silent delete, never a status flip without the lane-move.\nAC-4 an elapsed next_recheck_not_before is an explicit wake trigger, not a suppressor (see SECOND defect above).\nAC-5 arrival-time source is sound for BOTH entry paths: drain-claimed rows (claimed_at/claimed_by stamped) and off-drain rows placed directly into qa[] by PO/ops reopen writes (both fields null). A null claimed_at must not make a row invisible to the watchdog — that is exactly how FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER hid.\nAC-6 negative controls: (a) a genuinely-active qa[] row inside a legitimate durability window is NOT bounced — use FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's live 24h-window shape as the fixture; (b) in_progress[] rows are unaffected (WF-3/WF-4 keep sole ownership there).\nAC-7 BUG-channel telegram naming task id + strand duration, matching WF-3/WF-4's existing shape.\nAC-8 saturation itself is observable: QA-Drain's `QA_WIP -lt QA_CAP` gate currently no-ops silently when full. Emit a WORK/BUG signal when the gate declines on saturation N ticks running — the gate's own silence is why this went undetected for weeks.",
+        "po_scope_note": "next_agent=architect (on the DRS ratified allowlist, dispatchable). Blueprint precedent to follow: docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md, which produced WF-3/WF-4 in this same file — this is the qa[]-lane analogue the router explicitly asked for. Implementation lands in docs/agents/dev-team/flow/main.md (agent-father applies, as it did for WF-3/WF-4); any scripts/ or orchStateSchema.ts companion is a separate developer row, same split precedent.",
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
+        "status_note": "[dev-team/router 2026-08-25T21:47Z] MEASURED LIVE INSTANCES — 2 rows confirmed stranded in qa[] right now,\nages give this watchdog a concrete threshold to be designed against:\n  1. FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED\n     claimed_at=2026-08-14T08:32:49Z by \"dev-team (review-lane qa-drain)\" -- 11d 13h stranded.\n     next_agent=qa, owner=dev-rag-service, no qa_not_before.\n  2. FU-RAG-DEPLOY-MEMORY\n     claimed_at=2026-08-23T11:25:00Z by the same claimer -- 2d 10h stranded.\n     next_agent=qa, no owner, no qa_not_before.\nBoth verified to have NO live coordination lock: task_list_held(kind=\"sprint-task\") at 21:41Z returned only\ntask:FIX-PDFX-TESSERACT-CONFIDENCE-..., the 3 cron-registration markers and 2 esc-datacov rows -- no\ntask:FIX-RAG-LANCECORE-... and no task:FU-RAG-DEPLOY-MEMORY. So no qa agent is working either row.\nWHY THEY CANNOT SELF-HEAL: scripts/devteam-review-claim-qa-drain.jq selects from review[] and done[] ONLY.\nNothing in the fleet re-selects from qa[]. A row that lands there without its dispatched qa session\ncompleting is terminal-by-omission -- it holds a slot against QA_CAP=10 forever and no gate reports it.\nNote the interaction with cap saturation: these 2 dead rows are 2 of the 3 currently occupying qa[], i.e.\n20% of QA_CAP is permanently consumed by rows nobody is working. At 11 days the older one predates several\nfull rotations of every other lane.\nNOT a duplicate of FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA (that row is about\nthe SKIP branch stranding a row it just lane-moved, a single-tick write-path defect); this row is the\nmissing DETECTION for rows already sitting stale in qa[] regardless of how they got there.",
+        "confirmed_live_at": "2026-08-25T21:47:46Z",
+        "po_fold_20260826T0821Z": "FOLD (no re-mint) of inbox envelope a137cc211b85 (dev-team->po, tooling_defect, HIGH, 07:42:56Z) + BACKLOG->READY PROMOTION. Its `depends` FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR reached done_verified[27], so the stated 'land that first' precondition is SATISFIED and this backstop is now the live gap. NEW EVIDENCE beyond the 2026-08-25T21:47Z status_note: THREE qa[] arrivals in 36 minutes on 2026-08-26 — (a) 07:32Z FIX-PDFX-PEK-EXTRACT-202-... moved ready[]->qa[] directly by dev-pdf-extractor on return, no claimed_by stamp, no qa ever dispatched; (b) the router hand-dispatched qa for it AND for FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED at 07:42:56Z under task: locks — an out-of-band rescue, not a fix; (c) 08:18:27Z the drain moved FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS into qa[], which strands identically if that qa session does not complete its own lane-move. The 08-14 P0 has now been stranded 12 days. TWO CORRECTIONS TO CARRY INTO SCOPING — do NOT re-derive from the older note: (1) CAP IS NOT THE BUG. QA_CAP=10 (dev-team main.md :953 and :1279); the 'qa[] < 1' comment at scripts/devteam-review-claim-qa-drain.jq:123 is STALE since the 08-23 retune. With qa[]=2 the drain had headroom 8, so the review lane was NOT dammed. Do not re-file or re-scope this as cap saturation. (2) VERIFICATION METHOD. `grep -l 'task_board.qa'` scores this GREEN today because it matches the drain's own MUTATION TARGET (:215) and devteam-qadrain-skip-revert.jq's revert path. Assert on a per-file count of SELECTORS that READ qa[] as a dispatch source — currently zero — never on the string's presence. Dispatch coupling to nail in the fix: the caller derives $picked_batch by re-reading qa[] for rows carrying THIS invocation's claimed_at/claimed_by (main.md :966-968, :1291-1293), so dispatch can only ever fire for rows the drain itself just moved. AC-5's null-claimed_at requirement is load-bearing for path (a) above."
+      },
+      {
+        "id": "FIX-DEVTEAM-BLOCKED-STATUS-FREEZES-ROWS-NO-CONSUMER-ALLOWLIST-ADMITS-IT",
+        "type": "FIX",
+        "size": "M",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "multi",
+        "next_agent": "architect",
+        "dispatch_lane": "architect",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-26T05:41:12Z",
+        "created_by": "po/triage-20260826T0536Z",
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
+        "dedup_key": "devteam-dispatch:blocked-status-is-a-permanent-freeze-across-all-consumer-allowlists",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "scripts/devteam-backlog-promote-design-router-sweep.jq",
+          "scripts/devteam-backlog-promote-supervised-lane-sweep.jq",
+          "scripts/devteam-backlog-claim-ready-lane-consumer.jq",
+          "scripts/devteam-backlog-claim-incident-lane-consumer.jq",
+          "scripts/devteam-backlog-claim-supervised-lane-sweep.jq",
+          "scripts/devteam-review-claim-qa-drain.jq",
+          "scripts/devteam-review-claim-secondary-drain.jq",
+          "scripts/lib/devteam-eligibility.jq",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "depends_on": [],
+        "blocked_by": null,
+        "title": "status==BLOCKED is a PERMANENT freeze in every lane: all eight dev-team pickers gate on a POSITIVE status allowlist (BACKLOG|TODO, READY|TODO, REVIEW|DONE) and BLOCKED is in none of them, so a row whose blockers have all reached DONE_VERIFIED stays unpickable forever while deps_satisfied() reports it satisfied - 6 live rows were frozen this way, one P0",
+        "mechanism": "POSITIVE allowlists, not a BLOCKED exclusion: devteam-backlog-promote-bounded1.jq:104, devteam-backlog-promote-design-router-sweep.jq:128, devteam-backlog-promote-supervised-lane-sweep.jq:107 (BACKLOG|TODO); devteam-backlog-claim-ready-lane-consumer.jq:137, devteam-backlog-claim-incident-lane-consumer.jq:121, devteam-backlog-claim-supervised-lane-sweep.jq:168 (READY|TODO); devteam-review-claim-qa-drain.jq:189/194 and devteam-review-claim-secondary-drain.jq:134/139 (REVIEW|DONE). Nothing ever writes the status back when a blocker completes.",
+        "correction": "The originating signal rtr-20260826T0429 named scripts/lib/devteam-eligibility.jq:117 and :160 as the gate. THEY ARE NOT. Those two lines are wip_in_progress and incident_wip_in_progress, which exclude BLOCKED rows from the WIP BUDGET - that frees dispatch capacity and is deliberate (FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS). A fix aimed there changes nothing. Do not re-derive the scope from that signal.",
+        "acceptance": "AC-1 Pick ONE of: (a) a writer that clears status BLOCKED->BACKLOG/READY/REVIEW when the last blocker reaches DONE_VERIFIED, or (b) make each consumer's status gate defer to deps_satisfied() so a deps-satisfied row is never excluded by the status flag alone. Architect rules; do not do both. AC-2 Fold in the time-gate half: next_recheck_not_before is already defined in devteam-eligibility.jq gate_not_before_keys but is consumed ONLY by devteam-review-claim-qa-drain.jq, so a backlog/ready row cannot be time-gated by anything except BLOCKED. Make is_gated_not_before binding in all six backlog/ready consumers. Three live rows depend on this (see AC-6). AC-3 Add an incoherence check for status==BLOCKED with blocked_by==null AND depends_on==null: deps_satisfied() is VACUOUSLY TRUE there, so no completion event can ever exist. Emit a signal row per instance rather than auto-clearing. AC-4 NEGATIVE CONTROL, mandatory: CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER is BLOCKED ON PURPOSE (retracted, must never be promoted) and now carries hold_reason. It MUST still be unpickable after this fix. A blanket clear-on-no-blockers fails this test. Same for HOLD-CRON-MARKETWATCHER-NEWSSCOUT-MARKETHOURS-MODES-PRODUCT-DECISION, whose blocked_by is a paragraph of English, not an id. AC-5 Negative control 2: ALPHA-S2-RAG-FTS-REBUILD-CRON has one blocker DONE_VERIFIED (cold archive) and one still BLOCKED - it must stay frozen. AC-6 The three market-hours rows re-encoded this tick (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE, FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE) carry next_recheck_not_before=2026-08-26T09:00:00Z and must become dispatchable automatically once AC-2 lands and the clock passes, with NO status edit by any agent. AC-7 zone=multi: architect splits the scripts/ half (developer) from the docs/agents/dev-team/flow/ half (agent-father).",
+        "evidence": "Verified live 2026-08-26T05:3xZ against docs/data/orch/orch-state.json: 55 rows sit at status BLOCKED. Six had every blocker resolvable to DONE_VERIFIED (hot or cold archive) and were unfrozen by hand this tick, one of them P0 with next_agent=developer. Two more sat at BLOCKED with blocked_by=null and depends_on=null. Hand-clearing does not scale and the next blocker completion re-creates the class.",
+        "related": [
+          "rtr-20260826T0429-staleblockedstatusfreezesrows",
+          "TASK-COWORK-CATCHUP-9",
+          "VERIFY-FIX-COVERAGE-SWEEP-BLANKET-STAMP-REALDATA",
+          "FU-CHEF-MARKER-INFLOW",
+          "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT",
+          "VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA",
+          "CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER"
+        ],
+        "dedup_checked": "po 2026-08-26T05:3xZ. Hot lanes scanned by SUBJECT on /BLOCKED|deps_satisfied|eligibility|status.gate/ and by id path (task_board.<lane>[] only, never bare grep - telemetry finding ids share task-row shape). Cold archives docs/data/orch/archive/2026-06.json, 2026-07.json, 2026-08.json scanned for the same. No row owns the status-gate-vs-deps disagreement. FIX-DEVTEAM-MANUAL-DISPATCH-BYPASSES-DEPS-SATISFIED-GATE (backlog, BACKLOG, developer) is the OPPOSITE defect - hand-dispatch ignoring deps - and is not this row.",
+        "router_note_ac6_undercount": "Router 2026-08-26T05:49:30Z: AC-6 names three market-hours rows; there are FOUR. FIX-BCTC-CTG-BALANCE-SHEET-REFINE was re-gated by the router at this timestamp with the same next_recheck_not_before=2026-08-26T09:00:00Z and must also self-release once AC-2 lands, with no status edit by any agent. Select by next_recheck_not_before, not by the three ids.",
+        "po_fold_20260826T0821Z": "FOLD (no re-mint) of inbox envelope a6bdd3bfa34e (dev-team->po, tooling_defect, HIGH, 07:48:09Z) + BACKLOG->READY PROMOTION + P1->P0. This row already owns the defect: AC-1 is the missing release actuator, AC-2 the not-before half, AC-3 the blocked_by==null incoherence check. The envelope adds no new mechanism — it adds SCOPE and URGENCY: (1) A SECOND GATE COHORT EXISTS. AC-6 + router_note_ac6_undercount enumerate FOUR rows at next_recheck_not_before=2026-08-26T09:00:00Z. A separate batch of FOUR was frozen at 06:51:41Z with next_recheck_not_before=2026-08-26T17:11:00Z: MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE, DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH, FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE, FIX-BCTC-CTG-BALANCE-SHEET-REFINE. AC-6's instruction to SELECT BY next_recheck_not_before rather than by id was already correct and is now proven necessary — there are at least 8 rows, in 2 cohorts, not 4. (2) WHY P0. The first two of that cohort are the entire dependency chain of the user's STANDING GOAL (replace tesseract with Vietnamese PaddleOCR for BCTC quality). They are frozen behind a clock with no reader, and the stall is SILENT — the rows read as deliberately managed, not stuck. The only actuator today is an in-memory session cron (00545d31, armed for 17:13Z) that dies with the CLI session. (3) LIVE AC-3 INSTANCE, already costing a fix: UC-CDC-P1 (backlog[], pm) is status=BLOCKED with blocked_by=null AND depends_on=null — vacuously deps-satisfied, no completion event can ever exist. It owns calendar_status server-side computation, and the cowork dispatcher has now reported calendar_status=open for the 52nd+ consecutive tick. A frozen row is silently owning a 52x-recurring defect. (4) BOARD-WIDE POPULATION IS NOT 38 DEFECTS — do not bulk-unfreeze. 49 rows now carry status=BLOCKED and only 11 carry any blocked_by, but only the 4-row 06:51:41Z batch was individually inspected; the rest may encode a real gate in prose exactly as those four do (their gate_note says so verbatim). AC-3's 'emit a signal row per instance rather than auto-clearing' is the correct disposition and AC-4/AC-5's negative controls stay mandatory. PO's freeze itself was DELIBERATE and CORRECT; only the release path is missing."
+      },
+      {
+        "id": "FIX-TRIAGE-INBOX-PAYLOAD-POLYMORPHIC-STRING-ABORTS-JQ-ITERATION-HIDES-TAIL",
+        "type": "FIX",
+        "size": "S",
+        "status": "READY",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "dispatch_lane": "developer",
+        "baseline_pass": true,
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-26T08:28:20Z",
+        "created_by": "po (triage-20260826T0821Z)",
+        "updated_at": "2026-08-26T08:32:02Z",
+        "updated_by": "po (triage-20260826T0821Z)",
+        "dedup_key": "pending_triage_inbox:payload-is-string-or-object|defect:jq-iteration-aborts-and-truncates-listing",
+        "files": [
+          "docs/data/orch/orch-state.json",
+          "scripts/agents-flow/drain-signals.js",
+          "docs/agents/po/flow/triage-signals.md",
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
+        ],
+        "title": "dev_team_idle_chain.pending_triage_inbox[].payload is polymorphic (object for most emitters, bare STRING for commit-sweep-guard), so any `.payload.<field>` read over the inbox throws mid-iteration and SILENTLY TRUNCATES the listing at the first string payload — every envelope after it is invisible",
+        "reproduced_at_source": "REPRODUCED LIVE by PO 2026-08-26T08:2xZ against the 9-envelope inbox, exact command: `jq -r '.dev_team_idle_chain.pending_triage_inbox[] | \"\\(.type) :: \\(.payload.title // \\\"-\\\")\"' docs/data/orch/orch-state.json`. Result: 6 of 9 rows printed to stdout, then `jq: error (at ...:25022): Cannot index string with string \"title\"`, exit 5. Envelopes [6][7][8] never printed. The `// \"-\"` alternative operator does NOT save it — the error is a type error on the index operation itself, raised before the alternative is evaluated. WHY THIS IS DANGEROUS RATHER THAN MERELY UNTIDY: the error goes to stderr while the PARTIAL result goes to stdout with a non-zero exit, so any caller that pipes stdout and does not check $? sees a plausible, well-formed, SHORT inbox and no indication anything was dropped. Ordering is arbitrary (envelope arrival order), so a string payload at index 0 hides ALL nine. This tick it hid 3 of 9, one of which was the bug-escalation itself. Confirmed to have actually happened this tick: the router's first listing of the inbox stopped at [5] for exactly this reason.",
+        "acceptance": "AC-1 Decide and enforce ONE shape at the producer. Preferred: envelope payload is ALWAYS an object; a string-only emitter is wrapped as {text: \"<string>\"} at write time. Enforce in orchStateSchema.ts so a non-conforming envelope is rejected on write, not tolerated on read. AC-2 Migrate/normalize any string payloads already resident in the inbox at deploy time — do not leave a mixed population behind a new schema. AC-3 CONSUMER SIDE, mandatory even if AC-1 lands: every reader of this inbox uses a type-safe accessor (e.g. `(.payload | if type==\"object\" then .title else null end)`). Sweep the known readers: docs/agents/po/flow/triage-signals.md Step 0-SIG, docs/agents/dev-team/flow/drain-signals.md, scripts/agents-flow/drain-signals.js. AC-4 FAIL-LOUD, not fail-short: a consumer that cannot parse an envelope must report that envelope by envelope_id and CONTINUE, never abort the iteration. Assert the count of envelopes processed equals the count present. AC-5 REGRESSION FIXTURE using this tick's real data: a 9-envelope inbox whose index 6 payload is the bare string beginning '[notebook-immutability-guard] WARN:' must yield 9 rows out, not 6. AC-6 NEGATIVE CONTROL: the commit-sweep-guard emitter keeps working end-to-end after the change — its payload is genuinely a human-readable message with no object structure to impose, so the fix must not require it to invent fields.",
+        "po_scope_note": "Found by PO while triaging, not reported by any detector — which is itself the point: nothing in the fleet notices this, because the failure mode is a short-but-plausible answer. NOT a duplicate of FIX-DURABLE-INBOX-INLINES-FULL-SIGNAL-PAYLOAD-INTO-HOT-ORCHSTATE (backlog, developer) — that row is about payload SIZE bloating the hot file; this is about payload TYPE breaking iteration. They touch the same field and should be scoped together if one agent takes both, but neither fix implies the other.",
+        "dedup_checked": "po 2026-08-26T08:2xZ via scripts/po-board-dedup-search.sh on /pending_triage_inbox|payload.*schema|envelope.*payload|triage inbox/ --all-lanes. Nearest live rows examined and ruled out: FIX-DURABLE-INBOX-INLINES-FULL-SIGNAL-PAYLOAD-INTO-HOT-ORCHSTATE (size, not type), TASK-DEVTEAM-IDLE-CHAIN-5-CONSERVATION-DOCS (conservation-check coverage for the inbox, not payload shape), FIX-DEVTEAM-DRAIN-ROUTES-NON-PO-ENVELOPES-TO-PO-STEP0SIG (the `to` field, not `payload`). Cold archives 2026-06/07/08 + backlog-detail scanned by subject: only FIX-DEVTEAM-PAYLOAD-COMMENT-DRIFT (2026-06, dispatcher-wrap payload COMMENTS vs string schema — a doc-drift row, different plane)."
       }
     ],
     "review": [
@@ -23746,15 +23896,16 @@
           "FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED"
         ],
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
-        "updated_at": "2026-08-26T07:32:20Z",
+        "updated_at": "2026-08-26T08:32:02Z",
         "occurrence_count": 7,
         "po_occ_20260824T0104Z": "PO triage 2026-08-24T01:04Z — FIRST measured multi-fire evidence on a SINGLE agent+section pair, which is the discriminator triage-signals.md asks for on this payload class (its documented base rate of interleaved-cycle false positives is high, so one fire proves nothing). docs/agent-memory/notebooks/system-auditor.md retained section '## c114 · 2026-08-23T21:03Z' tripped the AC-2a immutability guard on SIX separate commit cycles: 2026-08-23T21:39:05Z, 22:44:57Z, 22:49:52Z, 23:16:23Z, 23:46:32Z and 2026-08-24T00:46:56Z (signal files docs/signals/processed/commit-sweep-guard-2026-08-23T{213905Z-80820,224457Z-43885,224952Z-55391,231623Z-62797,234632Z-82920}.json and -2026-08-24T004656Z-33857.json). All mode=warn, so none blocked and none is visible in git. NOT dispositioned off a clean `git status` — per the flow doc the index state at fire time is unreconstructable after the fact, so worktree cleanliness is INCONCLUSIVE, never benign. CAUSAL LINK worth carrying into the fix: the same tick delivered context_bloat_breach (310L/15614B vs 200L/12000B caps) and notebook_single_section_overage_breach on the SAME file, i.e. the rewrites are happening under cap pressure — which is exactly the failure mode this row's title names (rewriting a retained section to pay for an over-cap current section instead of trimming its own). Those two cap envelopes are folded onto CLEAN-NOTEBOOK-BYTECAP-3-FILES-UNPRUNABLE-SINGLE-SECTION; this row owns the rewrite mechanism.",
-        "updated_by": "po (triage-20260826T0707Z)",
+        "updated_by": "po (triage-20260826T0821Z)",
         "status_note": "[po/triage 2026-08-26T02:28Z] FOLD +1 occurrence (6->7), envelope 543b9115ee07 (commit-sweep-guard bug-escalation, [notebook-immutability-guard] WARN). Actor: bctc-analyst, docs/agent-memory/notebooks/bctc-analyst.md, retained section '## c184 - 2026-08-25T21:07:00Z' rewritten in place while '## c185' was added. MECHANISM-TRUE-POSITIVE by construction - the guard compares HEAD-vs-staged on a retained section, so the signal existing IS the proof; NOT dispositioned off git show --stat. Attribution note: the sweep fired on a ROUTER commit, but the router only committed on-disk state it did not author. NEW INFORMATION THAT NARROWS THIS ROW'S ROOT CAUSE - cap pressure is NOT a necessary precondition. This row's title blames 'rewrites retained prior sections TO PAY FOR an over-cap current section'. Measured here: the file is 8715B / 24L against a 12000B byte-cap and a 200L line-cap - comfortably UNDER both, before and after. So the compose step rewrote a retained section with no cap debt to pay. Diff of c184 old-vs-new is 2 edits totalling ~20 bytes: stripping '**' bold markers around 'held by THIS session', and adding ', not live market' after 'SEED DATA disclaimer'. Zero data loss, purely cosmetic - but that is exactly what makes it diagnostic: an over-cap-pressure theory cannot explain a 20-byte cosmetic edit on an under-cap file. The compose step appears to re-render retained sections from a working copy rather than passing them through byte-identically, independent of cap state. The whole-section drops in the same write (c183, c182 removed) were AUTHORIZED under AC-2a and are not part of this finding. mode=warn, non-blocking, no live block. 2nd distinct actor for this class (system-auditor 2026-08-23T23:46Z was the 1st).",
         "owner": "developer",
         "next_agent": "developer",
         "dispatch_lane": "developer",
-        "po_shapefix_20260826T0729Z": "TERMINAL-SHAPE REPAIR + BLOCKER CLEARED, po 2026-08-26T07:29Z (triage-20260826T0707Z). No occurrence bump — see the discriminator below. (a) This P0 has sat in review[] for 28 days with owner, next_agent AND dispatch_lane all ABSENT (not null-valued — the keys did not exist), so no picker could resolve a target: the Review-Lane QA-Drain PRIMARY selector wants next_agent==qa, and the SECONDARY resolver would have defaulted it to `po`, round-tripping it back to triage forever. Now explicitly developer. (b) blocked_by=[FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED] is SATISFIED — that row is in done_verified[] with status DONE_VERIFIED. The blocker is stale, not live; this row is dispatchable. (c) DISCRIMINATOR — envelope 406eee29 ([notebook-immutability-guard] WARN on docs/agent-memory/notebooks/unified-agent.md, section '## 2026-08-25T07:24Z — chef-intraday convergence scan (PUBLISHED)') is NOT an occurrence of this row and was deliberately NOT folded here. This row's mechanism is the compose step REWRITING retained content (cosmetic re-render / paying cap debt) — a loss-risk mechanism. The unified-agent case is the opposite: byte-for-byte APPEND-ONLY growth of a retained section (2375B -> 3261B -> 3657B across commits e3f16b6c6 / ce78ac26c / 8bf872681 / 436b2e48a; every diff is pure addition, zero deletions, zero data loss). It was folded into FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH instead, which owns the heading-level contract. Bumping occurrence_count here would have contaminated this row's evidence base with a different defect."
+        "po_shapefix_20260826T0729Z": "TERMINAL-SHAPE REPAIR + BLOCKER CLEARED, po 2026-08-26T07:29Z (triage-20260826T0707Z). No occurrence bump — see the discriminator below. (a) This P0 has sat in review[] for 28 days with owner, next_agent AND dispatch_lane all ABSENT (not null-valued — the keys did not exist), so no picker could resolve a target: the Review-Lane QA-Drain PRIMARY selector wants next_agent==qa, and the SECONDARY resolver would have defaulted it to `po`, round-tripping it back to triage forever. Now explicitly developer. (b) blocked_by=[FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED] is SATISFIED — that row is in done_verified[] with status DONE_VERIFIED. The blocker is stale, not live; this row is dispatchable. (c) DISCRIMINATOR — envelope 406eee29 ([notebook-immutability-guard] WARN on docs/agent-memory/notebooks/unified-agent.md, section '## 2026-08-25T07:24Z — chef-intraday convergence scan (PUBLISHED)') is NOT an occurrence of this row and was deliberately NOT folded here. This row's mechanism is the compose step REWRITING retained content (cosmetic re-render / paying cap debt) — a loss-risk mechanism. The unified-agent case is the opposite: byte-for-byte APPEND-ONLY growth of a retained section (2375B -> 3261B -> 3657B across commits e3f16b6c6 / ce78ac26c / 8bf872681 / 436b2e48a; every diff is pure addition, zero deletions, zero data loss). It was folded into FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH instead, which owns the heading-level contract. Bumping occurrence_count here would have contaminated this row's evidence base with a different defect.",
+        "po_fold_20260826T0821Z": "FOLD of inbox envelope 4cbba1c9dc41 (commit-sweep-guard->po, bug-escalation, high, 08:09:32Z) — [notebook-immutability-guard] WARN on docs/agent-memory/notebooks/alert-commander.md, retained section '## c284 . 2026-08-26T07:53:49Z (slot=alert-commander-market, tick=07:51)'. THIS IS THE FIRST OCCURRENCE OF THIS CLASS THAT IS REPRODUCIBLE AFTER THE FACT. Every prior triage of a [notebook-immutability-guard] fire was recorded INCONCLUSIVE because the guard compares INDEX vs HEAD and the index state is unreconstructable once the agent has committed (see triage-20260805T0837Z-po.md, triage-20260812T1700Z-po.md). Here the mutation survived INTO a commit, so it is visible as a plain HEAD-to-HEAD diff and needs no index reconstruction: `git show ad48ac043 -- docs/agent-memory/notebooks/alert-commander.md` (the c285 write) deletes the phrase ' and newsSentiment not <-0.5' from the Position-danger bullet of the ALREADY-COMMITTED c284 section (committed one cycle earlier as a22866d88). The same diff also drops the whole c282 section, which IS authorized under AC-2a — the violation is exclusively the in-place edit of retained c284. MECHANISM SIGNAL FOR THE FIX: post-edit, c284's Position-danger line is byte-identical to c285's, i.e. the compose step appears to have REGENERATED the retained section from the current cycle's template rather than carrying its bytes forward — that is a stronger and more testable hypothesis than 'trimmed to pay for cap pressure', and it predicts silent convergence of retained sections toward the newest one. A regression test can now pin a real fixture (a22866d88 -> ad48ac043) instead of a synthetic one. Threshold note: triage-signals.md's do-not-mint-per-occurrence rule stands (base rate of interleaved-cycle false positives is high) — this is a fold, not a mint, but it is a CONFIRMED true positive, not a volume tick."
       },
       {
         "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
@@ -23970,44 +24121,6 @@
             "observed_at": "2026-08-23T20:33:35Z"
           }
         }
-      },
-      {
-        "id": "UC-SDF-P2",
-        "type": "SPIKE",
-        "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "L",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P2",
-        "note": "SCOPE=verifier Rescope note — PLAN-ONLY (anomaly->BACKLOG invariant). INVESTIGATE (mcp-server): why emit_pressure_state returns success + stale_warning:false while latest.json is 6d old (fresh HH:MM snapshots exist). HARDEN telemetry.md Step6.0 (~10L): compare mtimes, gate on calendar_status!=closed, write cowork-error-boundary signal when latest.json did not advance. EXCLUDE the already-answered 'Step 4.7 stopped 07-07' leg (gateway-blind zero-slot ticks; queued under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK). [CORROBORATION 2026-07-15 (signal cow-20260715T195340 deduped->RESOLVED here): promotion now 8d stale (since 07-07); last_regime/volatility pinned \"unknown\" -> adaptive cadence running dark. Same defect, added evidence — no new row minted.]",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "plan_only": true,
-        "mode": "spike",
-        "timebox": 120,
-        "next_agent": "architect",
-        "related": [
-          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
-        ],
-        "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
-        "folded_signal": "cow-20260716T005400",
-        "updated_at": "2026-08-26T08:15:53Z",
-        "updated_by": "ba (UC-SDF-P2 plan-only spec)",
-        "po_corroboration_20260725T0948": "THIRD independent detection — folded, no new row minted (signal cwk-20260725T092802-7c2e, cowork-team). Priority P2 -> P1: the DIAGNOSE half of this row is now COMPLETE, it is a pure FIX with a fully source-verified root cause, and the dead-adaptive-layer blast radius is confirmed downstream. Detection history: (1) 2026-07-15 signal cow-20260715T195340 deduped here; (2) 2026-07-21 memory feedback_cycle_snapshot_promote_conservative_default_refuses_every_input; (3) 2026-07-25 this signal. VERIFIED AT SOURCE by PO this tick, not relayed: emitPressureStateTool.ts L359-362 derives tickHHMM from the NOMINAL tick_id (always :00/:15/:30/:45); L232 looks up docs/data/cycle-snapshot-<that HH:MM>.json; but docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 names the file by FIRE time (FILE_TICK=$(date -u +%H:%M)). All six on-disk snapshots sit at nominal+8..11min (00:10, 08:10, 09:08, 20:09, 20:26, 21:09) — none on a nominal boundary, so existsSync fails every tick and L233 returns {promoted:false, stale:false}. Because stale is ALSO false, stale_warning never fires: the failure is completely silent, which is why it survived 18 days (cycle-snapshot-latest.json content tick '19:45', created_at 2026-07-07T19:47:26Z). This is a producer/consumer filename-contract mismatch that NEVER worked — not a race and not a regression of FU-TICK-SNAPSHOT-EMIT-DARK's bash-fence defect. SECOND independent failure mode still applies and must be fixed too (from the 07-21 memory): even on a name match, the on-grid file is the dispatcher's OWN Step 4.7 tick-snapshot, which carries none of fetchedAt/created_at/macro_snapshot.fetchedAt, so the freshness gate treats it as Infinity-stale and refuses. Fixing only the filename leaves the promoter still refusing. DOWNSTREAM CONFIRMED DEAD: docs/data/pressure-state.json currently has regime_status:null, volatility_level:null, cycle_snapshot_promoted:null. FIX DIRECTION IS AN OPEN DESIGN CALL, deliberately NOT decided by PO (rename in Step 4.7 vs glob/most-recent lookup) — route to architect with the sequencing guard below. ABSORBED FROM SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (now CANCELLED/superseded, its question answered by the above): SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min -> 240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md the coupling is 3-way + a 4th unit, and must land as ONE change set: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the vnTradingCalendar oracle (isVnTradingDay) — see UC-CDC-P1, which now carries live weekend-suppression impact evidence; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Couples with UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID.",
-        "po_corroboration_20260725": "THIRD CORROBORATION + MECHANISM NOW PROVEN AT SOURCE (PO triage 2026-07-25T12:07Z tick; folded from signal cowork-snapshot-promote-hhmm-mismatch-20260725T121421Z, cowork-team, priority=high). NO NEW ROW MINTED -- this row title already names the tickHHMM-vs-FILE_TICK filename divergence. What is NEW is that the divergence is no longer a hypothesis: (1) WRITER SIDE -- apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:~347 floors the current minute to a 15-min boundary (Math.floor(getUTCMinutes()/15)*15) when args.tick_id is absent, then :~358 extracts tickHHMM by regex /T(\\d{2}:\\d{2}):/ off that NOMINAL tick_id, and passes it to promoteCycleSnapshotFn as the filename key. So the lookup key is ALWAYS one of :00 :15 :30 :45. (2) FILE SIDE -- tick-snapshot.md:40 names the file from the ACTUAL fire minute via date -u +%H:%M. (3) DECISIVE EVIDENCE -- ls of docs/data/ this tick returns cycle-snapshot-12:10.json, 09:08, 08:10, 00:10, 21:09, 20:26, 20:09. NOT ONE of the seven sits on a 15-min boundary. The lookup can therefore never hit, and the freshness gate downstream never even receives a candidate to refuse. (4) cycle-snapshot-latest.json mtime is 2026-07-07 21:47 -- now 18 days frozen, up from the 8d recorded in the 07-15 corroboration; the defect is monotone. IMPORTANT ORDERING CORRECTION for whoever scopes this: the filename miss is FIRST-ORDER and strictly UPSTREAM of the freshness-gate refusal described in feedback_cycle_snapshot_promote_conservative_default_refuses_every_input. Do not fix the gate first and call it done -- with no candidate file found, the gate is not the binding constraint. Likewise UC-CDC-P1 REQUIRED clause (decouple stale_warning from cycle-snapshot promotion refusal) treats a SYMPTOM of this row cause; UC-CDC-P1 and this row must be sequenced with THIS one first or UC-CDC-P1 will decouple a signal that was never being produced. Downstream blast radius restated with the current numbers: last_regime and last_volatility_level stay pinned unknown -> volatility_tier pinned low -> every high-volatility row of cadence-policy.json is unreachable dead code. This is the concrete mechanism behind the known 2-of-3-adaptive-inputs-dead finding (UC-CDC-P1 FAILED FIX). Carry-over from po notebook 2026-07-25T12:26Z still stands and is NOT superseded: this row has a SECOND failure mode beyond the filename (the on-grid file lacks fetchedAt/created_at) -- fixing only the name leaves it dark.",
-        "promoted_at": "2026-08-23T16:55:26Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect",
-        "ba_spec_ref": "docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md",
-        "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec.",
-        "secondary_claimed_at": "2026-08-26T08:15:51Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "architect"
       },
       {
         "id": "FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ",
@@ -24450,8 +24563,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T07:29:40Z",
-    "last_triaged_by": "po (triage-20260826T0707Z)",
+    "last_triaged_at": "2026-08-26T08:28:20Z",
+    "last_triaged_by": "po (triage-20260826T0821Z)",
     "in_progress": [
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -24516,8 +24629,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-26T07:33:06Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-08-26T08:28:20Z",
+  "_updated_by": "po (triage-20260826T0821Z)",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
@@ -24539,453 +24652,9 @@
         "last_served_tick": "2026-08-26T03:41:18Z"
       }
     },
-    "_updated_at": "2026-08-26T08:13:57Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "31000d163852f94da40ccf409affef4ba1c49ed771a9d734f8b409098809c58c",
-        "source": "file",
-        "from": "dev-team",
-        "to": "po",
-        "type": "tooling_defect",
-        "priority": "HIGH",
-        "payload": {
-          "title": "not-before deferral gate is honored by 1 of 4 pickers — ILC/RLC/SECONDARY dispatch time-gated rows anyway",
-          "evidence": {
-            "gate_keys": [
-              "qa_not_before",
-              "next_recheck_not_before",
-              "qa_new_window_earliest_d1_close"
-            ],
-            "predicate": "scripts/lib/devteam-eligibility.jq :684 gate_not_before_keys / :694 is_gated_not_before($now)",
-            "call_counts": {
-              "scripts/devteam-review-claim-qa-drain.jq": 2,
-              "scripts/devteam-backlog-claim-incident-lane-consumer.jq": 0,
-              "scripts/devteam-backlog-claim-ready-lane-consumer.jq": 0,
-              "scripts/devteam-review-claim-secondary-drain.jq": 0
-            },
-            "note": "All four import devteam-eligibility.jq, so the helper is IN SCOPE for all of them; three simply never invoke it. Importing the lib is not evidence the gate is enforced."
-          },
-          "impact": "A row deliberately time-gated by its author is invisible to only ONE lane. ILC, RLC and SECONDARY-drain will pick and dispatch it immediately. Stamping next_recheck_not_before therefore buys DECORATIVE protection on 3 of 4 dispatch paths — a false sense of deferral.",
-          "live_instance": "FIX-MARKETDB-20260826-RESTORE-DROPPED-12205-FF5M-AND-54-EVIDENCE-ROWS-STILL-RECOVERABLE sits P0/READY/next_agent=ops at ready[] head with NO gate field. It is deliberately deferred to 08:00Z (market close; peer db-data-integrity cron sweeps the same recovering DB every 30min). Router held it this tick with a task-lock busy-guard (ttl 2400s) because a gate field would NOT have stopped ILC.",
-          "recommendation": "Either (a) make ILC/RLC/SECONDARY call is_gated_not_before($now) like qa-drain does, or (b) document that task-locks are the ONLY fleet-honored deferral mechanism and stop advertising the gate keys as picker-wide. Do NOT leave both half-true.",
-          "found_by": "router dev-team tick 2026-08-26T07:07Z, grep-verified reader counts before relying on the gate"
-        },
-        "createdAt": "2026-08-26T07:19:50Z",
-        "drained_at": "2026-08-26T07:50:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "16c8571f771e9ccd76fcadec9d59aeef4d41367d597442fd0cbb303810009336",
-        "source": "file",
-        "from": "dev-pdf-extractor",
-        "to": "po",
-        "type": "task_proposal",
-        "priority": "P3",
-        "payload": {
-          "title": "mcp-server bctcExtractReconcileJob re-fires a 20-request batch every 30min with no pacing against pdf-extractor's single extraction slot — AC-3/AC-4 companions of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
-          "origin_row": "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
-          "why_deferred": "Fix lives in apps/mcp-server/ — outside apps/pdf-extractor/ (dev-pdf-extractor's zone_restricted boundary). Cannot be implemented by this agent.",
-          "evidence": {
-            "ac3_answer": "threading.Semaphore(1) in PekEngineAdapter was DELIBERATELY chosen (REQ-PEK-9d/AC-PEK-4d, docs/architecture-briefs/2026-05-26-pek-integrate-design.md §2.x: 'prevents two concurrent model instances from doubling RAM' against the Docker --memory 2.5g cap; measured +845.4 MiB RSS growth per single extraction per pek_engine_adapter.py's own FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM comment). It was never a default value.",
-            "capacity_mismatch": "43 POST /pek-extract requests arrived in the 01Z hour on 2026-08-26 against 1 server-side slot. pek_engine_adapter.py's own comment names the caller: bctcExtractReconcileJob.ts (mcp-server) re-fires its whole still-pek_triggered batch (DEFAULT_BATCH_SIZE=20) every 30-min tick with no pacing.",
-            "which_side_should_change": "The CALLER, not the server. Raising server concurrency risks the container's OOM-kill threshold (see ac3_answer). Raising PEK_SEMAPHORE_WAIT_SECONDS was explicitly ruled out as a non-fix by PO on the origin row (po_ruling_20260826T0650Z)."
-          },
-          "recommendation": "File a P3 row for dev-mcp-server: give bctcExtractReconcileJob.ts either (a) a client-side market-hours gate (it currently burns pointless round-trips into the 02:00-07:59 UTC block window the guard already refuses), or (b) honor the detail.retry_after field the 503 response already carries, plus add inter-request/inter-batch pacing so a 20-request re-fire does not queue 19 requests behind pdf-extractor's single slot.",
-          "found_by": "dev-pdf-extractor, while closing AC-3/AC-4 of FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S (session 036ceaf1-bf34-46cd-92e4-8c6b213ff4bb)"
-        },
-        "createdAt": "2026-08-26T07:27:21Z",
-        "drained_at": "2026-08-26T07:50:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "a137cc211b85a96ff4a6521244ab7e81a0d3228dcc6a56db6a24f8ea115224af",
-        "source": "file",
-        "from": "dev-team",
-        "to": "po",
-        "type": "tooling_defect",
-        "priority": "HIGH",
-        "payload": {
-          "title": "task_board.qa[] has NO picker — qa dispatch is coupled to the review->qa MOVE, so any row resident in qa[] is unreachable by every dispatch path",
-          "evidence": {
-            "drain_source_lanes": "scripts/devteam-review-claim-qa-drain.jq :41 — 'candidate lanes: .task_board.review[] UNION .task_board.done[]'. qa[] appears only as the MUTATION TARGET (:215 .task_board.qa = ... + [batch]), never as a selection source.",
-            "picker_scan": "grep -l 'task_board.qa' over scripts/devteam-*.jq + scripts/lib/devteam-eligibility.jq matches only devteam-review-claim-qa-drain.jq (target) and devteam-qadrain-skip-revert.jq (revert path). No selector reads qa[] for dispatch.",
-            "dispatch_coupling": "The caller derives $picked_batch by re-reading .task_board.qa[] for rows carrying THIS invocation's claimed_at/claimed_by stamp (main.md :966-968 and :1291-1293). Dispatch therefore fires only for rows the drain itself just moved — never for rows already sitting there.",
-            "stranded_rows_observed": [
-              {
-                "id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
-                "priority": "P0",
-                "claimed_at": "2026-08-14T08:32:49Z",
-                "age_days": 12,
-                "claimed_by": "dev-team (review-lane qa-drain)",
-                "note": "Drained CORRECTLY through the intended path. Still stranded 12 days. This is the load-bearing evidence: the defect is not about hand-placed rows, it is that nothing re-selects qa[] once the moving tick ends."
-              },
-              {
-                "id": "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
-                "priority": "P1",
-                "arrived": "2026-08-26T07:32Z",
-                "claimed_by_before_router_stamp": null,
-                "note": "Moved ready[]->qa[] directly by dev-pdf-extractor on return, bypassing the drain entirely, so it never received a claimed_by stamp and no qa was ever dispatched."
-              }
-            ],
-            "cap_is_not_the_bug": "QA_CAP=10 (main.md :953 and :1279), NOT the 'qa[] < 1' asserted by devteam-review-claim-qa-drain.jq :123 — that comment is stale since the 08-23 retune. With qa[]=2 the drain had headroom 8, so the review lane was NOT dammed. Do not re-file this as a cap-saturation issue."
-          },
-          "impact": "Any row that reaches qa[] without being moved there by the drain in that same tick is permanently unowned. A row the drain DID move is also unowned from the next tick onward if its qa agent never completes the move out — which is what happened to a P0 for 12 days. qa[] is currently a terminal parking lot, not a work lane.",
-          "recommendation": "Add a qa[]-resident re-dispatch path: select rows in qa[] with status=QA and next_agent=qa whose claimed_at is older than one tick and for which no live task:<id> lock is held, then dispatch qa for them. Note this is the SAME shape as the not-before finding filed at 07:19:50Z — a guarantee advertised board-wide but implemented on one path only. Verify by per-file selector count against qa[], NOT by grepping for the string 'task_board.qa' (both the target write and the revert script match it and would score this GREEN today).",
-          "router_action_taken": "Hand-dispatched qa for BOTH rows at 2026-08-26T07:42:56Z under task: locks (ttl 3600) after confirming no live lock existed on either. Stamped the PDFX row's claimed_by to mirror the drain's idiom. This unblocks the two rows; it does NOT fix the class defect.",
-          "found_by": "router dev-team tick 2026-08-26T07:07Z post-return verification — grepped the qa[] READER before assuming the next tick would pick the row up"
-        },
-        "createdAt": "2026-08-26T07:42:56Z",
-        "drained_at": "2026-08-26T07:50:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "a6bdd3bfa34e8fdcc12ff85e0e385de9f380dddc3e0241e4c2f8502fca55fdad",
-        "source": "file",
-        "from": "dev-team",
-        "to": "po",
-        "type": "tooling_defect",
-        "priority": "HIGH",
-        "payload": {
-          "title": "status=BLOCKED is being used as a CLOCK-based deferral, but nothing ever releases it — the 17:11Z gate on the PaddleOCR critical path has no actuator",
-          "not_a_complaint_about_the_gate": "PO's freeze is DELIBERATE, documented and correct. Each row carries a gate_note saying so verbatim: 'status=BLOCKED is the market-hours gate, NOT a dependency - blocked_by and depends_on are both empty by design. next_recheck_not_before is the real condition. BLOCKED is used because next_recheck_not_before is currently honoured only by the qa-drain consumer.' The engineering call (do not run the extractor while the AC-7 cgroup-memory series is in flight) is sound. This signal is ONLY about the missing release path.",
-          "evidence": {
-            "actuator_scan": "Files mentioning BOTH 'BLOCKED' and 'not_before' across scripts/: exactly 4 — devteam-review-claim-qa-drain.jq (gate reader, sources review[]/done[]), lib/devteam-eligibility.jq (the predicate itself), test-devteam-donelane-drain.sh (a test), and po-triage-20260826T0536Z-blocked-freeze-and-langvi-ruling.jq (PO's one-shot transform that SET the freeze). None of them scans for BLOCKED rows whose clock has passed and returns them to a live status.",
-            "why_the_one_gate_reader_cannot_help": "The four frozen rows sit in task_board.backlog[]. The only picker that honours not-before keys sources review[] UNION done[]. It can never see them. Separately, BLOCKED is excluded from every positive status allowlist, so no backlog picker will touch them either.",
-            "frozen_rows": [
-              {
-                "id": "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE",
-                "priority": "P1",
-                "next_recheck_not_before": "2026-08-26T17:11:00Z",
-                "depends_on": [
-                  "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S"
-                ]
-              },
-              {
-                "id": "DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH",
-                "priority": "P1",
-                "next_recheck_not_before": "2026-08-26T17:11:00Z",
-                "depends_on": [
-                  "MEASURE-PDFX-BCTC-QUALITY-TESSERACT-VIE-PRODUCTION-BASELINE"
-                ]
-              },
-              {
-                "id": "FIX-PDFOCR-ORIENTATION-CORPUS-79-FILES-312-PAGES-SWEEP-REVERTED-BY-DB-RESTORE",
-                "priority": "P1",
-                "next_recheck_not_before": "2026-08-26T17:11:00Z",
-                "depends_on": null
-              },
-              {
-                "id": "FIX-BCTC-CTG-BALANCE-SHEET-REFINE",
-                "priority": "high",
-                "next_recheck_not_before": "2026-08-26T17:11:00Z",
-                "depends_on": [
-                  "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD"
-                ]
-              }
-            ],
-            "gate_is_well_founded": "17:11:30Z = AC-7 sampler first sample 05:11:30Z + 12h. NOT container start (00:33:39Z) — do not recompute it from the container. Sampler healthy at 33 rows, last sample 07:42:32Z, container restarts=0.",
-            "board_wide_population_NOT_verified": "49 rows board-wide carry status=BLOCKED; only 11 carry any blocked_by. The other 38 were NOT individually inspected — I read only the 4-row batch stamped updated_at=2026-08-26T06:51:41Z. Do NOT treat '38 rows frozen with no blocker' as 38 defects; several may encode a real gate in prose exactly as these four do. Someone must actually read them before any sweep. A bulk unfreeze would be the prose-blind auto-claim failure mode."
-          },
-          "impact": "The user's standing goal — replace tesseract OCR with Vietnamese PaddleOCR to improve BCTC extraction quality — routes entirely through MEASURE-PDFX-... -> DECIDE-PDFX-.... Both are frozen behind a clock with no reader. Absent manual intervention the goal stalls indefinitely, and the stall is SILENT: the rows look deliberately managed, not stuck.",
-          "recommendation": "Give the clock an actuator. Either (a) add a backlog-side sweep that returns BLOCKED rows to READY once next_recheck_not_before has passed AND depends_on is satisfied, or (b) stop using BLOCKED for clock deferrals and use a task-lock, which is the only fleet-honored deferral mechanism today. Note this is the THIRD finding of the same shape filed in this tick alone (not-before honored by 1 of 4 pickers, 07:19:50Z; qa[] has no picker, 07:42:56Z; this one) — a guarantee advertised board-wide with zero or one implementing reader. That recurrence is itself worth a root-cause look.",
-          "router_action_taken": "Armed one-shot session cron 00545d31 for 2026-08-26T17:13Z (local 19:13) to verify the AC-7 window actually closed and then spawn po to release the freeze. NOTE THE WEAKNESS: session crons are in-memory and die with this CLI session, so this actuator does not survive a restart. It is a stopgap, not the fix.",
-          "found_by": "router dev-team tick 2026-08-26T07:07Z, tracing the standing goal's dependency chain while qa ran"
-        },
-        "createdAt": "2026-08-26T07:48:09Z",
-        "drained_at": "2026-08-26T07:50:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d126a50afe536008a3edbcdce9d9da96d890082dd9532b9187166d32995c9ed3",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T07:22:29Z",
-          "matched_slots": [
-            "chef-intraday",
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "chef-intraday",
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/unified-agent/flow/chef.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "chef-intraday": "cadence",
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "chef-intraday": "60",
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T07:21:36Z",
-          "last_fired_slots": [
-            "chef-intraday",
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "07:15",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 32,
-          "note": [
-            "Step 4.7 FILE_TICK=07:20 overwrote prior-day decoy cycle-snapshot-07:20.json (created_at 2026-08-25T07:20:55Z); count 40->40 net zero. SECOND consecutive prospective confirmation of the same-key overwrite death mechanism (07:05 last tick, 07:20 this tick). 2 decoys remain: 07:34, 07:49.",
-            "Step 0a: NEW=0, nothing to drain. The 2 auditor rows held at NEW last tick (sys-20260826T065952-3c3e / sys-20260826T070016-7c23) are now READ — consumed by a peer PO directly off the queue. 2nd confirmation that holding to=po rows at NEW is correct and the dev-team drain path is not required for delivery.",
-            "_fanout SSOT is docs/data/cadence-policy.json ._fanout, NOT cowork-schedule.json (jq ._fanout on cowork-schedule.json returns null). Correcting a dispatcher-side shorthand; values unchanged: default 4 / degraded 2 / floor 1500 / factor 2.",
-            "Step 5.1 locale-comma defect 21st confirmation: spec awk -F, parses host load as 7, true value 7,75. Non-binding at threshold 24 (12 cores x 2).",
-            "cycle_snapshot_promoted:false 56th consecutive; cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z.",
-            "calendar_status=open 49th+ consecutive (architect-owned computation defect).",
-            "regime_status / volatility_level keys ABSENT from cycle-snapshot-latest.json 16th verification; only live path is macro_snapshot.data.signals.carry.regime (=UNKNOWN in the stale latest). Step 6.0 last_regime/last_volatility_level structurally pinned to unknown.",
-            "signal_backlog 32 == independent file recount 32 (16th match).",
-            "2 slots this tick, both guaranteed=false; per-slot scheduled_utc_time differs (chef 07:13:00Z, alert-commander 07:15:00Z) — both propagated verbatim into ENTRY_PROMPT."
-          ]
-        },
-        "createdAt": "2026-08-26T07:22:29Z",
-        "drained_at": "2026-08-26T07:50:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e1a31b5db3fff7b6cb53401befa5b7b2f397baf67257ff546ed5e8e0b645bf2f",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T07:36:40Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T07:35:48Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "07:30",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 33,
-          "note": [
-            "Step 4.7 FILE_TICK=07:34 overwrote the 2026-08-25T07:34Z decoy (16659B -> 15958B). THIRD consecutive prospectively-predicted same-key overwrite; mechanism confirmed. Next decoy due: 07:49.",
-            "Snapshot count reconciled: 25 today + 15 of 2026-08-25 vintage + cycle-snapshot-latest = 41 via the *.json glob. A prior tick reported 40 by counting dated files only — bookkeeping inconsistency, not a missing or extra artifact.",
-            "2026-08-25 residue is 15 files (07:49 .. 21:05), not the 3 near-term ones previously tracked. Each dies by EITHER the 24h prune OR a same-key overwrite, whichever lands first.",
-            "Step 5.1 locale-comma: true 1-min load 2,86; spec awk -F comma parse yields 2. 22nd confirmation. Non-binding at threshold 24 (12 cores x factor 2). Defect is in the spec, not the host.",
-            "signal_backlog 33 == independent recount of docs/signals/*.json excluding cowork-team-* (17th consecutive match).",
-            "cycle_snapshot_promoted:false — 57th consecutive. cycle-snapshot-latest.json still tick=00:00 / 2026-08-23T00:07:50Z. Do NOT remedy by rounding the producer filename.",
-            "calendar_status=open — 50th+ consecutive; architect-owned computation defect, unchanged.",
-            "PRIOR-TICK FINDING (07:15Z chef-intraday): unified-agent wrote its synthesis JSON to docs/agents/unified-agent/output/ — a new untracked dir. chef-dish.md:890 mandates docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json; all 5 siblings incl. yesterday same-slot are there. FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON (backlog P1 agent-father) owns the own_paths half, but its fix adds docs/data/unified-agent-synthesis-*.json and would NOT have caught this file. Recorded on that row; no new row minted.",
-            "PRIOR-TICK FINDING (07:15Z chef-intraday): notebook write left uncommitted despite chef-dish.md:1095-1096 carrying it in own_paths; agent return narrated Notebook-updated with no commit mentioned. 2nd orphaned chef notebook write today (436b2e48a cleaned the 06:13Z one ~1h earlier). Committed as 0621e246d under commit-mutex; misplaced JSON deliberately left untracked to avoid ratifying the path."
-          ]
-        },
-        "createdAt": "2026-08-26T07:36:40Z",
-        "drained_at": "2026-08-26T07:50:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4cbba1c9dc41aa13e3c8674a2b89dee45b854482f842212275a9ad298b00126f",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/alert-commander.md — retained section '## c284 · 2026-08-26T07:53:49Z (slot=alert-commander-market, tick=07:51)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-26T08:09:32Z",
-        "drained_at": "2026-08-26T08:13:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1962946095a42a4cfd4c52d25e37e4081ccb9781d29745769c39d1ded38ccb91",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T07:52:00Z",
-          "matched_slots": [
-            "alert-commander-market"
-          ],
-          "won_slots": [
-            "alert-commander-market"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "alert-commander-market": "cron"
-          },
-          "cadence_minutes": {
-            "alert-commander-market": null
-          },
-          "last_fired_timestamp": "2026-08-26T07:51:07Z",
-          "last_fired_slots": [
-            "alert-commander-market"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "07:45",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 31,
-          "note": [
-            "DECOY 4th consecutive prospective confirmation: FILE_TICK=07:49 overwrote the 2026-08-25T07:49:47Z decoy (16668B to 15971B) at 07:49:46Z -- ONE SECOND before that decoy became prune-eligible (-mmin +1440). At the 24h anniversary minute the two death mechanisms converge; the snapshot COUNT discriminates them (overwrite keeps 41, prune would yield 40). Count held at 41, so overwrite won.",
-            "08-25 residue now 14 files (was 15). They begin pruning from roughly 08:0x onward as each crosses its own 24h mark.",
-            "Step 5.1 locale-comma: 23rd confirmation. The ACTUAL spec line (spawn-fanout.md:191) yields 3 from a true 1-min load of 3,18 -- the gsub strips the leading text and takes the pre-comma integer. Latent, non-binding at threshold 24.",
-            "ROUTER SELF-CORRECTION this tick: an ad-hoc awk RECONSTRUCTION of line 191 produced 88, which would have tripped DEGRADED and halved max_parallel. Reading the real line showed gsub makes it 3. A reconstructed probe must never be reported as spec behavior -- read the line.",
-            "signal_backlog 31 matched an independent file recount (18th consecutive match). Dropped 33 to 31 since the prior tick.",
-            "cycle_snapshot_promoted false -- 58th consecutive. cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z.",
-            "calendar_status open -- 51st+ consecutive. Architect-owned computation defect, unchanged.",
-            "cycle-snapshot-latest.json regime_status and volatility_level both ABSENT (17th verification); its own macro carry regime reads UNKNOWN.",
-            "Prior-tick sample 10 recorded on the P0 snapshot row (commit 8a011f1bc): the runtime consumer hit cycle-snapshot-07:34.json when neither nominal 07:30 nor round-5 07:35 existed on disk, so it follows NEITHER written spec. Restate that row as spec-vs-runtime divergence before scoping."
-          ]
-        },
-        "createdAt": "2026-08-26T07:52:00Z",
-        "drained_at": "2026-08-26T08:13:57Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6ec1cc4d0b8e32cec953ab1a78bb8614eb3aa45cd507d262665a1b733798ea8b",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-26T08:06:33Z",
-          "matched_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-market",
-            "alert-commander-critical"
-          ],
-          "won_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-market",
-            "alert-commander-critical"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/news-scout/flow/main.md",
-            "docs/agents/market-watcher/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 3,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "open",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "news-scout-offhours": "cadence",
-            "market-watcher-offhours": "cadence",
-            "alert-commander-market": "cron",
-            "alert-commander-critical": "cron"
-          },
-          "cadence_minutes": {
-            "news-scout-offhours": 30,
-            "market-watcher-offhours": 30,
-            "alert-commander-market": null,
-            "alert-commander-critical": null
-          },
-          "last_fired_timestamp": "2026-08-26T08:05:49Z",
-          "last_fired_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-market",
-            "alert-commander-critical"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "08:00",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 31,
-          "note": [
-            "4-slot fan-out, largest today. max_parallel=4 so ONE batch, no inter-batch wait.",
-            "Step 4b collision (WARNING only, R3 permits): alert-commander-market and alert-commander-critical share BOTH agent and flow_path. Both spawned, distinguished only by the slot= token in the trigger prompt.",
-            "Step 0a: 1 NEW signal row (sys-20260826T080003-2786, from=system-auditor, to=po). HELD at NEW, deliberately NOT marked READ -- PO selects on status==NEW and has no cowork slot, so marking it READ would strand it. Known trap, confirmed twice previously.",
-            "HAZARD, first identified PROSPECTIVELY: docs/data/cycle-snapshot-08:05.json exists but is the 2026-08-25 decoy (mtime and internal created_at both 2026-08-25T08:05:08Z). Step 4.7 prune ran at 08:04:32Z -- 36 SECONDS before that decoy crossed its 24h eligibility -- so it is alive across this exact spawn window. Under the raw-own-clock exact-match consumer behavior established at c281-c284, an agent bootstrapping at 08:05 resolves a REAL path to 24h-old market data, and the <=7min freshness gate is the ONLY guard. Failure signature to watch on return: any agent reporting a snapshot HIT at key 08:05.",
-            "Sample #12 pre-registered BEFORE spawn (correcting the post-hoc scoring that produced the retracted #10 finding): producer wrote key 08:04 at 08:04:32Z for nominal tick 08:00; spawn completed 08:05:49Z; expected consumer keys 08:05 through 08:07. Four agents on one shared consumer code path gives four independent within-tick replicates.",
-            "Snapshot count 41 to 42 -- Step 4.7 wrote a NEW key (08:04, no pre-existing file) and the prune removed nothing.",
-            "Step 5.1 locale-comma: 24th confirmation. Real spec line yields 4 from a true 1-min load of 4,86. Non-binding at threshold 24.",
-            "container_vm_headroom_mb 3099 to 2459 -- largest single-tick drop today, consistent with 4 concurrent agents. Still clear of the 1500 floor, but this is the first tick where one more simultaneous fan-out would bring the DEGRADED branch into play.",
-            "signal_backlog 31 matched an independent file recount (19th consecutive match). cycle_snapshot_promoted false, 59th consecutive. calendar_status open, 52nd+.",
-            "PRIOR-TICK CORRECTION: the newest-file claim recorded on FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK... after sample #10 was WRONG; retracted and replaced in commit 85bd4498b. c281-c284 show the consumer keys on its OWN wall-clock minute, matched exactly, with no nearest-file fallback."
-          ]
-        },
-        "createdAt": "2026-08-26T08:06:33Z",
-        "drained_at": "2026-08-26T08:13:57Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-26T08:28:20Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-25T17:10:00Z",
     "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
     "last_po_triage_consumed": 13,
