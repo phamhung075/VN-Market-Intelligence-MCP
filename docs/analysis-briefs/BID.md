@@ -15,6 +15,7 @@
 2026-07-02 | Q2 earnings consensus strong (9/10) + FED/macro easing context — banking exposure to policy softening | YoY: N/A
 2026-07-15 | NEUTRAL CTG chairman prosecution creates temporary banking sector headwind; broader earnings strength sustained | YoY: Earnings momentum from July 2 preserved
 2026-08-24 | BULLISH: H1 2026 banking earnings strong (9/10), FTSE index upgrade drives multi-billion USD passive inflow to VN banking (8/10). NIM compression offset by market-share gains & FII accumulation. | YoY: +0.41% (37.05k from 36.9k)
+2026-08-26 | NEUTRAL: Siemens Energy divestment news affects utilities/oil_gas/machinery sectors; BID exposure indirect via banking coverage of energy-dependent corporates (7/10 impact). Mixed macro: gold safe-haven +2.6% (risk-off signal), oil down -6.6% (commodity pressure), equity yields competitive at 8.2% vs deposit 5%. Banking breadth weak despite VN-Index rally (divergence flag). | YoY: +0.14% (37.05 stable)
 
 ---
 

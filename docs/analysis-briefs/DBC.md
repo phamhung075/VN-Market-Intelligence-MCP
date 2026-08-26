@@ -14,4 +14,6 @@
 
 2026-08-05 16:00 | Close: 16.750 VND | RSI: 43.5 | Vol: 2396500 (114.0% avg) | YoY: -50.5%
 
+2026-08-25 16:00 | Close: 17.700 VND | RSI: 63.4 | Vol: 8747300 (407.1% avg) | YoY: +15.2% | Status: Overbought (BB 128.3%), MACD bullish, watch for pullback
+
 ## [Unified Agent] Quarterly Syntheses

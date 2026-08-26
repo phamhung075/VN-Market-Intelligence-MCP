@@ -15,3 +15,5 @@
 ## [News Scout] Batch2 Sentiment — 2026-08-25 01:30 UTC
 
 2026-08-25 | **BULLISH** VN-Index breaks 1800 level with foreign fund inflows post-FTSE inclusion. Real estate sector leads recovery. VIC as market leader + largest FTSE weight benefits from passive index flows. Strong foreign accumulation signal amid geopolitical risk-off | YoY: Continued bullish momentum from prior cycles; passive fund flow amplification new positive driver
+
+2026-08-26 | **BULLISH** VIC continues FTSE beneficiary narrative. Real-estate sector +2.04% on day; VIC specifically mentioned in 6 news articles (news_mention MEDIUM 60% confidence). Market-wide divergence (VN-Index +18.56pts but 60% of stocks down) highlights concentration in blue-chip leaders like VIC. Macro backdrop: gold +0.26% (risk-off), yet equities attractive at 8.2% earnings yield vs 5% deposits. Foreign passive inflows from FTSE rebalancing provide structural tailwind. Price action: +4.80% vs prior (214.50→224.80), highest in watchlist. Caution: breadth deterioration amid index rally signals vulnerable sentiment (only 34-40% of stocks participating in rally). | YoY: +4.80% (224.80 from 214.50)
