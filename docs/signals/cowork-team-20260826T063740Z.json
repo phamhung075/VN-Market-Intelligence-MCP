@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T06:37:40Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T06:36:43Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 33,
+    "note": "(1) Snapshot-key sample #6: producer wrote cycle-snapshot-06:35.json for nominal tick 06:30 (5min drift). Consumer half pending this tick return. Producer clause confirmed at source last tick (tick-snapshot.md Step 4.7 fence sets FILE_TICK=$(date -u +%H:%M), raw wall-clock minute). Covered by FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (BACKLOG P0 architect) whose body already carries the third-clock arm and the settled fix shape (newest file inside the <=7min gate); NOTHING RE-FILED. NOTE for that row: its TITLE contradicts its own body — the consumer looks up by its OWN post-spawn wall clock per .claude/skills/step-0-cowork/SKILL.md Step -1 (\"TICK = current UTC time as HH:MM\"), NOT by nominal tick. Body governs; title would mislead an implementer into the already-withdrawn producer-rounding fix. (2) 3 NEW to=po signal rows (rtr-20260826T0625-kinhdichvifieldsunpinned, rtr-20260826T0628-stockpricefixabsentfrombinary, rtr-20260826T0633-fleetdeploydriftsweep) HELD AT NEW, deliberately NOT marked READ — premise re-verified this tick, not assumed: jq [.slots[]|select(.agent==\"po\")]|length on cowork-schedule.json = 0, so Step 0a route-to-slot branch is structurally unreachable for po and mark-READ would be delivery-less (READ is terminal for 24h cold-evict). Delivery is the dev-team/dashboard drain into .dev_team_idle_chain.pending_triage_inbox (currently length 0). Deviation from work-tick.md Step 0a as written, stated per standing convention. (3) DOC/ENVELOPE GAP: pressure-cadence.md Step 4.5d instructs WORK-path readers to read $VERDICT_JSON.supersede_mutex_applied, but cowork-tick-preflight.sh does NOT emit that key (chef_mutex_applied IS emitted). Non-material this tick (1 slot, no supersedes declared) but the documented consumer has no producer — same class as the rows this dispatcher already tracks. (4) RETRACTION of last tick finding (5): the Step 4.6 payload contract is NOT ambiguous. slot-claim.md states payload: JSON.stringify({...}) explicitly — a string. My object-payload failure last tick was a misread of the contract, not a defect in it. (5) mcp-call.sh signature is mcp_call <tool_name> <json_args> with the vn-market downstream implied — passing a leading server arg costs one failed round-trip (\"malformed args_json for tool=vn-market\"). (6) 18th locale-comma confirmation, Step 5.1: spec awk -F\",\" parses host load \"2,07\"->\"1\" (truncates decimals; true 1.99). Threshold 2*12=24, non-binding; latent, unfiled. (7) 53rd consecutive cycle_snapshot_promoted:false; cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z. (8) calendar_status=open 45th+ consecutive (architect-owned). (9) Step 5b used the SPEC DEFAULT (omitted FIRED_AT -> wall clock 06:36:43Z), correcting my own deviation last tick. Script carries a monotonic guard (FIRED_AT > current) so the convention drift recorded last tick can only ever SKIP a write, never move last_fired backwards — bounds that finding. (10) signal_backlog 33 matched independent file recount (13th consecutive match). Step 4.6b performed as documented NO-OP (P3 retired the leader heartbeat) — no heartbeat call this tick, unlike last tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T06:37:40Z"
+}
