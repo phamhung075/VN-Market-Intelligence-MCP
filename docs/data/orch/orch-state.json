@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-26T01:00:15Z",
-    "updated_by": "agent-father",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS",
+    "next_agent": "architect",
+    "next_action": "Design-Router Sweep claim of FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS — spawn architect DIRECTLY (no zone-detect indirection; lane resolved at CLAIM time via effective_next_agent(), never a cached promote-time value). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-26T01:15:05Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17181,32 +17182,6 @@
         ]
       },
       {
-        "id": "FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "created_at": "2026-08-25T16:18:00Z",
-        "created_by": "po (triage-20260825T1612Z)",
-        "updated_at": "2026-08-25T16:20:45Z",
-        "updated_by": "po (triage-20260825T1612Z)",
-        "baseline_pass": true,
-        "dedup_key": "devteam-qadrain:skip_branch_strands_already_lanemoved_row",
-        "source": "signal_queue row rtr-20260825T1545-qadrainskip (from=dev-team, provenance=router-observed, audit_cycle_tag cron:dev-team:2026-08-25T15:37Z)",
-        "title": "Review-Lane QA-Drain SKIP branch STRANDS the row it skips: the claim script has ALREADY moved review[] -> qa[] and committed before the per-row outer_claim runs, and no picker ever re-selects from qa[]",
-        "desc": "VERIFIED AT SOURCE by PO 2026-08-25, both halves read directly. (a) scripts/devteam-review-claim-qa-drain.jq performs the lane move inside the SAME orch-apply write as the claim stamp: it appends the batch to .task_board.qa (line ~205) and rebuilds .task_board.review without those indices (line ~214). That write lands BEFORE the caller's per-row outer task_claim is ever attempted. (b) Both QA-Drain invocation sites in docs/agents/dev-team/flow/main.md then say `if not outer_claim.claimed: log SKIP -- held by peer session; continue`. A skipped row therefore sits in qa[] with status=QA and no qa agent ever dispatched — and no later tick re-picks it, because BOTH QA-Drain sites select from review[], never qa[]. HIT LIVE this tick on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (P0). Same lane-narrower-than-claim-script family as FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED and FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY, and the same generic lesson as feedback_caller_readback_lane_narrower_than_claim_script_silently_kills_lane. SECOND, RELATED FACT that makes the SKIP prose wrong twice over: the holder can be YOURSELF — see FIX-TASKCLAIM-NOT-REENTRANT-SAME-SESSION-STALE-LOCK-BLOCKS-OWN-REDISPATCH, minted the same tick. ROUTED TO ARCHITECT, not straight to an implementer, because the fix is a genuine caller-vs-script design choice spanning a flow doc AND a jq script (defer the lane move until after outer_claim / roll it back on SKIP / make a later tick re-scan qa[] for unclaimed rows), and architect is on the ratified DRS allowlist so this row has a real automated picker.",
-        "ac": [
-          "AC-1 Decide and document the caller-vs-script split: either the claim script stops lane-moving until the caller confirms the outer claim, or the SKIP branch reverses the lane move, or a dedicated re-picker selects qa[] rows with status=QA that carry a claimed_at but no dispatch. Name which and why, in-file.",
-          "AC-2 Implement it at BOTH QA-Drain invocation sites (idle-tick and head-decoupled) — they share a claim script and a budget and must not diverge.",
-          "AC-3 A SKIP no longer leaves any row unreachable: prove on a scratch fixture that a row skipped for peer-collision is picked up on a subsequent tick.",
-          "AC-4 NEGATIVE CONTROL — the normal claim-and-dispatch path is byte-identical in behaviour.",
-          "AC-5 SWEEP THE LIVE BOARD for rows already stranded by this defect: qa[] rows with status=QA carrying a claimed_by='dev-team (review-lane qa-drain)' stamp older than one tick and no subsequent dispatch. At mint time qa[] holds 3 rows, two with claimed_at from 2026-08-14 and 2026-08-23. Report each with a disposition; do not close this row while any remains stranded."
-        ]
-      },
-      {
         "id": "FIX-TASKCLAIM-NOT-REENTRANT-SAME-SESSION-STALE-LOCK-BLOCKS-OWN-REDISPATCH",
         "type": "FIX",
         "status": "BACKLOG",
@@ -22801,35 +22776,6 @@
         "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
       },
       {
-        "status": "READY",
-        "size": "S",
-        "depends": [],
-        "created_at": "2026-08-24T13:16:43Z",
-        "created_by": "po/triage-20260824T1310Z",
-        "updated_at": "2026-08-25T22:30:08Z",
-        "updated_by": "po/triage-20260824T1310Z",
-        "id": "FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS",
-        "type": "FIX",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "architect",
-        "files": [
-          "launchd/com.vn-market.fleet-push.plist"
-        ],
-        "dedup_key": "fleetpush-disarm-not-durable",
-        "title": "The user's explicit fleet-push disarm lives ONLY in the untracked installed plist — the version-controlled repo copy still says RunAtLoad=1/StartInterval=1800 with no Disabled key, so any re-install from source silently re-arms an unattended push of 224 commits",
-        "acceptance": "AC-1 make the disarm durable in the tracked plane, or make re-installation refuse to silently re-arm a job the user disarmed. AC-2 MEASURED 2026-08-24T13:0xZ, and this is the whole finding: `diff <(plutil -p launchd/com.vn-market.fleet-push.plist) <(plutil -p ~/Library/LaunchAgents/com.vn-market.fleet-push.plist)` yields EXACTLY ONE line of difference — `> \"Disabled\" => 1`. Every other key is identical. The user's decision is one untracked key deep. AC-3 do NOT resolve this by committing Disabled=1 into the repo plist without a ruling: that makes the disarm the permanent default for every future install/host, which is a different policy decision than 'disarmed today'. Architect must choose between (a) tracked Disabled=1 plus an explicit re-arm procedure, (b) an install-time guard that refuses to overwrite a locally-disabled label, or (c) moving the arm/disarm decision out of the plist into a checked-in policy file the installer reads. AC-4 whatever ships must be verified by re-reading the INSTALLED plist with plutil -p (it is a BINARY plist; grep reads the Disabled key as absent — this exact false negative was hit live during triage). AC-5 do NOT re-arm fleet-push as part of this work, and do NOT push. origin/main stays ab5087296; PUSH-AUTONOMY-1 is unsatisfied; the user pushes personally.",
-        "evidence": "Found by PO 2026-08-24T13:0xZ while adjudicating the router's ack-ledger question; NOT reported by the router, which stated the disarm as 'plist Disabled=1' without distinguishing the tracked repo copy from the installed copy. 224 commits unpushed (git rev-list --count origin/main..HEAD, live). Both pre-push gates (tsc, size-lint) are now GREEN, so the ONLY thing standing between a re-install and an unattended 224-commit push is that one untracked key.",
-        "po_note": "P0 because it protects an explicit standing user decision and both technical brakes have just been released.",
-        "promoted_at": "2026-08-24T15:46:41Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect",
-        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
-        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)"
-      },
-      {
         "id": "UC-MDH-P2",
         "type": "SPRINT-S",
         "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
@@ -23074,6 +23020,36 @@
         "detail_ref": "docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md",
         "architect_review_note": "2026-08-26T00:56Z architect. Brief: docs/architecture-briefs/2026-08-26-sqlite-marketdb-corruption-6th-recurrence-crossboundary-engine-skew.md. Read-only forensics only (immutable=1 / {readonly:true} against preserved .corrupt-* snapshots + live read-only docker exec probes) — zero writes to market.db or any snapshot. VERDICT: both previously-known mechanisms (04-25 SHM/WAL torn-write; 08-06 Go DSN WAL re-arm) independently re-confirmed EXCLUDED for tonight via header-byte forensics (file-format writer/reader version byte): the 08-26 corrupt file is rollback-journal format (1/1) — the FIRST of the 4 preserved snapshots to be so. 07-19/07-30/08-06 are ALL WAL-format (2/2) sharing ONE scattered multi-tree btreeInitPage()-error-11 signature (SHM torn-write recurring because the DELETE-mode mitigation kept getting silently defeated) — 08-26 is a genuinely NEW, narrower signature instead: 7788 rowid-disorder cells concentrated in Tree 180 (intraday_foreign_flow_5m) + exactly 1 stray Tree-96 pointer + freelist off-by-exactly-1 + 37 orphaned pages = classic non-atomic multi-page-commit fingerprint, not disk-level scatter. NEW FINDING absent from every prior record: host bun (1.3.13 macOS) and container bun (1.3.13 oven/bun:1.3.13-debian) run DIFFERENT embedded SQLite engines (3.43.2 vs 3.51.2) against the SAME bind-mounted file — verified live both directions, twice. Two surviving root-cause candidates (engine-version skew; virtiofs advisory-lock/cache-coherency gap on the ROLLBACK-JOURNAL locking path, not WAL/SHM) are BOTH eliminated by ONE fix, so this is not a blocking ambiguity. RECOMMENDATION (costed, not option-1): do NOT re-migrate to a container-exclusive named volume now — tried once (ffa045e81 04-25), reverted after a VM-rebuild wiped it entirely (5ba622eca 07-15); would also require rewriting all 86 host-invoked script call-sites (52 apps/mcp-server/scripts + 34 scripts/migrations, up from 25 four weeks ago) to docker-exec — same migration cost as the cheaper fix below, for a strictly worse durability tradeoff. INSTEAD: new scripts/run-against-market-db.sh wrapper (mirrors orch-apply.sh SSOT-wrapper convention) that docker-execs every host-invoked market.db script into mcp-servers own container/engine — eliminates both candidates at once, zero mount-type change, zero rewrite of the 86 scripts own code (invocation-only). Also re-flagged STILL-OPEN from the 07-30 brief: backupDatabase() (checkpoint.ts:93) remains unconditional single-generation overwrite with no pre-copy integrity gate — unrelated to root cause but determines next-incident blast radius; not touched this session. Rowid magnitude (62.8M on a ~150K-row table) is a RED HERRING, not evidence of tampering — fully explained by INSERT OR REPLACE churn on a non-AUTOINCREMENT table (verified ~1.51M rowids consumed in the 20h between the clean 04:30Z backup and the corruption). No repair/write action taken this session; forensics only. NEXT: developer implements scripts/run-against-market-db.sh + dev-standards.md CANONICAL wrapper rule + checkpoint.ts backup integrity-gate/multi-generation fix per brief §6.",
         "updated_by": "architect"
+      },
+      {
+        "id": "FIX-DEVTEAM-QADRAIN-SKIP-BRANCH-STRANDS-ALREADY-LANEMOVED-ROW-IN-QA",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "created_at": "2026-08-25T16:18:00Z",
+        "created_by": "po (triage-20260825T1612Z)",
+        "updated_at": "2026-08-26T01:15:04Z",
+        "updated_by": "po (triage-20260825T1612Z)",
+        "baseline_pass": true,
+        "dedup_key": "devteam-qadrain:skip_branch_strands_already_lanemoved_row",
+        "source": "signal_queue row rtr-20260825T1545-qadrainskip (from=dev-team, provenance=router-observed, audit_cycle_tag cron:dev-team:2026-08-25T15:37Z)",
+        "title": "Review-Lane QA-Drain SKIP branch STRANDS the row it skips: the claim script has ALREADY moved review[] -> qa[] and committed before the per-row outer_claim runs, and no picker ever re-selects from qa[]",
+        "desc": "VERIFIED AT SOURCE by PO 2026-08-25, both halves read directly. (a) scripts/devteam-review-claim-qa-drain.jq performs the lane move inside the SAME orch-apply write as the claim stamp: it appends the batch to .task_board.qa (line ~205) and rebuilds .task_board.review without those indices (line ~214). That write lands BEFORE the caller's per-row outer task_claim is ever attempted. (b) Both QA-Drain invocation sites in docs/agents/dev-team/flow/main.md then say `if not outer_claim.claimed: log SKIP -- held by peer session; continue`. A skipped row therefore sits in qa[] with status=QA and no qa agent ever dispatched — and no later tick re-picks it, because BOTH QA-Drain sites select from review[], never qa[]. HIT LIVE this tick on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (P0). Same lane-narrower-than-claim-script family as FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED and FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY, and the same generic lesson as feedback_caller_readback_lane_narrower_than_claim_script_silently_kills_lane. SECOND, RELATED FACT that makes the SKIP prose wrong twice over: the holder can be YOURSELF — see FIX-TASKCLAIM-NOT-REENTRANT-SAME-SESSION-STALE-LOCK-BLOCKS-OWN-REDISPATCH, minted the same tick. ROUTED TO ARCHITECT, not straight to an implementer, because the fix is a genuine caller-vs-script design choice spanning a flow doc AND a jq script (defer the lane move until after outer_claim / roll it back on SKIP / make a later tick re-scan qa[] for unclaimed rows), and architect is on the ratified DRS allowlist so this row has a real automated picker.",
+        "ac": [
+          "AC-1 Decide and document the caller-vs-script split: either the claim script stops lane-moving until the caller confirms the outer claim, or the SKIP branch reverses the lane move, or a dedicated re-picker selects qa[] rows with status=QA that carry a claimed_at but no dispatch. Name which and why, in-file.",
+          "AC-2 Implement it at BOTH QA-Drain invocation sites (idle-tick and head-decoupled) — they share a claim script and a budget and must not diverge.",
+          "AC-3 A SKIP no longer leaves any row unreachable: prove on a scratch fixture that a row skipped for peer-collision is picked up on a subsequent tick.",
+          "AC-4 NEGATIVE CONTROL — the normal claim-and-dispatch path is byte-identical in behaviour.",
+          "AC-5 SWEEP THE LIVE BOARD for rows already stranded by this defect: qa[] rows with status=QA carrying a claimed_by='dev-team (review-lane qa-drain)' stamp older than one tick and no subsequent dispatch. At mint time qa[] holds 3 rows, two with claimed_at from 2026-08-14 and 2026-08-23. Report each with a disposition; do not close this row while any remains stranded."
+        ],
+        "promoted_at": "2026-08-26T01:15:03Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -24161,9 +24137,41 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-25T22:13:39Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-26T01:15:03Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
+    "in_progress": [
+      {
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "depends": [],
+        "created_at": "2026-08-24T13:16:43Z",
+        "created_by": "po/triage-20260824T1310Z",
+        "updated_at": "2026-08-26T01:15:05Z",
+        "updated_by": "po/triage-20260824T1310Z",
+        "id": "FIX-FLEETPUSH-DISARM-EXISTS-ONLY-IN-UNTRACKED-PLIST-REPO-COPY-SILENTLY-REARMS",
+        "type": "FIX",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "architect",
+        "files": [
+          "launchd/com.vn-market.fleet-push.plist"
+        ],
+        "dedup_key": "fleetpush-disarm-not-durable",
+        "title": "The user's explicit fleet-push disarm lives ONLY in the untracked installed plist — the version-controlled repo copy still says RunAtLoad=1/StartInterval=1800 with no Disabled key, so any re-install from source silently re-arms an unattended push of 224 commits",
+        "acceptance": "AC-1 make the disarm durable in the tracked plane, or make re-installation refuse to silently re-arm a job the user disarmed. AC-2 MEASURED 2026-08-24T13:0xZ, and this is the whole finding: `diff <(plutil -p launchd/com.vn-market.fleet-push.plist) <(plutil -p ~/Library/LaunchAgents/com.vn-market.fleet-push.plist)` yields EXACTLY ONE line of difference — `> \"Disabled\" => 1`. Every other key is identical. The user's decision is one untracked key deep. AC-3 do NOT resolve this by committing Disabled=1 into the repo plist without a ruling: that makes the disarm the permanent default for every future install/host, which is a different policy decision than 'disarmed today'. Architect must choose between (a) tracked Disabled=1 plus an explicit re-arm procedure, (b) an install-time guard that refuses to overwrite a locally-disabled label, or (c) moving the arm/disarm decision out of the plist into a checked-in policy file the installer reads. AC-4 whatever ships must be verified by re-reading the INSTALLED plist with plutil -p (it is a BINARY plist; grep reads the Disabled key as absent — this exact false negative was hit live during triage). AC-5 do NOT re-arm fleet-push as part of this work, and do NOT push. origin/main stays ab5087296; PUSH-AUTONOMY-1 is unsatisfied; the user pushes personally.",
+        "evidence": "Found by PO 2026-08-24T13:0xZ while adjudicating the router's ack-ledger question; NOT reported by the router, which stated the disarm as 'plist Disabled=1' without distinguishing the tracked repo copy from the installed copy. 224 commits unpushed (git rev-list --count origin/main..HEAD, live). Both pre-push gates (tsc, size-lint) are now GREEN, so the ONLY thing standing between a re-install and an unattended 224-commit push is that one untracked key.",
+        "po_note": "P0 because it protects an explicit standing user decision and both technical brakes have just been released.",
+        "promoted_at": "2026-08-24T15:46:41Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "dispatch_lane_reresolved_at": "2026-08-25T22:30:07Z",
+        "dispatch_lane_reresolved_by": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (AC-4 live remediation)",
+        "claimed_at": "2026-08-26T01:15:03Z",
+        "claimed_by": "dev-team (design-router sweep)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -24186,7 +24194,7 @@
         "last_served_tick": "2026-08-26T00:47:28Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-25T20:55:58Z"
+        "last_served_tick": "2026-08-26T01:14:13Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-25T21:12:15Z"
@@ -24195,7 +24203,7 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-26T01:12:35Z",
+    "_updated_at": "2026-08-26T01:14:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
