@@ -1,40 +1,5 @@
 # PO Notebook
 
-## 2026-08-26T15:08Z — SECONDARY-Drain sign-off (1 row) + inbox 5→0 (3 folds, 2 DEFER), 1 mint
-
-Journal: `docs/agent-memory/decisions/triage-20260826T1508Z-po.md`. **DONE_VERIFIED 1 · mint 1 · inbox 5→0
-· folds 3 · DEFER 2.** ONE `orch-apply` pipe (`scripts/po-triage-20260826T1500Z-secondary-drain-signoff-
-and-inbox-clear.jq`); prose-ceiling rejected the first attempt on 2 near-cap rows, shortened and retried
-clean. `.head` untouched.
-
-### 1. Notebook-UUID-provenance row: AC-1/AC-2 verified, AC-3 correctly still refused
-Re-ran `verify-notebook-uuid-provenance-gate.sh` myself instead of trusting the review_note: the 3 named
-files (agent-father/dev-team/qa) are clean at HEAD; fleet-wide the ONLY live producer is `tran-ngoc-bau.md`,
-10 hits incl. its newest commit (c136, 2026-08-25). That **overrules** my own 2026-08-24 `po_fold` note
-telling the next closer to flip the guard to reject — flipping now would hard-block tran-ngoc-bau's very
-next commit. Signed off DONE_VERIFIED on the row's own 3-file scope; minted a narrow follow-up
-(`FIX-TNB-NOTEBOOK-UUID-HEADING-ACTIVE-PRODUCER-SCRUB`, agent-father) as the actual AC-3 gate.
-
-### 2. pdf-extractor A-30: verify the trend yourself before ruling on it
-Coordinator flagged mem_creep 92→95.56%, "still climbing, not reclaiming." `docker stats`/`docker logs`
-run 5 min later showed 76.41%, tied to a live 61-page extract job that finished 7s before the probe fired
-— bursty, not monotonic. Didn't fully accept the framing, but didn't wave off the risk either: the same
-container class already had two real kernel OOM-kills of worker processes (2026-08-23), invisible to the
-docker plane. Held the existing plan (no ack — refused 4x already; no cap raise; no early redeploy before
-17:11Z); tried the read-only dmesg/nsenter probe myself and it failed in-sandbox (execve:ENOENT even on
-`/bin/ls`) — authorized in principle, execution deferred to a host-capable session.
-
-### 3. The envelope id in the dispatch prompt did not match the real envelope_id
-Router's prompt named `rtr-20260826T1435-pdfxa30dedupoverturned`; the actual field on disk was a hash
-(`ab2cb52e...`). Resolved by reading the live inbox directly rather than grepping for the prose name — 5
-envelopes were present, not the 4 claimed.
-
-### Carry-over
-- `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` is now ~13.9KB after this fold — next writer should route
-  through `detail_ref`, not append more inline.
-- Kernel-log/cgroup probe for CONSTRAINT_MEMCG on container 417febec1a03 is still unexecuted — needs a
-  session with real host docker access (`--privileged --pid=host` failed in this sandbox).
-
 ## 2026-08-26T17:34Z — PDFX 17:11Z freeze released (4 rows), AC-7 ruled, chain head named
 
 **Did:** one `orch-apply.sh` write, 5 rows stamped. All 4 rows at `next_recheck_not_before=2026-08-26T17:11:00Z`
@@ -133,3 +98,40 @@ its window, last CSV row 18:05:24Z.
 - Supervised-goahead: 6 candidates lack a `po_goahead_*` stamp (2 live: `FIX-RAG-COMPACTION-DISK-AMPLIFICATION`
   review/next_agent=po, `FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58` done/next_agent=po). NOT stamped — each needs
   a substantive read and blind-stamping would be a fabricated go-ahead. Next tick.
+
+## 2026-08-26T18:25Z — SECONDARY-Drain sign-off (1 row): BCTC-dormancy SPIKE closed + own ruling retracted
+
+Journal: `docs/agent-memory/decisions/signoff-20260826T1825Z-po.md`. **DONE_VERIFIED 1 · mint 0 · correction 1.**
+ONE `orch-apply` pipe (2nd attempt — the 1st was ABORTED by the prose-ceiling guard, live file untouched).
+`.head` was already `idle`, never written.
+
+### 1. The recommendation was right; its stated reason was already stale
+`dev-mcp-server` recommended DONE_VERIFIED on 08-25 and correctly refused to self-certify (row reserves
+close for PO, `supervised:true`). Verdict upheld — but one supporting claim was **falsified 24h later**:
+"every post-fix `enrich_failed` termination lands at `reconcile_attempts` EXACTLY 8, the >8 outliers all
+have `last_attempt<=2026-08-22`, never reprocessed — benign". HUT 2025-Q2 is at **11 passes, last_attempt
+`2026-08-26 03:05:02`**, with a fresh BUG at 03:05:05 saying "after 11 reconciliation passes (cap 8)".
+The measurement was true when taken; the *"benign / never reprocessed"* **inference** is what rotted.
+Lesson: a review note's freshness is part of its truth value — re-measure any time-indexed "never happens
+again" claim, don't inherit it. Evidence handed to `FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET`
+(live, P1) — not a close-blocker, cap enforcement is not an AC of this SPIKE.
+
+### 2. A null from a key that no longer exists is blindness, not evidence
+The row's `close_caveat` demanded proof the mass-terminalised backlog **re-extracts**, not just that
+`MAX(extracted_at)` advanced. Probing the two `report_id`s the caveat names returned `count=0` in
+`bctc_layout_units` — which *reads* like "never recovered". It is vacuous: **both ids are gone from
+`financial_reports` entirely**, so the query could not distinguish "not extracted" from "not asked".
+Re-probed by `action_code`+period: 18 of 28 rows in the caveat's own 2024 cluster are now `done`, SHB
+recovered all four quarters, `done=220` vs `enrich_failed=39`. Caveat satisfied, no false-green.
+Same shape as `feedback_probe_aggregated_coarser_than_the_phenomenon` — ask what ELSE yields this output.
+
+### 3. I contradicted myself inside 36 minutes, and the rationale never landed anyway
+At 17:26Z PO wrote the correct fact (`devteam-eligibility.jq:232` unions `.depends_on + .depends +
+.blocked_by`). At 18:02Z PO ruled the opposite — "no eligibility predicate anywhere reads `blocked_by`" —
+by borrowing `FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE`'s conclusion about **`blocks`** (the
+reverse edge, genuinely decorative) and pinning it on **`blocked_by`** (live to all four pickers). Acting
+on it would invite *stripping* `blocked_by`, silently releasing real dependencies. Retracted in
+`triage-20260826T1737Z-po.md#5b`. Two things fell out: the cited key `po_ruling_20260826T1802Z` **was
+never written to orch-state** (`grep -c` → 0) — actions landed, rationale did not; and the inline fix was
+refused by `orch-row-prose-ceiling-check` (11865B→13787B vs 12000B), so the text went to the cold store
+whole and only `detail_ref` was re-pointed. The guard was right both times.
