@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# commit-msg hook: notebook-compose actuator forcing-function (PILOT-SCOPED).
+# TASK: FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE. Parent: FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED.
+# SPEC: docs/architecture-briefs/2026-08-26-fix-auditor-notebook-compose-tier1-adoption-gap-and-commitmsg-forcing-function.md §Child A.
+#
+# WHY commit-msg, NOT pre-commit: pre-commit fires before git has obtained the
+# proposed commit message (githooks(5)) — no parameter, no access, structurally
+# cannot see a message-embedded marker. commit-msg receives $1 = path to the
+# proposed message, before the commit object is created. (Verified live,
+# 2026-08-26T12:07Z tick: .git/COMMIT_EDITMSG during pre-commit still held the
+# PREVIOUS commit's subject — a pre-commit guard reading it validates the
+# WRONG message and false-greens. Do not "rescue" that path.)
+#
+# SCOPE: PILOT-ONLY, docs/agent-memory/notebooks/system-auditor.md — the sole
+# live caller of scripts/notebook-compose.sh today (FIX-NOTEBOOK-COMPOSE-
+# REWRITES-RETAINED-PRIOR-SECTIONS, the fleet-wide rollout, is still un-merged
+# in task_board.review[]). Do not widen ahead of that row landing.
+
+set -u
+MSG_FILE="${1:-}"
+[ -f "$MSG_FILE" ] || exit 0
+
+NB_PATH="docs/agent-memory/notebooks/system-auditor.md"
+
+staged="$(git diff --cached --name-status 2>/dev/null)" || exit 0
+printf '%s\n' "$staged" | grep -qE $'^[AM][[:space:]]'"$NB_PATH"'$' || exit 0
+
+# Strip git's own '#'-led cleanup comments before matching (their presence/
+# absence depends on core.cleanup/editor; our marker itself never starts '#').
+msg_content="$(grep -v '^#' "$MSG_FILE" 2>/dev/null || cat "$MSG_FILE")"
+
+mode="${GIT_NOTEBOOK_COMPOSE_MARKER_MODE:-warn}"
+
+# Escape hatch for legitimate non-compose writes (e.g. the data-repair/renumber
+# class, precedent commit 35be008d0 "AC-3 data repair — restore steady state,
+# renumber c104->c105" — no marker by design, not a bypass).
+if printf '%s' "$msg_content" | grep -qi 'notebook-compose-marker-allow:'; then
+  exit 0
+fi
+
+# Tolerant match — 4 observed real marker shapes in live history: '[OK ...]',
+# '[WARN ...]', '[notebook-compose OK]', '[[notebook-compose] OK ...]' (this
+# last, nested-bracket shape is a REAL live commit, efe62d83d). All four
+# contain OK/WARN inside SOME bracketed group; that is the invariant checked,
+# not one exact literal shape.
+# DEVIATION FROM BRIEF (found + fixed during implementation, task
+# FIX-AUDITOR-NOTEBOOK-COMPOSE-COMMITMSG-MARKER-GATE): the brief's literal
+# regex '\[[^]]*(OK|WARN)[^]]*\]' does NOT match the nested-bracket shape —
+# '[^]]*' cannot cross the inner ']' in '[[notebook-compose] OK ...]', so it
+# would have false-WARNed/REJECTed a real compliant commit (verified live
+# against efe62d83d's actual message). Widened to tolerate one level of
+# nested '[...]' before/after the OK|WARN token; re-verified against all 4
+# real shapes plus negative controls (unrelated '[skip ci]' bracket, and
+# OK-substring words like TOKEN/BROKEN with no brackets at all — neither
+# false-matches).
+if ! printf '%s' "$msg_content" | grep -qE '\[([^][]|\[[^]]*\])*(OK|WARN)([^][]|\[[^]]*\])*\]'; then
+  verdict_word="WARN"
+  [ "$mode" = "reject" ] && verdict_word="REJECT"
+  msg="[notebook-compose-marker-guard] ${verdict_word}: staged commit touches ${NB_PATH} with no [notebook-compose OK|WARN ...]-shaped marker in its message. This notebook's SOLE authorized write path is scripts/notebook-compose.sh via docs/agents/system-auditor/flow/main.md's Notebook Write step — a commit with no marker means that step was bypassed (hand-written heading, direct Edit/Write, or a narrated-not-executed cycle), the exact class FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED exists to end (2 confirmed post-wire bypasses: f4b9740b2, 2f3112a99). If this really is an authorized non-compose write (data repair/renumber), add a 'notebook-compose-marker-allow: <reason>' line to the message. mode=${mode} (default warn; set GIT_NOTEBOOK_COMPOSE_MARKER_MODE=reject to hard-enforce once re-validated)."
+  echo "$msg" >&2
+  [ "$mode" = "reject" ] && exit 1
+fi
+
+exit 0
