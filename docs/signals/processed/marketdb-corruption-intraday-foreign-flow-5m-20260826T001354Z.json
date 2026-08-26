@@ -37,5 +37,11 @@
     "poisoned_connection_hypothesis": "SQLite poisons a connection once it returns SQLITE_CORRUPT; mcp-server holds long-lived connections (uptime 57m at detection). That would explain all three observations at once: intermittent across agents (which pooled connection you draw), non-transient within one agent cycle (same poisoned connection), and intact-but-unwritable unrelated tables. TESTABLE PREDICTION AND TRAP: restarting mcp-server will make the symptom disappear while leaving tree 180 corrupt — that is almost certainly how the 07-19 / 07-30 / 08-06 occurrences were each closed, which is why this is now the 4th+. Verify with quick_check AFTER any restart, not with a clean error log."
   },
   "priority": "high",
-  "createdAt": "2026-08-26T00:13:54Z"
+  "createdAt": "2026-08-26T00:13:54Z",
+  "_processed": {
+    "fingerprint": "dd27951c3b1d3ecf81a481b2b047c305e8ba8658652c75c2c16397eb451c6e20",
+    "processedAt": "2026-08-26T00:45:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
