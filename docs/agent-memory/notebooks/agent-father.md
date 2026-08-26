@@ -142,3 +142,28 @@ Commits: 579e7c685 (triage-signals.md), 0bac54347 (orch-state.json terminal-flip
   `archive/agent-father-archive-20260826.md`) before landing, per AC-2's always-3 steady state.
 - **Lesson:** none new — second consecutive clean sweep; zero drift on both the Top-6 checks and
   the tool-grant recheck.
+
+## Task-dispatch 2026-08-26T13:20Z — TASK-COWORK-CATCHUP-10, CANCELLED (true dup mis-ID'd)
+
+- Router dispatched this P0 row despite PO's do-not-dispatch note, after both blocking conditions
+  (TASK-COWORK-CATCHUP-9 done_verified; PO's named alt-target DONE_VERIFIED) fired.
+- PO's note named TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY as the duplicate. Disk check: that row's
+  own AC-3/status_note (agent-father, 2026-08-23T16:20Z) says it explicitly did NOT ship
+  `docs/protocols/cowork-master-cron-runbook.md` — outside agent-father commit_zone — and split that
+  scope into `FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS` (po, 2026-08-23T15:27Z, owner
+  developer, still BACKLOG). That backlog row, not DOC-TRUTH-LAYER-INVENTORY, is the real duplicate.
+- Confirmed the residual is genuine, not a phantom: runbook SS1/5/8-T5 still call
+  F1-LAUNCHD-COWORK-BACKSTOP "in flight"/T5 "NOT YET APPLICABLE"; that row is DONE_VERIFIED and its
+  launchd firer is loaded+running live today (`launchctl list` on this host: LastExitStatus=0). Also
+  independently re-checked the RemoteTrigger/"Layer A" language the router flagged as a prior sore
+  spot — all 9 mentions already correctly marked RETIRED (07-07 freshen), nothing stale there.
+- Verdict: outcome 3 (premise different from either offered outcome) — genuine duplicate, but of the
+  backlog row, not the one PO named, AND agent-father structurally cannot own the fix (file outside
+  commit_zone) even if it were not a duplicate. Zero runbook edits made.
+- Action: CANCELLED (do_not_reopen) via `jq | scripts/orch-apply.sh`, cross-linked the surviving
+  backlog row, reset `.head` to idle, corrected PO's status_note in place (see full note on the
+  archived row). Commit `838f67349`.
+- Lesson: a status_note asserting "X will absorb this" should be re-verified against X's OWN
+  completion note once X actually closes — a forward-looking dup guess can be falsified by the
+  cited row's real AC outcome, and the correct successor may be a THIRD row minted afterward, not
+  the one originally named.
