@@ -91,8 +91,11 @@
     "active_task_id": "FACTORY-KINHDICH-extract-hexagram-data",
     "next_agent": "dev-kinh-dich",
     "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-KINHDICH-extract-hexagram-data — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-26T04:11:45Z",
-    "updated_by": "router"
+    "updated_at": "2026-08-26T04:29:03Z",
+    "updated_by": "router",
+    "id": null,
+    "title": null,
+    "note": "idle after FACTORY-KINHDICH-extract-hexagram-data completed"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24016,6 +24019,26 @@
         "qa_new_window_csv": "docs/incidents/data/rag-durability-2026-08-25T1318Z-16c59b5e929f-window.csv",
         "qa_new_window_earliest_d1_close": "2026-08-26T13:18:55Z",
         "status_note": "[QA 2026-08-26T04:08Z | verify-committed, OOM-class] UNVERIFIED-BLOCKED -- durability window IMMATURE, not a code/config defect. D1 wall-clock floor (>=24h from window-open 2026-08-25T13:18:55Z) NOT yet met: checked 2026-08-26T04:07:57Z, ~9h11m short of the 2026-08-26T13:18:55Z floor. Mid-window checks (per po_ops_followup_20260825T1624's explicit ask, not close-only) all clean so far: D1 dmesg=0 OOM hits (buffer 2026-08-25T06:32:54Z..2026-08-26T04:07:56Z, non-vacuous, 375 docker0 hits); D2 container identity unchanged (16c59b5e929f, StartedAt 2026-08-25T06:33:04.025783939Z, RestartCount=0); D4 no mitigation (git log --since=2026-08-25T13:18:55Z on docker-compose.yml+apps/rag-service/ = 0 commits); D3 partial-only (871 samples so far, sawtooth 29.39-84.80pct, 0 over 85pct cap) -- informational, NOT a certification, window incomplete. AC-1/AC-2 (code/config) re-confirmed sound: commit 4df192e05 on main ancestry, live docker-compose.yml + docker inspect both show 2GiB cap deployed, unchanged since last verified. Full multi-cycle history (2026-08-14 -> 2026-08-25) moved to detail_ref this cycle (hot row was 18.7KB prose, ceiling is 12KB per orch-row-prose-ceiling-check.mjs) -- nothing deleted, only relocated; see detail_ref for the complete D1-D5 saga across prior cycles. NEXT ACTOR (po): do NOT dispatch a code-fix -- wait until >= 2026-08-26T13:18:55Z then re-dispatch qa (verify-committed) to close the window: final dmesg pull, re-confirm StartedAt/RestartCount unchanged, fit D3 over the CSV final 12h, write the six canonical D5 fields, then flip DONE_VERIFIED if D3 clears (or hold with a fresh finding if not). CSV: docs/incidents/data/rag-durability-2026-08-25T1318Z-16c59b5e929f-window.csv."
+      },
+      {
+        "title": "Extract 64-hexagram prose to an embedded data asset behind a small loader",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-KINHDICH-extract-hexagram-data",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-extract-hexagram-data",
+        "promoted_at": "2026-08-26T04:10:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-26T04:29:03Z",
+        "claimed_at": null,
+        "claimed_by": null,
+        "next_agent": "qa",
+        "owner": "dev-kinh-dich",
+        "owner_client_session": null,
+        "updated_by": "dev-kinh-dich (task complete)",
+        "status_note": "Extracted 64-hexagram prose to hexagram_prose.json (go:embed). Tests green. Sandbox G12 GREEN. RAW-verify /explain PASSED."
       }
     ],
     "qa": [
@@ -24208,25 +24231,6 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128."
-      },
-      {
-        "title": "Extract 64-hexagram prose to an embedded data asset behind a small loader",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-KINHDICH-extract-hexagram-data",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-extract-hexagram-data",
-        "promoted_at": "2026-08-26T04:10:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-26T04:11:45Z",
-        "claimed_at": "2026-08-26T04:10:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-kinh-dich",
-        "owner": "dev-kinh-dich",
-        "owner_client_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
-        "updated_by": "router (specialist resolved from detail dev_agent + zone)"
       },
       {
         "id": "FIX-DEVTEAM-QADRAIN-SELECTION-BLIND-TO-QA-NOT-BEFORE-TIME-GATE",
