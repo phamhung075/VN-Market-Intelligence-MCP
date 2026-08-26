@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-08-26T02:13:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-26",
+    "timestamp_utc": "2026-08-26T02:21:51Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L2_US_macro_absent_no_gap_token]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off with carry pressure",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "[gap:US_macro_data_unavailable — geopolitical risk flagged via Brent crude -4.77σ extreme]",
+    "vn_macro_layer": "USD/VND 25920 (bearish VND depreciation >25000 threshold) + gold 4717 (bullish risk-off >4300 threshold) + equity yield 8.2% premium vs deposit 5% (cheap valuation). Carry 1.37pp neutral (SBV 5% vs Fed 3.63%). Foreign room context not called this cycle [gap:foreign_room_unavailable].",
+    "valuation_layer": "4-pillar mapping: Real estate sector (VIC/VHM/DXG) 2-3 pillars aligned (valuation cheap via earnings yield, FII thesis via FTSE inflow mixed signals); Banking sector (VCB/BID) 2 pillars (capital-cost pressure via USD/VND depreciation, earnings stable); FPT/HPG mixed (FPT 12% US revenue exposure headwind, HPG supply strength vs sector weakness). Conviction capped MEDIUM — no 4-pillar consensus, Kinh Dịch shows contradictory signals (Khôn THAN TRONG vs Sư GIU), sector phases transition."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "FPT",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "US earnings headwind (12% revenue exposure) + news_mention weakness offset by technicals hold support — valuation FAIR but earnings outlook darkens.",
+      "business_context_cited": {
+        "field": "product",
+        "text": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom)",
+        "source": "bctc_signal_FPT_20260826_routine.json"
+      },
+      "valuation_gate": {
+        "verdict": "FAIR",
+        "note": "valuation_verdict=FAIR — no gate, direction proceeds as scored",
+        "override_engaged": false,
+        "override_rationale": null
+      }
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate news_mention + ta_oversold (RSI 28.4) = recovery setup, but sector weakness and FII mixed signals warrant HOLD despite Kinh Dịch Sư(7) GIU overlay.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Price_anomaly (vol 187.5%, bullish sentiment) + news_mention FTSE inflow converge, but Kinh Dịch Ki-39 tiêu-cực (MUA caution) + FII room utilization unknown = mixed thesis, conviction HOLD.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Price_anomaly (highest volume, sector weakness) + bctc_signal FAIR conflict with supply strength narrative — Kinh Dịch Khôn(2) THAN TRONG (mixed), conviction holds despite technical support.",
+      "business_context_cited": {
+        "field": "product",
+        "text": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+        "source": "bctc_signal_HPG_20260826_routine.json"
+      },
+      "valuation_gate": {
+        "verdict": "FAIR",
+        "note": "valuation_verdict=FAIR — no gate, direction proceeds as scored",
+        "override_engaged": false,
+        "override_rationale": null
+      }
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "công nghệ",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "thép",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token]",
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:foreign_room_unavailable]",
+    "[gap:macro_health_missing]",
+    "[L6-gap: gold >$4,300 regime-drift active — risk-off signal persists]",
+    "[L6-gap: Kinh Dịch contradictory multi-quĕ state (Khôn THAN TRONG vs Sư GIU) — no unified reversal signal]",
+    "[L6-gap: sector divergence (real estate mixed, banking pressured, tech/steel weak) — no broad-based recovery thesis]"
+  ],
+
+  "causal_chains": [
+    "Brent crude -4.77σ extreme ($85.31) → safe-haven gold spike $4717 (risk-off) → VND depreciation 25920 (>25000 bearish) → banking sector FX pressure → VCB carry unwind risk → medium conviction HOLD defensive.",
+    "Real estate news convergence (VIC FTSE inflow + VHM oversold recovery) + FPT/HPG earnings headwinds (US pressure, sector weakness) → medium conviction HOLD across all — no high-confidence directional thesis given macro uncertainty.",
+    "Kinh Dịch state contradictory: Khôn(2) THAN TRONG (caution/strength mix) vs Sư(7) GIU (persistence) across watchlist → signals no unified market inflection, warrant cautious positioning."
+  ],
+
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["FPT", "VHM", "VIC", "HPG"],
+    "sectors_covered": ["real_estate", "banking", "technology", "steel"]
+  }
+}
