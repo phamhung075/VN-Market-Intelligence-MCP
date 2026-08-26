@@ -25,7 +25,16 @@
      match its own "fires AFTER Phase A.5, BEFORE Phase B" header convention; added a 4-line
      forward-pointer at the top of § Pattern (Phase B) so a reader landing there first still finds
      Step 2.4. CARD.md unchanged (out of scope per architect brief §3 file-level design table —
-     Step 2.4 stays in this lazy-loaded reference, same split already used for Step 0a). -->
+     Step 2.4 stays in this lazy-loaded reference, same split already used for Step 0a).
+     FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE 2026-08-26 (+56L, 678->730):
+     revised Step 2.4's FR-3 block from a bare prefix match to a cadence-bounded prefix match —
+     Axis D (age-bound, `docs/data/cowork-schedule.json` `.slots[].publish_date_basis` ->
+     CADENCE_SEC_BY_BASIS lookup, closes AC-1 unconditionally for both daily 86400s and weekly
+     604800s slots, digest-sunday's latent weekly-scale overlap included) landed together with
+     Axis C (stale-owner, reuses the Phase A.5 `roster` read already in scope, closes AC-3) per
+     architect ruling docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-
+     mismatch-design.md §3. MARKER_TTL constants and the prefix-match shape itself are UNCHANGED
+     (PO's rejected exact-match recommendation stays rejected); only the staleness test is new. -->
 
 **Trigger:** router (or any dispatcher) about to spawn an agent for sprint-task, intent, or cowork-slot work
 
@@ -635,19 +644,71 @@ else:
                                    # check every slot this agent owns (cost asymmetry: one skipped
                                    # manual spawn is cheaper than a reproduced double-dispatch)
 
-# --- FR-3: one read-only probe, client-side prefix filter — zero date/timezone/cadence logic ---
+# --- FR-3: cadence-bounded prefix probe — Axis D (age-bound) + Axis C (stale-owner), landed
+# together per architect ruling (docs/architecture-briefs/2026-08-23-fix-cowork-published-
+# marker-ttl-cadence-mismatch-design.md §3, FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-
+# DAILY-CADENCE). Root cause this closes: a bare prefix match has no notion of "which period" —
+# MARKER_TTL=100800s (28h, deliberate — ARCH-DECIDE-D, catch-up flow needs it, NOT shortened
+# here) outliving a 24h/604800s cadence guarantees a live PRIOR-period marker at the exact
+# moment the next fire dispatches (confirmed: chef-evening blocked 100% of fires). Axis D
+# bounds the prefix match to markers still inside their OWN slot's cadence window — closes
+# AC-1 unconditionally, daily and weekly (digest-sunday's identical latent 24h/week overlap
+# included). Axis C reuses the roster this file already read at Phase A.5 (zero extra round
+# trip) to also catch a current-period marker whose claiming dispatcher session died — a case
+# axis D alone does not cover. Neither axis alone satisfies the full AC set (brief §3). The
+# MATCH shape (prefix, not exact period-key) is UNCHANGED — PO's rejected exact-match
+# recommendation (po_rescope_note, telegram report 4861) stays rejected; only the staleness
+# test is new.
+CADENCE_SEC_BY_BASIS = {
+  "utc_date": 86400, "vn_date": 86400,
+  "iso_week_period": 604800, "vn_date_saturday_anchor": 604800
+}
+
 held = call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "cowork-slot", expired: false })
 # cron:cowork:<TICK>, cowork-slot:<slot_id>, and published:<slot_id>:<period> all share
 # task_kind "cowork-slot" (BA spec §0 table) — one round trip returns every live cowork-side lock.
+now = <current unix epoch seconds, e.g. `date -u +%s`>   # `claimed_at` (task_list_held row) is
+                                                          # stored as a unixepoch INTEGER
+                                                          # (coordinationStore.ts) — same unit,
+                                                          # no timezone/date-string conversion.
+roster_session_ids = [row.owner_client_session for row in roster]   # `roster` = Phase A.5's own
+                                                                     # read (this same cycle,
+                                                                     # already in scope) — zero
+                                                                     # extra round trip.
 
 collision = null
 for slot_id in TARGET_SLOTS:
+  SLOT_RECORD = jq --arg s "$slot_id" '.slots[] | select(.slot_id==$s)' docs/data/cowork-schedule.json
+  CADENCE_SEC = CADENCE_SEC_BY_BASIS[SLOT_RECORD.publish_date_basis]   # null if basis absent/unmapped
+
   for row in held:
     if row.task_id == "cowork-slot:" + slot_id: collision = row; break
-    if row.task_id starts_with "published:" + slot_id + ":": collision = row; break
-    # prefix match, NOT exact period-key — catches daily AND weekly published: keys without the
-    # router ever computing a date/hour/ISO-week (EC-4). No `apps/mcp-server` code required.
+
+    if row.task_id starts_with "published:" + slot_id + ":":
+      if CADENCE_SEC == null:
+        # No known cadence for this slot (the non-guaranteed / non-publish-gate slots whose
+        # `publish_date_basis` is null, confirmed live against docs/data/cowork-schedule.json) —
+        # byte-identical PRE-FIX prefix-match behavior. This fix is scope-bound to the slots the
+        # row's evidence covers; do not silently relax slots never analyzed for this defect.
+        collision = row; break
+
+      AGE_SEC = now - row.claimed_at
+      if AGE_SEC >= CADENCE_SEC:
+        continue   # AXIS D — prior-period marker; structurally cannot describe the CURRENT
+                   # window (AC-1/AC-6). No date/timezone/period-string computed — pure
+                   # arithmetic on an already-returned field. Keep scanning: a genuinely
+                   # current-period marker for this same slot, if one exists, must still block.
+
+      # AGE_SEC < CADENCE_SEC — marker IS within the current period (AC-2, no regression).
+      if row.owner_client_session not in roster_session_ids:
+        continue   # AXIS C / AC-3 — current-period marker, but the claiming dispatcher
+                   # session is absent from the presence roster already read this cycle
+                   # (zero extra round trip) → treat as abandoned, not live.
+
+      collision = row; break
   if collision: break
+    # Prefix match itself retained deliberately (07-29 ruling) — cadence-agnostic, zero
+    # date-basis duplication (EC-4). Only the STALENESS test changed.
 
 # --- FR-4: symmetric response — reuse the EXACT Phase B peer-collision text, same lock class ---
 if collision != null:
