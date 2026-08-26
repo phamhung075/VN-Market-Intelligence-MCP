@@ -1,3 +1,35 @@
+## c17 · 2026-08-26T10:23Z
+### Audit Run Tier-DATA (10:15-10:23 UTC 2026-08-26)
+- Tier: DATA | Tables: 17 checked (all 17 explicit findings, no omissions) | DB integrity scan
+- Anomalies: 0 new (6 REAL, all dedup-matched already-open; 3 BY-DESIGN info; 8 CLEAN) | 6 dedup-skipped
+- Status: DEGRADED (6 already-open REAL issues re-confirmed live, none newly regressed toward 0; R-13 full-coverage re-run per router instruction)
+
+### Findings Summary
+**REAL (6, all already-open — dedup-matched, no new signal rows written):**
+- `daily_ohlcv`: 336 OHLC violations (20 distinct dates), flat count. MAX(date) among violating rows=2026-06-12 (75-day-old residue, not fresh). already-open:LINT-OHLCV-WRITE-BYPASS
+- `signal_outcomes`: 1 orphaned row (id=66, signal_id=6218, VCB, 2026-06-15) referencing a deleted agent_signals row. already-open:ALPHA-S5-TRUTH-LEDGER-BACKTEST
+- `financial_reports`: 52 low-confidence rows (extraction_confidence<0.2), flat count. R-13 correction: prior 09:35Z cycle had reclassified this identical count as BY-DESIGN and dropped it from findings — reasserted REAL/MED this cycle per re-run, no genuine state change observed. already-open:FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE
+- `deep_fetch_queue`: 2607 lifetime rows, 0 'done' ever (100% expired/vps-failed/pending), 30/32 pending stuck >24h (oldest 8 days). already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD
+- `deep_fetch_stats`: 0 rows, class=a writer exists but its precondition (a done-fetch) never fires — corroborated by deep_fetch_queue's 0 done rows. already-open:FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD
+- `cron_job_runs`: FULL breakdown crashed=211/error=7/success=218652; 24h window=success=1617 only (newest crashed row 2026-08-25 04:30:02, ~29h47m old, slid outside the 24h window). NULL error_msg on 218/218 crashed+error rows. already-open:FIX-CRON-RUNS-NULL-ERRORMSG
+
+**BY-DESIGN (3):**
+- `price_alerts`: 0 rows, class=c (on-demand MCP tool only, no production caller)
+- `alert_engine_records`: 0 rows, class=b (sole writer targets a separate alert_engine.db, not market.db)
+- `agent_signals`: 139 rows, 104 >7d old — expected per reference_agent_signals_is_a_rolling_2h_ttl_window (TTL filters queries, does not delete rows)
+
+**CLEAN (8):** market_prices, market_prices_history, vn_index_cache, alerts, macro_indicators (46.1h, under 48h threshold), sbv_rates, fred_series_daily (46.1h), scheduler_locks
+
+### Raw Probe Output
+```
+db-integrity-counts.sh (scan_ts=2026-08-26T10:17:37Z):
+{"counts":{"ohlc_violations_count":336,"scale_gt100x_count":0,"vnindex_cache_rows_count":1,"low_confidence_reports_count":52},
+ "context":{"daily_ohlcv_total":790025,"daily_ohlcv_newest_date":"2026-08-26","fresh_ohlc_violations_last_2d":0,"ohlc_violation_distinct_dates":20}}
+```
+
+### Status
+All 17 watched tables carry an explicit findings[] entry (R-13 full-coverage requirement). History entry: `docs/data/db-integrity-history.json` scan_ts=2026-08-26T10:23:03Z. history_len_before=200, history_len_after=200 (at 200-row cap, append proven by scan_ts filter not length delta, per R-7). Durability sweep this cycle: swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=1 (SKIP-dedup, already alerted last cycle) schedule_gap_t3=0.
+
 ## c16 · 2026-08-26T09:35:19Z
 
 **Tier:** DATA
@@ -84,29 +116,3 @@ tables_checked=17 (R-9 clause 1 PASS). All 4 REAL findings carry a non-null sign
 ### Status
 
 All 5 REAL findings already-open (dedup-matched). No new signals written. History entry: `docs/data/db-integrity-history.json` scan_ts=2026-08-26T09:05:41Z.
-
-## c15 · 2026-08-26T09:00Z
-### Audit Run Tier-DATA (HH:MM–HH:MM UTC YYYY-MM-DD)
-- Tier: DATA | Tables: 17 checked | DB integrity scan
-- Anomalies: 3 new (C critical: deep_fetch_stats, deep_fetch_queue, cron_job_runs; W warn: none; I info: 3 by-design) | 0 dedup-skipped
-- Status: DEGRADED (3 critical open issues in deep-fetch pipeline and cron health)
-
-### Findings Summary
-**CRITICAL (3 REAL):**
-- `deep_fetch_stats`: 0 rows, class=a (production writer exists) — stats collection broken while queue accumulates (64 stuck rows: 30 pending 191h+, 34 vps-failed 508h+)
-- `deep_fetch_queue`: 64 non-terminal rows (30 pending 191h+, 34 vps-failed 508h+) — URLs stuck 8-21+ days suggests VPS infrastructure failure or off-season pause
-- `cron_job_runs`: 13 failed/crashed runs past 7 days — recurring job failures (latest 2026-08-26 00:33:41)
-
-**INFO (3 BY-DESIGN):**
-- `price_alerts`: empty by design (on-demand tool, no production callers yet)
-- `alert_engine_records`: empty by design (writes to separate alert_engine.db, not market.db)
-- `macro_indicators`: 1 row, 2d old — acceptable cadence (weekly-to-monthly fetch)
-
-### Raw Probe Output
-```
-db-integrity-counts.sh output:
-- ohlc_violations: 336 (20 distinct dates)
-- scale_anomalies: 0
-- vnindex_cache_rows: 1
-- low_confidence_reports: 52
-```
