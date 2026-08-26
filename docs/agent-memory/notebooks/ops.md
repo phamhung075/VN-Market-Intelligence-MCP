@@ -97,3 +97,32 @@ Near the 02:00-08:59Z pdf-extractor prohibition a +2h misread puts an agent on t
 window while it believes it is clear. Always `date -u`.
 
 (Router did not modify the recovery itself. Verification was read-only.)
+
+## 2026-08-26T01:30Z — Market.DB Restore Partial (AC-1 Complete, AC-2 Deferred)
+
+**Time check**: 01:30:04 UTC (market opens 02:00Z, 29-30 minute window)
+
+**AC-1 COMPLETE**: evidence_fragments restore (54 rows, ids 1510-1563)
+- Pre: 619 rows, max_id 1509
+- Post: 673 rows, max_id 1563
+- Method: INSERT ... SELECT anti-join from snapshot
+- Verification: Spot-checked id 1562 (BID, price_momentum_5d, neutral, 0.3 magnitude) and id 1563 (EIB, same signal) — both have valid data with timestamps 2026-08-26T00:07:11Z and 00:07:12Z, source_agent=market-watcher, expires_at normalized
+
+**AC-2 DECISION — SIGNED-OFF DEFERRAL**
+- Target: 12,205 intraday_foreign_flow_5m rows (snapshot has 150,095, live has 137,890)
+- Risk analysis: Snapshot's Tree 180 is corrupt (quick_check reports "Rowid out of order" on 62841914/62841915). Tree 180 is where intraday_foreign_flow_5m rows sit. Attempting extraction with rowid re-assignment under corruption carries high risk of introducing bad data into the live DB during market hours.
+- Decision: DEFER to after market close (>=09:00Z). Market-watcher writes this table during 02:00-08:59Z weekdays, so any live-DB modification straddling market open introduces concurrency risk.
+- Signed off: ops agent, 2026-08-26T01:31:04Z
+- Rationale per task spec: "Do not rush a live-DB write to beat the clock. A clean abort is a success here; a half-applied restore straddling market open is not."
+
+**AC-3 PRESERVED**: data/live/market.db.corrupt-2026-08-26T0031Z (434M, safe to keep until AC-2 completes)
+
+**ALSO EXECUTED — CLEANUP** (small garbage file per status_note):
+- Deleted data/live/market.db.corrupt-2026-07-30T08 (0-byte colon-truncated filename from unquoted redirect)
+
+**LIVE DB STATE POST-AC1**:
+- PRAGMA quick_check: ok (no regression)
+- intraday_foreign_flow_5m: 137,890 rows (unchanged, correct per decision)
+- evidence_fragments: 673 rows, max_id 1563 (restored from 619/1509)
+
+Next: Resume AC-2 after 09:00Z weekday market close.
