@@ -143,3 +143,4 @@
 - `files[]` (`scripts/market-db-journal-guard.sh`, `launchd/`) vs the shipped commit `671496470` (touches only the brief + notebook + one signal file) -- confirmed neither claimed file appears in the commit's stat; also found `scripts/market-db-journal-guard.sh` never existed on disk at any point (empty `git log`), so `files[]` was already stale/imprecise at mint time, independent of the routing defect.
 **why-decision:** The underlying P0 (undeliverable alert during the exact outage it monitors) is still 100% unfixed on `main` -- no code exists, cron prompt unedited, AC-1/AC-2 unimplemented and therefore unverifiable live. A sound design brief is not a certifiable fix; flipping DONE_VERIFIED would falsely close a live P0. vc-changes, routed to owner `po` (row's own `.owner` field) with a note that the correct next step is `developer` per the brief's own RETURN block.
 **why-change:** no change from plan.
+### CAP-REACHED · 2026-08-26T10:58:36Z
