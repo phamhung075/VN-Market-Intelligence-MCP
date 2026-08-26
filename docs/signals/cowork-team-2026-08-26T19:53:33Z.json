@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T19:53:33Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-08-26T19:52:50Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 118,
+    "signal_backlog": 54,
+    "note": "DUAL-PLANE occurrence 4: launchd Layer C firer spawned chef-evening as pid 70235 at 19:46:38Z for the same 45 19 cron; that run exited 19:49:35Z exit_code=0 having produced NO artifact (no synthesis json, no notebook section, no published marker) — its stdout shows router-protocol ladder prose and a ps-grep that matched its own pid, i.e. an off-flow router latch self-suppressing as its own peer. Layer C spawns raw claude -p with no IDENTITY_PREAMBLE, so it lacks the Step 5.2 guard. Dispatcher plane re-spawned WITH preamble at 19:52. Also: cycle-snapshot keying defect occurrence 8, snapshot written 19:52:16Z vs emit 19:53:12Z = 56s, inside the <=7min gate, promoted:false due to nominal-tick 19:45 vs filename 19:52."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T19:53:33Z"
+}
