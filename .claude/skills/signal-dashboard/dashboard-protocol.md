@@ -111,7 +111,14 @@ If `.signal_queue` absent or orch-state.json missing → log `"[dashboard] skip"
 ### Option A — Script (preferred)
 Claim commit-mutex, call `bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"` (handles atomic cold+hot), commit both files, release mutex.
 
-### Option B — Inline jq (when script unavailable)
+### Option B — Inline jq (when script unavailable) — BLOCKED live, 2026-08-26 (tran-ngoc-bau c137)
+Live-confirmed: `orch-apply.sh`'s conservation-check hard-rejects any signal_queue row removal
+that isn't declared via `ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS` — only `scripts/orch-cold-evict.sh`
+sets that env var for its own removals. A manually-built candidate that drops rows aborts with
+`row-identity violation ... route it through scripts/orch-cold-evict.sh`. Treat Option B as
+dead in practice; use Option A always. Formula kept below for reference only (do not use for a
+live write).
+
 Evict: status IN (READ, RESOLVED, SUPERSEDED) AND ts < now-24h. Keep: NEW rows always.
 
 ```bash
