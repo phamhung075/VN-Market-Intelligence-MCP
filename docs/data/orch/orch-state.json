@@ -20320,6 +20320,40 @@
             "observed_at": "2026-08-26T00:22:42Z"
           }
         }
+      },
+      {
+        "id": "OPS-MCPSERVER-IMAGE-PREDATES-REAPER-FIX-9-COMMITS-13H-STALE",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "ops",
+        "supervised": false,
+        "baseline_pass": true,
+        "dedup_key": "ops-rebuild:mcp-server|image-predates-0f6891872",
+        "files": [
+          "apps/mcp-server/",
+          "docker-compose.yml"
+        ],
+        "title": "mcp-server container is running an image built 2026-08-24T12:41:40Z — 9 landed apps/mcp-server commits behind, INCLUDING 0f6891872 (reaper stops orphan-minting TTL-expired locks owned by a live presence-registered session), whose own defect then fired live 4h38m after the fix was on main",
+        "created_at": "2026-08-25T07:32:38Z",
+        "created_by": "po/triage-20260825T073238Z",
+        "updated_at": "2026-08-26T00:25:49Z",
+        "updated_by": "qa-agent-036ceaf1",
+        "status_note": "PO RAW-VERIFIED THIS TICK, not taken from the signal. `docker image inspect` on the running container's image => Created=2026-08-24T12:41:40.992744683Z. `git log --since=2026-08-24T12:41:49Z -- apps/mcp-server/` => 9 commits, and `git merge-base --is-ancestor 0f6891872 HEAD` => true. 0f6891872 landed 2026-08-25 03:54:59 +0200 (= 01:54:59Z), so the running code is ~13h behind on that fix specifically. Corroborates system-auditor signal_feedback 03:56:03Z ('mcp-server running 13h older code than latest verified fix (commit 0f6891872)') — WARN, but the premise is exact. WHY P0 AND NOT ROUTINE DRIFT: at 06:33:55Z today — 63 seconds after the Docker daemon returned from the 05:31-06:45Z outage — the server-reaper minted orphan-signal:task:TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY against a DONE_VERIFIED, cold-archived task whose lock had expired on TTL only because the holder could not reach the gateway to heartbeat. That is the exact shape 0f6891872 exists to prevent, and it fired because the fix is on main but not in the running image. CAUSAL CLAIM IS BOUNDED, DO NOT OVERSTATE: the un-deployed fix is a NECESSARY condition; whether it is SUFFICIENT depends on whether session 036ceaf1 was presence-registered at 06:33:55Z (presence registration is opt-in). The implementer must check that before claiming the rebuild closes the incident. Evidence doc: docs/handoffs/2026-08-25-orphan-adoption-terminal-guard-live-reproduction.md. AC-1: rebuild + redeploy mcp-server ONLY (never `down && up` — that destroys peer containers, see feedback_rebuild_recreate_destroys_peers) and verify the new image ID differs from sha256:e6942e6304996da1cfb8e44923a606ecde6ca227a1f262856437e6dfc9ab7389. AC-2: confirm the deployed build contains 0f6891872. AC-3: report whether the reaper still mints orphan-signals for live-presence sessions after the deploy. RELATED, SAME CLASS, DIFFERENT SERVICE — do not fold: OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND, UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT. Three services now measured running pre-fix images; if a fourth appears, mint the systemic 'no deploy gate after a verified fix lands' row rather than a fourth per-service row.\n[QA] VERIFIED THROUGH THE RUNTIME, PASS. Running container: vn-market-intelligence-mcp-mcp-server-1, ImageID=sha256:0a653c2a07673c9aad8796b2d7b6c6feb00d3a3926727cbd257f4e57c00721c6 (Created=2026-08-25T23:12:41Z) -- differs from the stale sha256:e6942e6304996da1cfb8e44923a606ecde6ca227a1f262856437e6dfc9ab7389 named in AC-1. Confirmed the diff is real, not tag-repointing: resolved via `docker inspect ...--format '{{.Image}}'`, not the tag. AC-2: byte-for-byte identical (`diff`) between `git show HEAD:apps/mcp-server/src/infrastructure/db/coordinationStore.ts` and the file inside the running container (`docker exec ... cat /app/src/...`) -- the NOT EXISTS session-presence subquery and the FIX-REAPER-ORPHAN-MINT-KEYS-ON-TTL-ONLY marker are both present verbatim; a second spot-check (pdfOcrWorker.ts, changed by the newest apps/mcp-server commit 8d361eee9, landed 2026-08-25T23:04:41Z, before the 23:12:41Z image build) also came back IDENTICAL -- the running image is current with HEAD, not merely with 0f6891872. AC-3: ran `docker exec ... bun test src/__tests__/task-lock-coordination-store.test.ts` against the LIVE container (not host source) -- 51/51 pass including AC-1/AC-2/AC-2b/AC-4 of the reaper fix itself: an expired lock under a LIVE presence session is suppressed, an expired lock under an ABSENT or EXPIRED presence session still emits exactly as before (polarity intact, no over-suppression). Reaper no longer mints orphan-signals for live-presence sessions post-deploy. Single-service rebuild confirmed, not a `down && up`: all peer containers except mcp-server + pdf-extractor show ~18h uptime, which lines up with the 05:31-06:45Z Docker daemon outage recovery documented on this row (2026-08-25), NOT with this deploy -- pdf-extractor was recreated ~66s apart from mcp-server via its own separate OPS row (UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT, also in qa[] under a different QA dispatch), each with its own freshly-built image (mcp-server sha256:0a653c2a0767..., pdf-extractor sha256:4e431bca1cb9...) roughly 1 min apart -- consistent with two sequential single-service `--build` calls, not a stack teardown. Runtime health: RestartCount=0, ExitCode=0, Health=healthy, uptime ~1h6m at verification time, health-check log shows exit=0 on every probe -- not an exit-0 restart-loop. cgroup memory (never ru_maxrss): memory.current=1511628800B (~1.44GiB), memory.peak=1590591488B (~1.52GiB), memory.max=3221225472B (3GiB cap) -- no OOM risk. Noted but out of scope for this row: image label vn.market.git_sha=unknown (ARG GIT_SHA not passed at build time) -- already tracked separately as FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH in backlog; did not rely on it, verified via direct content diff + in-container test execution instead.",
+        "claimed_at": "2026-08-26T00:17:44Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-26T00:25:48Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "docker inspect / docker exec grep+diff / docker exec bun test / cgroup memory.current+memory.peak",
+            "args": "container=vn-market-intelligence-mcp-mcp-server-1; diff HEAD:apps/mcp-server/src/infrastructure/db/coordinationStore.ts + pdfOcrWorker.ts vs in-container /app/src; bun test src/__tests__/task-lock-coordination-store.test.ts",
+            "live_value_observed": "ImageID sha256:0a653c2a07673c9aad8796b2d7b6c6feb00d3a3926727cbd257f4e57c00721c6 (Created 2026-08-25T23:12:41Z) != stale sha256:e6942e6304996da1cfb8e44923a606ecde6ca227a1f262856437e6dfc9ab7389; coordinationStore.ts + pdfOcrWorker.ts byte-identical to HEAD; 51/51 tests pass incl. AC-1/AC-2/AC-2b/AC-4 reaper-presence-suppression; RestartCount=0 ExitCode=0 healthy uptime ~1h6m; memory.current=1511628800B memory.peak=1590591488B memory.max=3221225472B",
+            "observed_at": "2026-08-26T00:25:48Z"
+          }
+        }
       }
     ],
     "head": {
@@ -24130,32 +24164,6 @@
         "claimed_at": "2026-08-26T00:17:44Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "verify_note": "AC-1 PASS: scripts/devteam-backlog-claim-design-router-sweep.jq now resolves effective_next_agent($detail_items) fresh at claim time, never reads cached .dispatch_lane (verified: fixture with dispatch_lane='ba'/next_agent='architect' claims to 'architect').\nAC-2 PASS: same fixture proves stale-cache-superseded-by-later-next_agent (regression fixture in scripts/audits/devteam-dispatch-gate-satisfiability.sh, assertion AC-DRS-CLAIMTIME-RESOLVE).\nAC-3 PASS: dispatch_lane=null + resolvable next_agent claims correctly (AC-DRS-NULL-LANE-RESOLVABLE); dispatch_lane=null + unresolvable next_agent REFUSES, head stays idle, never writes next_agent=null (AC-DRS-NULL-LANE-REFUSE).\nAC-4 (addendum) DONE, RE-AUDITED LIVE (not trusting the 3 names in this row's own note): all 8 live DRS-stamped ready[] rows re-resolved via effective_next_agent($detail_items) on 2026-08-25T22:30Z — dispatch_lane value UNCHANGED for all 8 (diff=0; the 3 \"mismatches\" the note names compare against raw board .next_agent, which for those 3 rows was edited post-promote WITHOUT an updated_at bump, so effective_next_agent's own 2026-08-25 recency-compare correctly falls back to detail, matching dispatch_lane already). Stamped dispatch_lane_reresolved_at/_by on all 8 for audit trail. Applied via orch-apply.sh, bun scripts/orch-validate.mjs PASS pre-write.\nRESIDUAL (flagged, NOT this row's scope, needs architect/PO adjudication): 3 rows' board next_agent disagrees with resolved dispatch_lane because the board edit didn't bump updated_at — FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (board=pm vs resolved=architect), FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN (board=developer vs resolved=architect), FIX-BCTC-BANK-SUMMARY-MAPPING (board=architect vs resolved=ba). Which side is actually correct is a content call, not a code defect — needs a human/architect decision, not folded into this fix.\nSCOPE WIDENING: identical unguarded-cached-dispatch_lane defect found + fixed in the SAME commit in scripts/devteam-backlog-claim-supervised-lane-sweep.jq's PRIMARY path (uses resolved_dispatch_lane, not bare effective_next_agent, per that sweep's own promote-time resolver contract) — cross-ref feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head.\nORDERING (2nd, separable defect): FIXED in the same commit for BOTH scripts (sort_by([priority_rank, idx]) among stamped candidates) rather than filed separately — small change to the same selection expression, live-reproduced regression fixtures both PASS (AC-DRS-PRIORITY-ORDER, AC-SLS-PRIMARY-PRIORITY-ORDER). Live P0 FIX-JOURNALGUARD-ALERT-TRANSPORT-RUNS-ON-THE-PLANE-IT-MONITORS was starved behind an 11-day-old stamp before this fix; now resolves ahead of it by priority_rank.\nTEST EVIDENCE: scripts/audits/devteam-dispatch-gate-satisfiability.sh 121 PASS / 2 FAIL both before and after (pre-existing FAIL = \"SLS gate ... SLS claims a row\", reproduces byte-identical against pre-fix HEAD copies of both claim scripts — live-board-drift artifact, zero live SLS-eligible backlog rows right now, unrelated to this fix). All 8 new isolated regression fixtures (AC-1/AC-2/AC-3 x2 scripts + ordering x2 scripts) PASS.",
-        "drain_source_lane": "review"
-      },
-      {
-        "id": "OPS-MCPSERVER-IMAGE-PREDATES-REAPER-FIX-9-COMMITS-13H-STALE",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "ops",
-        "next_agent": "qa",
-        "supervised": false,
-        "baseline_pass": true,
-        "dedup_key": "ops-rebuild:mcp-server|image-predates-0f6891872",
-        "files": [
-          "apps/mcp-server/",
-          "docker-compose.yml"
-        ],
-        "title": "mcp-server container is running an image built 2026-08-24T12:41:40Z — 9 landed apps/mcp-server commits behind, INCLUDING 0f6891872 (reaper stops orphan-minting TTL-expired locks owned by a live presence-registered session), whose own defect then fired live 4h38m after the fix was on main",
-        "created_at": "2026-08-25T07:32:38Z",
-        "created_by": "po/triage-20260825T073238Z",
-        "updated_at": "2026-08-26T00:17:45Z",
-        "updated_by": "ops-agent-036ceaf1",
-        "status_note": "PO RAW-VERIFIED THIS TICK, not taken from the signal. `docker image inspect` on the running container's image => Created=2026-08-24T12:41:40.992744683Z. `git log --since=2026-08-24T12:41:49Z -- apps/mcp-server/` => 9 commits, and `git merge-base --is-ancestor 0f6891872 HEAD` => true. 0f6891872 landed 2026-08-25 03:54:59 +0200 (= 01:54:59Z), so the running code is ~13h behind on that fix specifically. Corroborates system-auditor signal_feedback 03:56:03Z ('mcp-server running 13h older code than latest verified fix (commit 0f6891872)') — WARN, but the premise is exact. WHY P0 AND NOT ROUTINE DRIFT: at 06:33:55Z today — 63 seconds after the Docker daemon returned from the 05:31-06:45Z outage — the server-reaper minted orphan-signal:task:TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY against a DONE_VERIFIED, cold-archived task whose lock had expired on TTL only because the holder could not reach the gateway to heartbeat. That is the exact shape 0f6891872 exists to prevent, and it fired because the fix is on main but not in the running image. CAUSAL CLAIM IS BOUNDED, DO NOT OVERSTATE: the un-deployed fix is a NECESSARY condition; whether it is SUFFICIENT depends on whether session 036ceaf1 was presence-registered at 06:33:55Z (presence registration is opt-in). The implementer must check that before claiming the rebuild closes the incident. Evidence doc: docs/handoffs/2026-08-25-orphan-adoption-terminal-guard-live-reproduction.md. AC-1: rebuild + redeploy mcp-server ONLY (never `down && up` — that destroys peer containers, see feedback_rebuild_recreate_destroys_peers) and verify the new image ID differs from sha256:e6942e6304996da1cfb8e44923a606ecde6ca227a1f262856437e6dfc9ab7389. AC-2: confirm the deployed build contains 0f6891872. AC-3: report whether the reaper still mints orphan-signals for live-presence sessions after the deploy. RELATED, SAME CLASS, DIFFERENT SERVICE — do not fold: OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND, UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT. Three services now measured running pre-fix images; if a fourth appears, mint the systemic 'no deploy gate after a verified fix lands' row rather than a fourth per-service row.",
-        "claimed_at": "2026-08-26T00:17:44Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
         "drain_source_lane": "review"
       },
       {
