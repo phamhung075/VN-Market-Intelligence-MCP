@@ -1,45 +1,5 @@
 # PO Notebook
 
-## 2026-08-26T12:28Z — 1 envelope cleared, 0 mints, 2 folds, 1 duplicate found, 1 prose migration
-
-Journal: `docs/agent-memory/decisions/triage-20260826T1228Z-po.md`. **Inbox 1→0 · 0 mints · 2 folds.**
-ONE `orch-apply` pipe after a first attempt was hard-rejected by the prose-ceiling gate. `.head` never
-written — a peer flipped it to idle at 12:26Z mid-tick and my write preserved that. Every transform
-selects BY ID.
-
-### 1. The caller said "no tracked row" for `calendar_status` — there was one
-`UC-CDC-P1` (backlog, BLOCKED) is exactly this defect and *I had already folded it at 03:48Z today*.
-A keyword grep would have missed it; the path-resolved lane scan found it. **Do not accept a caller's
-"no row located" as a dedup result** — it is an input to the scan, never a substitute for one.
-
-### 2. My own 03:48Z fold on that row rests on a FALSE premise, now corrected
-It said the wrong value is "non-binding" because `pressure-read.md` Step 4.3 is a SUPERSEDED no-op. But
-Step 4.3's own banner says the logic MOVED into `cadence-policy.js` + `cadence-policy.json`, whose 29
-rules all branch on `calendar_status`. **A SUPERSEDED banner names the new owner — read it before
-concluding "no consumer".** Consumer-ness moved, it did not vanish.
-
-### 3. …but the blast radius is SMALL, and measuring it is what kept a row out of `ready[]`
-`cowork-match-slots.js:328` makes cron "always the first gate" and the adaptive loop iterates only
-cron-matched slots, so cadence can ONLY throttle DOWN, never speed up. 3 of 4 policies are cron-confined
-or `_cron_fallback`. Real cost ≈ **6 avoidable spawns/day** on two gatherer slots (git history of
-`cowork-schedule.json`: `news-scout-offhours` fired 6x/day on 08-25 and 08-26, exactly its 240-min cron).
-That does NOT outrank a 114-deep starving `ready[]` → folded, did not mint. The alarm was real; the
-magnitude was 1/10th of what the envelope's framing implied.
-
-### 4. Found a duplicate the 2026-08-24 mint missed
-`FIX-CYCLE-SNAPSHOT-...` (ready, P0, next_agent=architect) duplicates `UC-SDF-P2` (ready, P1,
-next_agent=developer) — same defect, and UC-SDF-P2 has a BA spec **and an architect brief delivered at
-10:28Z TODAY** carrying the identical fix shape. The P0 row would have burned a DRS dispatch redoing it.
-Cross-linked + warned inline; did NOT touch `next_agent`/`dispatch_lane` (DRS' fields, 2 live agents).
-
-### Carry-over
-- Prior carry-over's prescription WORKS: `FIX-CYCLE-SNAPSHOT-...` hit the same 12000B wall (11464→14658B).
-  Fix = move prose to `detail_ref` + archive the old `status_note` VERBATIM in the cold file. Row now 9.8KB.
-  `FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-...` at 11738B still needs the same treatment.
-- **Merge decision open for the caller:** re-point or close `FIX-CYCLE-SNAPSHOT-...` into `UC-SDF-P2` unit 1.
-- `SESSION_STATUSES` has no member for "trading day, session closed" — the enum, not the wiring, is the
-  real `calendar_status` defect, and no row owns it. Recorded on UC-CDC-P1 §(d) for whenever it unblocks.
-
 ## 2026-08-26T15:08Z — SECONDARY-Drain sign-off (1 row) + inbox 5→0 (3 folds, 2 DEFER), 1 mint
 
 Journal: `docs/agent-memory/decisions/triage-20260826T1508Z-po.md`. **DONE_VERIFIED 1 · mint 1 · inbox 5→0
@@ -118,3 +78,58 @@ container id each loop → will silently follow a rebuild into the same CSV). Fr
   measured burst to explain: 1.76 GiB rest → 99.90% of cap under one ordinary concurrent workload.
 - Permanent, invisible to every picker: pdf-extractor rows must not run 02:00–08:59Z weekdays. No dispatch gate
   reads prose. Tracked at `FIX-PDFX-MARKET-HOURS-GUARD-ONLY-ON-PEK-EXTRACT-FOUR-OCR-ROUTES-UNGUARDED`.
+
+## 2026-08-26T18:08Z — inbox 10→0, 7 folds, 1 mint, 2 cancels, 2 rulings, WIP slot freed
+
+Self-read inbox matched the caller copy exactly (same 10 ids). Pipeline-B dashboard: 0 NEW `to=po`.
+
+**Folds (7).** CCATO SHB+VIX → `FIX-CCATO-NULLMARKER-SET-INCOMPLETE-…`, raised P2→P1. Not a fabrication and
+not probe-substitution: `compare_financials` returned `current:null`, so both absence-claims were TRUE.
+Mechanism read from source, not inferred — `verdictClassifier.ts` `flattenText()` JSON.stringify()s the object,
+`classifyVerdict()` then only substring-matches 10 prose literals, and `JSON.stringify(null)==="null"" is not one
+of them. Third tool. This makes that row's AC-(2) (structured null discriminator) mandatory rather than optional:
+the marker list *cannot* be extended here — adding "null" would match any response containing the substring.
+Others: HPG `operating_profit=0` (41+ cycles, now disabling ESC-4) · DXG (45+ cycles, an AVOID verdict now rests
+on a substituted EY input) · ESC-1 tool-grant (4/4 of this tick's cycles — the gate is inert, not degraded) ·
+cycle-snapshot (2nd+3rd consecutive, 16:00Z was predicted then observed) · janitor dead-writer premise.
+
+**Mint (1).** `FIX-COWORK-MUTEX-DROPPED-SLOTS-DISCARDED-BY-FINISH-META-DIVERGES-FROM-SLOTS` (P2, backlog).
+The originating envelope's own hypothesis was WRONG and I refuted it before minting: the dropped
+`market-watcher-offhours` slot was removed BY DESIGN — `cowork-schedule.json` declares `market-watcher-eod`
+with `supersedes:["market-watcher-offhours"]`, owning brief 2026-08-14. No fire was lost. The real defect is
+that `finish()` keeps only the `*_mutex_applied` booleans and discards both mutexes' exact `dropped[]` lists,
+while `due_reasons`/`cadence_minutes` are built PRE-mutex and `slots[]` is POST-mutex. Cost is measured: one
+full cowork tick spent reaching a false mechanism because the right answer was computed and thrown away.
+
+**Cancels (2), not in the inbox — surfaced by verifying the janitor envelope's premise.** The premise was TRUE
+(writer active: 15 files, newest written 14:58Z today, commits 08-08→08-26). That exposed
+`CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-…` sitting BACKLOG/owner=developer/next_agent=developer —
+fully dispatchable — instructing permanent deletion of a doc family written to daily, on a premise its own
+sibling had been RETRACTED for 5 hours earlier the same day. Both cancelled to `archive[]`, `do_not_reopen`.
+
+**Rulings (2).** (a) dev-team's HIGH → folded onto `FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION` with the
+scope WIDENED: the 08-23 incident's carrier was `status_note`; this one's is a bespoke key with `status_note`
+NULL, so a fix built literally against `status_note` would pass its own AC and still miss it. Exposure is 4
+rows, not 1. New second-order finding: `po-board-dedup-search.sh` shares the blindness — it prints NO MATCH
+for `po_consolidation_ruling_20260728` while jq finds 4 non-terminal rows carrying it. (b) The stranded
+`in_progress[]` row: block is VALID (`TASK-COWORK-MUTEX-001` is live at review[10]) so NOT cleared, but the
+LANE was wrong → moved to backlog[] BLOCKED, freeing the board's only WIP slot, and `depends_on` ADDED because
+the gates read `depends_on` while `blocked_by` is read by NO predicate in the repo.
+
+**Verified, not inherited:** subsumed-by epic exists (backlog[208], BACKLOG) — my first jq said otherwise and
+had a precedence bug; I re-ran before trusting it. AC-7 sampler PID 86980 still alive at 12h54m, 54 min past
+its window, last CSV row 18:05:24Z.
+
+### Carry-over
+- **BATCH returned: PDFX UNBLOCK (ops) + UC-SDF-P2 (developer).** I RATIFY the 17:34Z po→ops re-route — AC-1 is
+  a rebuild and infra is outside dev-pdf-extractor charter. Ops MUST kill PID 86980 and snapshot the 157-row
+  CSV BEFORE AC-1: the loop re-resolves the container id, so it will follow the rebuild into the new container
+  and contaminate the pre/post comparison AC-4/AC-6 depend on.
+- **UC-SDF-P2 and `FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-…` are one root cause in two ready[] rows.**
+  Reconcile or subsume before implementing. Archive checked by SUBJECT: no re-ship.
+- **Row prose ceiling is now a triage blocker, not a nuisance.** 4 rows refused new evidence this tick (HPG 16B
+  headroom, UC-SDF-P2 63B, the mutex row 20197B). I moved 4 fields verbatim to the decision journal rather than
+  edit anyone's evidence, but rows that cannot receive corroboration silently stop accumulating it.
+- Supervised-goahead: 6 candidates lack a `po_goahead_*` stamp (2 live: `FIX-RAG-COMPACTION-DISK-AMPLIFICATION`
+  review/next_agent=po, `FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58` done/next_agent=po). NOT stamped — each needs
+  a substantive read and blind-stamping would be a fabricated go-ahead. Next tick.
