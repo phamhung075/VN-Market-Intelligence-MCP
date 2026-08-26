@@ -19768,6 +19768,32 @@
           "observed_at": "2026-08-26T14:21:45Z"
         }
       }
+    },
+    {
+      "id": "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
+      "type": "FIX",
+      "status": "DONE_VERIFIED",
+      "priority": "P3",
+      "size": "S",
+      "zone": "cross-service/",
+      "title": "notebook-uuid-provenance guard has sat in default mode=warn since 2026-08-05 — it fires, escalates to PO's inbox, and the UUID commits anyway: session 632721c2-... is live in HEAD across 3 notebooks (agent-father.md, dev-team.md, qa.md). Promote to reject, but scrub BEFORE flipping or the flip hard-blocks those 3 agents' next notebook commit",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
+      "updated_at": "2026-08-26T15:08:06Z",
+      "po_fold_20260824T2258Z": "FOLD 2x bug-escalation, 4th notebook. docs/agent-memory/notebooks/tran-ngoc-bau.md heading '## c134 - 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)' embeds a full session UUID; the guard fired twice, mode=warn, and the commit proceeded — exactly this row's thesis, now at HEAD on a 4th notebook. This row is in review[]: whoever signs it off should flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject as part of the close, because warn-mode has now demonstrably failed to prevent the leak it detects.",
+      "updated_by": "po (secondary-drain-signoff-20260826T1500Z)",
+      "secondary_claimed_at": "2026-08-26T14:48:02Z",
+      "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+      "secondary_dispatch_target": "po",
+      "reviewed_at": "2026-08-26T15:08:05Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "scripts/audits/verify-notebook-uuid-provenance-gate.sh",
+          "args": "default (last 8 commits, all 59 tracked notebooks under docs/agent-memory/notebooks/)",
+          "live_value_observed": "agent-father.md/dev-team.md/qa.md: 0 RULE1 hits each (AC-1 scrub holds at current HEAD). Fleet-wide: 10 RULE1 hits total, ALL on docs/agent-memory/notebooks/tran-ngoc-bau.md (headings c125/c126/c130/c132/c132-peer/c133/c134/c135/c136), including its single most recent commit 967aea78fabb (c136, 2026-08-25T20:13-20:32Z) -- confirms AC-3 (flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE default to reject) is still unsafe: an active, unscoped producer exists as of yesterday.",
+          "observed_at": "2026-08-26T15:08:05Z"
+        }
+      },
+      "po_review_note": "PO SIGN-OFF 2026-08-26T15:08:05Z (Review-Lane SECONDARY-Drain). Independently re-verified, not narrated from prose: (1) AC-1 scrub HOLDS at current HEAD -- bash scripts/audits/verify-notebook-uuid-provenance-gate.sh (default, last 8 commits) shows ZERO RULE1 hits on all 3 named files (agent-father.md, dev-team.md, qa.md), confirming developer's 2026-08-22 review_note is still true today, not stale. (2) AC-2 validator already run by developer; re-confirmed fleet-wide this tick: 59 tracked notebooks scanned, 10 RULE1 hits total, ALL on ONE file -- docs/agent-memory/notebooks/tran-ngoc-bau.md -- zero on this row's own scrub targets. (3) AC-3 (flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE default warn->reject) CONFIRMED still unsafe: the fresh scan's tran-ngoc-bau.md hits include its MOST RECENT commit (967aea78fabb, heading c136 2026-08-25T20:13-20:32Z, this session=7a47f7c6-...) -- the raw-UUID-in-heading convention is active as of yesterday, not stale history. Flipping the fleet-wide default today would immediately hard-block tran-ngoc-bau's very next notebook commit -- exactly the fleet-memory-stranding failure this row's own AC-1 STRICT ORDERING section exists to prevent, against a 4th agent outside this row's files[] scope. THIS OVERRULES po_fold_20260824T2258Z's 'flip anyway' recommendation, written before this fresh verification and reading the recurrence as proof warn-mode 'failed' rather than as proof AC-3's own precondition (no other active unscoped producer) is not yet met. DISPOSITION: DONE_VERIFIED for this row's own scoped deliverable (3-file scrub + validator run, both independently confirmed). AC-3 execution is not this row's to finish -- gated on new row FIX-TNB-NOTEBOOK-UUID-HEADING-ACTIVE-PRODUCER-SCRUB (backlog[], next_agent=agent-father, minted this tick), per the developer's own AC-4 request to route the scope decision to PO rather than silently widen or force the flip. GIT_NOTEBOOK_UUID_PROVENANCE_MODE left at default (warn) -- NOT flipped."
     }
   ],
   "closed_sprints": [
@@ -32144,6 +32170,20 @@
       "provenance": "detector",
       "audit_cycle_tag": "cron:auditor-t2:2026-08-25T12:00Z",
       "dedup_key": "data_stale:bctc-discover:B-13"
+    },
+    {
+      "id": "sys-20260825T150107-0332",
+      "ts": "2026-08-25T15:01:07Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 mem_creep pre-gate ephemeral gap recurred: ocr-bench-paddleocr-run2(97.64%) already exited by probe time",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-25T14:30Z",
+      "dedup_key": "detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope"
     }
   ],
   "backlog_detail": [],

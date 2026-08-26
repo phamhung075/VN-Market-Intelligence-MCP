@@ -132,20 +132,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260825T150107-0332",
-        "ts": "2026-08-25T15:01:07Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 mem_creep pre-gate ephemeral gap recurred: ocr-bench-paddleocr-run2(97.64%) already exited by probe time",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-25T14:30Z",
-        "dedup_key": "detector_defect:auditor-tier1-probe:mem_creep_ephemeral_container_scope"
-      },
-      {
         "id": "rtr-20260825T1540-drainflag",
         "ts": "2026-08-25T15:37:56Z",
         "from": "dev-team",
@@ -6121,8 +6107,8 @@
         "next_agent": "dev-mcp-server",
         "owner": "dev-mcp-server",
         "po_correction_20260730": "PREMISE REFUTED — do NOT build the capability described in the original title; it already shipped.\n\nREAD AT SOURCE: process_telegram_report (interface/mcp/tools/briefings/telegramReportTools.ts:160-242) takes resolution: z.enum([\"none\",\"fixed\",\"wontfix\",\"duplicate\",\"monitoring\"]). \"monitoring\" IS the dispositioned-but-deferred ack this row asks for; \"duplicate\" IS the tracked-elsewhere ack. Step 4 calls markProcessed(db,id) UNCONDITIONALLY, setting status=processed. read_telegram_reports filters WHERE status='new' (telegramReportStore.ts:108); listUnresolvedReports filters \"resolution NOT IN ('fixed','wontfix','duplicate') AND status != 'processed'\" (:391-401). So ANY process_telegram_report call drops the row out of BOTH polls.\n\nPROVEN END-TO-END, not inferred: PO acked report 4039, re-read list_unresolved_reports -> 179 dropped to 178 with 4039 absent; then acked the remaining 178 and both planes returned empty. 179 -> 0 in a single pass. The queue was never unclearable — it was uncleared.\n\nRETARGETED SCOPE (cheap, and this is the actual root cause):\n(1) Fix docs/agents/tools/list/process_telegram_report.md — it documents the parameter as `delete_message` (actual: `delete_telegram_message`) and does not mention `resolution` AT ALL. That doc drift is precisely why 179 reports sat at resolution=none: every agent reading the tool doc literally could not see the disposition values.\n(2) Wire an explicit ack step into whichever flow reads this queue (dev-team Step 4.1 / the PO report-queue pass) carrying the resolution decision table: fixed = the fix shipped; duplicate = root cause already has a board row; monitoring = real and tracked but not yet fixed; wontfix = detector/actuator mismatch that will never be actioned.\n(3) OPTIONAL follow-on ONLY if (1)+(2) prove insufficient: a report -> backlog-row link field. Do not start at (3).\n\nOBSERVED SIDE EFFECT — benign, documented here so nobody re-files it as a bug: delete_success=false for every Telegram message older than ~48h (bot deletion window), and delete_success=null when message_id=0 (dashboard-routed rows). The SQLite row is marked processed in all three cases. The DB is authoritative; the Telegram deletion is best-effort.\n",
-        "updated_at": "2026-08-26T02:34:23Z",
-        "updated_by": "po/report-queue-triage-20260805T1815Z",
+        "updated_at": "2026-08-26T15:08:06Z",
+        "updated_by": "po/triage-20260826T1500Z",
         "po_second_root_cause_2026-07-31": "SECOND ROOT CAUSE FOUND + RE-ESCALATED P2->P1 2026-07-31T00:37Z by po (daily triage). The 07-30 retarget blamed the tool doc alone. That is necessary but NOT sufficient, and the sufficiency gap is why this recurred within 24h. REFUTATION OF THE REMAINING PREMISE: this row still implied PO lacks/does not know the ack capability. FALSE, re-proven live this tick -- po called process_telegram_report(resolution=...,delete_telegram_message=true) 9/9 times successfully and took BOTH planes to empty (read_telegram_reports(status=new) => \"Khong co bao cao moi\", list_unresolved_reports() => []). Dispositions used: 4221/4223 wontfix (Polymarket deliberately retired, enabled:false verified live at apps/mcp-server/mcp.config.json:96), 4222/4228 fixed (314e70718), 4224/4226 duplicate (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT owns it), 4225 fixed, 4227 fixed (e370f5f51), 4229 monitoring (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE owns it). THE REAL DURABLE CAUSE (grep-verified this tick, not inferred): docs/agents/po/flow/telegram-reports.md is a 131-line ORPHANED SUB-FLOW. It already contains the correct drain step -- Step 2f `process_telegram_report(id=..., delete_telegram_message=true)` -- and has since it was written. But NOTHING ROUTES TO IT: `grep -rn \"telegram-reports\" docs/agents/po/ .claude/` returns exactly ONE hit, the files own size-justification header comment. po/flow/main.md has a 5-row Dispatch table and a Branch-Workflows table and telegram-reports.md appears in NEITHER; the only nod to it is No-Task Guard bullet 2 (main.md:105) which says `read_telegram_reports(status=\"new\")` -- any user requests? -> handle first, naming the READ but never the ACK and never pointing at the sub-flow that performs it. Net effect: the queue is drained ONLY when a human or the router explicitly tells PO to drain it (07-30 by hand, 07-31 by an explicit router instruction in the spawn prompt). On an ordinary unattended cron tick PO reads the reports, triages them into its BATCH, and leaves every row status=new/resolution=none -- so the same reports resurface every single tick forever. This is the 5th instance of the documented-consumer-with-no-documented-producer class already catalogued in po/flow/supervised-goahead.md and po/flow/manual-dispatch-sweep.md headers, except here it is inverted: the PRODUCER (telegram-reports.md) exists and is correct, and the ROUTE to it is what is missing. AC-1 (tool doc, dev-mcp-server, apps/mcp-server zone): docs/agents/tools/list/process_telegram_report.md still documents param `delete_message` (line 16, line 74) which is NOT the real param name, and still omits `resolution` entirely -- re-verified live this tick, unchanged since the 07-30 retarget. Document all 5 enum values none|fixed|wontfix|duplicate|monitoring and rename to delete_telegram_message. AC-2 (the fix that actually stops the recurrence): add telegram-reports.md to po/flow/main.md so an unattended tick reaches it -- one row in the Dispatch table and/or the Branch Workflows table, plus make No-Task Guard bullet 2 route there instead of dead-ending at \"handle first\". Pointer-line edit only, no agent-definition/factory work. AC-3: after both, a cron PO tick with >=1 status=new report must leave 0 rows in BOTH read_telegram_reports(status=new) AND list_unresolved_reports() -- assert on both planes, not one (single-plane assertion is how the 07-30 fix looked complete while the route stayed dead).",
         "plan_only": true,
         "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
@@ -17501,10 +17487,10 @@
         "depends": [],
         "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "updated_at": "2026-08-26T06:51:41Z",
+        "updated_at": "2026-08-26T15:08:06Z",
         "next_agent": "dev-pdf-extractor",
         "status_note": "UNBLOCKED + NARROWED + RE-ROUTED by PO 2026-08-26T01:16Z. Root cause is settled at source: ocr_executor = ProcessPoolExecutor(max_workers=1) at main.py:154 has NO max_tasks_per_child, so its single child is never recycled for the container life, while ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child and BOTH malloc_trim(0) mitigations are wired only into PID1 (pek_run_helper.py:133, routes_extract.py:112) — the executor child has zero mitigation. PRIMARY REMEDY = worker recycling (max_tasks_per_child; Python 3.12.3 verified in-container). Cap raise REJECTED. Call budget DEMOTED to safety-belt. architect: small bounded design call only (dedicated recycled executor vs tuned N, because the same executor also serves tesseract), then hand to dev-pdf-extractor. Burst/extraction VERIFICATION is market-hours gated to >=09:00Z weekdays; design+impl are not. FULL RULING + the four retired/superseded PO fields (po_burst_measurement_20260824T0722Z, po_ac4_bar_ruling_20260824T0850Z incl. the B1-B4 bar definitions, po_goahead_20260808T000430, po_ruling_20260824) are in detail_ref under key po_adjudication_20260826T0116Z — moved to cold store, NOT deleted.",
-        "updated_by": "po/triage-20260826T0650Z",
+        "updated_by": "po (secondary-drain-signoff-20260826T1500Z)",
         "files": [
           "apps/pdf-extractor/main.py",
           "apps/pdf-extractor/infrastructure/ocr_worker.py",
@@ -17525,7 +17511,8 @@
         "po_gate_20260826T0536Z": "STAYS BLOCKED, gate re-encoded. Remaining AC-2/AC-3/AC-6 are memory MEASUREMENT ACs that require RUNNING pdf-extractor, barred 02:00-08:59Z weekdays. The old blocked_by AC8-MARKET-HOURS-GATE-UNTIL-0900Z-WEEKDAY was a clock condition wearing a task id and could never discharge. Real gate now in next_recheck_not_before. UNBLOCK ACTION at/after 2026-08-26T09:00:00Z: set status=BACKLOG, leave next_agent=dev-pdf-extractor. Also corrects po_sequencing_20260826T0116Z, which narrated this row as 'ready[0], next_agent=architect' — it was never moved and architect finished its design pass at 01:53Z; the row is backlog[]/dev-pdf-extractor.",
         "router_redeploy_debt_20260826T0600Z": "Router 2026-08-26T05:55Z — SECOND redeploy debt. MOVED TO COLD 2026-08-26T06:04Z (full text at detail_ref, same key). Operative residue, PO-re-verified in container 417febec1a03: 1db5f9f81 is NOT in the running image (main.py has ProcessPoolExecutor(max_workers=1) with no max_tasks_per_child; BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT absent; ocr_worker.py malloc_trim 0 hits vs 5 in repo). NOT an AC-2 regression — pek_run_helper.py 7 hits and routes_extract.py 4 hits both still present. Image sha256:4e431bca built 2026-08-25T23:13:41Z, container started 00:33:39Z. Redeploy is owned by ready[] UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT, gated to after 2026-08-26T17:11Z (AC-7 sampler) and outside 02:00-08:59Z. The brief attached to this field about AC-0 being stale is SUPERSEDED — see po_ruling_20260826T0604Z_ac0_not_stale.",
         "po_ruling_20260826T0604Z_ac0_not_stale": "PO RULING 2026-08-26T06:04Z — AC-0 IS NOT STALE; the reopen premise is wrong on MECHANISM IDENTITY. FULL ruling in detail_ref under key po_ruling_20260826T0604Z_ac0_not_stale. Headline, all re-verified first-hand: 1db5f9f81 touches exactly main.py, infrastructure/ocr_worker.py and one test file — NOT infrastructure/ocr_backends.py, where AutoFallbackOcrBackend (the thing AC-0 measured) lives. Two DIFFERENT rescue mechanisms exist: A = AutoFallbackOcrBackend, per table REGION, ink-coverage discriminator, PID-1 paddle_table, gated by OCR_TEXT_BACKEND=auto (AC-0's subject, unchanged); B = ocr_pages_worker, per PAGE, LOW_TESSERACT_PAGE_CHARS=30 discriminator, pool-child _paddle_ocr_worker_instance, NOT gated by OCR_TEXT_BACKEND (grep -c = 0) (1db5f9f81's subject). All three cited changes land on B only; A stays unrecycled, UNBUDGETED and without per-fire trim. Also: AC-0 ran ENTIRELY in PID 1 with both PID-1 trim sites already live (c3fd44766 2026-08-15, 6f3577b9f 2026-08-23, sweep 2026-08-25T18:30Z) and still logged 847 memory.max events — the \"PID-1-only trim\" premise is inverted. And budget 4 does not clear this row's own <=80%-of-cap bar: AC-0 measured N=3 at 90.11%, so the bar breaks between N=1 (56.42%) and N=3, not at N=6. VERDICT: lead stays DEAD; the 08-25T17:52Z reopen clause is a conjunctive AND whose leg (ii) (a recall proxy separating min(legit) > max(broken) on a frozen n>=8 sample) is structurally falsified and untouched by any memory work. BINDING HERE: AC-3's fire-count sweep MUST measure mechanism B's own call site and MUST NOT import AC-0's mechanism-A numbers; the AC-4 default of 4 currently rests on no measurement of the path it governs. CORRECTION to a premise previously treated as closed: lang=\"vi\" is NOT dormant in production — ocr_worker.py:266 builds PaddleOCR(lang=\"vi\") with no OCR_TEXT_BACKEND gate and fires on any page under 30 Tesseract chars. Split out as DECIDE-PDFX-OCRWORKER-PAGE-RESCUE-LIVE-UNMEASURED-QUALITY-PATH.",
-        "po_unfreeze_20260826T0650Z": "DECISION C — UNFROZEN EARLY, SOURCE-ONLY. The root cause is already settled at source by the 01:16Z adjudication (main.py:154 ProcessPoolExecutor(max_workers=1) has no max_tasks_per_child, so the child caching PaddleOCR is immortal, and both shipped malloc_trim mitigations are wired only into PID 1). Writing that fix needs a text editor, not a container, so the 09:00Z market-hours gate never applied to the work this row actually contains. BINDING SUBSTITUTE CONSTRAINT: the fix may be written and unit-tested now, but the container MUST NOT be rebuilt, restarted or recreated before 2026-08-26T17:11Z — container 417febec1a03 is carrying the AC-7 sampler series to its 12h close and that series has already been destroyed four times. Deploy folds into the post-17:11Z window."
+        "po_unfreeze_20260826T0650Z": "DECISION C — UNFROZEN EARLY, SOURCE-ONLY. The root cause is already settled at source by the 01:16Z adjudication (main.py:154 ProcessPoolExecutor(max_workers=1) has no max_tasks_per_child, so the child caching PaddleOCR is immortal, and both shipped malloc_trim mitigations are wired only into PID 1). Writing that fix needs a text editor, not a container, so the 09:00Z market-hours gate never applied to the work this row actually contains. BINDING SUBSTITUTE CONSTRAINT: the fix may be written and unit-tested now, but the container MUST NOT be rebuilt, restarted or recreated before 2026-08-26T17:11Z — container 417febec1a03 is carrying the AC-7 sampler series to its 12h close and that series has already been destroyed four times. Deploy folds into the post-17:11Z window.",
+        "po_ruling_20260826T1500Z_pdfx_a30_capacity": "3 rulings on envelope ab2cb52e... (audit_finding, 'A-30 dedup suppression OVERTURNED'). VERIFIED LIVE, not trusted from envelope: tier1-last-trigger.json FAILURE mem_creep=95.56% @14:53:18Z; spawn-debounce.json shows correctly DEBOUNCED (verdict stayed RED, last_healthy.json frozen, not silenced -- AC-3 of the debounce row holding). Fresh docker stats 5.5min later: 76.41%, tied to a 61-page extract job (report d83e8b30..., DONE 14:53:11Z, 7s before the fire) -- BURSTY/job-correlated, not monotonic; refines but does not fully accept the 'still climbing' framing for THIS fire. R1 (pull ack): no acked_memory[] entry exists for pdf-extractor -- refused 4x already, reaffirmed not reversed. R2 (cap): HOLD plan. Cap raise stays REJECTED (13.5GiB/7.75GiB host overcommit). Real fix (1db5f9f81, worker-recycling) code-complete+tested, confirmed NOT deployed to running image; deploy stays gated post-2026-08-26T17:11Z per UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT -- same anchor as this dispatch's hard constraint, no early deploy authorized. R3 (kernel probe): AUTHORIZED (same class as the 2026-08-24T07:22Z precedent) but MY OWN attempt this tick failed -- `docker run --privileged --pid=host justincormack/nsenter1 -- dmesg` returned execve:ENOENT on every target incl. /bin/ls -- sandbox limitation, not design flaw. Deferred to a host-capable session: read CONSTRAINT_MEMCG/oom-kill lines after 2026-08-26T00:33:39Z (this container's StartedAt)."
       },
       {
         "id": "FIX-GUARD-SIGNAL-TYPE-COVERAGE-PIPELINEA-CI-BLIND-AND-BROAD-BRIDGE-GAP",
@@ -18099,6 +18086,30 @@
         "created_by": "architect (FIX-MANUALDISPATCH-BLIND-TO-READY-ROWS-OFF-ALLOWLIST-WITHOUT-XOR-FLAG follow-up)",
         "status_note": "Split off FIX-MANUALDISPATCH-BLIND-TO-READY-ROWS-OFF-ALLOWLIST-WITHOUT-XOR-FLAG (archived DONE -- its own premise was falsified, see docs/architecture-briefs/2026-08-26-fix-manualdispatch-ready-lane-off-allowlist-hole-already-rlc-covered.md). RLC (scripts/devteam-backlog-claim-ready-lane-consumer.jq) already covers off-allowlist/non-dev-next_agent ready[] rows carrying neither supervised nor plan_only, by design (no allowlist gate) -- but it shares wip_in_progress<2 with BOUNDED-1/SLS/DRS (4 consumers, 2 slots), claims exactly ONE row per turn ordered strictly by [priority_rank, idx], with no anti-starvation aging, against a live ready[] queue of 113 rows (99 at rank 0/1). Live evidence: FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (P1, created 2026-07-14, 43d), FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH / DESIGN-COWORK-FANOUT-T1/T7 (P1, created 2026-07-21, 36d), CHORE-PRUNE-SPRINT-COWORK-GUARANTEED-SLOT-CATCHUP-DECISION-JOURNAL (P3, 2026-08-06, 20d) all RLC-eligible the whole time per their own board fields, still unclaimed. AC-1: recompute the current RLC-eligible ready[] set + its age distribution at dispatch time (do not trust these numbers as still current). AC-2: propose ONE of -- (a) a batch-claim shape mirroring the Incident-Lane Consumers own take_budget (docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md), (b) a dedicated non-shared RLC budget analogous to ILCs INCIDENT_CAP, or (c) a FIFO-aging tiebreak added to the existing [priority_rank, idx] sort -- pick on the evidence, do not force one shape. AC-3: whichever shape is chosen must not weaken the existing sup/plan_only/wrapper/deps/detail-deferred gates (RLCs own exclusion set is correct and untouched by this row). AC-4: regression control proving the fix actually drains aged low-tier rows faster without starving P0/P1 arrivals.",
         "updated_at": "2026-08-26T13:57:06Z"
+      },
+      {
+        "id": "FIX-TNB-NOTEBOOK-UUID-HEADING-ACTIVE-PRODUCER-SCRUB",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-26T15:08:05Z",
+        "created_by": "po (secondary-drain-signoff-20260826T1500Z)",
+        "related": [
+          "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD"
+        ],
+        "dedup_checked": "scripts/po-board-dedup-search.sh + archive grep for tran-ngoc-bau+uuid/heading follow-up: none found. FIX-AGENT-NOTEBOOK-UUID-PROVENANCE (cold/archived parent, off live board) is the only prior UUID-hygiene row and does not name this agent specifically.",
+        "title": "tran-ngoc-bau.md is the ONLY active, unscoped raw-session-UUID-in-heading producer left (10/10 RULE1 hits over its last 8 commits, incl. its most recent, c136 2026-08-25) -- blocks safely flipping GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject fleet-wide",
+        "files": [
+          "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+          "docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md"
+        ],
+        "desc": "MEASURED live 2026-08-26T15:08:05Z via scripts/audits/verify-notebook-uuid-provenance-gate.sh (default, last 8 commits, 59 tracked notebooks): 10 RULE1 (full-UUID-on-heading-line) hits, ALL on tran-ngoc-bau.md, spanning c125/c126/c130/c132/c132-peer/c133/c134/c135/c136 -- including its single most recent commit (967aea78fabb). The convention is NOT instructed anywhere: docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md Step 8 (the only notebook-append instruction this agent has) shows only a '### Quality Audit (HH:MM-HH:MM UTC)' SUB-heading template with no session/UUID field at all -- the '## c<NNN> . <ISO> (slot=tnb-audit; this session=<uuid>; VN-date=...)' TOP heading is an emergent, self-perpetuating habit (each cycle's own prior notebook content is the template the agent imitates against), matching the pre-commit hook's documented exception class ('tran-ngoc-bau's own collision-note pattern') but still a standing violation of .claude/skills/notebook-write/SKILL.md AC-1's 'FORBIDDEN, no exceptions' rule, and the sole remaining blocker on FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE's own AC-3 (fleet-wide default flip warn->reject), whose sign-off this same tick independently re-verified the block is real, not stale.",
+        "ac": "AC-1 scrub the existing raw UUIDs in docs/agent-memory/notebooks/tran-ngoc-bau.md headings -- forward-fix only (no history rewrite, matches the treatment already given to agent-father.md/dev-team.md/qa.md by the parent row), replace with a non-identifying label per SKILL.md AC-1's own convention (e.g. 'the audit session', 'a peer tnb-audit session'). AC-2 add an explicit instruction to docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md Step 8 (agent-definition file -> agent-father's commit zone; PO/developer must not edit it directly) stating the canonical '## c<NNN> . <ISO-timestamp>' heading format (SKILL.md AC-1) and explicitly forbidding a session/coordination UUID in ANY heading. AC-3 after tran-ngoc-bau's next notebook commit post-fix, re-run bash scripts/audits/verify-notebook-uuid-provenance-gate.sh --file docs/agent-memory/notebooks/tran-ngoc-bau.md and confirm 0 RULE1 hits on the new commit. AC-4 only once AC-3 passes, FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE's own AC-3 (flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE default to reject) becomes safely executable -- file that as a fresh follow-up row at that time; do not reopen the DONE_VERIFIED row.",
+        "updated_at": "2026-08-26T15:08:06Z"
       }
     ],
     "closed_sprints": [
@@ -23961,22 +23972,6 @@
         "status_note": "\n[QA] Prerequisite FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE verified DONE_VERIFIED (direct-commit verify, 2026-08-26). Dependency cleared, status restored BLOCKED->REVIEW (its pre-block value), next_agent=developer for the remaining known AC (CARD.md Step-2.4 wiring per this row's own 2026-08-14 QA CHANGES_REQUESTED / po_sequencing_gate_20260814T1952Z -- CARD.md still has 0 Step-2.4 mentions, unaffected by the prerequisite fix)."
       },
       {
-        "id": "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P3",
-        "size": "S",
-        "zone": "cross-service/",
-        "title": "notebook-uuid-provenance guard has sat in default mode=warn since 2026-08-05 — it fires, escalates to PO's inbox, and the UUID commits anyway: session 632721c2-... is live in HEAD across 3 notebooks (agent-father.md, dev-team.md, qa.md). Promote to reject, but scrub BEFORE flipping or the flip hard-blocks those 3 agents' next notebook commit",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
-        "updated_at": "2026-08-26T14:48:03Z",
-        "po_fold_20260824T2258Z": "FOLD 2x bug-escalation, 4th notebook. docs/agent-memory/notebooks/tran-ngoc-bau.md heading '## c134 - 2026-08-24T20:13-20:29Z (slot=tnb-audit; this session=7be6b4cd-057e-419b-a967-4810daf2b646; VN-date=2026-08-25)' embeds a full session UUID; the guard fired twice, mode=warn, and the commit proceeded — exactly this row's thesis, now at HEAD on a 4th notebook. This row is in review[]: whoever signs it off should flip GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject as part of the close, because warn-mode has now demonstrably failed to prevent the leak it detects.",
-        "updated_by": "po",
-        "secondary_claimed_at": "2026-08-26T14:48:02Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
-      },
-      {
         "id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
         "type": "FIX",
         "size": "M",
@@ -24394,15 +24389,16 @@
         "root_cause": "Some commit call-site reachable from the router session still issues a BARE `git commit -m ...` with no `-- <paths>`. 20 warns vs a threshold of 3 means the per-session escalation counter converged to hard-block without the offending call-site ever being identified or fixed - the hook's escalation is working, the remediation loop is not.",
         "acceptance": "AC-1 [QA PASS, scope-narrowed] name the concrete bare-commit call-site(s) reachable from a router/dispatcher session (file:line) — satisfied for the COWORK-TICK class; the other 3 classes are owned by the follow-up rows named in the ruling. AC-2 [QA PASS, same narrowing] convert each to pathspec-scoped form. AC-3 [NARROWED 2026-08-25 by PO — COWORK-TICK CLASS ONLY] over a 24h window anchored at commit e6adc6dfe committer date 2026-08-25T14:59:30Z (earliest closable 2026-08-26T14:59:30Z), PASS requires BOTH: (i) zero BARE fires inside the window whose staged-file list matches the cowork-tick signature (docs/data/cowork-schedule.json and/or docs/signals/cowork-team-*.json), AND (ii) POSITIVE EXERCISE PROOF — at least 2 commits inside the window that touch either of those paths AND are pathspec-scoped, proving telemetry.md Step 6.2 actually ran. Clause (ii) is MANDATORY and NON-WAIVABLE: the class base rate is ~1.3 fires/day (4 fires / 3 days), so clause (i) alone cannot distinguish 'fixed' from 'the path was never exercised'. BARE fires from the system-auditor-notebook, ad-hoc-mega-sweep or misc-agent classes DO NOT fail this AC. AC-4 [QA PASS 2026-08-25T15:49:37Z, independently re-probed in a fresh sandbox repo across all 3 surfaces] the escalation payload names the offending call-site (caller_chain), not only the actor session id.",
         "non_goals": "Not a change to the discriminator itself (verify-commit-sweep-discriminator.sh VERDICT: PASS - the detector is sound).",
-        "updated_at": "2026-08-26T04:10:35Z",
-        "occurrence_count": 32,
+        "updated_at": "2026-08-26T15:08:06Z",
+        "occurrence_count": 33,
         "updated_by": "po (ac3-scope-ruling-20260825T1612Z)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
         "verify_note": "[QA/verify-committed 2026-08-25T15:49:37Z] PARTIAL PASS — 3 of 4 ACs verified, AC-3 NOT verifiable yet (24h window only 3.3% elapsed). Commit e6adc6dfe: on main ancestry (git merge-base --is-ancestor = yes), touches 3/3 claimed files.\n\nAC-4 PASS — independently re-verified end-to-end, NOT trusted from the developer's prose. Confirmed the LIVE hook is the fixed one (.git/hooks/pre-commit is a symlink to scripts/git-hooks/pre-commit, byte-identical, caller_chain present 6x). Fresh sandbox repo + a real BARE commit emitted caller_chain= on ALL THREE surfaces: stderr banner, .git/sweep-guard.log line, and the docs/signals/ bug-escalation payload. The chain named both the invoking command line (\"git commit -q -m bare probe\") AND the top-level family identity (\"claude --dangerously-skip-permissions -n detect-loop\") — which is exactly the operator-actionable field this row's AC-4 demanded and the actor session id alone never gave. scripts/git-hooks/pre-commit.test.sh re-run by QA: 15/15 PASS, 0 failed.\n\nAC-1 / AC-2 PASS-WITH-SCOPE-CAVEAT. The cowork-team gap is real and log-corroborated, not merely asserted: BARE fires at 2026-08-24T21:08:29Z and 2026-08-25T00:08:22Z (actor 7a47f7c6) staged exactly [docs/data/cowork-schedule.json, docs/signals/cowork-team-*.json] — precisely the tick artifacts the cowork-team flow tree named no commit step for. The remedy is NOT inert: telemetry.md Step 6.2 delegates to .claude/skills/commit-mutex/SKILL.md, whose Step 2c is itself pathspec-scoped (\"-- <path1> <path2>\"). CAVEAT: this class is only 4 of 59 BARE fires since 2026-08-22 (6.8%). The rest: system-auditor notebook 16/59 (27.1%), ad-hoc mega-sweep n>=20 1/59 (1.7%), misc agent commits 38/59 (64.4%) — all explicitly named-not-fixed by this commit. AC-1's literal wording (\"identify the concrete call-site(s) ... name file:line\") is satisfied only for one class; 93.2% of the live fire population still has no named call-site.\n\nAC-3 PENDING — CANNOT BE CLOSED TODAY, and was not. Window anchor = e6adc6dfe committer date 2026-08-25T14:59:30Z. EARLIEST CLOSABLE: 2026-08-26T14:59:30Z. At QA time (2026-08-25T15:49:37Z) only 0h47m of 24h had elapsed = 3.3%. Zero post-fix BARE fires so far is NOT evidence of anything: across the last 40 fires the MEDIAN inter-fire gap is 0.68h and 48% of historical gaps ALREADY exceed 47 min, so the current silence is the modal outcome under the UNFIXED regime. Base rate for comparison: 14-22 BARE fires/day (08-22: 20, 08-23: 22, 08-24: 14).\n\nAC-3 FORWARD RISK, for whoever re-verifies after 2026-08-26T14:59:30Z: with 93.2% of the fire population unaddressed, AC-3 as literally written (\"zero new BARE fires\") is unlikely to pass on this fix alone. PO ruling needed on whether AC-3 is scoped to the cowork-team class only, or whether the row must widen to cover the system-auditor execution-fidelity class and the ad-hoc mega-sweep class.\n\nOUT OF SCOPE — flagged, NOT absorbed into this row's verdict: scripts/verify-fleet-commit-pathspec.sh is RED (exit 1, 6 FAIL lines), but all 6 were inspected line-by-line and ALL 6 are prose false positives, zero real bare-commit instructions. Two distinct causes. (a) ALLOWLIST LINE-NUMBER DRIFT, 3 sites: docs/agents/developer/flow/main.md allowlisted at :104, prose now at :105; docs/policies/dev-standards.md allowlisted at :805 and :1465, prose now at :1428 and :2204. (b) NEVER-ALLOWLISTED RULE-2.5 prose notes, 3 sites: docs/agents/market-watcher/flow/cycle.md:306, docs/agents/market-watcher/flow/eod.md:106, docs/agents/news-scout/flow/stage-log-notify.md:45 — each sits immediately BELOW its own correctly-pathspec-scoped code fence and says so verbatim (\"The trailing -- <path> ABOVE closes that gap\"), while the script's LOOKAHEAD=10 scans only FORWARD. That script is AC-3 of FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK, a DIFFERENT row — it is NOT a blocker here (this row's AC-1/AC-2 were verified by direct call-site inspection, never by that script), but it is currently unusable as fleet-wide evidence and needs its own fix row (line-anchored allowlist keys are inherently drift-prone; a backward lookbehind window would close cause (b)).\n\nALSO FLAGGED SEPARATELY (not absorbed): system-auditor notebook BARE fires recur despite the already-mandatory pathspec-scoped scripts/auditor-notebook-commit.sh at every call site — 16 fires since 08-22 across 6 actor sessions, latest 2026-08-25T08:01:59Z. Confirmed INTERMITTENT, not deterministic: the post-fix system-auditor notebook commit 0a7d11978 (2026-08-25T15:05:51Z) did NOT fire. Execution-fidelity gap, not a missing script — needs its own row.\n\n\n--- prior note, preserved ---\n[developer/dispatch 2026-08-25] AC-4 done first: scripts/git-hooks/pre-commit now captures a best-effort caller_chain (OS process ancestry + top-level claude -n <family> identity) into the WARN banner/log/signal payload -- verified live in a sandboxed repo, pre-commit.test.sh 15/15 PASS. AC-1/AC-2: exhaustive call-site sweep found every documented commit site already pathspec-scoped except one full gap -- docs/agents/cowork-team/flow/ named NO commit step anywhere for docs/data/cowork-schedule.json or its own telemetry signal despite committing both every ~15min tick. Fixed: telemetry.md Step 6.2 (commit-mutex-guarded, pathspec-scoped) + main.md dispatch-table update. Named, not fixed (broader pattern, separate follow-up recommended): system-auditor notebook BARE fires recur despite an already-mandatory pathspec-scoped script at every call site -- compliance/execution-fidelity gap, not a missing instruction; also a distinct ad hoc git-add-A-style mega-fire class (45-46 files) that already violates an existing rule. AC-3 24h zero-new-BARE window PENDING VERIFICATION (cannot close inside this dispatch). Commit: e6adc6dfe (scripts/git-hooks/pre-commit, docs/agents/cowork-team/flow/main.md, docs/agents/cowork-team/flow/telemetry.md).\n\n[QA re-verify 2026-08-26T04:07:07Z] HOLD — dispatched before qa_not_before=2026-08-26T14:59:30Z (window anchor e6adc6dfe committer 2026-08-25T14:59:30Z; only ~13h/24h elapsed at dispatch time). Per po_ruling_ac3_scope_20260825's own instruction (a Review-Lane pick before that timestamp MUST read qa_not_before first and return HOLD without consuming a redispatch), returning HOLD; redispatch_count NOT bumped (stays 1). Re-confirmed on fresh inspection: AC-1/AC-2/AC-4 still hold (e6adc6dfe on main ancestry; telemetry.md Step 6.2 + pre-commit caller_chain intact; scripts/git-hooks/pre-commit.test.sh 15/15 PASS). AC-3 informational-only spot-check (NOT a verdict, window still open): 0 cowork-tick-signature BARE fires in .git/sweep-guard.log since anchor (3 fires total since anchor, none match cowork-schedule.json/cowork-team-* signature); clause(ii) exercise-proof strong, 32 commits touched docs/data/cowork-schedule.json since anchor, 3 spot-checked are clean 2-file pathspec-scoped diffs. Do NOT re-verify before 2026-08-26T14:59:30Z.",
         "redispatch_count": 1,
         "qa_not_before": "2026-08-26T14:59:30Z",
         "po_ruling_ac3_scope_20260825": "RULING: NARROW AC-3 TO THE COWORK-TICK CLASS. DO NOT WIDEN THIS ROW. ***FULL RULING (rationale, the three rejected alternatives, the exact narrowed AC-3, and the three follow-up rows) IS IN THE COLD STORE: docs/data/orch/archive/backlog-detail.json .items[] id=FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS field po_ruling_ac3_scope_20260825 — READ IT BEFORE RE-VERIFYING.*** SUMMARY: QA's classification is accepted in full — of 59 BARE fires since 2026-08-22, e6adc6dfe closes the cowork-tick class ONLY (4/59 = 6.8%); system-auditor notebook 16/59 = 27.1%; ad-hoc mega-sweep 1/59; misc agent commits 38/59 = 64.4%. AC-3 as literally worded cannot pass on this fix. NARROW, because the three remaining classes have structurally different remedies that cannot share one DoD: cowork = missing instruction (fixed); system-auditor = EXECUTION-FIDELITY gap on an already-mandatory already-pathspec-scoped script, proven intermittent not deterministic (0a7d11978 at 15:05:51Z did not fire, actor c6581d0a at 08:01:59Z did) so no further doc edit closes it; misc = no named call-site at all, discoverable for the first time only because AC-4 shipped caller_chain today. Folding them into one AC-3 yields an unbounded DoD — the exact mechanism that left this row 11 days at occurrence_count 32. The row's delivered value is AC-4, which three prior PO notes each called the binding blocker, and it landed and was independently re-verified. FOLLOW-UPS MINTED THIS TICK so the other 93.2% is not dropped: FIX-AUDITOR-NOTEBOOK-BARE-COMMIT-EXECUTION-FIDELITY-16-OF-59; SPIKE-SWEEPGUARD-MISC-CLASS-CALLERCHAIN-CLASSIFY-38-OF-59; FIX-VERIFYFLEETPATHSPEC-LINEKEYED-ALLOWLIST-AND-FORWARDONLY-LOOKAHEAD. ROUTING: next_agent po -> qa; the only remaining work is the AC-3 re-verify. qa_not_before=2026-08-26T14:59:30Z — a Review-Lane QA-Drain pick before that timestamp MUST read qa_not_before first and return HOLD without consuming a redispatch. QA-Drain PRIMARY is a live picker, so NO hand-hop is needed for this row. Historical occurrence log (status_note + the 3 po_occurrence_* fields) relocated to the same cold entry; nothing was deleted.",
-        "qa_hold_at": "2026-08-26T04:10:34Z"
+        "qa_hold_at": "2026-08-26T04:10:34Z",
+        "po_fold_20260826T1500Z": "New same-class fire folded, NOT re-minted (dedup_key match, no status/next_agent/qa_not_before touched): durable-inbox envelope 266f77fef7ee1a29572aae6cf137f31c38f32a8998e2c3954f9eb6919c39b69d (bug-escalation, commit-sweep-guard, createdAt 2026-08-26T14:25:31Z). Payload: '[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/data/auditor-tier1-last-healthy.json docs/data/auditor-tier1-last-trigger.json docs/data/auditor-tier1-spawn-debounce.json. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked.' escalated=true -> per triage-signals.md this is REPEAT-OFFENDER-AFTER-BLOCK, same dedup_key class this row already owns (sweepguard:bare-commit|defect:repeat-offender-after-block|actor:router-session) -- actor session 036ceaf1-... is the same router-coordinating-session class, a fresh session id with a lower prior_warns count (5 vs the original mint's 20), consistent with the per-session counter having reset on a new session rather than a new root cause. Row's own status/next_agent/qa_not_before/redispatch_count left untouched -- AC-3 re-verification stays QA's own action per po_ruling_ac3_scope_20260825."
       },
       {
         "id": "FU-RAG-DEPLOY-MEMORY",
@@ -24631,95 +24627,12 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T14:50:22Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "2481d0673b40ea5a39dec14295e071a4518ccd0e625cf694d81c6497e22c0138",
-        "source": "dashboard",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "priority": "HIGH",
-        "payload": "136 telegram reports unresolved, all status=NEW, zero ever claimed, oldest 2d - no consumer drains them",
-        "createdAt": "2026-08-26T12:39:44Z",
-        "drained_at": "2026-08-26T12:47:54Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "11bead93cee41f7bd6d9c9081e9776a5d60329e1a7e39a22e409b93c0482ae65",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md",
-          "line_count": 152,
-          "cap": 600,
-          "byte_count": 42263,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 6263,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-26T12:23:52Z",
-        "drained_at": "2026-08-26T12:48:20Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "18ba303ce48d6bc73be2f1070b766ac13bbd08f2e5c811fb18fb1dfa336ea62e",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md",
-          "line_count": 155,
-          "cap": 600,
-          "byte_count": 42548,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 6548,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-26T13:08:06Z",
-        "drained_at": "2026-08-26T13:10:12Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "ab2cb52efd0d931e83ee26a79fb85d49c9720f626b854b16a3532880b9f5759e",
-        "source": "dashboard",
-        "from": "router",
-        "to": "po",
-        "type": "audit_finding",
-        "priority": "HIGH",
-        "payload": "pdf-extractor A-30 dedup suppression OVERTURNED — corrected cgroup evidence is materially worse than the 2026-08-23 entry it was deduping against",
-        "createdAt": "2026-08-26T14:35:04Z",
-        "drained_at": "2026-08-26T14:44:06Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "266f77fef7ee1a29572aae6cf137f31c38f32a8998e2c3954f9eb6919c39b69d",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/data/auditor-tier1-last-healthy.json docs/data/auditor-tier1-last-trigger.json docs/data/auditor-tier1-spawn-debounce.json. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid15453:git commit -F - ]<-[pid15451:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]",
-        "createdAt": "2026-08-26T14:25:31Z",
-        "drained_at": "2026-08-26T14:44:34Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
-    "last_po_triage_at": "2026-08-25T17:10:00Z",
-    "last_po_triage_note": "17 envelopes triaged, 13 CLEARED, 4 HELD BACK. Dispositions: 1 cowork-fire (16:36Z refine-bctc-slot-4 fan-out) informational, no mint. 1 signal_feedback devteam-secondary-drain-po-double-spawn-20260825T161841Z -> its PO-scoped case was already actioned (AC-6 fixed at 0d0284a9d); the GENERALISATION it flagged as unfiled is now MINTED as FIX-DISPATCH-ROWSCOPED-CLAIM-KEY-DOES-NOT-GUARD-SECOND-INSTANCE-OF-SAME-AGENT (backlog, architect, 4 confirmed sites). 1 system-issue janitor-health-recheck -> FOLD onto CLEAN-RETIRE-TEAM-TOOL-RECHECK-HEALTH-DOC-FAMILY-DEAD-REMOTETRIGGER-WRITER with a root-cause correction: its AC-1 is UNSATISFIABLE as written because memory-prune-sweep.sh:109 probes docs/signals/ at -maxdepth 1 while the drain relocates the marker into docs/signals/processed/, so the retirement latch is erased every drain and the escalation re-fires daily (3 markers now sit in processed/, 08-23/24/25). 10 notebook-auto-prune-hook envelopes -> FOLD onto CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[]), which was re-baselined this tick: scope 6 files -> 4 (code-janitor.md and dev-team.md have CONVERGED under cap and are dropped), stale section_count=1 premise replaced with the live undroppable-remainder mechanism, and prose shrunk 12585B -> 5294B so the row is bumpable again. THE 92-SECOND PAIRING IS AN ARTEFACT, NOT 14 OCCURRENCES: all four notebooks' mtimes predate the 16:30/16:31 window, so the hook re-evaluated a standing STATE and emitted it as a per-invocation EVENT twice around two code-janitor commits; createdAt is inside the envelope hash so fingerprint dedup cannot collapse them. 8 distinct (type,file) subjects, not 14 incidents.",
-    "last_po_triage_consumed": 13,
+    "_updated_at": "2026-08-26T15:08:05Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
+    "last_po_triage_at": "2026-08-26T15:08:05Z",
+    "last_po_triage_note": "secondary-drain-signoff-20260826T1500Z: 5 envelopes triaged (1 system-issue fold, 2 context_bloat_breach DEFER, 1 audit_finding fold+3-part ruling, 1 bug-escalation fold), 0 held back, inbox cleared to zero",
+    "last_po_triage_consumed": 5,
     "last_triage_clear": {
       "ts": "2026-08-23T09:07:20Z",
       "consumed_count": 8,
@@ -24727,7 +24640,7 @@
       "note": "8 envelopes, all bug-escalation/commit-sweep-guard. Cleared by envelope_id subtraction, never a blind = []."
     },
     "pending_triage_inbox_cleared_at": "2026-08-26T05:41:12Z",
-    "last_po_triage_by": "po (triage-20260825T1700Z)",
+    "last_po_triage_by": "po",
     "pending_triage_inbox_cleared_by": "po (triage-20260826T0536Z, 23 envelopes read)",
     "pending_triage_inbox_hold_back": {
       "held": 4,
