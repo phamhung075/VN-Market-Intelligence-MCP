@@ -1,0 +1,65 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T07:22:29Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "60",
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T07:21:36Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 32,
+    "note": [
+      "Step 4.7 FILE_TICK=07:20 overwrote prior-day decoy cycle-snapshot-07:20.json (created_at 2026-08-25T07:20:55Z); count 40->40 net zero. SECOND consecutive prospective confirmation of the same-key overwrite death mechanism (07:05 last tick, 07:20 this tick). 2 decoys remain: 07:34, 07:49.",
+      "Step 0a: NEW=0, nothing to drain. The 2 auditor rows held at NEW last tick (sys-20260826T065952-3c3e / sys-20260826T070016-7c23) are now READ — consumed by a peer PO directly off the queue. 2nd confirmation that holding to=po rows at NEW is correct and the dev-team drain path is not required for delivery.",
+      "_fanout SSOT is docs/data/cadence-policy.json ._fanout, NOT cowork-schedule.json (jq ._fanout on cowork-schedule.json returns null). Correcting a dispatcher-side shorthand; values unchanged: default 4 / degraded 2 / floor 1500 / factor 2.",
+      "Step 5.1 locale-comma defect 21st confirmation: spec awk -F, parses host load as 7, true value 7,75. Non-binding at threshold 24 (12 cores x 2).",
+      "cycle_snapshot_promoted:false 56th consecutive; cycle-snapshot-latest.json still tick=00:00 created_at=2026-08-23T00:07:50Z.",
+      "calendar_status=open 49th+ consecutive (architect-owned computation defect).",
+      "regime_status / volatility_level keys ABSENT from cycle-snapshot-latest.json 16th verification; only live path is macro_snapshot.data.signals.carry.regime (=UNKNOWN in the stale latest). Step 6.0 last_regime/last_volatility_level structurally pinned to unknown.",
+      "signal_backlog 32 == independent file recount 32 (16th match).",
+      "2 slots this tick, both guaranteed=false; per-slot scheduled_utc_time differs (chef 07:13:00Z, alert-commander 07:15:00Z) — both propagated verbatim into ENTRY_PROMPT."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T07:22:29Z"
+}
