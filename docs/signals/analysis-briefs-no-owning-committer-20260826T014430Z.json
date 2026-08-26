@@ -1,0 +1,25 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "flow-defect",
+  "priority": "medium",
+  "createdAt": "2026-08-26T01:44:30Z",
+  "payload": {
+    "title": "docs/analysis-briefs/*.md written by 2 cowork agents, committed by neither",
+    "summary": "Both news-scout and market-watcher have a documented step that APPENDS to docs/analysis-briefs/{TICKER}.md, and both have a working commit step whose git add pathspec omits that path. The ledger appends therefore never reach git by any designed path.",
+    "evidence": {
+      "news_scout_write": "docs/agents/news-scout/flow/stage-log-notify.md:139-141",
+      "news_scout_commit_pathspec": "docs/agents/news-scout/flow/stage-log-notify.md:40 — git add docs/agent-memory/notebooks/news-scout.md (briefs absent)",
+      "market_watcher_write": "docs/agents/market-watcher/flow/eod.md:21-23",
+      "market_watcher_commit_pathspec": "docs/agents/market-watcher/flow/eod.md:101 — git add notebooks/market-watcher.md notebooks/news-scout.md (briefs absent)",
+      "observed_strand": "DBC/VCB/VNM carried market-watcher 2026-08-25T16:00Z EOD entries uncommitted for 9h30m; BID/VCI/VIC carried news-scout c286 2026-08-26T01:35Z entries uncommitted at agent return",
+      "historical_commits_are_incidental": "git log -- docs/analysis-briefs/BID.md shows every prior commit came from an unrelated agent doing a broad git add: unified-agent CHEF publish 4fbd578cb, pm decompose 2ddbe5321, session sweep 644e5872e. No committer names this path deliberately."
+    },
+    "defect_class": "documented write with no mechanically-wired commit — identical class to FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED (2026-08-15), which fixed the notebook path only and did not close the ledger path",
+    "why_it_persists": "Incidental pickup by broad-git-add peers masks it intermittently, so it presents as flaky rather than structural. It re-strands on every cycle where no such peer fires.",
+    "remediation_direction": "Add docs/analysis-briefs/{TICKER}.md for the tickers this cycle actually touched to BOTH agents' existing commit blocks — both halves of the pathspec (git add -- <paths> && git commit -F - -- <paths>), per commit-boundary SKILL.md RULE 2.5, which both blocks already implement correctly for the notebooks. No new mutex needed; reuse each agent's existing key.",
+    "not_yet_verified": "Whether unified-agent or any other briefs-writer has the same omission. Only news-scout and market-watcher were checked.",
+    "router_action_taken": "Recovery commit e6fbe0017 landed the 6 stranded appends (verified append-only, 0 deletions). Recovery only — the flow-doc gap is unfixed and will re-strand next cycle.",
+    "suggested_owner": "cowork-refactory-expert (cowork agent .md files) or agent-father"
+  }
+}
