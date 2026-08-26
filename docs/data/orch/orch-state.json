@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T18:43:56Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-26T20:11:11Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -1135,6 +1135,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "cow-20260826T201111",
+        "ts": "2026-08-26T20:11:11Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "detector_defect",
+        "summary": "Layer C firer spawns with no IDENTITY_PREAMBLE; exit-0 run did zero work — falsifies LAYERC-LASTFIRED-WRITEBACK",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-layerc-no-identity-preamble-20260826T2010Z.md"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
