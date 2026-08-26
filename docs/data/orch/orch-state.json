@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-STOCK-extract-vndirect-mapper",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-STOCK-extract-vndirect-mapper — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-26T05:15:50Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-08-26T05:21:50Z",
+    "updated_by": "dev-stock-price"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -24196,6 +24195,22 @@
         "branch": null,
         "commit": "fe013f22f",
         "review_note": "[developer] Sec3 implemented per the same brief, option (b). New scripts/devteam-qadrain-skip-revert.jq, invoked identically from BOTH QA-Drain SKIP branches (idle-tick + head-decoupled, docs/agents/dev-team/flow/main.md) when a per-row outer_claim fails after the batch script already moved the row into qa[]. Reverses via the already-stamped drain_source_lane field -- no redispatch_count charge, no new re-picker (does not encroach on FIX-DEVTEAM-QA-LANE-STALE-AGE-WATCHDOG-BLIND's scope). Deliberately NOT piped through '|| true' -- logs loudly on nonzero exit instead, per the brief's explicit warning against reproducing FIX-DEVTEAM-QADRAIN-PIPE-SWALLOWS-CAS-ABORT-NO-RETRY on this new call site. Both edits (this row's revert wiring + sec1a's AC-7 gate prose) landed in ONE pass per call site, per the brief's own sequencing note. AC-5 live sweep: architect's own review_note already confirmed zero remaining stranded qa[] rows pre-cycle -- reconfirmed, not re-swept here (no new strand found). Tests: scripts/test-devteam-donelane-drain.sh new AC-3 fixture set (revert + re-pick-up-on-a-subsequent-claim-script-invocation + 2 defensive no-ops: id absent from qa[], row already progressed past status==QA). Commit fe013f22f, no apps/mcp-server change."
+      },
+      {
+        "title": "Extract a pure VnDirect quote-mapper primitive; collapse Tier1/Tier2 duplication",
+        "priority": "P1",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-STOCK-extract-vndirect-mapper",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-extract-vndirect-mapper",
+        "promoted_at": "2026-08-26T05:15:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-26T05:21:50Z",
+        "next_agent": "qa",
+        "updated_by": "dev-stock-price",
+        "developer_completed_at": "2026-08-26T05:21:49Z"
       }
     ],
     "qa": [
@@ -24388,21 +24403,6 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "developer_disposition_20260826": "VERIFIED: root cause already shipped f8d3891c6 (2026-08-14, Step 2.4 Cowork-Slot Cross-Path Collision Probe, dispatch-claim/SKILL.md+CLAUDE.md lockstep) - zero post-08-14 recurrence in git log or board. No new code for this parent row. All remaining atomic work owned by children[]: TASK-COWORK-MUTEX-001 (review[], BLOCKED, blocked_by/depends_on=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE - READY/developer, NOT this session's row); TASK-COWORK-MUTEX-002/003 (backlog[], depend on 001). Epic closes via post-cycle Epic-Wrapper Autoclose Sweep once all 3 children terminal. The 3 live orphan-signal:cowork-slot:{alert-commander-market,chef-intraday,news-scout-sentiment} locks cited as corroboration are the DESIGNED Phase-A reaper output for expired cowork-slot claims (only sprint-task/cowork-slot/dashboard-row emit orphan-signal per dispatch-claim/SKILL.md) - unrelated to this row's specific router-intent-path bug (already patched); could not confirm live via task_list_held (developer has no vn-market MCP grant, INV-GATEWAY-1 by design), stated as docs-based inference not a live probe. LANE: stays in_progress[] (not backlog[]/review[]) - empirically confirmed via orch-row-prose-ceiling-check.mjs that a lane move hard-rejects (live=0B -> candidate=16574B, row never resided in a ceiling lane so has no live baseline), identical gap already ratified on FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 (po ruling 2026-08-24): status=BLOCKED already excludes this row from wip_in_progress (scripts/lib/devteam-eligibility.jq), so no WIP-picker deadlock. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md STEP developer-S128."
-      },
-      {
-        "title": "Extract a pure VnDirect quote-mapper primitive; collapse Tier1/Tier2 duplication",
-        "priority": "P1",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-STOCK-extract-vndirect-mapper",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-extract-vndirect-mapper",
-        "promoted_at": "2026-08-26T05:15:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-26T05:15:50Z",
-        "claimed_at": "2026-08-26T05:15:50Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },

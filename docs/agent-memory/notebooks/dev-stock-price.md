@@ -36,3 +36,11 @@ db.prepare(`DELETE FROM market_prices_history WHERE fetched_at < ?`).run(cutoff)
 ## Session 2026-07-09 — FACTORY-STOCK-split-sandbox DONE
 
 Split 743L cmd/sandbox/main.go into 8 files: main.go (101L), discover.go (71L), helpers.go (23L), dispatch.go (75L), exec_primitive_normalizer.go (97L), exec_primitive_selector.go (123L), exec_primitive_staleness.go (76L), exec_module_resolution.go (150L). All build/vet/test/lint/sandbox PASS. Two files over 120L justified (single cohesive executors with no natural seams).
+
+## 2026-08-26T05:21:31Z dev-stock-price c1
+Task: FACTORY-STOCK-extract-vndirect-mapper
+Action: Collapsed Tier1/Tier2 VnDirect inline mapping into vndirectquotemapper primitive
+Files: apps/stock-price/pkg/infrastructure/fetchers.go (-97,+25 lines)
+Commit: 912a4bf79
+G12: primitive=9/9 GREEN, module=2/2 GREEN
+Zone health: no drift detected
