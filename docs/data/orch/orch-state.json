@@ -24644,7 +24644,7 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T15:43:32Z",
+    "_updated_at": "2026-08-26T16:12:03Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24915,6 +24915,71 @@
         },
         "createdAt": "",
         "drained_at": "2026-08-26T15:41:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8591ee13c5e534c1a21bbc51128738e3922bd52d24663ccb077675b40f232b54",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T16:07:55Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-eod": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": "30",
+            "market-watcher-eod": "30",
+            "alert-commander-critical": "null"
+          },
+          "last_fired_timestamp": "2026-08-26T16:07:02Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "16:00",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 113,
+          "signal_backlog": 31,
+          "note": "TWO findings this tick. (1) MATCHES/meta DISAGREEMENT, new: preflight returned slots[] with 3 entries but due_reasons/cadence_minutes with 4 keys — market-watcher-offhours appears in both meta maps (due_reason=cadence, cadence_minutes=30) yet is absent from slots[], and is recorded in NEITHER suppressed_cadence[] NOR downgraded[]. It is therefore invisible to every telemetry consumer. cowork-match-slots.js L419-423 builds due_reasons by iterating the SAME results array that becomes slots[], so the slot was in results and was dropped afterward without the meta maps being updated. Ruled out by measurement, not assumption: trigger_prompt/flow_path agree for all 4 slots (slotEntryPathsAgree true), so the L447/L460 extractPromptFlowPath filter is not the cause; and news-scout-offhours has IDENTICAL cron (0 */4 * * *), IDENTICAL last_fired (2026-08-26T12:06:03Z) and IDENTICAL policy_id (gatherer-standard) yet survived, which rules out cron/boundary-dedup/cadence-policy causes. The only differing attribute is agent, and market-watcher is the sole agent holding a SECOND due slot this tick (market-watcher-eod, cron 0 16 * * 1-5). Behaviour is consistent with one-slot-per-agent dedup, but the implementing line was NOT located — recorded as observed behaviour, not as a diagnosed mechanism. Note this contradicts documented intent: main.md OQ-2 says the collision guard is WARNING only and R3 allows multi-slot. Net effect this tick is bounded (market-watcher still ran, via the eod slot) but a genuine due fire was dropped silently. (2) THIRD consecutive same-tick confirmation of FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK: Step 4.7 wrote docs/data/cycle-snapshot-16:06.json (17025B, carry.regime=NEUTRAL) and emit_pressure_state returned cycle_snapshot_promoted=false 5s later (producer named 16:06 by wall clock, promoter looked up nominal 16:00). Same shape at 12:00Z (12:05) and 15:00Z (15:04). Three consecutive fan-out ticks, fresh valid snapshot on disk every time, unpromoted every time — deterministic, and now predicted-in-advance rather than merely observed. calendar_status=open is false: VN market closed 08:59Z. dev_head/devq/signal_backlog measured, not placeholders; devq is ready[] (113) — a first attempt summing every task_board array returned 872 by including backlog/archive lanes and was discarded, not written. Canonical .head read, NOT the .task_board.head deprecated stub."
+        },
+        "createdAt": "2026-08-26T16:07:55Z",
+        "drained_at": "2026-08-26T16:12:03Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
