@@ -1,30 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-25T22:35:00Z | **Cycle:** FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (session 036ceaf1, BOUNDED-1 auto-pickup)
-
-## Session 2026-08-25T20:14:54Z — FIX-ORCHAPPLY-MKTEMP-SUFFIX-DEFEATS-RANDOMIZATION-BSD-CONCURRENT-WRITER-COLLISION (scripts/, developer, P1, session 036ceaf1, router hand-dispatch)
-
-**Confirmed the defect live before touching code, then fixed it.** `scripts/orch-apply.sh:172`'s `mktemp ".../.orch-apply-XXXXXXXX.json"` — BSD/macOS mktemp only substitutes a TRAILING X-run; a literal suffix after it makes the whole string one fixed filename, never substituted. Reproduced directly: 2nd call to the exact buggy template failed `mkstemp failed: File exists` on the literal `.orch-apply-XXXXXXXX.json`. GNU/Linux mktemp tolerates the suffix, which is why CI never caught it.
-
-**Fix: X-run at the template's end (no suffix, portable on both platforms), then `mv` to append `.json` as a separate step** — mktemp's own O_EXCL already guarantees the pre-suffix name is unique, so the rename itself cannot collide. Checked before assuming: `.json` carries zero functional weight for any downstream reader (`orch-validate.mjs`/`orch-stamp-updated-at.mjs`/`orch-conservation-check.mjs`/`orch-row-prose-ceiling-check.mjs` all take the path as a CLI arg and `readFileSync` + `JSON.parse`, extension-agnostic) — but IS relied on by `scripts/test/orch-apply-wrapper-tests.sh`'s leftover-temp-file glob (`.orch-apply-*.json`), so the fix preserves that exact filename SHAPE rather than dropping the suffix. CAS guard and atomic-rename semantics untouched.
-
-**Proved by execution, against a throwaway fixture copy only — real orch-state.json sha256 confirmed unchanged before/after.** Ran the fixed script 3x sequentially (3 distinct randomised names: `Q7SunAFE`/`etc9Aoxt`/`n879OEIL`, all exit 0) then 5x truly concurrently (5 more distinct names, zero `mkstemp`/`File exists` collisions, all exit 0). Ran the project's own `scripts/test/orch-apply-wrapper-tests.sh`: 109/109 PASS, including the CAS test's leftover-file glob check and every "REAL live file UNCHANGED" assertion.
-
-**Verification:** commit `5a18d8726` — `scripts/orch-apply.sh` only, explicit pathspec on both `add` and `commit`. Router owns the board write for this row (`next_agent`=qa per dispatch instructions) — did not touch `docs/data/orch/orch-state.json`.
-
----
-
-## Session 2026-08-25T13:55:00Z — FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (cross-service/, developer, P0 M, session 036ceaf1, dev-team incident-lane consumer dispatch, po_expedited_at)
-
-**AC-1 first, and it inverted the fix: the "forged writer id" premise is REFUTED.** The ntg-* rows carrying the frozen ts `2026-08-24T00:00:00Z` came from the REAL production writer, driven by `apps/mcp-server/src/__tests__/CCATO-MCP-T5-USECASE.test.ts` — 5 of its cases reach a FAIL verdict overriding NEITHER `writeSignalsFn` NOR `orchStatePath`, so `runNarrativeTruthGate` falls through to `DEFAULT_ORCH_STATE_PATH` (the LIVE orch-state.json) with the suite's injected clock. Every `bun test` run appended exactly 6 rows to production. Arithmetic is decisive: those 5 cases yield `returned_value` {60, 61, 61, 62.1, 62.1, "not found in database"} = 1/2/2/1; PO measured 12/24/24/12 over 12 batches. Claim text, `agent_id:"chef"` and the ts are verbatim T5 constants. So "NEITHER sanctioned engine can have produced them" is FALSE, and the "7 inverted verdicts" are T5's deliberate missing-`tool_null_markers` case.
-
-**LESSON — a frozen/impossible timestamp in production data points at a TEST RUNNER before it points at a forger.** Injected clocks are the only thing here that legitimately emit a second-identical ts across hours of wall clock. Grep the test tree for the literal timestamp FIRST: `grep -rn "<frozen ts>" apps scripts` found it in seconds, in the same file that held the claim text and the agent id.
-
-**LESSON — replaying a clock-skew guard needs a PER-ROW emission clock.** My first replay applied one wall clock to rows emitted 10h apart and produced 2 false quarantines against genuine live rows — it read exactly like an over-broad gate. Reconstruct each candidate's own emission time from git before scoring it.
-
-**Did NOT ship AC-2 (producer auth in `orch-apply.sh`) or AC-8 (collapse live rows), both premise-refuted; reported as not-done, not narrated as done.** `_updated_by:"narrative-truth-gate"` was never forged — the TS writer is a second sanctioned producer that legitimately stamps it, so that check would reject genuine rows and still miss the leak (which never touches `orch-apply.sh`). Only 2 ntg-* rows remain, both real distinct clock reads.
-
-**Shipped:** T5 `baseDeps()` stubs `writeSignalsFn`; new `narrativeContradictionGuards.ts` screens at the write boundary with a distinct greppable marker per class, quarantine never silent drop; `dedup_key` on BOTH engines, honoured on append so repeats bump `.occurrences`; summary quotes the probe evidence (python/TS byte-identical). CAUSAL REPRO: removing only the stub re-fires exactly 6 `NTG-GUARD-REFUSED-TEST-HARNESS-LIVE-WRITE` lines, live sha byte-identical. Replay of all 8 real rows at per-row clocks: 6 BLOCKED, 2 genuine ACCEPTED, negative controls 2 accepted + 1 collapsed to `occurrences=2`. 13/13 new, `tsc` clean, 307/307 across all 19 adjacent test files. `in_progress[]` -> `review[]`, next_agent=qa.
+**Last updated:** 2026-08-26T03:15:00Z | **Cycle:** FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (session 036ceaf1, router hand-dispatch)
 
 ## Session 2026-08-25T22:35:00Z — FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (scripts/, developer, P0 S, session 036ceaf1, BOUNDED-1 auto-pickup)
 
@@ -57,3 +33,17 @@
 **Verification:** single orch-apply.sh write (all 4 rows + FIX-ORCHCOLDEVICT next_agent flip in one transform), commit 7320028e1. FIX-ORCHCOLDEVICT stays in review[], next_agent=qa for a final AC-3-focused re-verify (AC-1/AC-2/AC-4 untouched, already QA-confirmed). Lock task:FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS left held for the dispatcher.
 
 (header timestamp correction: the empty "## Session  —" heading above is session start 2026-08-26T00:27:27Z — printf %s arg was dropped when authoring it, appending here since notebooks are append-only)
+
+---
+
+## Session 2026-08-26T02:48:06Z — FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (cross-service/, developer, P0 M, session 036ceaf1, router hand-dispatch)
+
+**Root cause already shipped — verified, did not re-implement.** This epic-wrapper row's own defect (router `intent:` PRE-CLAIM and the cowork-slot dispatcher sharing no `task_id` namespace, so `task_claim` was a no-op mutex across the two paths) was fixed 12 days ago by commit `f8d3891c6` (2026-08-14): Step 2.4 Cowork-Slot Cross-Path Collision Probe in `dispatch-claim/SKILL.md`, lockstep with the matching `CLAUDE.md` phase-list line. Both still live at HEAD; `git log`/board search found zero recurrence of this specific bug after 08-14 (the one post-08-14 `po-double-dispatch` signal I found, 2026-08-24, is dev-team's own SECONDARY-Drain/Step-1 lock-key split — a different mechanism, already routed to architect, not this row).
+
+**The 3 corroborating `orphan-signal:cowork-slot:*` locks cited in the dispatch prompt are NOT this bug.** Per `dispatch-claim/SKILL.md`, only `sprint-task`/`cowork-slot`/`dashboard-row` task-kinds ever generate `orphan-signal` rows (the reaper's designed output for an expired claim). That is a normal lifecycle event for a crashed/timed-out cowork-slot agent, not evidence of the router double-dispatching one. Could not confirm this live via `task_list_held` — developer carries no vn-market MCP tool grant (INV-GATEWAY-1 by design) — so this is a docs-based read, stated as such, not a live probe.
+
+**All remaining atomic work belongs to `children[]`, not this parent row.** `TASK-COWORK-MUTEX-001` (review[], status=BLOCKED) is gated on a separate, already-architect-designed row, `FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE` (ready[], next_agent=developer) — NOT assigned to me this cycle, and I have no MCP grant to claim it myself even if it were. `TASK-COWORK-MUTEX-002`/`-003` (backlog[]) both depend on 001. The epic closes via the post-cycle Epic-Wrapper Autoclose Sweep once all 3 go terminal — there is no independent AC left on the parent to implement.
+
+**Lane-move blocked by a live prose-ceiling defect — followed the already-ratified precedent instead of forcing it.** Tried moving the row to `backlog[]` with `status=BLOCKED`; `orch-row-prose-ceiling-check.mjs` hard-rejected it (`live=0B -> candidate=16574B` — this row never resided in a ceiling lane so has zero live baseline, same gap `FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58`'s po ruling hit on 2026-08-24). Same fix applied here: row stays in `in_progress[]`, `status=BLOCKED` — `wip_in_progress` (`scripts/lib/devteam-eligibility.jq`) excludes BLOCKED rows by construction, so this does not consume a WIP slot or deadlock any picker.
+
+**Verification:** no code changed (nothing left to implement). `docs/data/orch/orch-state.json` commit `a247f9fab` (status BLOCKED, blocked_by=[TASK-COWORK-MUTEX-001], claim identity cleared, `.head` reset idle). Decision journal `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md` STEP developer-S128, commit `792e3461a`.
