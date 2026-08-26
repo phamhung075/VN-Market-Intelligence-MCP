@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-26T00:46:59Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+    "next_agent": "agent-father",
+    "next_action": "Ready-Lane Consumer claim of FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP — spawn agent-father DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-26T00:48:58Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20529,50 +20530,6 @@
     },
     "ready": [
       {
-        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/po/flow/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
-        "created_at": "2026-08-23T12:10:00Z",
-        "created_by": "po/triage-20260823T1157Z",
-        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned for /TRIAGE-INBOX|INBOX-CLEAR|ZSH|ECHO/. No match — FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ (the row that AUTHORED this block) is closed and concerned ownership, not the actuator's correctness. Minted.",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "desc": "FOUND BY EXECUTION, NOT BY REVIEW — this fired live on PO's 2026-08-23T11:57Z tick and cost a retry. docs/agents/po/flow/triage-signals.md § 'Durable-inbox CLEAR (executable ...)' prescribes verbatim:\n  pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' docs/data/orch/orch-state.json)\n  consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')\n  consumed_ids_csv=$(echo \"$consumed_ids\" | jq -r 'join(\",\")')\n  jq --argjson ids \"$consumed_ids\" ... | ORCH_APPLY_DECLARED_INBOX_TRIAGED=\"$consumed_ids_csv\" bash scripts/orch-apply.sh || true\nThe agent shell on this host is /bin/zsh 5.9 (ZSH_VERSION=5.9, BASH_VERSION unset). zsh's `echo` builtin interprets backslash escapes BY DEFAULT (unlike bash's), so `echo \"$pendingSignals\"` rewrites every JSON-escaped \\n inside a payload string into a REAL newline, producing invalid JSON.\n\nMEASURED THIS TICK against the live 10-envelope inbox (fixture copy retained): `jq -c` on the file returns rc=0 and a 15234-char SINGLE line; `echo \"$pendingSignals\" | wc -l` returns 33 — the shell turned 1 line into 33. `echo \"$pendingSignals\" | jq -c '[.[].envelope_id]'` then exits 5 with 'Invalid string: control characters from U+0000 through U+001F must be escaped at line 17, column 98'. Minimal isolated repro: `V='{\"a\":\"x\\ny\"}'; echo \"$V\" | jq -c .` FAILS while `printf '%s' \"$V\" | jq -c .` SUCCEEDS.\n\nWHY IT IS SILENT — THIS IS THE REAL SEVERITY: with consumed_ids empty, `jq --argjson` aborts, the pipeline's jq emits nothing, orch-apply.sh prints 'ERROR: stdin produced empty candidate — aborting (no write)' and exits non-zero, and the block's trailing `|| true` swallows exactly that. A doc-faithful PO tick therefore reports the inbox CLEARED while the envelopes are all still there. That is the narrated-but-never-landed class this fleet has 4+ confirmed instances of, sitting inside the very step that is supposed to be PO's own durable actuator. It also fully explains a re-delivery/backlog-growth pattern that has previously been attributed to drain lag.\n\nWHY IT HAS NOT ALWAYS FIRED: it needs at least one payload containing a \\n escape. This tick, the flow_actuator_fix envelope (agents-architect -> agent-father) carried multi-line jq patch code in payload.proposed_patch, which is the first payload shape large enough to guarantee it. So the defect is INTERMITTENT BY INPUT, not by luck — richer payloads make it certain.",
-        "ac": [
-          "AC-1 REGRESSION (must FAIL before, PASS after): replay the documented block verbatim against a fixture orch-state.json whose inbox contains one payload with a \\n escape, under zsh. Pre-fix it must leave the inbox UNCHANGED while the block exits 0 (that combination — no write, exit 0 — is the whole bug). Post-fix the inbox must be empty.",
-          "AC-2 remove the `echo \"$var\" | jq` round-trip entirely: read the ids straight out of the file with `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json`. Never round-trip full payloads through a shell variable — they are attacker-shaped free text from arbitrary emitters. If any round-trip must remain, it uses `printf '%s'`, never `echo`.",
-          "AC-3 DELETE the trailing `|| true` on the orch-apply pipe, or replace it with an explicit non-zero-exit handler that fails LOUD per docs/protocols/fail-loud-protocol.md. A CLEAR that did not land must never be reportable as success. This AC is independent of AC-2 and must not be dropped if AC-2 alone makes the current input pass.",
-          "AC-4 the block gains a post-write self-verification re-reading the file (`jq '.dev_team_idle_chain.pending_triage_inbox|length'` == 0, or == the count of envelopes that arrived mid-tick), matching the AC-3 persistence-gate shape already in docs/agents/po/flow/main.md. RETURN may not assert 'inbox cleared' without it.",
-          "AC-5 FLEETWIDE AUDIT, opt-IN allowlist (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): grep every docs/agents/**/flow/*.md and .claude/skills/**/SKILL.md for the `echo \"$...\" | jq` idiom and report the full hit list. The shell is zsh for every agent on this host, so any other flow doc using it has the same latent corruption. Fix or explicitly waive each hit; do not validate this on triage-signals.md alone."
-        ],
-        "baseline_pass": "under zsh: run the documented CLEAR block against a fixture whose inbox holds a payload containing a \\n escape; post-fix `jq '.dev_team_idle_chain.pending_triage_inbox|length'` == 0 AND the block exits non-zero if orch-apply.sh refused the write",
-        "related": [
-          "FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire",
-          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
-        ],
-        "status_note": "SAME FILE as the umbrella row FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (docs/agents/po/flow/triage-signals.md) and the same owner (agent-father) — dispatch both in ONE agent-father hop, they do not conflict (routing table vs the CLEAR block, different sections). PO worked around it this tick by reading ids directly from the file, so the 10 envelopes DID clear (verified inbox_len 10 -> 0, _updated_by=po); the doc, however, is still wrong and the next agent to follow it verbatim will silently fail again. Sibling in kind, not in cause: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR is prose-with-no-actuator; this one is an actuator that EXISTS, looks executable, and lies about its exit status — arguably worse, because a reviewer greps for the orch-apply.sh pipe, finds it, and moves on. | [po 2026-08-24T14:40:11Z] REPRODUCED LIVE THIS TICK, and the reproduction CORRECTS THIS ROW'S OWN TITLE. Running the documented CLEAR block verbatim (docs/agents/po/flow/triage-signals.md lines 52-53, `consumed_ids=$(echo \"$pendingSignals\" | jq -c ...)`) against the real 22-envelope inbox under zsh failed with: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1`, then `jq: invalid JSON text passed to --argjson`, then `[orch-apply] ERROR: stdin produced empty candidate — aborting (no write)`. Minimal repro confirmed independently: `zsh -c 'x='{\"a\":\"line1\\nline2\"}'; echo \"$x\" | jq -c .'` reproduces the same parse error, because zsh's builtin echo interprets backslash escapes by default while bash's does not. TITLE CORRECTION: it is NOT a SILENT-NOOP. It is a FAIL-LOUD ABORT — orch-apply refuses the empty candidate and leaves the live file untouched, so the inbox is never half-drained and nothing is silently lost. That is strictly better than the title implies and should be reflected in the row (rename away from -SILENT-NOOP), but the IMPACT is still total: the CLEAR can never succeed under zsh, so the inbox drains to zero only if the operator substitutes printf, which is exactly how it was cleared this tick (22 envelopes, ORCH_APPLY_DECLARED_INBOX_TRIAGED, conservation inbox_row_identity=clean). This is the mechanism behind the documented 64-envelope backlog accumulation. FIX: replace both `echo \"$x\" |` with `printf '%s' \"$x\" |` at lines 52-53.",
-        "updated_at": "2026-08-25T20:00:31Z",
-        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
-        "updated_by": "po (triage-20260825T1937Z promote)",
-        "occurrence_count": 2,
-        "po_occurrence_2_20260824T2052Z": "[po/triage 2026-08-24T20:52Z — OCCURRENCE 2, REPRODUCED LIVE BY A DIFFERENT SESSION running triage-signals.md § Step 0-SIG's CLEAR block VERBATIM. The block is still shipped broken.]\n\nWHAT WAS RUN: the executable CLEAR block as written in docs/agents/po/flow/triage-signals.md, unmodified — `pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' ...)`, then `consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')`, then `--argjson ids \"$consumed_ids\"`.\n\nWHAT HAPPENED, verbatim: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1` on the `echo \"$pendingSignals\" | jq` hop; `pre-CLEAR depth:` printed EMPTY; `declaring  envelope_ids` printed with an empty count; then `jq: invalid JSON text passed to --argjson`. Post-write readback: inbox depth STILL 16, _updated_by still \"dev-team\", _updated_at still 2026-08-24T20:24:01Z. The CLEAR was a complete no-op.\n\nTHE TRIGGER IS IN THE PAYLOADS, WHICH IS WHY THIS IS NOT INTERMITTENT AND WILL RECUR: this tick's inbox held four cowork-team envelopes whose `payload` is a JSON object with a multi-line `note` field (the 19:47Z chef-evening collision note, the 20:06Z 3-slot fan-out note, the 20:21Z tnb-audit note) plus five notebook-auto-prune envelopes whose `tied_sections` field embeds literal newlines. Round-tripping that through a zsh shell variable and back through `echo` is what injects the unescaped control characters. Any tick whose inbox contains a multi-line payload — i.e. essentially every tick that drains cowork-fire telemetry — hits this. The 16-envelope inbox this tick is the normal case, not an edge case.\n\nWHY IT IS A SILENT NO-OP RATHER THAN A LOUD FAILURE, and this is the part that makes it P0: the block ends with `|| true`, so the shell exit status is 0 whatever happens. An agent that trusts the exit code — or that simply does not read back — reports \"inbox cleared\" having cleared nothing, and the same 16 envelopes are re-delivered and re-triaged next tick. That is exactly how a 64-envelope backlog accumulated once already (recorded in this doc's own header).\n\nTHE WORKAROUND THAT ACTUALLY LANDED, this tick, and the shape the fix should take: eliminate the shell round-trip entirely. Derive the id list straight from the file into a file — `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json > ids.json` — then pass it with `--slurpfile ids ids.json` and index `$ids[0]`, and read the CSV for ORCH_APPLY_DECLARED_INBOX_TRIAGED from its own file via `$(cat ids.csv)` (safe: hex ids and commas only, no control characters). Verified: inbox depth 16 -> 0, _updated_by=po. The defensive property the doc requires is preserved — PO compared the 16 freshly-derived ids against the 16 read at the top of Step 0-SIG before writing, all 16 matched by prefix, no envelope had arrived in between.\n\nSECOND, INDEPENDENT INSTANCE OF THE SAME CLASS THE SAME TICK (different call site, same root cause): PO wrote a triage fold note via a zsh single-quoted variable piped to `jq --arg`. orch-apply returned OK, `occurrence_count` landed correctly, and the note field landed as an EMPTY STRING (readback LEN=0). Detected only by reading back the FIELD CONTENT — the exit code, the lane counts and the conservation check were all green. So the blast radius of this defect class is wider than the CLEAR block: it is every `jq --arg` in every PO flow doc that carries agent-authored prose. Whoever fixes the CLEAR block should sweep for the pattern rather than patch the one site.\n",
-        "po_occ3_20260825": "OCC3, first PROOF the CLEAR does not land: 4 envelope_ids from the 16:30Z inbox re-delivered VERBATIM at 18:13Z after the 17:00Z run folded them, though their files sit in processed/ — the subtraction never happened. Cost=1 duplicate triage pass. Detail: decisions/triage-20260825T1815Z-po.md",
-        "dispatch_lane": "agent-father",
-        "promoted_at": "2026-08-25T20:00:30Z",
-        "promoted_by": "po (triage-20260825T1937Z)"
-      },
-      {
         "id": "FIX-TASKSCHEMA-NEXTAGENT-CONDITIONAL-MANDATORY",
         "type": "FIX",
         "title": "task-schema: make next_agent conditionally mandatory at mint time + add a WARN-tier orch-validate check (architecture brief 2026-08-14 pm-decompose-closeout §4, §9 row 2)",
@@ -24391,7 +24348,54 @@
     },
     "last_triaged_at": "2026-08-25T22:13:39Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PO-TRIAGE-INBOX-CLEAR-ECHO-PIPE-MANGLES-JSON-UNDER-ZSH-SILENT-NOOP",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/po/flow/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "title": "PO's documented durable-inbox CLEAR block uses `echo \"$json\" | jq`, which zsh's echo corrupts on any payload containing a \\n escape — the CLEAR then silently no-ops behind its own `|| true` and the inbox never drains",
+        "created_at": "2026-08-23T12:10:00Z",
+        "created_by": "po/triage-20260823T1157Z",
+        "dedup_key": "flow-actuator-defect:docs/agents/po/flow/triage-signals.md|durable-inbox-clear|echo-pipe",
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned for /TRIAGE-INBOX|INBOX-CLEAR|ZSH|ECHO/. No match — FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ (the row that AUTHORED this block) is closed and concerned ownership, not the actuator's correctness. Minted.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "desc": "FOUND BY EXECUTION, NOT BY REVIEW — this fired live on PO's 2026-08-23T11:57Z tick and cost a retry. docs/agents/po/flow/triage-signals.md § 'Durable-inbox CLEAR (executable ...)' prescribes verbatim:\n  pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' docs/data/orch/orch-state.json)\n  consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')\n  consumed_ids_csv=$(echo \"$consumed_ids\" | jq -r 'join(\",\")')\n  jq --argjson ids \"$consumed_ids\" ... | ORCH_APPLY_DECLARED_INBOX_TRIAGED=\"$consumed_ids_csv\" bash scripts/orch-apply.sh || true\nThe agent shell on this host is /bin/zsh 5.9 (ZSH_VERSION=5.9, BASH_VERSION unset). zsh's `echo` builtin interprets backslash escapes BY DEFAULT (unlike bash's), so `echo \"$pendingSignals\"` rewrites every JSON-escaped \\n inside a payload string into a REAL newline, producing invalid JSON.\n\nMEASURED THIS TICK against the live 10-envelope inbox (fixture copy retained): `jq -c` on the file returns rc=0 and a 15234-char SINGLE line; `echo \"$pendingSignals\" | wc -l` returns 33 — the shell turned 1 line into 33. `echo \"$pendingSignals\" | jq -c '[.[].envelope_id]'` then exits 5 with 'Invalid string: control characters from U+0000 through U+001F must be escaped at line 17, column 98'. Minimal isolated repro: `V='{\"a\":\"x\\ny\"}'; echo \"$V\" | jq -c .` FAILS while `printf '%s' \"$V\" | jq -c .` SUCCEEDS.\n\nWHY IT IS SILENT — THIS IS THE REAL SEVERITY: with consumed_ids empty, `jq --argjson` aborts, the pipeline's jq emits nothing, orch-apply.sh prints 'ERROR: stdin produced empty candidate — aborting (no write)' and exits non-zero, and the block's trailing `|| true` swallows exactly that. A doc-faithful PO tick therefore reports the inbox CLEARED while the envelopes are all still there. That is the narrated-but-never-landed class this fleet has 4+ confirmed instances of, sitting inside the very step that is supposed to be PO's own durable actuator. It also fully explains a re-delivery/backlog-growth pattern that has previously been attributed to drain lag.\n\nWHY IT HAS NOT ALWAYS FIRED: it needs at least one payload containing a \\n escape. This tick, the flow_actuator_fix envelope (agents-architect -> agent-father) carried multi-line jq patch code in payload.proposed_patch, which is the first payload shape large enough to guarantee it. So the defect is INTERMITTENT BY INPUT, not by luck — richer payloads make it certain.",
+        "ac": [
+          "AC-1 REGRESSION (must FAIL before, PASS after): replay the documented block verbatim against a fixture orch-state.json whose inbox contains one payload with a \\n escape, under zsh. Pre-fix it must leave the inbox UNCHANGED while the block exits 0 (that combination — no write, exit 0 — is the whole bug). Post-fix the inbox must be empty.",
+          "AC-2 remove the `echo \"$var\" | jq` round-trip entirely: read the ids straight out of the file with `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json`. Never round-trip full payloads through a shell variable — they are attacker-shaped free text from arbitrary emitters. If any round-trip must remain, it uses `printf '%s'`, never `echo`.",
+          "AC-3 DELETE the trailing `|| true` on the orch-apply pipe, or replace it with an explicit non-zero-exit handler that fails LOUD per docs/protocols/fail-loud-protocol.md. A CLEAR that did not land must never be reportable as success. This AC is independent of AC-2 and must not be dropped if AC-2 alone makes the current input pass.",
+          "AC-4 the block gains a post-write self-verification re-reading the file (`jq '.dev_team_idle_chain.pending_triage_inbox|length'` == 0, or == the count of envelopes that arrived mid-tick), matching the AC-3 persistence-gate shape already in docs/agents/po/flow/main.md. RETURN may not assert 'inbox cleared' without it.",
+          "AC-5 FLEETWIDE AUDIT, opt-IN allowlist (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): grep every docs/agents/**/flow/*.md and .claude/skills/**/SKILL.md for the `echo \"$...\" | jq` idiom and report the full hit list. The shell is zsh for every agent on this host, so any other flow doc using it has the same latent corruption. Fix or explicitly waive each hit; do not validate this on triage-signals.md alone."
+        ],
+        "baseline_pass": "under zsh: run the documented CLEAR block against a fixture whose inbox holds a payload containing a \\n escape; post-fix `jq '.dev_team_idle_chain.pending_triage_inbox|length'` == 0 AND the block exits non-zero if orch-apply.sh refused the write",
+        "related": [
+          "FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire",
+          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
+        ],
+        "status_note": "SAME FILE as the umbrella row FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (docs/agents/po/flow/triage-signals.md) and the same owner (agent-father) — dispatch both in ONE agent-father hop, they do not conflict (routing table vs the CLEAR block, different sections). PO worked around it this tick by reading ids directly from the file, so the 10 envelopes DID clear (verified inbox_len 10 -> 0, _updated_by=po); the doc, however, is still wrong and the next agent to follow it verbatim will silently fail again. Sibling in kind, not in cause: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR is prose-with-no-actuator; this one is an actuator that EXISTS, looks executable, and lies about its exit status — arguably worse, because a reviewer greps for the orch-apply.sh pipe, finds it, and moves on. | [po 2026-08-24T14:40:11Z] REPRODUCED LIVE THIS TICK, and the reproduction CORRECTS THIS ROW'S OWN TITLE. Running the documented CLEAR block verbatim (docs/agents/po/flow/triage-signals.md lines 52-53, `consumed_ids=$(echo \"$pendingSignals\" | jq -c ...)`) against the real 22-envelope inbox under zsh failed with: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1`, then `jq: invalid JSON text passed to --argjson`, then `[orch-apply] ERROR: stdin produced empty candidate — aborting (no write)`. Minimal repro confirmed independently: `zsh -c 'x='{\"a\":\"line1\\nline2\"}'; echo \"$x\" | jq -c .'` reproduces the same parse error, because zsh's builtin echo interprets backslash escapes by default while bash's does not. TITLE CORRECTION: it is NOT a SILENT-NOOP. It is a FAIL-LOUD ABORT — orch-apply refuses the empty candidate and leaves the live file untouched, so the inbox is never half-drained and nothing is silently lost. That is strictly better than the title implies and should be reflected in the row (rename away from -SILENT-NOOP), but the IMPACT is still total: the CLEAR can never succeed under zsh, so the inbox drains to zero only if the operator substitutes printf, which is exactly how it was cleared this tick (22 envelopes, ORCH_APPLY_DECLARED_INBOX_TRIAGED, conservation inbox_row_identity=clean). This is the mechanism behind the documented 64-envelope backlog accumulation. FIX: replace both `echo \"$x\" |` with `printf '%s' \"$x\" |` at lines 52-53.",
+        "updated_at": "2026-08-26T00:48:58Z",
+        "po_manual_dispatch_flagged_at": "2026-08-24T23:58:30Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. FALL-THROUGH: rank-0 candidate FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED is unstampable (prose ceiling, occurrence 3 folded onto FIX-PO-MANUAL-DISPATCH-SWEEP-STAMP-REJECTED-BY-PROSE-CEILING-ON-ITS-OWN-TOP-CANDIDATE).",
+        "updated_by": "po (triage-20260825T1937Z promote)",
+        "occurrence_count": 2,
+        "po_occurrence_2_20260824T2052Z": "[po/triage 2026-08-24T20:52Z — OCCURRENCE 2, REPRODUCED LIVE BY A DIFFERENT SESSION running triage-signals.md § Step 0-SIG's CLEAR block VERBATIM. The block is still shipped broken.]\n\nWHAT WAS RUN: the executable CLEAR block as written in docs/agents/po/flow/triage-signals.md, unmodified — `pendingSignals=$(jq -c '.dev_team_idle_chain.pending_triage_inbox // []' ...)`, then `consumed_ids=$(echo \"$pendingSignals\" | jq -c '[.[].envelope_id]')`, then `--argjson ids \"$consumed_ids\"`.\n\nWHAT HAPPENED, verbatim: `jq: parse error: Invalid string: control characters from U+0000 through U+001F must be escaped at line 2, column 1` on the `echo \"$pendingSignals\" | jq` hop; `pre-CLEAR depth:` printed EMPTY; `declaring  envelope_ids` printed with an empty count; then `jq: invalid JSON text passed to --argjson`. Post-write readback: inbox depth STILL 16, _updated_by still \"dev-team\", _updated_at still 2026-08-24T20:24:01Z. The CLEAR was a complete no-op.\n\nTHE TRIGGER IS IN THE PAYLOADS, WHICH IS WHY THIS IS NOT INTERMITTENT AND WILL RECUR: this tick's inbox held four cowork-team envelopes whose `payload` is a JSON object with a multi-line `note` field (the 19:47Z chef-evening collision note, the 20:06Z 3-slot fan-out note, the 20:21Z tnb-audit note) plus five notebook-auto-prune envelopes whose `tied_sections` field embeds literal newlines. Round-tripping that through a zsh shell variable and back through `echo` is what injects the unescaped control characters. Any tick whose inbox contains a multi-line payload — i.e. essentially every tick that drains cowork-fire telemetry — hits this. The 16-envelope inbox this tick is the normal case, not an edge case.\n\nWHY IT IS A SILENT NO-OP RATHER THAN A LOUD FAILURE, and this is the part that makes it P0: the block ends with `|| true`, so the shell exit status is 0 whatever happens. An agent that trusts the exit code — or that simply does not read back — reports \"inbox cleared\" having cleared nothing, and the same 16 envelopes are re-delivered and re-triaged next tick. That is exactly how a 64-envelope backlog accumulated once already (recorded in this doc's own header).\n\nTHE WORKAROUND THAT ACTUALLY LANDED, this tick, and the shape the fix should take: eliminate the shell round-trip entirely. Derive the id list straight from the file into a file — `jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' docs/data/orch/orch-state.json > ids.json` — then pass it with `--slurpfile ids ids.json` and index `$ids[0]`, and read the CSV for ORCH_APPLY_DECLARED_INBOX_TRIAGED from its own file via `$(cat ids.csv)` (safe: hex ids and commas only, no control characters). Verified: inbox depth 16 -> 0, _updated_by=po. The defensive property the doc requires is preserved — PO compared the 16 freshly-derived ids against the 16 read at the top of Step 0-SIG before writing, all 16 matched by prefix, no envelope had arrived in between.\n\nSECOND, INDEPENDENT INSTANCE OF THE SAME CLASS THE SAME TICK (different call site, same root cause): PO wrote a triage fold note via a zsh single-quoted variable piped to `jq --arg`. orch-apply returned OK, `occurrence_count` landed correctly, and the note field landed as an EMPTY STRING (readback LEN=0). Detected only by reading back the FIELD CONTENT — the exit code, the lane counts and the conservation check were all green. So the blast radius of this defect class is wider than the CLEAR block: it is every `jq --arg` in every PO flow doc that carries agent-authored prose. Whoever fixes the CLEAR block should sweep for the pattern rather than patch the one site.\n",
+        "po_occ3_20260825": "OCC3, first PROOF the CLEAR does not land: 4 envelope_ids from the 16:30Z inbox re-delivered VERBATIM at 18:13Z after the 17:00Z run folded them, though their files sit in processed/ — the subtraction never happened. Cost=1 duplicate triage pass. Detail: decisions/triage-20260825T1815Z-po.md",
+        "dispatch_lane": "agent-father",
+        "promoted_at": "2026-08-25T20:00:30Z",
+        "promoted_by": "po (triage-20260825T1937Z)",
+        "claimed_at": "2026-08-26T00:48:57Z",
+        "claimed_by": "dev-team (ready-lane consumer)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -24411,7 +24415,7 @@
         "last_served_tick": "2026-08-25T22:46:28Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-25T14:45:11Z"
+        "last_served_tick": "2026-08-26T00:47:28Z"
       },
       "drs": {
         "last_served_tick": "2026-08-25T20:55:58Z"
@@ -24423,7 +24427,7 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-26T00:45:34Z",
+    "_updated_at": "2026-08-26T00:47:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
