@@ -22419,8 +22419,8 @@
         "parent": "FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS",
         "created_at": "2026-08-23T10:45:00Z",
         "created_by": "pm",
-        "updated_at": "2026-08-23T10:47:21Z",
-        "updated_by": "pm",
+        "updated_at": "2026-08-26T03:05:13Z",
+        "updated_by": "router (occurrence bump, 2nd ratified hit)",
         "depends_on": [],
         "handoff": "docs/handoffs/TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES.md",
         "files": [
@@ -22429,7 +22429,8 @@
           "docs/policies/dev-standards.md"
         ],
         "verification_gate": "AC-1: UC-CCA-P3 moved in_progress[]->review[] byte-identical exits 0 (today: exit 1, live=0B -> candidate=12161B). AC-4: duplicate-id max() rule holds with EITHER copy larger.",
-        "note": "Spec: docs/handoffs/TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES.md. SHIP FIRST AND ALONE (brief §8 step 1) — read-only predicate change, depends on nothing open, unblocks a live defect. MECHANISM CONFIRMED IN CODE: PROSE_CEILING_LANES at :105 omits in_progress[], so collectRowsById() misses the live row, liveBytes falls to 0 at :267, and :269 hard-rejects. Two rows are parked BLOCKED-in-place right now instead of lane-moved because of this. KEEP THE GATED SET AT backlog|ready|review — widen ONLY the live baseline lookup, with max(proseBytes) across duplicate ids (3 duplicate ids exist live; last-wins could pick the smaller copy and manufacture a false reject). CORRECTION TO CARRY: 'numeric occurrence bump is rejected' is FALSE — occurrence_count 1->2 already passes (same digit count, zero delta). A fix scoped to integer increments fixes NONE of the live blocks."
+        "note": "Spec: docs/handoffs/TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES.md. SHIP FIRST AND ALONE (brief §8 step 1) — read-only predicate change, depends on nothing open, unblocks a live defect. MECHANISM CONFIRMED IN CODE: PROSE_CEILING_LANES at :105 omits in_progress[], so collectRowsById() misses the live row, liveBytes falls to 0 at :267, and :269 hard-rejects. Two rows are parked BLOCKED-in-place right now instead of lane-moved because of this. KEEP THE GATED SET AT backlog|ready|review — widen ONLY the live baseline lookup, with max(proseBytes) across duplicate ids (3 duplicate ids exist live; last-wins could pick the smaller copy and manufacture a false reject). CORRECTION TO CARRY: 'numeric occurrence bump is rejected' is FALSE — occurrence_count 1->2 already passes (same digit count, zero delta). A fix scoped to integer increments fixes NONE of the live blocks.",
+        "occurrence_2_20260826T0300Z": "SECOND ratified live hit, 2026-08-26T03:00Z, dev-team tick 02:37Z. developer working FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS attempted the standard in_progress[] -> backlog[] move and got a HARD REJECT: live=0B -> candidate=16574B. Mechanism is EXACTLY this row title: the source lane was in_progress[], which orch-row-prose-ceiling-check.mjs does not scan for a baseline, so a byte-identical move read as 16574B of net-new growth. NOTE the agent narrated the cause as \"this row never resided in a ceiling-checked lane\" — that framing is wrong and worth correcting for whoever implements: it is not a property of the row history, it is a lane-coverage gap in the baseline lookup. Consequence both times has been the same workaround: park the row in in_progress[] with status=BLOCKED instead of moving it, relying on scripts/lib/devteam-eligibility.jq:117 to keep it off the WIP count. That read-side exclusion holds, but the eligibility file itself (:110-114) documents a write-side companion fix whose whole purpose is to move newly-BLOCKED rows OUT of in_progress[] so correctness stops depending on the read-side exclusion alone. This ceiling gap is what blocks that companion fix from ever executing. First ratified occurrence was FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58."
       },
       {
         "id": "TASK-PROSECEILING-VALUE-SHAPE-MEASURE",
