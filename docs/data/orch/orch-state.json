@@ -87,11 +87,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-26T01:53:35Z",
-    "updated_by": "architect",
+    "status": "in_progress",
+    "active_task_id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+    "next_agent": "dev-pdf-extractor",
+    "updated_at": "2026-08-26T02:14:26Z",
+    "updated_by": "router",
     "resume_attempts": 0
   },
   "narrative": {
@@ -23240,32 +23240,6 @@
         "claimed_at": "2026-08-26T01:15:03Z",
         "claimed_by": "dev-team (design-router sweep)",
         "architect_review_note": "[architect 2026-08-26T01:17Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Re-verified the 1-line Disabled=>1 diff live (plutil -p; every other key byte-identical). New finding: of 5 tracked launchd/*.plist, 3 (cowork-guaranteed-slot-firer, socat-bridge, socat-tls-bridge) install as SYMLINKS to the repo file (drift-immune by construction); fleet-push (and docker-events) install as independent COPIES — the actual mechanism behind this row. No install script exists anywhere in-repo today; cron-jobs.md's documented \"install/re-arm\" step assumes the installed copy already exists, so the silent-rearm vector only fires on a genuine reinstall-from-source (disaster recovery / fresh host — this fleet has had several such events). PUSH-AUTONOMY-1 (dev-standards.md, unmodified, still canonical) frames autonomous push as the standing design default; the current Disabled=1 is a live host-level override tied to the present CI-red/224-backlog situation, not a stated permanent policy change — so the tracked plist's armed-by-design shape is still correct and should NOT be inverted.\n\nCHOSE (b): new scripts/install-launchd-plist.sh — refuses to overwrite an installed plist whose Disabled key reads true (plutil -extract Disabled raw, never grep; live-verified against fleet-push=present/rc0 vs docker-events=absent/rc1 as a working/non-working control pair) — becomes the sole documented install/re-arm path (cron-jobs.md repoint). REJECTED (a) tracked Disabled=1+doc: inverts the checked-in default to disabled-by-design for every future clone/host, forever, for what the row's own AC-5 frames as a temporary override tied to the current incident — and fixes only fleet-push's value, not a mechanism (docker-events gets nothing). REJECTED (c) checked-in policy file the installer reads: needs the SAME install-time enforcer as (b) to have any effect at all, so it pays (b)'s full cost plus a new registry/schema to maintain, for a reasoned-record benefit this brief + the row's own po_note/evidence already supply — not worth a parallel ledger for a problem confined to 1 label today.\n\nCOST (named, not waved at): the new script + fixture-only test is unbuilt as of this cycle — the exact gap this row exists to close stays open until developer lands it and the doc repoint ships; even after, this is a discipline control (bypassable by a manual cp outside the script), same category and same acceptance this fleet already gives orch-apply.sh, not an OS-level lock.\n\nFull brief (design detail, pseudocode, AC mapping, test strategy): docs/architecture-briefs/2026-08-26-fix-fleetpush-disarm-durable-install-guard.md. Journal STEP architect-S48 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-7.md)."
-      },
-      {
-        "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/pdf-extractor/",
-        "depends": [],
-        "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "updated_at": "2026-08-26T01:56:25Z",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "status_note": "UNBLOCKED + NARROWED + RE-ROUTED by PO 2026-08-26T01:16Z. Root cause is settled at source: ocr_executor = ProcessPoolExecutor(max_workers=1) at main.py:154 has NO max_tasks_per_child, so its single child is never recycled for the container life, while ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child and BOTH malloc_trim(0) mitigations are wired only into PID1 (pek_run_helper.py:133, routes_extract.py:112) — the executor child has zero mitigation. PRIMARY REMEDY = worker recycling (max_tasks_per_child; Python 3.12.3 verified in-container). Cap raise REJECTED. Call budget DEMOTED to safety-belt. architect: small bounded design call only (dedicated recycled executor vs tuned N, because the same executor also serves tesseract), then hand to dev-pdf-extractor. Burst/extraction VERIFICATION is market-hours gated to >=09:00Z weekdays; design+impl are not. FULL RULING + the four retired/superseded PO fields (po_burst_measurement_20260824T0722Z, po_ac4_bar_ruling_20260824T0850Z incl. the B1-B4 bar definitions, po_goahead_20260808T000430, po_ruling_20260824) are in detail_ref under key po_adjudication_20260826T0116Z — moved to cold store, NOT deleted.",
-        "updated_by": "router",
-        "files": [
-          "apps/pdf-extractor/main.py",
-          "apps/pdf-extractor/infrastructure/ocr_worker.py",
-          "apps/pdf-extractor/interface/pek_run_helper.py",
-          "apps/pdf-extractor/interface/routes_extract.py"
-        ],
-        "dispatch_lane": "dev-pdf-extractor",
-        "architect_review_note": "[architect 2026-08-26T01:53Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified root cause at source: main.py:154 ProcessPoolExecutor(max_workers=1) has no max_tasks_per_child; ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child; both malloc_trim(0) sites (pek_run_helper.py:133, routes_extract.py:112) are PID1-only. NEW FINDING beyond the PO's own framing: read extract_tables_usecase.py:531-567 — ocr_executor gets exactly 2 tasks/document (locate + one ocr_pages_worker call that loops internally over every rescue fire on that document's own pages). max_tasks_per_child recycles BETWEEN tasks, never inside one, so recycling structurally cannot bound a single pathological document's own multi-fire compounding (DBC's 18-page doc fires 6 times inside ONE such call). EVIDENCE-PROVENANCE FLAG: traced the \"6 fires pins the cap, ~914 events\" figure to ocr_bench_inner.py and confirmed it measures AutoFallbackOcrBackend/PEK's PID1 paddle_table instance (sibling, now-CANCELLED mechanism per the PO's own same-tick closure note) — NOT this row's own ocr_worker.py child instance, never directly benchmarked. Treated as strong same-library corroboration of the qualitative mechanism (gc.collect()=~0, malloc_trim(0)=~70-99%), not as a substitute for measuring this row's own curve (AC-3 below).\n\nDECISION (ii) chosen over (i): max_tasks_per_child=1 on the EXISTING shared ocr_executor (one-line main.py change; zero change needed to ocr_worker.py's already-correct \"if None: load\" cache pattern — module state resets on every fresh fork). REJECTED (i) dedicated second executor for the Paddle rescue only: requires splitting ocr_pages_worker's contract into a parent-orchestrated two-phase dispatch (ProcessPoolExecutors aren't passable into an already-running worker), touching extract_tables_usecase.py's call contract, both existing test files, and doubling lifespan.py's executor-shutdown bookkeeping — real re-architecture, not the small bounded design call asked for. N=1 (not a larger N) because it is the only value that needs no curve-fitting to be provably correct against \"never recycled\" — any N>1 reopens the same defect in a smaller, untested window.\n\nMANDATORY SAFETY BELT (recycling cannot reach intra-document compounding): BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT budget in ocr_worker.py, default 4 (provisional, pending AC-3's own measured curve) + malloc_trim(0) after each fire inside ocr_pages_worker's loop (same ctypes.CDLL(\"libc.so.6\") shape already shipped twice). Latency reload cost NOT measured (honest gap, not guessed) — gave a precise cold/warm measurement script instead (brief §6).\n\nFull brief: docs/architecture-briefs/2026-08-26-fix-pdfx-parent-process-memory-burst-headroom-worker-recycling.md (amendment to the 2026-08-07 brief, per PO's \"do not author a second 29KB brief\" instruction). AC-1..AC-9 there (unit-testable AC-1/AC-4/AC-5 first, no market-hours conflict; live AC-2/AC-3/AC-6 gated both on >=09:00Z weekday AND on the separate ops rebuild tracked at UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT landing this code first). Journal STEP architect-S49 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-7.md).\n",
-        "design_brief_20260826": "docs/architecture-briefs/2026-08-26-fix-pdfx-parent-process-memory-burst-headroom-worker-recycling.md",
-        "router_note_20260826T0155Z_claim_residue": "Cleared owner_client_session/claimed_at/claimed_by left by the 2026-08-26T01:37Z router hand-dispatch, after architect returned the row to ready[]. A READY row must carry no live claim identity: a non-null owner_client_session blocks the orphan-release FR-2 ladder (which requires IS NULL), and a stale claimed_at/claimed_by pair misleads the consumers that correlate a dispatch batch by exactly that pair. next_agent/owner/dispatch_lane (all dev-pdf-extractor, set by architect) deliberately PRESERVED — those are routing, not claim state."
       }
     ],
     "review": [
@@ -24256,7 +24230,38 @@
     },
     "last_triaged_at": "2026-08-26T01:15:03Z",
     "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/pdf-extractor/",
+        "depends": [],
+        "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+        "updated_at": "2026-08-26T02:14:26Z",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "status_note": "UNBLOCKED + NARROWED + RE-ROUTED by PO 2026-08-26T01:16Z. Root cause is settled at source: ocr_executor = ProcessPoolExecutor(max_workers=1) at main.py:154 has NO max_tasks_per_child, so its single child is never recycled for the container life, while ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child and BOTH malloc_trim(0) mitigations are wired only into PID1 (pek_run_helper.py:133, routes_extract.py:112) — the executor child has zero mitigation. PRIMARY REMEDY = worker recycling (max_tasks_per_child; Python 3.12.3 verified in-container). Cap raise REJECTED. Call budget DEMOTED to safety-belt. architect: small bounded design call only (dedicated recycled executor vs tuned N, because the same executor also serves tesseract), then hand to dev-pdf-extractor. Burst/extraction VERIFICATION is market-hours gated to >=09:00Z weekdays; design+impl are not. FULL RULING + the four retired/superseded PO fields (po_burst_measurement_20260824T0722Z, po_ac4_bar_ruling_20260824T0850Z incl. the B1-B4 bar definitions, po_goahead_20260808T000430, po_ruling_20260824) are in detail_ref under key po_adjudication_20260826T0116Z — moved to cold store, NOT deleted.",
+        "updated_by": "router",
+        "files": [
+          "apps/pdf-extractor/main.py",
+          "apps/pdf-extractor/infrastructure/ocr_worker.py",
+          "apps/pdf-extractor/interface/pek_run_helper.py",
+          "apps/pdf-extractor/interface/routes_extract.py"
+        ],
+        "dispatch_lane": "dev-pdf-extractor",
+        "architect_review_note": "[architect 2026-08-26T01:53Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified root cause at source: main.py:154 ProcessPoolExecutor(max_workers=1) has no max_tasks_per_child; ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child; both malloc_trim(0) sites (pek_run_helper.py:133, routes_extract.py:112) are PID1-only. NEW FINDING beyond the PO's own framing: read extract_tables_usecase.py:531-567 — ocr_executor gets exactly 2 tasks/document (locate + one ocr_pages_worker call that loops internally over every rescue fire on that document's own pages). max_tasks_per_child recycles BETWEEN tasks, never inside one, so recycling structurally cannot bound a single pathological document's own multi-fire compounding (DBC's 18-page doc fires 6 times inside ONE such call). EVIDENCE-PROVENANCE FLAG: traced the \"6 fires pins the cap, ~914 events\" figure to ocr_bench_inner.py and confirmed it measures AutoFallbackOcrBackend/PEK's PID1 paddle_table instance (sibling, now-CANCELLED mechanism per the PO's own same-tick closure note) — NOT this row's own ocr_worker.py child instance, never directly benchmarked. Treated as strong same-library corroboration of the qualitative mechanism (gc.collect()=~0, malloc_trim(0)=~70-99%), not as a substitute for measuring this row's own curve (AC-3 below).\n\nDECISION (ii) chosen over (i): max_tasks_per_child=1 on the EXISTING shared ocr_executor (one-line main.py change; zero change needed to ocr_worker.py's already-correct \"if None: load\" cache pattern — module state resets on every fresh fork). REJECTED (i) dedicated second executor for the Paddle rescue only: requires splitting ocr_pages_worker's contract into a parent-orchestrated two-phase dispatch (ProcessPoolExecutors aren't passable into an already-running worker), touching extract_tables_usecase.py's call contract, both existing test files, and doubling lifespan.py's executor-shutdown bookkeeping — real re-architecture, not the small bounded design call asked for. N=1 (not a larger N) because it is the only value that needs no curve-fitting to be provably correct against \"never recycled\" — any N>1 reopens the same defect in a smaller, untested window.\n\nMANDATORY SAFETY BELT (recycling cannot reach intra-document compounding): BCTC_MAX_PADDLE_RESCUE_FIRES_PER_DOCUMENT budget in ocr_worker.py, default 4 (provisional, pending AC-3's own measured curve) + malloc_trim(0) after each fire inside ocr_pages_worker's loop (same ctypes.CDLL(\"libc.so.6\") shape already shipped twice). Latency reload cost NOT measured (honest gap, not guessed) — gave a precise cold/warm measurement script instead (brief §6).\n\nFull brief: docs/architecture-briefs/2026-08-26-fix-pdfx-parent-process-memory-burst-headroom-worker-recycling.md (amendment to the 2026-08-07 brief, per PO's \"do not author a second 29KB brief\" instruction). AC-1..AC-9 there (unit-testable AC-1/AC-4/AC-5 first, no market-hours conflict; live AC-2/AC-3/AC-6 gated both on >=09:00Z weekday AND on the separate ops rebuild tracked at UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT landing this code first). Journal STEP architect-S49 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-7.md).\n",
+        "design_brief_20260826": "docs/architecture-briefs/2026-08-26-fix-pdfx-parent-process-memory-burst-headroom-worker-recycling.md",
+        "router_note_20260826T0155Z_claim_residue": "Cleared owner_client_session/claimed_at/claimed_by left by the 2026-08-26T01:37Z router hand-dispatch, after architect returned the row to ready[]. A READY row must carry no live claim identity: a non-null owner_client_session blocks the orphan-release FR-2 ladder (which requires IS NULL), and a stale claimed_at/claimed_by pair misleads the consumers that correlate a dispatch batch by exactly that pair. next_agent/owner/dispatch_lane (all dev-pdf-extractor, set by architect) deliberately PRESERVED — those are routing, not claim state.",
+        "owner_client_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb",
+        "claimed_at": "2026-08-26T02:14:25Z",
+        "claimed_by": "router-hand-dispatch",
+        "router_dispatch_20260826T0216Z": "Hand-dispatched dev-pdf-extractor, scoped to AC-1/AC-4/AC-5 ONLY (code + unit tests). Brief AC-8 is a HARD market-hours gate: AC-2/AC-3/AC-6 may not run 02:00-08:59Z weekday, and dispatch time was 2026-08-26T02:16Z Wednesday = inside that window. AC-9 additionally blocks those three behind the ops rebuild on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT. Locks held: intent:dev-pdf-extractor:main + task:FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, both ttl=3600, both to be released by the router on return."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
