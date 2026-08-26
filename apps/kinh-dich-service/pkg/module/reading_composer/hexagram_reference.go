@@ -67,12 +67,12 @@ type proseEntry struct {
 func mapTrendToEnum(trend string) (marketTrend string, marketTrendLabel localized) {
 	t := strings.ToUpper(trend)
 	if strings.HasPrefix(t, "THUAN LOI") {
-		return "favorable", localized{En: "Favorable (THUAN LOI)", Vi: "Thuan loi (THUAN LOI)"}
+		return "favorable", localized{En: "Favorable (THUẬN LỢI)", Vi: "Thuận lợi (THUẬN LỢI)"}
 	}
 	if strings.HasPrefix(t, "BAT LOI") {
-		return "unfavorable", localized{En: "Unfavorable (BAT LOI)", Vi: "Bat loi (BAT LOI)"}
+		return "unfavorable", localized{En: "Unfavorable (BẤT LỢI)", Vi: "Bất lợi (BẤT LỢI)"}
 	}
-	return "neutral", localized{En: "Neutral (TRUNG TINH)", Vi: "Trung tinh (TRUNG TINH)"}
+	return "neutral", localized{En: "Neutral (TRUNG TÍNH)", Vi: "Trung tính (TRUNG TÍNH)"}
 }
 
 // buildPhases constructs phase references from queDataMap lines + localized glosses.
