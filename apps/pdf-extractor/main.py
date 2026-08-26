@@ -38,6 +38,9 @@ from infrastructure.md_table_push_client import MdTablePushClient  # MD-EXTRACT
 from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRACT-2 + LF-EXTRACT
 from infrastructure.layout_first_push_client import LayoutFirstPushClient  # LF-EXTRACT
 from infrastructure.pek_engine_adapter import PekEngineAdapter  # PEK-INTEGRATE
+from infrastructure.pek_extraction_status_repository import (  # FIX-PDFX-PEK-EXTRACT-202-SILENT-DROP
+    PekExtractionStatusRepository,
+)
 from infrastructure.ocr_backends import select_ocr_backend  # PEK-IMPL-OCR
 from infrastructure.ocr_text_source_factory import select_ocr_text_source  # FU-1
 from domain.services import ExtractPDFService
@@ -240,6 +243,10 @@ def create_app() -> FastAPI:
     pek_adapter = PekEngineAdapter(ocr_backend=_ocr_text_backend)
     # PEK push client reuses existing LayoutFirstPushClient (same contract).
     pek_push_client = LayoutFirstPushClient(mcp_server_url=cfg.mcp_server_url)
+    # FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S
+    # AC-1: durable record of accepted/done/failed — same isolated pdf_extractor.db
+    # as doc_repo (cfg.db_path), a new table, no shared access.
+    pek_status_repo = PekExtractionStatusRepository(db_path=cfg.db_path)
 
     # --- FastAPI app ---
     app = FastAPI(
@@ -265,6 +272,7 @@ def create_app() -> FastAPI:
         extract_layout_first_usecase=extract_layout_first_usecase,  # LF-EXTRACT
         pek_engine_adapter=pek_adapter,     # PEK-INTEGRATE
         pek_push_client=pek_push_client,    # PEK-INTEGRATE: reuses LayoutFirstPushClient
+        pek_status_repo=pek_status_repo,    # FIX-PDFX-PEK-EXTRACT-202-SILENT-DROP AC-1
         ocr_text_source=ocr_text_source,    # FU-1: wires /page-text handler
         ocr_source_ok=ocr_source_ok,        # FU-1 RISK-1: startup probe result → /health
         local_extract_usecase=local_extract_usecase,  # FEAT-PDF-EXTRACTOR-LOCAL-INPUT

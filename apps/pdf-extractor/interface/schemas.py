@@ -77,7 +77,11 @@ class PekExtractRequestSchema(BaseModel):
     Endpoint returns 202 Accepted immediately (background task — fire-and-forget).
 
     Market-hours guard (REQ-PEK-11 Layer 2 — AC-PEK-NEW-1):
-        If VN HOSE is open (Mon–Fri 02:00–08:59 UTC), returns HTTP 503 IMMEDIATELY.
+        Blocked while domain.primitives.market_hours.primitive.is_vn_market_open_utc()
+        returns True — see that primitive for the authoritative window (this
+        docstring used to restate it as "02:00-08:59 UTC" and drifted from the
+        actual "02:00-07:59 UTC" guard — FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-
+        THEN-SILENTLY-DROPPED-SEMAPHORE-1800S AC-5).
         No model is loaded. No inference runs. RSS stays at cold-start baseline.
     """
 

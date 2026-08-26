@@ -23,6 +23,7 @@ def register_pek_routes(
     router: APIRouter,
     pek_engine_adapter: Optional[Any] = None,
     pek_push_client: Optional[Any] = None,
+    pek_status_repo: Optional[Any] = None,
 ) -> None:
     """Attach POST /pek-extract to the given APIRouter."""
 
@@ -38,7 +39,11 @@ def register_pek_routes(
         Returns 202 Accepted immediately; extraction runs as background task.
 
         Market-hours guard (REQ-PEK-11 Layer 2 — AC-PEK-NEW-1, CRITICAL):
-            If VN HOSE is open (Mon-Fri 02:00-08:59 UTC), returns HTTP 503 IMMEDIATELY.
+            Blocked while domain.primitives.market_hours.primitive.is_vn_market_open_utc()
+            returns True — see that primitive for the authoritative window
+            (that docstring is the single source of truth; this one used to
+            restate it and drifted to a wrong "08:59" — FIX-PDFX-PEK-EXTRACT-
+            202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S AC-5).
             No model loaded. No inference. RSS stays at cold-start baseline (~80MB).
 
         Sequential guard (REQ-PEK-4d):
@@ -46,15 +51,17 @@ def register_pek_routes(
             time. A contended request QUEUES for the slot (bounded by
             PEK_SEMAPHORE_WAIT_SECONDS, default 30 min) rather than failing.
             NO HTTP code is involved: this route has already returned 202 by the
-            time the background task acquires, so a queue-wait exhaustion
-            surfaces only as a logged '_run_pek_extract: FAILED' trace, never as
-            a 429 response. (Corrected by
-            FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE — the previous
-            '→ HTTP 429' claim here was never reachable on this path.)
+            time the background task acquires, so a queue-wait exhaustion used
+            to surface ONLY as a logged '_run_pek_extract: FAILED' trace, with
+            nothing durable recorded (FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-
+            SILENTLY-DROPPED-SEMAPHORE-1800S AC-1). pek_status_repo now records
+            "accepted" here and "done"/"failed" in pek_run_helper.py, so the
+            caller has a queryable terminal state via GET /pek-extract/{report_id}
+            instead of a 202 that silently never resolves.
 
         Accepts:  { report_id: str, pdf_path: str }
         Returns:  { status: "accepted", report_id: str }  (HTTP 202)
-                  { error: "market_open", retry_after: "after 15:00 ICT (08:00 UTC)" }  (HTTP 503, during 02:00-07:59 UTC Mon-Fri)
+                  { error: "market_open", retry_after: "after 15:00 ICT (08:00 UTC)" }  (HTTP 503, market open)
 
         Requires: pek_engine_adapter + pek_push_client injected at composition root.
         Returns HTTP 503 if not wired (graceful degrade, same as other endpoints).
@@ -83,12 +90,20 @@ def register_pek_routes(
                 },
             )
 
+        # AC-1 durable record: write "accepted" BEFORE the 202 goes out, so a
+        # background task that never reaches "done"/"failed" (e.g. the worker
+        # process itself dies) is still distinguishable from one that was
+        # never accepted at all.
+        if pek_status_repo is not None:
+            pek_status_repo.mark_accepted(body.report_id)
+
         background_tasks.add_task(
             _run_pek_extract,
             pek_engine_adapter,
             pek_push_client,
             body.report_id,
             body.pdf_path,
+            pek_status_repo,
         )
 
         return {"status": "accepted", "report_id": body.report_id}

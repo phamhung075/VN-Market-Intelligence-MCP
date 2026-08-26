@@ -1,4 +1,10 @@
-# size-justification: 135L — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM
+# size-justification: 159L — FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S
+# 2026-08-26 (135L -> 159L, +24L): added status_repo param + mark_done()/
+# mark_failed() call sites in the existing try/except — the except branch
+# used to ONLY log.error(), now also writes the durable record AC-1 requires.
+# Stays in this file (not a new split) because the writes sit inline in the
+# same try/except this file already owns; a split would need to re-thread
+# result/exc across a file boundary for two one-line calls.
 # 2026-08-15 (93L -> 135L, +42L): added _malloc_trim_or_noop() + its
 # finally-block call site inside _run_pek_extract. Same allocator-hygiene
 # concern this file already owns at the request-lifecycle boundary
@@ -51,9 +57,20 @@ async def _run_pek_extract(
     push_client: Any,
     report_id: str,
     pdf_path: str,
+    status_repo: Any = None,
 ) -> None:
     """
     Background task: run PEK extraction and push results via LayoutFirstPushClient.
+
+    FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S
+    (AC-1): status_repo (infrastructure.pek_extraction_status_repository.
+    PekExtractionStatusRepository, optional — None in callers/tests that
+    don't inject it) is written on BOTH terminal paths below: mark_done() on
+    a successful push, mark_failed(error=str(exc)) in the except branch. That
+    except branch used to ONLY call logger.error() — a SemaphoreContendedError
+    (queue wait exhausted) or any other extraction failure was a traceback in
+    stdout and nothing else. GET /pek-extract/{report_id}
+    (interface/routes_pek_status.py) reads this record back.
 
     PEK-INTEGRATE: calls PekEngineAdapter.extract_layout_and_tables(), then
     pushes the result payload to mcp-server POST /api/push-bctc-layout
@@ -112,6 +129,8 @@ async def _run_pek_extract(
             push_result.get("units_stored"),
             push_result.get("pages_stored"),
         )
+        if status_repo is not None:
+            status_repo.mark_done(report_id)
     except Exception as exc:
         # BTB-UNBLOCK-DEV FAIL-LOUD: log full traceback (exc_info=True).
         # A silent "error=%s" with no traceback was the root cause of the
@@ -122,6 +141,11 @@ async def _run_pek_extract(
             report_id,
             exc_info=True,
         )
+        # FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S
+        # AC-1: the durable record. Covers SemaphoreContendedError (queue wait
+        # exhausted) and every other exception this try-block can raise.
+        if status_repo is not None:
+            status_repo.mark_failed(report_id, str(exc))
     finally:
         # FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM: return freed
         # native-allocator memory (torch/PaddlePaddle layout+table buffers)

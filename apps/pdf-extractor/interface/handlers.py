@@ -28,6 +28,7 @@ from interface.routes_extract_tables import register_extract_tables_routes
 from interface.routes_md_tables import register_md_tables_routes
 from interface.routes_layout_first import register_layout_first_routes
 from interface.routes_pek import register_pek_routes
+from interface.routes_pek_status import register_pek_status_routes
 from interface.routes_rasterizer import register_rasterizer_routes
 from interface.routes_page_text import register_page_text_routes
 
@@ -40,6 +41,7 @@ def register_routes(
     extract_layout_first_usecase: Optional["ExtractLayoutFirstUseCase"] = None,
     pek_engine_adapter: Optional[Any] = None,
     pek_push_client: Optional[Any] = None,
+    pek_status_repo: Optional[Any] = None,  # FIX-PDFX-PEK-EXTRACT-202-SILENT-DROP AC-1
     ocr_text_source: Optional[Any] = None,
     ocr_source_ok: bool = True,
     pdf_data_dir: str = "data/pdfs",
@@ -59,7 +61,11 @@ def register_routes(
         router, extract_layout_first_usecase=extract_layout_first_usecase
     )
     register_pek_routes(
-        router, pek_engine_adapter=pek_engine_adapter, pek_push_client=pek_push_client
+        router,
+        pek_engine_adapter=pek_engine_adapter,
+        pek_push_client=pek_push_client,
+        pek_status_repo=pek_status_repo,
     )
+    register_pek_status_routes(router, pek_status_repo=pek_status_repo)
     register_rasterizer_routes(router, pdf_data_dir=pdf_data_dir)
     register_page_text_routes(router, ocr_text_source=ocr_text_source)
