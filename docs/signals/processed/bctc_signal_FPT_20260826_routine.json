@@ -4,39 +4,49 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
-  "customer": "Doanh nghiệp CNTT trong nước và nước ngoài (offshore), thuê bao viễn thông cá nhân, học sinh/sinh viên",
-  "ops": "Biên lợi nhuận gộp 34.0%; lợi nhuận từ công ty liên kết tăng 36% YoY (đổi phương pháp hợp nhất FTEL sang vốn chủ sở hữu từ 01/01/2026)",
-  "mgmt": "ROE 6.2% (raw quý) / 28.3% (annualized, sector-comparison); balance sheet cân đối (balance_check PASSED, imbalance 0.00%)",
-  "valuation": {
-    "pe": 13.8,
-    "ey_spread_pp": 2.25,
-    "verdict": "FAIR"
-  },
+  "product": "Xuat khau phan mem, tich hop he thong, dich vu CNTT, vien thong (FPT Telecom - hach toan theo phuong phap von chu so huu tu Q1-2026), giao duc (FPT Edu)",
+  "customer": "Doanh nghiep mua dich vu CNTT (trong nuoc + offshore Nhat/My/APAC), thue bao vien thong, hoc sinh sinh vien",
+  "ops": "Bien loi nhuan gop 34.0%; LNST Q1-2026 dat 2.477 ty VND, +13.8% YoY tren co so hop nhat da dieu chinh (doanh thu -22.3% headline do doi phuong phap hop nhat FTEL sang von chu so huu, +8.7% YoY neu dieu chinh cung phuong phap); OCF am -2.848 ty VND (dau tu tai chinh ngan han tang manh)",
+  "mgmt": "Track-record tang truong EPS on dinh; minh bach cong bo thay doi phuong phap hop nhat FTEL va dieu chinh hoi to so lieu so sanh",
+  "ey_spread_pct": 2.25,
+  "valuation_verdict": "FAIR",
+  "pe_sector": 13.8,
+  "pe_median_sector": 17.3,
+  "roe_sector_comparison_pct": 28.3,
   "kd_reading": {
-    "hexagram": "Tieu Qua (62)",
+    "que": "Co (18)",
     "trend": "TRUNG_TINH",
     "signal": "GIU",
-    "confidence": 0.37
+    "confidence_pct": 37,
+    "note": "changed vs c182-c185 (was Que Tieu Qua 62, TRUNG TINH, GIU 37-38% for 4 consecutive cycles) — 4-cycle byte-identical pattern broken this cycle"
   },
   "esc_gate": {
-    "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-    "esc2": "FALSE (imbalance 0.00%)",
-    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard esc-datacov:FPT:Q1-2026:ESC-3 held by prior session)",
-    "esc4": "FALSE (non_operating_share 2.00%)",
-    "esc5": "TRUE (7/15 refine units <0.50 confidence, min=0.45, unit-0008..0014) — esc-deep-dive-request dispatched to dev-team this cycle"
+    "esc1": "unevaluable_scope_reduced_no_bash_glob_bctc_table_rows_tool",
+    "esc2": "FALSE_imbalance_0.00pct",
+    "esc3": "DATA-COVERAGE-LIMITED_3of4_quarters",
+    "esc4": "FALSE_non_operating_share_2.00pct",
+    "esc5": "TRUE_7of15_units_below_0.50_min_0.45",
+    "escalation_status": "GUARD-HELD",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d"
   },
-  "escalation_status": "PENDING",
-  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-  "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-  "data_gaps": [
-    "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
-    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+  "coverage_guard_held": true,
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "insider_signals": "none_significant",
+  "legal_risk_signals": 0,
+  "evidence_fragments_recorded": [
+    "bctc_roe_strong (id=1584)",
+    "bctc_report_overdue (id=1585)"
   ],
-  "as_of": "2026-08-26T00:20:00Z",
+  "generated_at": "2026-08-26T15:20:00Z",
   "_processed": {
-    "fingerprint": "6fb6b45e6987e0be4dd05957e1e907a63a44cd389fbc8d36ef6e988365b87ed2",
-    "processedAt": "2026-08-26T00:13:49Z",
+    "fingerprint": "9ce491c6b3a4687f942b2d081b59812f90bd0cce8f00cc00d5b1ba4f0aa0a6c0",
+    "processedAt": "2026-08-26T15:10:05Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

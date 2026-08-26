@@ -4,37 +4,43 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Ngân hàng bán lẻ và doanh nghiệp, tín dụng, tài trợ thương mại, bancassurance",
-  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, khách hàng SME",
-  "ops": "Thu nhập lãi thuần 17.421 tỷ VND; lợi nhuận từ HĐKD chiếm 80.9% doanh thu; ROE 16.7% (annualized) dưới trung vị ngành ngân hàng (17.6%)",
-  "mgmt": "OCF/NI ratio quý này 1.37x (divergence 36.81%, dưới ngưỡng cảnh báo 40%); balance sheet lệch nhẹ 0.37% (dưới ngưỡng 0.5%)",
-  "valuation": {
-    "pe": 14.1,
-    "ey_spread_pp": 2.09,
-    "verdict": "FAIR"
-  },
+  "product": "Ngan hang thuong mai quoc doanh lon nhat VN: tin dung, huy dong, thanh toan quoc te, bancassurance, dich vu the/ngan hang so",
+  "customer": "Doanh nghiep lon (SOE + FDI), khach hang ban le do thi thu nhap trung-cao, doanh nghiep xuat nhap khau",
+  "ops": "Thu nhap lai thuan Q1-2026 17.421 ty VND; Loi nhuan hoat dong 14.089 ty VND (80.9%); LNST 9.462 ty VND (54.3%); ROE (BCTC raw, non-annualized) 4.2% vs sector-comparison annualized 16.7% (duoi median nganh 17.6%); OCF/NI ratio Q1 = 1.368 (OCF vuot NI 36.8%, chua vuot nguong 40% ESC-3)",
+  "mgmt": "Xu huong tin tuc TICH CUC 30 ngay qua (slope +0.13); KD tin cay 100% THUAN LOI tuan nay, tang manh tu 37% TRUNG TINH chu ky truoc",
+  "ey_spread_pct": 2.09,
+  "valuation_verdict": "FAIR",
+  "pe_sector": 14.1,
+  "pe_median_sector": 9,
+  "roe_sector_comparison_pct": 16.7,
   "kd_reading": {
-    "hexagram": "Tieu Qua (62)",
-    "trend": "TRUNG_TINH",
+    "que": "Ton (57)",
+    "trend": "THUAN_LOI",
     "signal": "GIU",
-    "confidence": 0.37
+    "confidence_pct": 100,
+    "note": "changed vs c182-c185 (was Que Tieu Qua 62, TRUNG TINH, GIU 37-38% for 4 consecutive cycles) — flipped to favorable, 4-cycle byte-identical pattern broken this cycle"
   },
   "esc_gate": {
-    "esc1": "SCOPE-REDUCED (no Bash/Glob/bctc_table_rows tool)",
-    "esc2": "FALSE (imbalance 0.37%)",
-    "esc3": "FALSE (4/4 quarters, divergence 36.81% < 40% threshold)",
-    "esc4": "N/A (bank — operating_profit > pretax_profit structurally, non_operating_share formula not applicable)",
-    "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+    "esc1": "unevaluable_scope_reduced_no_bash_glob_bctc_table_rows_tool",
+    "esc2": "FALSE_imbalance_0.37pct",
+    "esc3": "FALSE_divergence_36.81pct_below_40pct_threshold_4of4_quarters",
+    "esc4": "N/A_bank_operating_profit_exceeds_pretax_profit_structurally",
+    "esc5": "FALSE_report_id_null_refine_status_PARTIAL"
   },
-  "escalation_status": "NONE",
-  "data_gaps": [
-    "Q2-2026 PDF on disk since 2026-08-01, still unextracted by pipeline",
-    "record_evidence_fragment failing this cycle (\"database disk image is malformed\") — evidence pipeline starved, reported to dev-team"
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "insider_signals": "none_significant",
+  "legal_risk_signals": 0,
+  "evidence_fragments_recorded": [
+    "bctc_roe_strong (id=1588)",
+    "bctc_report_overdue (id=1589)"
   ],
-  "as_of": "2026-08-26T00:20:00Z",
+  "generated_at": "2026-08-26T15:20:00Z",
   "_processed": {
-    "fingerprint": "7a92cd4c9d423cce81d4f07a85b0268a25123339c3bebb265d6895c56579ec16",
-    "processedAt": "2026-08-26T00:13:49Z",
+    "fingerprint": "2ea1346d4a1bbf9cf05999846c40791673f11b27f6497ada70b964b853c9213c",
+    "processedAt": "2026-08-26T15:10:05Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
