@@ -1,0 +1,42 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-08-26T02:21:00Z",
+  "payload": {
+    "fire_time": "2026-08-26T02:21:00Z",
+    "matched_slots": ["chef-intraday", "alert-commander-market"],
+    "won_slots": ["chef-intraday", "alert-commander-market"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md", "docs/agents/alert-commander/flow/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": { "chef-intraday": "cadence", "alert-commander-market": "cron" },
+    "cadence_minutes": { "chef-intraday": "60", "alert-commander-market": null },
+    "last_fired_timestamp": "2026-08-26T02:20:36Z",
+    "last_fired_slots": ["chef-intraday", "alert-commander-market"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "2-slot batch, MAX_PARALLEL=4 (headroom 3391MB vs 1500 floor, load1m 4.50 vs 24 threshold, 12 cores), DEGRADED=false, single batch, no inter-batch wait. FIELD-PROVENANCE (deliberate, re FIX-COWORKFIRE-TELEMETRY-SERVERCOMPUTED-FIELDS-FABRICATED-30PCT): dev_head resolved from the CANONICAL top-level .head, which reads {status:in_progress, active_task_id:FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, next_agent:dev-pdf-extractor, updated_by:router 02:14:26Z} -> active. It is NOT read from .task_board.head, which is a deprecated stub carrying {status:deprecated, canonical_moved_to:.head}; reading that stub and mapping its literal 'deprecated' onto this field is one mechanical route to the dev_head:unknown placeholder tell. signal_backlog=31 independently recomputed as a docs/signals/*.json file count excluding cowork-team-*, and agrees exactly with emit_pressure_state's server-side 31. devq and calendar_status read from the freshly emitted pressure-state.json, not carried forward.",
+    "carried_defects": {
+      "cycle_snapshot_promoted": "false again — 36th consecutive. Nominal tick 02:15, Step 4.7 wrote cycle-snapshot-02:19.json (wall clock). Routed: FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK. Fold evidence filed this session at commit 0e7c095b7 — the prior-day same-name decoy AC-4 describes hypothetically actually fired at 02:05Z against alert-commander.",
+      "calendar_status": "still 'open' — 28th+ consecutive; the computation defect is unchanged, this field is reported as-read, not as-believed.",
+      "load_parse": "spawn-fanout.md Step 5.1's own LOAD_1MIN expression (uptime | awk -F',') truncates 4.50 to 4 on this locale-comma host. Verdict unaffected at a 24 threshold; latent if any future threshold sits near an integer boundary."
+    }
+  }
+}
