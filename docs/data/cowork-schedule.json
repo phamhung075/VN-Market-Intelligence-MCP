@@ -424,7 +424,7 @@
       "depends_on": "chef-eod 08:45 UTC + 30min",
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-08-13T09:25:15Z",
+      "last_fired": "2026-08-26T09:20:45Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "last_reactivated_at": null,
