@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T02:53:15Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T02:45:00Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:45",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 34,
+    "note": "1-slot fan-out. Step 0a drain no-op: the single signal_queue NEW row (rtr-20260826T0234-auditordedupskipzero) is to=architect, outside the SSOT cowork recipient set [po, tran-ngoc-bau, alert-commander, unified-agent] — preflight new_signals=0 is correct-by-design, not a blind gate. Step 4.6 slot claim required payload as a STRING (object rejected with zod invalid_type); re-issued serialized, claimed=true.",
+    "FIELD-PROVENANCE": {
+      "dev_head": "read from canonical TOP-LEVEL .head (status=busy, active_task_id=FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, updated_by=router 02:48:06Z) — NOT the deprecated .task_board.head passthrough stub",
+      "devq": "server-computed dev_queue_depth from emit_pressure_state, not caller-supplied",
+      "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 34; matches server value exactly",
+      "calendar_status": "server-computed; still open — carried defect, not verified by this tick",
+      "last_regime_and_volatility": "both spec lookup keys (.regime_status/.volatility_level) re-confirmed ABSENT from cycle-snapshot-latest.json (still tick=00:00, created_at=2026-08-23T00:07:50Z, ~74h stale); passed unknown per spec rather than substituting the live NEUTRAL that exists at .macro_snapshot.data.signals.carry.regime"
+    },
+    "carried_defects": {
+      "cycle_snapshot_promoted_false": "38th consecutive. Naming fix routed to architect (0d77460a3), not landed. Do NOT fix by rounding the producer — po_fold_20260825 withdrew that shape.",
+      "snapshot_wallclock_naming": "nominal tick 02:45, producer wrote cycle-snapshot-02:51.json (wall-clock). A PRIOR-DAY cycle-snapshot-02:50.json (created_at 2026-08-25T02:50:23Z) survives one minute away from today file. Census after this tick prune: 30 prior-day / 6 today. Already covered by the 02:15Z filing + 02:30Z quantified amendment; settled fix (po_fold_20260825 newest-file-inside-7min-gate) DOES resolve this instance — newest is 02:51 at 02:51:11Z. No new row warranted.",
+      "step51_locale_comma_load_parse": "3rd consecutive observation. Spec expression awk -F, truncates true load 5,28 to 5 on this locale-comma host. Defect is IN THE SPEC, not an improvisation. Latent — non-binding at threshold 24 (2 x 12 cores).",
+      "snapshot_prune": "removed exactly 1 file this tick (prior-day cycle-snapshot-02:35.json)."
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T02:53:15Z"
+}
