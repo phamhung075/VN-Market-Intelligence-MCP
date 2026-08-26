@@ -132,20 +132,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "rtr-20260825T1540-drainflag",
-        "ts": "2026-08-25T15:37:56Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "scripts/agents-flow/drain-signals.js has no unknown-flag guard: an unrecognised argument falls through to the DESTRUCTIVE default (perform the drain). Observed live this tick — `--help` was invoked expecting usage text and instead drained 6 signals, moved 6 files to processed/, appended 6 rows to pending_triage_inbox and wrote signals.db. There is no --help and no --dry-run. Only --count-drainable is recognised. Any operator or agent probing this script read-only will silently mutate state.",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "router-observed",
-        "audit_cycle_tag": "cron:dev-team:2026-08-25T15:07Z",
-        "dedup_key": "tooling_defect:drain-signals-js:unknown_flag_falls_through_to_destructive_default"
-      },
-      {
         "id": "rtr-20260825T1545-qadrainskip",
         "ts": "2026-08-25T15:44:26Z",
         "from": "dev-team",
