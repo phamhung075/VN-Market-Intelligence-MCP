@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-26T14:44:06Z",
+    "_updated_at": "2026-08-26T16:41:32Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1222,7 +1222,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer is operational (migrated to agent-father's local keep-cycle) — 30d memory-prune rule continues as routine hygiene",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-26.json"
       }
     ],
@@ -24606,7 +24606,7 @@
         "last_served_tick": "2026-08-26T14:50:22Z"
       }
     },
-    "_updated_at": "2026-08-26T16:13:14Z",
+    "_updated_at": "2026-08-26T16:41:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24943,6 +24943,31 @@
         "createdAt": "2026-08-26T16:07:55Z",
         "drained_at": "2026-08-26T16:12:03Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bd1cd6a9f54cb3bcfa32bb6fd3737900a8ec94236bc1a437b509680296f54a24",
+        "source": "dashboard",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "LOW",
+        "payload": {
+          "from": "code-janitor",
+          "to": "po",
+          "type": "system-issue",
+          "createdAt": "2026-08-26T16:30:03Z",
+          "payload": {
+            "finding": "CONTRADICTION DETECTED: docs/agent-memory/health/team-tool-recheck-*.md writer is ACTIVE, not silent. Most recent file team-tool-recheck-2026-08-26-1257.md was written today at 14:58Z (3 hours before this signal). Git history shows continuous operation since at least 2026-08-06, with commits on 08-06, 08-13, 08-14, 08-15, 08-18, 08-22, 08-23, 08-25, 08-26. MIGRATION COMPLETED: writer migrated from cloud RemoteTrigger (trig_019Q8D5xttjZn6iytx2Ld9dW, killed 2026-06-22) to agent-father's local keep-cycle; active commits show operation under agent-father since at least 2026-08-06.",
+            "correction_reason": "Pre-gate signal payload cited silence since 2026-06-23 but disk verification and git log contradict this premise. Writer is operational and routed correctly. No action needed — the 30d memory-prune rule will continue draining old files as routine hygiene.",
+            "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md). RESOLVED: migrated to agent-father's local keep-cycle, no user decision needed.",
+            "decision_needed": "NONE — writer is operational; consider retiring this signal class since the migration (the original decision) has already shipped.",
+            "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+            "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+          }
+        },
+        "createdAt": "2026-08-26T16:30:03Z",
+        "drained_at": "2026-08-26T16:41:32Z",
+        "routed_to": "po"
       }
     ],
     "last_po_triage_at": "2026-08-26T15:08:05Z",
