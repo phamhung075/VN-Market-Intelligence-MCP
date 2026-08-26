@@ -1,8 +1,0 @@
-{
-  "from": "commit-sweep-guard",
-  "to": "po",
-  "type": "bug-escalation",
-  "priority": "high",
-  "createdAt": "2026-08-26T10:35:19Z",
-  "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-tier2-last-healthy.json. actor=036ceaf1-bf34-46cd-92e4-8c6b213ff4bb mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid35427:git commit -m chore(auditor): Tier-2 freshness sweep c18 — A-29 cron degradation re-confirmed (21 STALE/MISSED), all freshness checks PASS, VPS health both plan]<-[pid35422:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604621452-4zb6uk.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88808:claude --dangerously-skip-permissions -n detect-loop ]"
-}
