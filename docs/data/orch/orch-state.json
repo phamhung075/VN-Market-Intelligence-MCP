@@ -182,34 +182,6 @@
         "disposition": "FOLDED into FIX-CCATO-NULLMARKER-SET-INCOMPLETE-2ND-TOOL-GETTECHNICALINDICATORS-NOTFOUND-SCORED-AS-CONTRADICTION (backlog, raised P2->P1). NOT a fabrication and NOT probe-substitution: compare_financials returned current=null, so the absence-claim was TRUE. Third tool hitting the same null-marker gap. Mechanism read from source: verdictClassifier.ts flattenText() JSON.stringify()s the object, classifyVerdict() only substring-matches 10 prose literals from claim-tool-map.json .tool_null_markers, and JSON.stringify(null)===\"null\" is not one of them -> NON_NULL -> spurious contradiction."
       },
       {
-        "id": "rtr-20260825T1905-resumekeykeepalivestrand",
-        "ts": "2026-08-25T19:41:21Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "REGRESSION FOUND IN A SHIPPED FIX — FIX-DEVTEAM-RESUME-KEY-TTL-3600-LAPSES-UNDER-LIVE-AGENT (commit faf84a6f6, agent-father, 2026-08-25). The fix is directionally right and closes a real confirmed duplicate-spawn window, but as written it introduces a PERMANENT STRAND for the most common agent death mode, and its own AC-2 (\"crash recovery preserved and PROVEN\") is falsified rather than merely unproven. Mechanism: the new keepalive renews resume_key on S2/ILC's claimed:false branch every tick. WF-4's stale-age reset declines to fire whenever `git log --since=claimed_at --grep=<task-id>` finds a commit — and commit-convention.md REQUIRES a `Task: <TASK-SLUG>` trailer on any fix/feat delivering a board task, so one commit from the agent before it dies satisfies that grep permanently. WF-4 therefore never resets .head; S2's outer_claim never succeeds because the keepalive keeps the lock alive; .head.resume_attempts increments only on the successful-claim branch (main.md:589) so WF-3's 3-attempt bound is never reachable. The row sits in in_progress[] forever holding a WIP slot. Pre-fix, the same scenario self-healed in 3 ticks. Note the irony worth recording: WF-4's own in-file comment names \"S2's own outer_claim peer-held check\" as the safety net justifying its conservative no-reset — this fix is what removes that safety net. Suggested bound (not prescriptive): increment resume_attempts on the renew branch so WF-3 stays reachable, or cap consecutive renewals, or source liveness from something other than the lock's own presence. Row moved ready[]->review[] next_agent=po with the full chain in status_note. Currently INERT (.head idle, in_progress[]=0) so there is time to fix before first exposure.",
-        "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "router-observed",
-        "audit_cycle_tag": "cron:dev-team:2026-08-25T18:37Z",
-        "dedup_key": "signal_feedback:devteam-resume-key-keepalive:renewal-unbounded-strands-row-wf3-unreachable"
-      },
-      {
-        "id": "rtr-20260825T1952-preflightreentrantrun",
-        "ts": "2026-08-25T19:52:05Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "tooling_defect",
-        "summary": "dev-team-tick-preflight.sh returns RUN for a duplicate delivery of a tick whose body is STILL IN FLIGHT, and nothing downstream can tell the two apart. Observed 2026-08-25T19:50:53Z: the 19:37Z tick body had already run (commit 39f216d2b at 19:45:48Z — drain complete, 3 agents dispatched and still live). A second delivery of the same cron prompt arrived at 19:50Z; preflight found SF-1 (dev-team-cron-singleton) and the fire-election lock (cron:dev-team:2026-08-25T19:37Z) already held by THIS SAME session, heartbeated both (claimed_at=1787687051, heartbeat_at=1787687364 on both locks — a renewal, not a re-claim after expiry), and returned {\"verdict\":\"RUN\",\"tick\":\"2026-08-25T19:37Z\"} with detail \"locks held — continue main.md at gcc-preflight\". || WHY THIS IS NOT SIMPLY A TTL BUG (first read, corrected): the fire-election TTL is 600s against a 1800s cadence, so an expiry-then-reclaim was the obvious hypothesis. The heartbeat_at field falsifies it — the lock never lapsed. The re-entrant RUN is deliberate and has a legitimate purpose: if a tick's body crashes midway, the same-session re-fire must be able to resume rather than strand the tick. || THE ACTUAL GAP: the fire-election lock records that a tick STARTED and is released only at jump:end. It never records how far the body got, so \"I hold this tick's lock\" is ambiguous between (a) the body crashed, resume it and (b) the body is running fine right now, do not touch it. Both present identically to preflight, and it resolves the ambiguity toward RUN in both cases. A router that trusted the verdict here would have re-run gcc-preflight, re-drained, and re-entered Step 1 / ILC on top of three live agents — the exact duplicate dispatch the fire-election lock exists to prevent. What actually prevented it was out-of-band harness knowledge that the three subagents were still alive, which is NOT available in-flow. || UNTESTED AND IMPORTANT: whether the Phase-B intent gate would have blocked the duplicate spawn depends on whether task_claim treats a re-claim by the SAME owner_client_session as re-entrant (claimed:true) or as held (claimed:false). If re-entrant, the intent locks provide no protection here at all and this is a live duplicate-spawn vector. I did not test it, because the only way to test is to attempt the duplicate claim I am trying to avoid. Worth settling deliberately with a stubbed fixture. || SAME ROOT SHAPE as FIX-DEVTEAM-RESUME-KEY-TTL-3600 (rtr-20260825T1905): a lock's presence or absence being read as a liveness verdict it cannot actually carry. Suggested direction: stamp a completion marker (tick + jump:end reached) into the fire-election lock's payload via task_heartbeat payload_patch as the body advances, so a re-delivery can distinguish resume-after-crash from already-running.",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "router-observed",
-        "audit_cycle_tag": "cron:dev-team:2026-08-25T19:37Z",
-        "dedup_key": "tooling_defect:devteam-tick-preflight:reentrant-run-cannot-distinguish-inflight-from-crashed"
-      },
-      {
         "id": "tra-20260825T203533Z",
         "ts": "2026-08-25T20:35:33Z",
         "from": "tran-ngoc-bau",
