@@ -1,0 +1,37 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "tooling_defect",
+  "priority": "HIGH",
+  "createdAt": "2026-08-26T07:42:56Z",
+  "payload": {
+    "title": "task_board.qa[] has NO picker — qa dispatch is coupled to the review->qa MOVE, so any row resident in qa[] is unreachable by every dispatch path",
+    "evidence": {
+      "drain_source_lanes": "scripts/devteam-review-claim-qa-drain.jq :41 — 'candidate lanes: .task_board.review[] UNION .task_board.done[]'. qa[] appears only as the MUTATION TARGET (:215 .task_board.qa = ... + [batch]), never as a selection source.",
+      "picker_scan": "grep -l 'task_board.qa' over scripts/devteam-*.jq + scripts/lib/devteam-eligibility.jq matches only devteam-review-claim-qa-drain.jq (target) and devteam-qadrain-skip-revert.jq (revert path). No selector reads qa[] for dispatch.",
+      "dispatch_coupling": "The caller derives $picked_batch by re-reading .task_board.qa[] for rows carrying THIS invocation's claimed_at/claimed_by stamp (main.md :966-968 and :1291-1293). Dispatch therefore fires only for rows the drain itself just moved — never for rows already sitting there.",
+      "stranded_rows_observed": [
+        {
+          "id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
+          "priority": "P0",
+          "claimed_at": "2026-08-14T08:32:49Z",
+          "age_days": 12,
+          "claimed_by": "dev-team (review-lane qa-drain)",
+          "note": "Drained CORRECTLY through the intended path. Still stranded 12 days. This is the load-bearing evidence: the defect is not about hand-placed rows, it is that nothing re-selects qa[] once the moving tick ends."
+        },
+        {
+          "id": "FIX-PDFX-PEK-EXTRACT-202-ACCEPTED-THEN-SILENTLY-DROPPED-SEMAPHORE-1800S",
+          "priority": "P1",
+          "arrived": "2026-08-26T07:32Z",
+          "claimed_by_before_router_stamp": null,
+          "note": "Moved ready[]->qa[] directly by dev-pdf-extractor on return, bypassing the drain entirely, so it never received a claimed_by stamp and no qa was ever dispatched."
+        }
+      ],
+      "cap_is_not_the_bug": "QA_CAP=10 (main.md :953 and :1279), NOT the 'qa[] < 1' asserted by devteam-review-claim-qa-drain.jq :123 — that comment is stale since the 08-23 retune. With qa[]=2 the drain had headroom 8, so the review lane was NOT dammed. Do not re-file this as a cap-saturation issue."
+    },
+    "impact": "Any row that reaches qa[] without being moved there by the drain in that same tick is permanently unowned. A row the drain DID move is also unowned from the next tick onward if its qa agent never completes the move out — which is what happened to a P0 for 12 days. qa[] is currently a terminal parking lot, not a work lane.",
+    "recommendation": "Add a qa[]-resident re-dispatch path: select rows in qa[] with status=QA and next_agent=qa whose claimed_at is older than one tick and for which no live task:<id> lock is held, then dispatch qa for them. Note this is the SAME shape as the not-before finding filed at 07:19:50Z — a guarantee advertised board-wide but implemented on one path only. Verify by per-file selector count against qa[], NOT by grepping for the string 'task_board.qa' (both the target write and the revert script match it and would score this GREEN today).",
+    "router_action_taken": "Hand-dispatched qa for BOTH rows at 2026-08-26T07:42:56Z under task: locks (ttl 3600) after confirming no live lock existed on either. Stamped the PDFX row's claimed_by to mirror the drain's idiom. This unblocks the two rows; it does NOT fix the class defect.",
+    "found_by": "router dev-team tick 2026-08-26T07:07Z post-return verification — grepped the qa[] READER before assuming the next tick would pick the row up"
+  }
+}
