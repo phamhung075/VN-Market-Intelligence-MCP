@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-26T17:41:03Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/digest-predict.md",
+    "line_count": 79,
+    "cap": 200,
+    "byte_count": 44354,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 32354,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "a9f94b765305e24e84026c7511f9164e64975e4c56ec2096cc23d47aaff587f9",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

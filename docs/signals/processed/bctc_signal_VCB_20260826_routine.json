@@ -4,43 +4,35 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Ngan hang thuong mai quoc doanh lon nhat VN: tin dung, huy dong, thanh toan quoc te, bancassurance, dich vu the/ngan hang so",
-  "customer": "Doanh nghiep lon (SOE + FDI), khach hang ban le do thi thu nhap trung-cao, doanh nghiep xuat nhap khau",
-  "ops": "Thu nhap lai thuan Q1-2026 17.421 ty VND; Loi nhuan hoat dong 14.089 ty VND (80.9%); LNST 9.462 ty VND (54.3%); ROE (BCTC raw, non-annualized) 4.2% vs sector-comparison annualized 16.7% (duoi median nganh 17.6%); OCF/NI ratio Q1 = 1.368 (OCF vuot NI 36.8%, chua vuot nguong 40% ESC-3)",
-  "mgmt": "Xu huong tin tuc TICH CUC 30 ngay qua (slope +0.13); KD tin cay 100% THUAN LOI tuan nay, tang manh tu 37% TRUNG TINH chu ky truoc",
-  "ey_spread_pct": 2.09,
+  "product": "Retail and corporate banking, cards, bancassurance cross-sell, trade finance",
+  "customer": "Retail depositors, corporate borrowers, government-linked accounts, SOE clients",
+  "ops": "Operating margin 80.9%; EY_SPREAD +2.09pp (FAIR, PE 14.1x vs sector median 9.0x, +57% premium — governance/quality premium over peers); OCF/NI ratio 1.37x (Q1-2026), healthy cash conversion for a bank",
+  "mgmt": "ROE 16.7% (sector-comp, below median 17.6% — bank peers CTG/MBB/ACB running higher ROE); foreign flow net -99K shares (weaker than sector, mild outflow); balance sheet imbalance 0.37% (within tolerance)",
+  "ey_spread_pp": 2.09,
   "valuation_verdict": "FAIR",
-  "pe_sector": 14.1,
-  "pe_median_sector": 9,
-  "roe_sector_comparison_pct": 16.7,
   "kd_reading": {
-    "que": "Ton (57)",
-    "trend": "THUAN_LOI",
+    "que": "Ton(57)",
+    "trend": "THUAN LOI",
     "signal": "GIU",
-    "confidence_pct": 100,
-    "note": "changed vs c182-c185 (was Que Tieu Qua 62, TRUNG TINH, GIU 37-38% for 4 consecutive cycles) — flipped to favorable, 4-cycle byte-identical pattern broken this cycle"
+    "confidence_pct": 100
   },
   "esc_gate": {
-    "esc1": "unevaluable_scope_reduced_no_bash_glob_bctc_table_rows_tool",
-    "esc2": "FALSE_imbalance_0.37pct",
-    "esc3": "FALSE_divergence_36.81pct_below_40pct_threshold_4of4_quarters",
-    "esc4": "N/A_bank_operating_profit_exceeds_pretax_profit_structurally",
-    "esc5": "FALSE_report_id_null_refine_status_PARTIAL"
+    "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.37%)",
+    "esc3": "FALSE (divergence_ratio 36.81%, quarters_returned=4/4)",
+    "esc4": "N/A (bank — operating_profit > pretax_profit structurally, non_operating_share formula not meaningful)",
+    "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
   },
-  "trick_summary": null,
-  "trick_confidence": "none",
+  "escalation_status": "NONE",
   "regime": "NEUTRAL",
   "carry_regime": "NEUTRAL",
-  "insider_signals": "none_significant",
-  "legal_risk_signals": 0,
-  "evidence_fragments_recorded": [
-    "bctc_roe_strong (id=1588)",
-    "bctc_report_overdue (id=1589)"
-  ],
-  "generated_at": "2026-08-26T15:20:00Z",
+  "max_deposit_rate_pct": 5,
+  "cycle_id": "20260826-1800",
+  "slot": "bctc-analyst-slot-2",
+  "generated_at": "2026-08-26T18:15:00Z",
   "_processed": {
-    "fingerprint": "2ea1346d4a1bbf9cf05999846c40791673f11b27f6497ada70b964b853c9213c",
-    "processedAt": "2026-08-26T15:10:05Z",
+    "fingerprint": "4d0485535151f3950ca5fc98bcfa034d674f8039c95bf33d0f9c7b1845995863",
+    "processedAt": "2026-08-26T20:12:52Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

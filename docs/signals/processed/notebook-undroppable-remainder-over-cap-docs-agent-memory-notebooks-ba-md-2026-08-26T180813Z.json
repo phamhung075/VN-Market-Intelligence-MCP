@@ -1,0 +1,27 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_undroppable_remainder_over_cap_breach",
+  "priority": "high",
+  "createdAt": "2026-08-26T18:08:13Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/ba.md",
+    "line_count": 112,
+    "cap": 200,
+    "byte_count": 19953,
+    "byte_cap": 12000,
+    "section_count": 5,
+    "non_sentinel_section_count": 3,
+    "sentinel_section_count": 2,
+    "undroppable_line_count": 41,
+    "undroppable_byte_count": 13916,
+    "reason": "the preamble plus every currently-present sentinel/rolling '## ' section (e.g. 'Archive', 'Known patterns / preferences') is, by itself, already over cap on at least one axis -- the SELECTION plane already treats those sections as permanently undroppable (NSO_SENTINEL_KEY), so the MEASUREMENT plane must agree: no amount of dropping dated ('## ' with a real timestamp) sections can ever bring this file under cap, and attempting it anyway would destroy real cycle history for zero convergence benefit (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, AC-1..AC-4). Every dated section in this file is retained untouched; the rolling/sentinel content itself must be manually split to an archive file to relieve this cap.",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "3014e53973aa7db5c71ced9bb888bfd8e85aacbd102815c1cc6ca76bfba41da1",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

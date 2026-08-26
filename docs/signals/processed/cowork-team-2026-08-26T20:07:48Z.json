@@ -57,5 +57,11 @@
     "note": "market-watcher-offhours RECOVERED this tick: last_fired advanced 2026-08-26T12:06:03Z -> 20:06:52Z, closing the 8h gap left when it alone missed the 16:00Z fire its two 0 */4 peers took (both 16:07:02Z). Cycle-snapshot keying defect occurrence 9: Step 4.7 wrote cycle-snapshot-20:04.json at 20:04:55Z, Step 6.0 emit ran 20:07:06Z (gap 2m11s, deep inside the <=7min freshness gate), yet cycle_snapshot_promoted=false — freshness cannot contribute at 2m11s, so nominal-tick-vs-wallclock-filename key mismatch (lookup 20:00 vs file 20:04) is isolated as sole cause, same shape as 19:52/19:45 and 18:04/18:00. calendar_status=open at 20:07Z though VN closed 08:59Z (~79th consecutive intraday falsification). One transient gateway error on task_release for alert-commander-critical (\"method tools/call is invalid during session initialization\"); retry returned released:0 and task_list_held confirmed zero cowork-slot:* tokens held, so the first call had landed server-side. Step 5.1 note: the load parse documented in spawn-fanout.md (awk -F comma) yields 3 on this comma-locale host where the real 1-min load is 3.61 — benign at a threshold of 24, still an undercount with no board row."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T20:07:48Z"
+  "createdAt": "2026-08-26T20:07:48Z",
+  "_processed": {
+    "fingerprint": "604c0754ed7a46c3f44fc6ffa9172149171d4d7e5f14613e3602aa2c04f1ddca",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

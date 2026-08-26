@@ -2,17 +2,18 @@
   "from": "code-janitor",
   "to": "po",
   "type": "system-issue",
-  "createdAt": "2026-08-26T10:34:57Z",
+  "createdAt": "2026-08-26T16:30:03Z",
   "payload": {
-    "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
-    "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
-    "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+    "finding": "CONTRADICTION DETECTED: docs/agent-memory/health/team-tool-recheck-*.md writer is ACTIVE, not silent. Most recent file team-tool-recheck-2026-08-26-1257.md was written today at 14:58Z (3 hours before this signal). Git history shows continuous operation since at least 2026-08-06, with commits on 08-06, 08-13, 08-14, 08-15, 08-18, 08-22, 08-23, 08-25, 08-26. MIGRATION COMPLETED: writer migrated from cloud RemoteTrigger (trig_019Q8D5xttjZn6iytx2Ld9dW, killed 2026-06-22) to agent-father's local keep-cycle; active commits show operation under agent-father since at least 2026-08-06.",
+    "correction_reason": "Pre-gate signal payload cited silence since 2026-06-23 but disk verification and git log contradict this premise. Writer is operational and routed correctly. No action needed — the 30d memory-prune rule will continue draining old files as routine hygiene.",
+    "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md). RESOLVED: migrated to agent-father's local keep-cycle, no user decision needed.",
+    "decision_needed": "NONE — writer is operational; consider retiring this signal class since the migration (the original decision) has already shipped.",
     "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
     "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
   },
   "_processed": {
-    "fingerprint": "3d283489a0edfe3539c437b2bc097edd704a3e9b7587d55ab38f12d6bf03b402",
-    "processedAt": "2026-08-26T11:11:27Z",
+    "fingerprint": "8d5b39591a1c7a8c7d413c0d176b8191785a8c99ec5052d11c5d8e22233c3719",
+    "processedAt": "2026-08-26T20:12:52Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

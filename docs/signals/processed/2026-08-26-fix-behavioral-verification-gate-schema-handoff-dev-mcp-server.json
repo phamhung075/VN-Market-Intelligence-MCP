@@ -8,7 +8,9 @@
     "brief": "docs/architecture-briefs/2026-08-26-behavioral-verification-gate-deploy-aware-ordering.md",
     "no_new_brief": true,
     "reason": "design fully specified in brief §5c; this is the one row from §9's file table that lands in apps/ (dev-mcp-server zone), which agent-father's commit_zone explicitly excludes (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/] only). 6 of §9's 7 files already landed doc-side, this cycle, in two ordered commits: ee158a9ea (mint-side: po/flow/main.md, ba/flow/main.md) then 900d640ad (enforcement-side: qa/flow/main.md, ops/flow/docker.md, orch-sentinel dim-oh2/main/emit-scorecard.md). This row is the remaining one.",
-    "target_files": ["apps/mcp-server/src/infrastructure/orchStateSchema.ts"],
+    "target_files": [
+      "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
+    ],
     "ac": [
       "AC-1: add a new conditional inside checkOne() in checkVerificationGate() (orchStateSchema.ts:627, right after the existing hasValidRawProbe block, ~line 641), mirroring the hasValidRawProbe/hasHonestGapReason pattern (helper fn hasValidBehaviorPredicate(v) that VerificationSchema.safeParse()s v and checks .data.behavior_predicate?.cmd && .data.behavior_predicate?.expect !== undefined). VerificationSchema already .passthrough()s (orchStateSchema.ts:166-171) so nested behavior_predicate/behavior_probe fields are schema-legal today with zero migration.",
       "AC-2: reject condition is row.status === 'DONE_VERIFIED' AND !RC_VERIF_GRANDFATHERED_IDS.has(id) AND zone starts with 'apps/' AND priority is P0/P1-equivalent AND created_at (fallback declared_at) >= BEHAVIOR_PREDICATE_CUTOFF AND !hasValidBehaviorPredicate(row.verification).",
@@ -18,8 +20,17 @@
       "AC-6: unit test - a P0 apps/ row with created_at >= cutoff and no behavior_predicate rejects; the same row with created_at < cutoff passes (grandfather-by-time, not by id-list); a P2/scripts row never rejects regardless of behavior_predicate presence.",
       "AC-7 (dedup honored, do not duplicate): checked backlog[]/ready[]/done_verified[]/archive/2026-08.json by subject before minting this signal - the only 4 rows matching 'behavior_predicate|behavioral-verification|checkVerificationGate|OH-2.4|behavior_probe' are FIX-RCVERIF-50-GRANDFATHERED-IDS-MARKER-BLIND-NO-TRACKING-ROW (backlog) and 3 archived rows, all about the UNRELATED raw_probe grandfather-exemption defect, not this mint-time predicate gate. None is a duplicate."
     ],
-    "commits_already_landed": ["ee158a9ea", "900d640ad"],
+    "commits_already_landed": [
+      "ee158a9ea",
+      "900d640ad"
+    ],
     "not_agent_fathers_zone": "apps/mcp-server/src/infrastructure/orchStateSchema.ts is apps/ - outside agent-father's commit_zone.allowed. Zone boundary per this task's own dispatch: dev-mcp-server."
   },
-  "createdAt": "2026-08-26T20:03:00Z"
+  "createdAt": "2026-08-26T20:03:00Z",
+  "_processed": {
+    "fingerprint": "3cf9b17bd952951c0186aa39b5b118c33a60685f202afddaa2245f948e25f707",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

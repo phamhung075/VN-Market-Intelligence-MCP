@@ -45,5 +45,11 @@
     "note": "DUAL-PLANE occurrence 4: launchd Layer C firer spawned chef-evening as pid 70235 at 19:46:38Z for the same 45 19 cron; that run exited 19:49:35Z exit_code=0 having produced NO artifact (no synthesis json, no notebook section, no published marker) — its stdout shows router-protocol ladder prose and a ps-grep that matched its own pid, i.e. an off-flow router latch self-suppressing as its own peer. Layer C spawns raw claude -p with no IDENTITY_PREAMBLE, so it lacks the Step 5.2 guard. Dispatcher plane re-spawned WITH preamble at 19:52. Also: cycle-snapshot keying defect occurrence 8, snapshot written 19:52:16Z vs emit 19:53:12Z = 56s, inside the <=7min gate, promoted:false due to nominal-tick 19:45 vs filename 19:52."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T19:53:33Z"
+  "createdAt": "2026-08-26T19:53:33Z",
+  "_processed": {
+    "fingerprint": "a7a081b831d7b18dfd6061cac50ed4107ec5fa7171fcbcfaa40eb4cb3af9ab44",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

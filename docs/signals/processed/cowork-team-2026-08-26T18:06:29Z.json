@@ -45,5 +45,11 @@
     "note": "Tick 18:00Z, 1 slot (bctc-analyst-slot-2, guaranteed:false so no launchd-firer dual-plane exposure; ps-grep confirmed no live peer before Step 4.6). CYCLE-SNAPSHOT KEYING DEFECT — 7th confirmation and the cleanest instance to date: Step 4.7 wrote cycle-snapshot-18:04.json at 18:04:49Z and emit_pressure_state ran at 18:05:46Z, a 57-SECOND gap, far inside the <=7min freshness gate both copies specify, and cycle_snapshot_promoted was still false because the consumer looks up nominal tick 18:00. Freshness is not a contributing factor at 57s; the key mismatch is the sole cause. Series: 12:05/12:00, 15:04/15:00, 16:06/16:00, 16:35/16:30, 17:34/17:30, 18:04/18:00. Fix shape unchanged: drop the key lookup, take the NEWEST cycle-snapshot-*.json inside the freshness gate. Do NOT round the producer filename, do NOT widen the prune threshold. NOTE FOR WHOEVER PICKS THIS UP: the owning row FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (12071B) has been reported as UNWRITABLE/frozen; that is wrong. orch-apply row-prose-ceiling gates NET NEW GROWTH, not absolute size — 17 over-ceiling rows passed as grandfathered non-blocking on this session 17:45Z write. The row is editable by replacement, not append. cycle-snapshot-latest.json remains stale at 2026-08-23T00:07:50Z tick 00:00 (3 days) — every agent falling back to it reads an 08-23 market picture. calendar_status:\"open\" at emit though VN closed 08:59Z (~74th consecutive intraday falsification). dev_queue_depth:5 in pressure-state vs devq:112 ready[] — ~22x divergence, mechanism still unlocated. signal_backlog 37->44 since 17:30Z. PENDING for 20:00Z: market-watcher-offhours last_fired still 2026-08-26T12:06:03Z while both 0 */4 * * * peers (news-scout-offhours, alert-commander-critical) fired 16:07:02Z — 20:00Z decides one-cycle loss vs effectively dark."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T18:06:29Z"
+  "createdAt": "2026-08-26T18:06:29Z",
+  "_processed": {
+    "fingerprint": "30d983acb52ce19f892866cd086bfb68b34de4fd2049067168cd3a2d6c45069a",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

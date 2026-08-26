@@ -24,5 +24,11 @@
     ],
     "root_cause_row": "FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION",
     "root_cause_note": "Live confirmation of the widening PO recorded at 18:0xZ this same tick: the contraindication carrier here is a bespoke top-level key (po_duplicate_flag_20260806T2230) with status_note ABSENT, so a fix written literally against status_note would pass its own AC and still dispatch this row. Every BOUNDED-1 gate passed legitimately — supervised, epic-wrapper, depends_on (dep is DONE_VERIFIED), detail-DEFERRED, non-dev-owner, plan-only, non-dev-next_agent, and prose-sequencing (which only fires when effective_depends_on is EMPTY; this row has a satisfied dep, so it is exempt by construction)."
+  },
+  "_processed": {
+    "fingerprint": "ac4b7844935fd5b4ed81b02fd2bc1f16d512439a4f05fddd0f3bd41c21732259",
+    "processedAt": "2026-08-26T20:12:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
