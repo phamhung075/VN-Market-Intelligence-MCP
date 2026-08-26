@@ -16,9 +16,18 @@
     "class_note": "THIRD confirmed instance of the class 'agent writes a documented path, the same flow omits it from its own commit pathspec'. Prior two routed 2026-08-25 in signal 9b716c031 (docs/analysis-briefs/*.md: news-scout stage-log-notify.md:40 and market-watcher eod.md:101 both write it, both omit it from their commit pathspecs). Recommend po consider a fleet-wide sweep predicate rather than three independent one-line fixes: for each agent flow, diff the set of write targets named in the flow against the union of its own commit pathspecs. Unverified whether other agents share the omission.",
     "verification": {
       "commit_landed": "e3f16b6c6",
-      "files_in_commit": ["docs/agent-memory/notebooks/unified-agent.md", "docs/data/unified-agent-synthesis-2026-08-26-intraday.json"],
+      "files_in_commit": [
+        "docs/agent-memory/notebooks/unified-agent.md",
+        "docs/data/unified-agent-synthesis-2026-08-26-intraday.json"
+      ],
       "synthesis_file_on_disk_bytes": 5873,
       "step_5_3_offflow_detector": "PASS — 0/6 distinct markers on a 1657 B final-turn surface; negative control clean (no dispatcher-authored prompt text, len < 20000); matcher liveness confirmed 6/6 against the IDENTITY_PREAMBLE control corpus"
     }
+  },
+  "_processed": {
+    "fingerprint": "ca53b2c4f238323aafaa74b60321c719348b70442d1b8c085763538a4717b1b0",
+    "processedAt": "2026-08-26T03:20:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

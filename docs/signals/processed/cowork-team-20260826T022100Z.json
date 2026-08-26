@@ -6,11 +6,20 @@
   "createdAt": "2026-08-26T02:21:00Z",
   "payload": {
     "fire_time": "2026-08-26T02:21:00Z",
-    "matched_slots": ["chef-intraday", "alert-commander-market"],
-    "won_slots": ["chef-intraday", "alert-commander-market"],
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md", "docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -20,10 +29,19 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "chef-intraday": "cadence", "alert-commander-market": "cron" },
-    "cadence_minutes": { "chef-intraday": "60", "alert-commander-market": null },
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "60",
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-26T02:20:36Z",
-    "last_fired_slots": ["chef-intraday", "alert-commander-market"],
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -38,5 +56,11 @@
       "calendar_status": "still 'open' — 28th+ consecutive; the computation defect is unchanged, this field is reported as-read, not as-believed.",
       "load_parse": "spawn-fanout.md Step 5.1's own LOAD_1MIN expression (uptime | awk -F',') truncates 4.50 to 4 on this locale-comma host. Verdict unaffected at a 24 threshold; latent if any future threshold sits near an integer boundary."
     }
+  },
+  "_processed": {
+    "fingerprint": "d24e2a3e269ea557941a012f7ed8760c41140f4c5eb2e8772c79c34167c212e9",
+    "processedAt": "2026-08-26T03:20:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

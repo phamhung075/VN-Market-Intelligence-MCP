@@ -19,12 +19,56 @@
       "total_snapshot_files": 36,
       "created_today": 4,
       "created_prior_day": 32,
-      "today_names": ["00:04", "01:35", "02:04", "02:19"],
-      "prior_day_names": ["02:20", "02:35", "02:50", "03:05", "03:19", "03:34", "03:49", "04:04", "04:20", "04:35", "04:49", "05:04", "06:36", "06:50", "07:05", "07:20", "07:34", "07:49", "08:05", "08:23", "12:05", "12:20", "12:35", "15:04", "16:04", "16:34", "17:35", "18:05", "19:50", "20:05", "20:20", "21:05"]
+      "today_names": [
+        "00:04",
+        "01:35",
+        "02:04",
+        "02:19"
+      ],
+      "prior_day_names": [
+        "02:20",
+        "02:35",
+        "02:50",
+        "03:05",
+        "03:19",
+        "03:34",
+        "03:49",
+        "04:04",
+        "04:20",
+        "04:35",
+        "04:49",
+        "05:04",
+        "06:36",
+        "06:50",
+        "07:05",
+        "07:20",
+        "07:34",
+        "07:49",
+        "08:05",
+        "08:23",
+        "12:05",
+        "12:20",
+        "12:35",
+        "15:04",
+        "16:04",
+        "16:34",
+        "17:35",
+        "18:05",
+        "19:50",
+        "20:05",
+        "20:20",
+        "21:05"
+      ]
     },
     "why_this_raises_the_severity": "The prior-day set is not trailing residue at the edge of the prune window — it is 32 of 36 files, the MAJORITY of the directory, spanning 02:20 through 21:05. Because the producer runs a fixed 15-min cadence every day, yesterday's filename set and today's are drawn from very nearly the same pool. So the directory is pre-seeded RIGHT NOW with a stale decoy at nearly every tick name today will use for the next ~19 hours. Under the current key-lookup, hitting 24h-old macro data is the default path and a clean miss is the exception. The only thing standing between that and a consumer acting on day-old macro data is each consumer's own inside-the-file date check — which is per-consumer, is not written down as a contract anywhere, and no future consumer is obliged to implement.",
     "fix_shape_unchanged": "po_fold_20260825 already settled it: drop the key lookup, take the NEWEST cycle-snapshot-*.json inside the <=7min freshness gate both copies already specify. That is immune to the entire decoy population and does not depend on the prune at all. This amendment proposes NO new shape — it argues the settled shape is worth more than P1.",
     "prune_note": "Still not a prune bug, and still do NOT widen the age threshold. The prune window (1440 min) equals the filename namespace period (1440 min) by construction, so every HH:MM name has a same-named prior-day twin alive in its final minutes. Pruning by DATE would remove the twins; widening the threshold makes it worse. If the freshness-gate fix lands, neither change is needed.",
     "still_do_not_do": "Do NOT 'fix' this by rounding the producer's filename to the nominal tick. po_fold_20260825 already withdrew that shape — it would make the producer's name collide with the prior day's EXACTLY rather than approximately, which is the wrong direction."
+  },
+  "_processed": {
+    "fingerprint": "f9b11f8276d503365cd062a42a076e7b8ffef25f1b313d2f4f0de6212ba1c5d5",
+    "processedAt": "2026-08-26T03:20:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

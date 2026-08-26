@@ -24296,7 +24296,7 @@
         "last_served_tick": "2026-08-25T21:41:32Z"
       }
     },
-    "_updated_at": "2026-08-26T03:16:59Z",
+    "_updated_at": "2026-08-26T03:20:39Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24321,6 +24321,497 @@
         "payload": "THIRD clock in the cycle-snapshot path: the AGENT consumer (cycle-bootstrap/SKILL.md Step -1) looks up by its OWN wall-clock at bootstrap, not by nominal tick and not by the producer key — measured 4/4 consecutive alert-commander cycles today (c261-c264), fresh-hit rate 0/4. It is a NAME-SPACE mismatch, not a +1min offset: the consumer rounds to 5-min multiples inconsistently while the producer names by unrounded date -u +%H:%M, so a hit needs coincidence (1 of 7 producer files today had a 5-multiple minute). Landing the already-routed producer-side rename ALONE fixes the emit_pressure_state arm and makes THIS arm permanently, deterministically dead.",
         "createdAt": "2026-08-26T03:00:42Z",
         "drained_at": "2026-08-26T03:16:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ca53b2c4f238323aafaa74b60321c719348b70442d1b8c085763538a4717b1b0",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "flow-defect",
+        "priority": "high",
+        "payload": {
+          "action_requested": "TRIAGE as a SEPARATE arm from the qa-lane P0 FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS. That row's dedup_key scopes to 'actor:router-session'; this occurrence is actor=unified-agent with a DIFFERENT root cause. If that P0 passes QA as-is, this arm keeps firing. Fix is a 1-line pathspec edit in docs/agents/unified-agent/flow/chef-dish.md step 8e.",
+          "observed_at": "2026-08-26T02:23:05Z",
+          "observed_during": "cowork 02:15Z tick, slot=chef-intraday, agent=unified-agent",
+          "hook_signal_file": "docs/signals/commit-sweep-guard-2026-08-26T022305Z-12851.json",
+          "symptom": "commit-sweep-guard blocked a BARE commit (prior_warns=3 threshold=3 outcome=blocked) staging docs/agent-memory/notebooks/unified-agent.md + docs/data/unified-agent-synthesis-2026-08-26-intraday.json. Agent then retried with an explicit pathspec and landed e3f16b6c6 with exactly those 2 files — correct outcome, but only after tripping the guard.",
+          "root_cause": "Same-file inconsistency in docs/agents/unified-agent/flow/chef-dish.md, ~200 lines apart. Line 890 defines Step 7.6's write target FILEPATH = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json, and line 861 explicitly authorizes that write pattern against the agent frontmatter. Step 8e's commit block (lines 1093-1098) then omits it from ALL THREE of: the own_paths comment, the git add pathspec, and the git commit trailing pathspec — all three list only docs/agent-memory/notebooks/unified-agent.md and docs/signals/processed/. The agent is instructed to write a file its own commit step cannot commit, so it must either strand the file or improvise. It improvised a bare commit. NOT an agent-discipline failure — a missing instruction.",
+          "fix_shape": "Add docs/data/unified-agent-synthesis-*.json to all three lists in chef-dish.md step 8e (own_paths comment, git add, git commit trailing pathspec). Use the concrete resolved filename the cycle already computed at Step 7.6, not a glob, so the pathspec stays scoped to this cycle's own file and cannot absorb a peer cycle's synthesis JSON.",
+          "why_this_is_not_covered_by_the_qa_row": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (qa lane, P0, next=qa, occurrence_count 32) has dedup_key 'sweepguard:bare-commit|defect:repeat-offender-after-block|actor:router-session'. Its landed remedy was Step 6.2 in docs/agents/cowork-team/flow/telemetry.md — the cowork DISPATCHER's own commit step. That fix is real and correct for that actor. It does not reach unified-agent, whose commit step already had a pathspec and whose defect is an incomplete own_paths list, not an absent commit step.",
+          "class_note": "THIRD confirmed instance of the class 'agent writes a documented path, the same flow omits it from its own commit pathspec'. Prior two routed 2026-08-25 in signal 9b716c031 (docs/analysis-briefs/*.md: news-scout stage-log-notify.md:40 and market-watcher eod.md:101 both write it, both omit it from their commit pathspecs). Recommend po consider a fleet-wide sweep predicate rather than three independent one-line fixes: for each agent flow, diff the set of write targets named in the flow against the union of its own commit pathspecs. Unverified whether other agents share the omission.",
+          "verification": {
+            "commit_landed": "e3f16b6c6",
+            "files_in_commit": [
+              "docs/agent-memory/notebooks/unified-agent.md",
+              "docs/data/unified-agent-synthesis-2026-08-26-intraday.json"
+            ],
+            "synthesis_file_on_disk_bytes": 5873,
+            "step_5_3_offflow_detector": "PASS — 0/6 distinct markers on a 1657 B final-turn surface; negative control clean (no dispatcher-authored prompt text, len < 20000); matcher liveness confirmed 6/6 against the IDENTITY_PREAMBLE control corpus"
+          }
+        },
+        "createdAt": "2026-08-26T02:27:41Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4d766602df65ee36587e14c774d3b22d02cf7698b5eb672cdd66c45698d9afca",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/unified-agent.md docs/data/unified-agent-synthesis-2026-08-26-intraday.json. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid12850:git commit -m chore(memory/unified-agent): chef intraday 2026-08-26 convergence scan published\\012\\012Clusters qualified: 4 (FPT/VHM/VIC/HPG ticker + real-estat]<-[pid12846:/bin/zsh -c source /Users/admin/.claude/shell-snapshots/snapshot-zsh-1787604597949-wnhuaq.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>]<-[pid88052:claude --dangerously-skip-permissions -n cowork-team ]",
+        "createdAt": "2026-08-26T02:23:05Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "43ceb6c067d301923db5e5ab149d35e4b62391119a77e171d65ace8be557b310",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/dispatch-claim/SKILL.md",
+          "line_count": 730,
+          "cap": 200,
+          "byte_count": 40405,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "line-cap,byte-cap",
+          "overage": 530,
+          "byte_overage": 28405,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T03:08:00Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7040830dc1fbe60eecd23ba8f1985184010954209f07bf50a5c1973a3d85ba42",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-9.md",
+          "line_count": 138,
+          "cap": 600,
+          "byte_count": 37911,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1911,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-26T03:11:36Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d24e2a3e269ea557941a012f7ed8760c41140f4c5eb2e8772c79c34167c212e9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T02:21:00Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": "60",
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T02:20:36Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:15",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "2-slot batch, MAX_PARALLEL=4 (headroom 3391MB vs 1500 floor, load1m 4.50 vs 24 threshold, 12 cores), DEGRADED=false, single batch, no inter-batch wait. FIELD-PROVENANCE (deliberate, re FIX-COWORKFIRE-TELEMETRY-SERVERCOMPUTED-FIELDS-FABRICATED-30PCT): dev_head resolved from the CANONICAL top-level .head, which reads {status:in_progress, active_task_id:FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, next_agent:dev-pdf-extractor, updated_by:router 02:14:26Z} -> active. It is NOT read from .task_board.head, which is a deprecated stub carrying {status:deprecated, canonical_moved_to:.head}; reading that stub and mapping its literal 'deprecated' onto this field is one mechanical route to the dev_head:unknown placeholder tell. signal_backlog=31 independently recomputed as a docs/signals/*.json file count excluding cowork-team-*, and agrees exactly with emit_pressure_state's server-side 31. devq and calendar_status read from the freshly emitted pressure-state.json, not carried forward.",
+          "carried_defects": {
+            "cycle_snapshot_promoted": "false again — 36th consecutive. Nominal tick 02:15, Step 4.7 wrote cycle-snapshot-02:19.json (wall clock). Routed: FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK. Fold evidence filed this session at commit 0e7c095b7 — the prior-day same-name decoy AC-4 describes hypothetically actually fired at 02:05Z against alert-commander.",
+            "calendar_status": "still 'open' — 28th+ consecutive; the computation defect is unchanged, this field is reported as-read, not as-believed.",
+            "load_parse": "spawn-fanout.md Step 5.1's own LOAD_1MIN expression (uptime | awk -F',') truncates 4.50 to 4 on this locale-comma host. Verdict unaffected at a 24 threshold; latent if any future threshold sits near an integer boundary."
+          }
+        },
+        "createdAt": "2026-08-26T02:21:00Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1521b82982804233a09d814a472d7f9bfb76441ef6062852bcd4d9262d1d0286",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T02:35:58Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T02:35:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 34,
+          "note": "Single-slot tick. Step 5.1 gate degraded=false (headroom 3726MB vs 1500 floor, cores 12, true load1m 9.32 vs threshold 24) -> MAX_PARALLEL=4, non-binding at 1 slot.",
+          "FIELD-PROVENANCE": {
+            "dev_head": "MEASURED from canonical TOP-LEVEL .head (status=idle) — NOT from .task_board.head, which is a deprecated passthrough stub object literally carrying {status:'deprecated', canonical_moved_to:'.head'}. Reading the stub and mapping its literal onto this field is one mechanical route to the dev_head:unknown fabrication tell tracked by FIX-COWORKFIRE-TELEMETRY-SERVERCOMPUTED-FIELDS-FABRICATED-30PCT. Was 'active' at 02:15Z (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM); that row has since closed out.",
+            "signal_backlog": "server-computed value used verbatim; independently recomputed as a file count (docs/signals/*.json excluding cowork-team-*) = 34, agrees exactly. Rose 31 -> 34 this tick from three router-filed signals, not from drain backpressure.",
+            "devq": "read from the pressure-state emitted by this tick's own Step 6.0",
+            "calendar_status": "read from same; see carried_defects"
+          },
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "37th consecutive. Producer named this tick's file by wall clock (cycle-snapshot-02:34.json, 14791B) while the nominal tick is 02:30. Routed: FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK (backlog P1, next=architect).",
+            "prior_day_decoy": "This tick's prune removed exactly one file — the cycle-snapshot-02:20.json decoy that alert-commander HIT at 02:20Z. 31 prior-day files remain vs 5 today. No 02:30 decoy exists, so this tick's consumer lookup will be a clean MISS (degrades gracefully) rather than a stale HIT. Quantified evidence filed to po at a08f623c4 as an AMENDMENT to the already-drained 02:15Z filing, explicitly flagged do-not-mint-a-new-row.",
+            "last_regime_and_volatility": "Both passed as 'unknown' per the spec's own 'if known, else unknown' clause — VERIFIED this tick that the spec's lookup keys regime_status and volatility_level are BOTH ABSENT from cycle-snapshot-latest.json, which is itself ~74h stale (tick 00:00, created 2026-08-23T00:07:50Z). A live regime value NEUTRAL does exist in this tick's fresh snapshot at .macro_snapshot.data.signals.carry.regime — a DIFFERENT path than the spec names. Not silently substituted: doing so would make this emitter inconsistent with every other one and hide the defect. Volatility has no producer at any path (zero matches). Owner: architect.",
+            "calendar_status_open": "29th+ consecutive; server-side computation defect, value passed through unmodified.",
+            "step_5_1_locale_load_parse": "The spec's own awk -F',' expression truncated true load 9.32 to 9 on this locale-comma host. Latent — harmless at a threshold of 24, a real comparison bug only if a future threshold sits near an integer boundary. In the spec, not an improvisation."
+          }
+        },
+        "createdAt": "2026-08-26T02:35:58Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "90bbf8d3f1105fdfc264819155f56d312f26d112a742a1f06b4ce1f961e6e4c8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T02:53:15Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T02:45:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:45",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 5,
+          "signal_backlog": 34,
+          "note": "1-slot fan-out. Step 0a drain no-op: the single signal_queue NEW row (rtr-20260826T0234-auditordedupskipzero) is to=architect, outside the SSOT cowork recipient set [po, tran-ngoc-bau, alert-commander, unified-agent] — preflight new_signals=0 is correct-by-design, not a blind gate. Step 4.6 slot claim required payload as a STRING (object rejected with zod invalid_type); re-issued serialized, claimed=true.",
+          "FIELD-PROVENANCE": {
+            "dev_head": "read from canonical TOP-LEVEL .head (status=busy, active_task_id=FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, updated_by=router 02:48:06Z) — NOT the deprecated .task_board.head passthrough stub",
+            "devq": "server-computed dev_queue_depth from emit_pressure_state, not caller-supplied",
+            "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 34; matches server value exactly",
+            "calendar_status": "server-computed; still open — carried defect, not verified by this tick",
+            "last_regime_and_volatility": "both spec lookup keys (.regime_status/.volatility_level) re-confirmed ABSENT from cycle-snapshot-latest.json (still tick=00:00, created_at=2026-08-23T00:07:50Z, ~74h stale); passed unknown per spec rather than substituting the live NEUTRAL that exists at .macro_snapshot.data.signals.carry.regime"
+          },
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "38th consecutive. Naming fix routed to architect (0d77460a3), not landed. Do NOT fix by rounding the producer — po_fold_20260825 withdrew that shape.",
+            "snapshot_wallclock_naming": "nominal tick 02:45, producer wrote cycle-snapshot-02:51.json (wall-clock). A PRIOR-DAY cycle-snapshot-02:50.json (created_at 2026-08-25T02:50:23Z) survives one minute away from today file. Census after this tick prune: 30 prior-day / 6 today. Already covered by the 02:15Z filing + 02:30Z quantified amendment; settled fix (po_fold_20260825 newest-file-inside-7min-gate) DOES resolve this instance — newest is 02:51 at 02:51:11Z. No new row warranted.",
+            "step51_locale_comma_load_parse": "3rd consecutive observation. Spec expression awk -F, truncates true load 5,28 to 5 on this locale-comma host. Defect is IN THE SPEC, not an improvisation. Latent — non-binding at threshold 24 (2 x 12 cores).",
+            "snapshot_prune": "removed exactly 1 file this tick (prior-day cycle-snapshot-02:35.json)."
+          }
+        },
+        "createdAt": "2026-08-26T02:53:15Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a7e94e70e22261cb56dfb65a19a3c945b22d32e9c9d0bd7d14d24232c3a30b65",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T03:08:14Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 5,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T03:00:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "03:00",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 5,
+          "signal_backlog": 34,
+          "note": "1-slot fan-out. Step 0a drain no-op — sole NEW signal_queue row is to:architect, outside SSOT cowork_signal_recipient set [po,tran-ngoc-bau,alert-commander,unified-agent]; preflight new_signals:0 agrees. Slot claim payload passed as JSON STRING per slot-claim.md Step 4.6 (doc says JSON.stringify — CORRECTION to the 02:45Z tick note, which wrongly reported a doc-vs-schema divergence here; there is none).",
+          "FIELD-PROVENANCE": {
+            "dev_head": "canonical TOP-LEVEL .head (status=busy, active=FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE, updated_by=router 03:03:50Z by a PEER session, not this one) — NOT the deprecated .task_board.head passthrough stub",
+            "signal_backlog": "independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 34; matches server emit exactly",
+            "devq": "server-computed dev_queue_depth from emit_pressure_state; NOT ready[]+backlog[]",
+            "last_regime_and_volatility": "passed unknown per telemetry.md Step 6.0 spec clause — both lookup keys (.regime_status/.volatility_level) verified ABSENT from cycle-snapshot-latest.json, which is still tick 00:00 / created 2026-08-23T00:07:50Z (~75h stale). Live regime exists at .macro_snapshot.data.signals.carry.regime but substituting it would desync this emitter from every peer and mask the architect-owned defect."
+          },
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "39th consecutive. Producer named by wall-clock 03:06, promoter looks up nominal 03:00. Filed + routed to architect; naming fix NOT landed.",
+            "agent_consumer_third_clock": "cycle-bootstrap SKILL.md Step -1 derives TICK from its own POST-spawn wall-clock, so it will look for ~03:07-03:08 against a file named 03:06. Filed 02:57Z as rtr-20260826T0257-snapshotagentconsumerclock (AMENDMENT to the existing producer/promoter row, architect).",
+            "spec_load_parse_locale_comma": "4th confirmation. spawn-fanout.md Step 5.1 LOAD_1MIN uses awk -F, which truncates 3,76 -> 3 on this locale-comma host. Non-binding at threshold 24 (12 cores x2). Bug is IN THE SPEC, not the caller.",
+            "calendar_status_open": "31st+ consecutive computation defect; server-side, architect-owned. Step 4.3 suppression is a SUPERSEDED no-op so it is non-binding here.",
+            "snapshot_prune": "removed exactly 1 prior-day file this tick (36 before -> 36 after, +1 written)."
+          }
+        },
+        "createdAt": "2026-08-26T03:08:14Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9b195184e55b8a3e9b15fd7cfb4a3d5ce8ba3de9472af60be3e54b7649eea85d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-26T03:20:13Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [
+            "chef-intraday"
+          ],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-26T03:15:00Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "03:15",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 36,
+          "note": "1-slot fan-out. Step 0a drain no-op — signal_queue held ZERO NEW rows this tick; the architect-addressed row filed at 02:57Z was drained to READ by a peer between ticks, so it reached its recipient. chef-intraday cadence-suppressed by preflight.",
+          "FIELD-PROVENANCE": {
+            "dev_head": "canonical TOP-LEVEL .head — status=idle, active_task_id=null, updated_by=developer 03:16:08Z (peer dev work completed between ticks; head was busy at 03:00Z tick). NOT the deprecated .task_board.head stub.",
+            "signal_backlog": "server-emitted value; independently recomputed as a FILE count (docs/signals/*.json excl cowork-team-*) = 36 — up 2 from the 03:00Z tick, both new arrivals are peer-written context-bloat signals.",
+            "devq": "server-computed dev_queue_depth from emit_pressure_state; NOT ready[]+backlog[]",
+            "last_regime_and_volatility": "passed unknown per telemetry.md Step 6.0 spec clause — .regime_status/.volatility_level verified ABSENT from cycle-snapshot-latest.json, still tick 00:00 / created 2026-08-23T00:07:50Z (~75h stale)."
+          },
+          "carried_defects": {
+            "cycle_snapshot_promoted_false": "40th consecutive.",
+            "agent_consumer_third_clock": "5th consecutive miss expected — producer wrote cycle-snapshot-03:19.json; the consumer rounds its POST-spawn wall-clock to a 5-min multiple, so 03:19 is unreachable by construction. Row rtr-20260826T0257-snapshotagentconsumerclock (architect) was AMENDED at 03:14Z with this name-space framing and has since been drained to READ.",
+            "decoy_overwritten": "this tick the producer wrote cycle-snapshot-03:19.json ON TOP of a genuine prior-day decoy of the same name (created_at 2026-08-25T03:19:39Z). Same-name overwrite is how decoys age out; prune removed 2 more.",
+            "spec_load_parse_locale_comma": "5th confirmation — spawn-fanout.md Step 5.1 awk -F, truncates 3,47 -> 3. Non-binding at threshold 24.",
+            "calendar_status_open": "32nd+ consecutive computation defect; architect-owned; Step 4.3 is a SUPERSEDED no-op so non-binding here."
+          }
+        },
+        "createdAt": "2026-08-26T03:20:13Z",
+        "drained_at": "2026-08-26T03:20:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f9b11f8276d503365cd062a42a076e7b8ffef25f1b313d2f4f0de6212ba1c5d5",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "flow-defect",
+        "priority": "high",
+        "payload": {
+          "action_requested": "AMENDS the filing already sitting in your pending_triage_inbox (drained_at 2026-08-26T02:19:11Z, payload begins \"action_requested\":\"FOLD evidence onto the EXISTING backlog row FIX-CYCLE-SNAPSHOT-PRODUC...\"). Same defect, same row, same fix shape. DO NOT MINT A NEW ROW and DO NOT count this as a separate occurrence — fold it into the SAME fold. This exists as its own file only because the original was drained before this measurement was taken and the drained copy cannot be edited.",
+          "amends": "docs/signals/processed/cyclesnapshot-priorday-decoy-observed-20260826T021500Z.json (drained by 6fa3132f5)",
+          "target_row": "FIX-CYCLE-SNAPSHOT-PRODUCER-NAMES-BY-WALLCLOCK-CONSUMER-LOOKS-UP-BY-NOMINAL-TICK",
+          "what_is_new": "A second hit one tick later, plus a directory census that changes the severity claim from 'the collision has stopped being conditional' to 'a hit is the EXPECTED outcome of any lookup by nominal tick name, all day'.",
+          "second_hit": {
+            "when": "2026-08-26T02:20Z, alert-commander c261, slot=alert-commander-market",
+            "detail": "This session's own 02:15Z tick wrote docs/data/cycle-snapshot-02:19.json at 02:19:34Z. Fifty-six seconds later the consumer looked up docs/data/cycle-snapshot-02:20.json, found a file, and it was created 2026-08-25T02:20:38Z — exactly 24h old. The fresh ~1-minute-old snapshot sat in the same directory, unconsulted.",
+            "note": "Two consecutive ticks, two hits. The first (02:05) is already in the drained filing."
+          },
+          "directory_census": {
+            "measured_at": "2026-08-26T02:30Z",
+            "total_snapshot_files": 36,
+            "created_today": 4,
+            "created_prior_day": 32,
+            "today_names": [
+              "00:04",
+              "01:35",
+              "02:04",
+              "02:19"
+            ],
+            "prior_day_names": [
+              "02:20",
+              "02:35",
+              "02:50",
+              "03:05",
+              "03:19",
+              "03:34",
+              "03:49",
+              "04:04",
+              "04:20",
+              "04:35",
+              "04:49",
+              "05:04",
+              "06:36",
+              "06:50",
+              "07:05",
+              "07:20",
+              "07:34",
+              "07:49",
+              "08:05",
+              "08:23",
+              "12:05",
+              "12:20",
+              "12:35",
+              "15:04",
+              "16:04",
+              "16:34",
+              "17:35",
+              "18:05",
+              "19:50",
+              "20:05",
+              "20:20",
+              "21:05"
+            ]
+          },
+          "why_this_raises_the_severity": "The prior-day set is not trailing residue at the edge of the prune window — it is 32 of 36 files, the MAJORITY of the directory, spanning 02:20 through 21:05. Because the producer runs a fixed 15-min cadence every day, yesterday's filename set and today's are drawn from very nearly the same pool. So the directory is pre-seeded RIGHT NOW with a stale decoy at nearly every tick name today will use for the next ~19 hours. Under the current key-lookup, hitting 24h-old macro data is the default path and a clean miss is the exception. The only thing standing between that and a consumer acting on day-old macro data is each consumer's own inside-the-file date check — which is per-consumer, is not written down as a contract anywhere, and no future consumer is obliged to implement.",
+          "fix_shape_unchanged": "po_fold_20260825 already settled it: drop the key lookup, take the NEWEST cycle-snapshot-*.json inside the <=7min freshness gate both copies already specify. That is immune to the entire decoy population and does not depend on the prune at all. This amendment proposes NO new shape — it argues the settled shape is worth more than P1.",
+          "prune_note": "Still not a prune bug, and still do NOT widen the age threshold. The prune window (1440 min) equals the filename namespace period (1440 min) by construction, so every HH:MM name has a same-named prior-day twin alive in its final minutes. Pruning by DATE would remove the twins; widening the threshold makes it worse. If the freshness-gate fix lands, neither change is needed.",
+          "still_do_not_do": "Do NOT 'fix' this by rounding the producer's filename to the nominal tick. po_fold_20260825 already withdrew that shape — it would make the producer's name collide with the prior day's EXACTLY rather than approximately, which is the wrong direction."
+        },
+        "createdAt": "2026-08-26T02:30:25Z",
+        "drained_at": "2026-08-26T03:20:39Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
