@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 4 row(s) (4 from review[], 0 from done[]), highest-ranked FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 4 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-26T00:17:45Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-26T00:46:59Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
