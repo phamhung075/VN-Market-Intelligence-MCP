@@ -159,3 +159,64 @@
 **Gaps:** [gap:macro_cpi_data_missing] [gap:L3_us_macro_incomplete] [gap:L3_fx_reserves_missing] [gap:L5_kinhdich_unavailable] [gap:L6_single_pillar_vhm]
 
 Marker claimed: published:chef-intraday:2026-08-26:14 (TTL 3600s)
+
+---
+
+## Session 2026-08-26 08:45Z [chef-eod] — Convergence published
+
+**Slot:** chef-eod  
+**Dish Type:** eod  
+**Executed:** 2026-08-26T08:45:00Z  
+**Duration:** 45s  
+**Quality Verdict:** full
+
+**Convergence detected:**
+- Ticker convergence: 4 tickers (DBC, FPT, VHM, VIC — ≥2 signal types each)
+- Sector convergence: N/A
+- Macro-micro: Breadth divergence (70% down) vs index up = level contradiction
+
+**Clusters published:**
+- FPT: TRUNG BÌNH conviction, BUY (3/4 pillars: M2✓ COC✓ EPS✓ VAL✗)
+  - Rationale: Margin 34%, ROE 28.3% annualized, volume spike +2.4x, 12% US revenue
+  - Business context cited: "Biên lợi nhuận gộp 34.0%; lợi nhuận công ty liên kết +36% YoY" (bctc_signal_FPT_20260826)
+- VIC: TRUNG BÌNH conviction, BUY → HOLD (2/4 pillars: breadth concern)
+  - Rationale: BB breakout +4.31%, but market-wide yếu (70% down)
+- DBC: THẤP conviction, HOLD (1/4 pillars)
+  - Rationale: Volume spike +407% = overbought, no EPS catalyst
+
+**TNB Layers walked:** 1–6 (full)
+- L1 Data Discipline: State transitions (Brent -8.07%, breadth 70% down) ✓
+- L2 US Stack: EFFR 8bp + Brent extreme risk-off ✓
+- L3 VN Stack: USD/VND 25,890, breadth warning, vàng +25y ✓
+- L4 Valuation: FPT 3/4 pillars, VIC 2/4, DBC 1/4; phase=slowdown ✓
+- L5 Kinh Dịch: Tuy (45) TRUNG_TINH no reversal ✓
+- L6 Gap Catalogue: [L6-gap: breadth divergence], [L6-gap: biznav unavail VIC/DBC], [L6-gap: HPG geopolitical] ✓
+
+**Signals consumed:**
+- alert-engine: #11350-11361 (BB breakout, news_mention, ta_oversold)
+- price_anomaly_20260825: DBC volume spike
+- news-scout chain_catalyst: Gold 25y surge, breadth divergence, banking bifurcation
+- bctc_signal files: FPT, HPG, VCB, DXG (processed ✓ latest timestamps)
+
+**Published marker:**
+- Key: published:chef-eod:2026-08-26
+- Claimed: ✓ 2026-08-26T08:45:05Z
+- TTL: 100800s (28h)
+
+**Messages sent:**
+- Block A (MARKET): Plain Vietnamese, user-facing (3 paragraphs)
+- Block B (WORK): TNB audit detail, full layer citations, signal IDs + sources
+
+**Synthesis JSON:**
+- Path: docs/data/unified-agent-synthesis-2026-08-26-chef-eod.json
+- Size: 4184 bytes
+- Schema: ✓ PASS (all 7 top-level keys, conviction_calls[], enum valid)
+- Quality gate: ✓ FULL (L2/L3/L4/BizCtx/L6/Schema/Direction/Valuation all pass)
+
+**Notable deviations:**
+- VIC downgraded from BUY→HOLD mid-flow due to breadth collapse (2/4 pillars only)
+- HPG skipped from conviction_calls (geopolitical gov risk → Scenario 4 flag)
+- DXG not included (AVOID valuation verdict + 1/4 pillars)
+
+**Exit status:** DONE: publication complete | PIPELINE: full | QUALITY: full
+

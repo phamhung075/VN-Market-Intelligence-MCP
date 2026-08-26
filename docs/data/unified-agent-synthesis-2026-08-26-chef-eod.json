@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "cycle_id": "chef-eod-2026-08-26-08:45Z",
+    "dish_type": "eod",
+    "date_vn": "2026-08-26",
+    "timestamp_utc": "2026-08-26T08:45:00Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "1-6 (full)"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "NEUTRAL with headwind accumulation",
+    "regime_confidence": 0.72,
+    "us_macro_layer": "Brent crude sụt mạnh (-8.07%) — tín hiệu risk-off từ lo lắng về cầu toàn cầu. Fed giữ lãi suất, EFFR-IORB spread 8 bp — chế độ trung tính với thiên hướng thắt chặt nhẹ khi lạm phát vẫn kiên cố.",
+    "vn_macro_layer": "USD/VND giữ 25,890 — áp lực tỷ giá ôn hòa. Breadth divergence 70% cổ phiếu giảm trong khi VN-Index tăng — tín hiệu cảnh báo sự yếu đuối cơ bản thị trường. Vàng tăng khoảng 25 năm — risk-off sentiment từ nhà đầu tư toàn cầu.",
+    "valuation_layer": "Sector ngân hàng: VCB FAIR, BID khỏe; hoạt động FII bán ròng nhẹ trên áp lực tỷ giá. Bất động sản: VIC tăng 4.3% trên cơ sở kỹ thuật, nhưng DXG bị cản bởi AVOID verdict từ định giá kém. Công nghệ: FPT khỏe (ROE 28.3% annualized, margin 34%), hưởng lợi từ đơn hàng Mỹ. Phase: slowdown — lãi suất tăng, M2 trung tính, EPS hỗn hợp."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "FPT",
+      "conviction_level": "TRUNG BÌNH",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Margin lợi nhuận 34%, ROE mạnh 28.3% annualized; FPT có 12% doanh thu từ Mỹ đóng góp (IT services); volume spike +2.4x — tích lũy kỹ thuật đang bắt đầu.",
+      "business_context_cited": {
+        "field": "ops",
+        "text": "Biên lợi nhuận gộp 34.0%; lợi nhuận từ công ty liên kết tăng 36% YoY",
+        "source": "bctc_signal_FPT_20260826_routine.json"
+      },
+      "valuation_gate": null
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "TRUNG BÌNH",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Giá tăng 4.31%, BB breakout + news interest — tín hiệu tích lũy kỹ thuật, nhưng thị trường rộng yếu (70% cổ phiếu giảm). Cần xác nhận với FX reserves trend.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "DBC",
+      "conviction_level": "THẤP",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Volume spike +407%, RSI 63.4 áp lực — tín hiệu cảnh báo kỹ thuật; thiếu sáng kiến kinh doanh để khẳng định xu hướng.",
+      "business_context_cited": null,
+      "valuation_gate": null
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector": "technology",
+      "phase": "recovery",
+      "conviction": "TRUNG BÌNH",
+      "rationale": "FPT tăng 2.69% — hưởng lợi từ đầu tư CNTT Mỹ; lợi nhuận công ty liên kết tăng 36% YoY."
+    },
+    {
+      "sector": "real_estate",
+      "phase": "slowdown",
+      "conviction": "THẤP",
+      "rationale": "VIC kỹ thuật tích cực, nhưng DXG cũng bị định giá cản; thị trường rộng yếu. Vàng tăng → risk-off → bất động sản chưa clear."
+    },
+    {
+      "sector": "banking",
+      "phase": "slowdown",
+      "conviction": "TRUNG BÌNH",
+      "rationale": "VCB FAIR, BID khỏe. Nhưng breadth collapse 70% — tín hiệu yếu cơ bản. FII bán ròng nhẹ trên áp lực tỷ giá."
+    }
+  ],
+  "known_gaps": [],
+  "causal_chains": [
+    "Brent giảm mạnh (-8.07%) + breadth collapse 70% → risk-off sentiment từ FII → FPT tích lũy (cloud/AI đóng góp), nhưng VIC/DXG yếu; VN-Index tăng không ủng hộ.",
+    "Vàng tăng 25 năm + EFFR-IORB 8bp → tăng ưa cầu an toàn; FII bán bất động sản; tech hưởng lợi từ đầu tư Mỹ."
+  ],
+  "clusters_summary": {
+    "count": 4,
+    "tickers": ["DBC", "FPT", "VHM", "VIC"],
+    "trigger": "ticker convergence (2+ signal types per ticker)"
+  }
+}
