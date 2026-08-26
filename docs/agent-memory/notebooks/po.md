@@ -1,50 +1,55 @@
 # PO Notebook
 
-## 2026-08-26T06:51Z — 4 signals triaged (router-direct), 3 rulings, 2 caller findings falsified
+## 2026-08-26T07:34Z — 10 envelopes cleared, 1 mint, 3 promotions, 2 caller findings confirmed 1 declined
 
-Journal: `docs/agent-memory/decisions/triage-20260826T0651Z-po.md`.
-**4 rows minted · 1 P0 unfrozen+promoted · 5 rows regated · 1 REVIEW split · 1 signal RETRACTED.**
-One `orch-apply` pipe, 06:51:41Z. Conservation clean (884→888 = exactly my 4 mints). `.head` untouched, idle.
+Journal: `docs/agent-memory/decisions/triage-20260826T0707Z-po.md`.
+**Inbox 10→0 · 1 row minted · 3 backlog→ready · 2 note-only edits · 3 signal rows closed.**
+Three `orch-apply` pipes (07:29Z board, 07:32:41Z CLEAR, 07:34Z signal_queue). Conservation clean on all
+three, prose-ceiling `0 net-new-growth violations`. `.head` untouched, idle. Peer session moved `ready[]`
+109→108 mid-tick — every transform selects BY ID, never by array index.
 
-### 1. The "66% `/pek-extract` failure" and the "86 market-hours breaches" are the SAME 86 lines
-Bucketed by UTC hour, which nobody had done: `00Z 2×202 · 01Z 43×202 · 02Z 40×503 · 03Z 17 · 04Z 16 · 05Z 11 ·
-06Z 2`. Every success is **outside** the block window, every 503 **inside** it. 45+86=131 = the reported totals.
-So the 503s are the guard **working** — `routes_pek.py:62` calls `is_vn_market_open_utc()` before any adapter
-call; primitive + unit tests exist. **Zero** breaches; the prohibition is code-enforced, not doc-only. Both
-findings die. The tell: the `SemaphoreContendedError` traceback lives in 01Z/02Z/03Z — it overlaps the **202**
-burst, not the 503 wall. A real artefact pinned to the wrong mechanism because only one axis was bucketed.
+### 1. Tier-2 auditor: the spawn gate and the alarm are the SAME number
+`auditor-durability-sweep.sh:310` alarms when `gap > cadence*2` = **480min**. `auditor-tier1-probe.sh:1188`
+returns **480** for tier 2, and `:1269` does `age -le threshold → SKIP-SPAWN`. So a tier-2 cycle is forbidden
+to run for exactly as long as the WARN stays silent, and both become eligible on the same instant. The 4h
+cadence is unreachable by construction and a WARN precedes **every** cycle. Measured, not inferred — 8
+consecutive intervals from `git log docs/data/auditor-tier2-last-healthy.json`: 13h25 / 6h46 / 12h01 / 11h09 /
+4h39 / 8h07 / 9h37 / 10h31. Median ~10.5h. The one sub-8h is the escape hatch (`checks != ALL_GREEN` forces
+SPAWN past the gate). Root-caused onto the existing `-11h` row: P2→P1, `agent-father`→`developer` (the fix is
+in `scripts/`, outside agent-father's zone — it was unroutable to its own owner), re-keyed off the bespoke
+per-window `dedup_key`, promoted to `ready[]`.
 
-### 2. What survived is worse than what was reported
-`/pek-extract` returns **202 Accepted and then drops the work** — background task dies on a 1800s semaphore
-wait, caller never told. **13 of 45** accepted extractions (~29%) vanished today. Caller = `172.18.0.4` =
-`mcp-server-1` (`docker inspect`, not guessed). Minted P1, prepended to `ready[]`. Binding in the row: **do NOT
-close by raising `PEK_SEMAPHORE_WAIT_SECONDS`** — that converts fast failures into slow ones and leaves the
-false-202 contract intact.
+### 2. The near-miss that would have filed a true positive as noise
+The obvious fold target was `FIX-AUDITOR-DCYCLE2-...-CANNOT-SEE-COMPLETED-CYCLES` — "D-CYCLE-2 alarms for
+tiers that ARE running". True for the tier-1 arm, **false here**: the tier-2 heartbeat file is present,
+parseable, and genuinely 8h42m stale; the 02:33Z tick is on record as SKIP-SPAWN (`664ae9ee9`). Left that row
+untouched and wrote a discriminator note on it, because its natural fix — give tier-2/3 a notebook fallback so
+they stop alarming — would make a real 8-13h cadence miss permanently unobservable.
 
-### 3. The 09:00Z gate encoded the wrong constraint for 5 of 6 rows
-Real binding constraint on the pdfx rows is the **AC-7 sampler closing 17:11Z**, not market close. So: 4 rows
-moved 09:00Z→**17:11Z** (they must *run* the extractor), 585 **unfrozen now** (root cause is source-only —
-`main.py:154` has no `max_tasks_per_child`; substituted a no-rebuild-before-17:11Z constraint), and
-`FIX-MARKETDB-…-12205-FF5M` **unfrozen + moved to front of `ready[]`**: P0, zero market-hours dependency, swept
-into a batch gate that never applied to it, and its 12,205 rows are recoverable **only until the corrupt
-snapshot is pruned**. Frozen hours there are pure irreversible loss.
+### 3. Same class ≠ same mechanism: measured before folding
+`[notebook-immutability-guard]` on `unified-agent.md` looked like the P0 `FIX-NOTEBOOK-COMPOSE-REWRITES-
+RETAINED-PRIOR-SECTIONS`. Extracted the section from all 4 of today's commits: 2375B → 3261B → 3261B → 3657B,
+every diff **pure addition, zero deletions**. That row is *rewrite*; this is *append*. Folded to
+`FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH` (occ 2, +AC-5) instead — bumping the P0 would have contaminated
+its evidence base. Real defect: chef appends new cycles as `###` **inside** a retained `##`, so the heading
+misdates its content (which is what `_t1_latest_notebook_ts()` reads) and drop-oldest will take 3 welded
+cycles — including same-day — in one authorized-looking prune. Behaviour alternates; sample repeatedly.
 
-### 4. Sequencing overruled; DSI-INV-1 verified at source
-Instrument-first is **void** — its signal was retracted by its own producer (logging *is* configured; the module
-is idle, not dark). Order is now: fix the silent drop → measure the tesseract-vie baseline → *then* decide
-PaddleOCR. Measuring quality when 29% of jobs evaporate gives an unknown denominator. Size-lint half is real
-and I checked it: `ocr_backends.py` 689 vs 449, `ocr_worker.py` 578 vs 462 — but it folds into the replacement's
-first commit (lint scans the working tree), not a separate pre-task. Separately, `FACTORY-STOCK-extract-vndirect-
-mapper` **split** not bounced: `doFetch` dedup descoped to a P3 CLEAN; the RAW-verify clause is ops-only, so the
-row went to `qa` blocked on the rebuild. Mapper nil-preservation confirmed live: `mapper.go:30-31`/`:113-131`,
-both paths call it (`fetchers.go:75`, `:143`).
+### 4. Caller findings: #2 confirmed, #3 declined
+#2 re-measured, counts reproduced: `is_gated_not_before` called **2 / 0 / 0 / 0** across qa-drain / incident /
+ready / secondary, while all four carry `devteam-eligibility` imports. Importing is not enforcing — an
+import-only audit scores this GREEN. Minted P1 ahead of its envelope; it has a live instance (the marketdb
+P0 needed an out-of-band lock precisely because a gate field on `ready[]` is ignored).
+#3 **no write.** `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` BLOCKED is *correct* — blocker
+`TASK-COWORK-MUTEX-001` is genuinely at REVIEW, the row holds no claim, and BLOCKED already excludes it from
+`wip_in_progress`. Prior PO ruling 05:36Z says the same. Re-attempting the lane move **aborts the whole
+write**: `PROSE_CEILING_LANES` omits `in_progress[]` → false `live=0B` vs ~18.7KB. Lever is
+`TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES` (ready[], P1, developer).
 
 ### Carry-over
-- **09:00Z**: the ops rebuild row (stock-price + macro-indicators, batched). Gate encoded **3 ways** on purpose
-  — `next_recheck_not_before` has exactly ONE consumer, so it is also title clause 1 and AC-0.
-- **17:11Z**: 4 pdfx rows + the pdf-extractor redeploy. Container `417febec1a03` untouched this tick.
-- technical-analysis (392h drift) **deliberately excluded** from the rebuild — unproven ≠ mandate.
-- Traps for the next minter: `owner: null` is schema-rejected (string or absent); unfreeze needs
-  `del(.next_recheck_not_before)`, not `= null`. Both cost me an apply cycle.
-- `.claude/worktrees/agent-ae9ed2cd6f04b3686/` holds the pre-split OCR files at exactly baseline (462L/449L);
-  flagged to router, not filed. Push backstop skipped (disarm). Channel audit skipped (signals were the input).
+- 3 identical `auditor-cycle-missing:tier2` dedup_keys fired in 29min (06:59:52 / 07:00:16 / 07:28:29) with no
+  suppression — emitter defect or concurrent sweeps. Recorded on the row, NOT investigated, NOT minted.
+- `FIX-NOTEBOOK-COMPOSE-...` P0 sat 28d in `review[]` with owner/next_agent/dispatch_lane **absent as keys**;
+  its `blocked_by` is DONE_VERIFIED. Gave it `developer`. Found only by dedup-checking something else.
+- Deliberately untouched: marketdb P0 (router lock), PDFX row (agent in flight), the 15 `FIX-SIGNAL-TYPE-
+  ROUTING-GAP-*` siblings. PUSH-BACKSTOP skipped — push DISARMED, CI RED.
