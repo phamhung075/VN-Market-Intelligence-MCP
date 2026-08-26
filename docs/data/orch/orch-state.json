@@ -22,14 +22,6 @@
       "why_change": "no change from plan — spec follows PO SSOT (frontend-data-coverage-map.json) exactly; anchor task set validated; dev chain is dependency-minimal (L2 unblocks both L3A and L4 simultaneously)."
     },
     {
-      "by": "ba",
-      "task_id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION",
-      "ts": "2026-06-23T17:45:00Z",
-      "decision": "BA spec complete. Three verified_decision write paths identified: Path A (dominant, alertStore.ts storeAlerts/storeAlertsFromCommander — co-write INSERT omits confidence_score → DEFAULT 50); Path B (agentSignalTools.ts post_signal without finding_data.confidence → undefined → DEFAULT 50); Path C (structural enabler: column DEFAULT 50 in schema-news.ts:104). Fix: wire alert.confidence_score with severity fallback (critical→90/high→75/warning→60/low→40) into Path A; pass null not undefined in Path B; remove DEFAULT in Path C; harden read-path ?? null in stockSignalsHandler:224. No backfill of 3316 legacy rows. NEXT: architect.",
-      "what_considered": "(A) Wire conviction from assembleBriefing.topConviction — REJECTED (assembleBriefing does NOT post agent_signals rows; topConviction is a response struct field). (B) Severity-map fallback only — REJECTED (ignores real alert.confidence_score already in Alert object). (C) Wire alert.confidence_score with severity-map fallback + remove DEFAULT — CHOSEN (real value first, deterministic proxy only when absent, DEFAULT removal makes omission honest).",
-      "why_change": "Three-path root cause: the column DEFAULT is the structural enabler; removing it + wiring real values + hardening read-path is the minimal correct fix set."
-    },
-    {
       "by": "pm",
       "task_id": "SSOT-W1-ZOD-SCHEMA-MODEL",
       "ts": "2026-06-27T10:15:00Z",
@@ -139,27 +131,6 @@
     "_updated_by": "po/triage-20260826T0650Z",
     "archive": [],
     "rows": [
-      {
-        "id": "orphanrepro-20260825T065305Z",
-        "ts": "2026-08-25T06:53:05Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "FIRST LIVE REPRODUCTION of the orphan-adoption terminal-guard defect — evidence only, NOT a new work item; existing coverage already owns the fix (FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD epic in backlog[] BLOCKED, child FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD in ready[] P1). At 06:33:55Z, 63s after the Docker VM outage ended, server-reaper minted an orphan-signal for a DONE_VERIFIED task already cold-evicted to archive/2026-08.json. Phase A gates adoption ONLY on redispatch_count>=N_MAX (1>=3 false) and has no terminal-state check, so it would have spawned dev-mcp-server in adopt-resume mode against shipped, QA-verified work. Withheld by hand; nothing automatic stopped it. KEY DESIGN NOTE for the FR-4 implementation: the row was unresolvable in the HOT board at adoption time (already cold-evicted), so a hot-only read-guard sees not-found rather than terminal — not-found MUST NOT be treated as adoptable.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/2026-08-25-orphan-adoption-terminal-guard-live-reproduction.md",
-        "payload": {
-          "dedup_key": "orphan-adoption:terminal-guard-live-repro-20260825T063355Z",
-          "kind": "evidence-for-existing-row",
-          "do_not_mint_new_task": true,
-          "existing_coverage": [
-            "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-            "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD"
-          ],
-          "ask": "Attach this reproduction to the FR4/FR5 child and decide whether it changes that child priority. Router did NOT promote it — position noted only: ready[21] of 109, P1, dispatch_lane null, 8 P0s ahead in band. Evidence could not be written onto the row inline: it is 11947B against ORCH_ROW_PROSE_CEILING_BYTES=12000, and the bulk is five bespoke po_triage_*/po_corroboration_* keys (10.5KB) that are PO-owned, so dev-team did not restructure them."
-        }
-      },
       {
         "id": "verdictgate-20260825T071500Z",
         "ts": "2026-08-25T07:15:00Z",
@@ -18850,37 +18821,6 @@
         "review_note": "Task 1 of 5 (pm decomposition of architect brief 2026-07-25-devteam-idle-chain-rotation-durable-inbox.md). Shipped all 3 tightly-coupled deliverables per row note: (1) dev_team_idle_chain: z.record(z.unknown()).optional() on OrchStateSchema root (orchStateSchema.ts), same precedent as narrative/dashboard_section_cache/session_handoff_status; (2) rotation_selected($doc) in scripts/lib/devteam-eligibility.jq — verbatim architect-brief §2.2 aged round-robin (oldest last_served_tick wins, missing/null defaults to epoch, fixed-order tiebreak); (3) new scripts/devteam-idle-chain-stamp.jq per-tick stamp writer (self-healing on bootstrap, guards $c against the fixed 5-id set). PLAN-ONLY constraint honored — docs/agents/dev-team/flow/main.md and drain-signals.md untouched (git status confirmed). Evidence: bun tsc --noEmit clean; direct Zod safeParse probes (with/without/loose-shape dev_team_idle_chain) PASS; bun scripts/orch-validate.mjs Stage 0+1 PASS on live orch-state.json; orchStateSchema.test.ts 104/104 pass; jq -n scenario probes (bootstrap-absent-key default, all-null tie-break, mid-rotation next-oldest-wins, simulated 5-tick cycle selects each of the 5 ids exactly once); stamp-writer probes (bootstrap self-heal, partial update, unrecognized-id no-op, jq -n -f valid-JSON output); toolCount=184/cronJobCount=88 unchanged; live boot (:memory:) health 200 + both dashboard routes 200; full bun test 14885 pass/40 skip/55 fail/1238 files — within the standing FIX-MCP-SUITE-HEALTH-BASELINE band (dev-standards.md:610), confirmed zero overlap with orchStateSchema/dev_team_idle_chain/devteam-eligibility. Handoff: docs/handoffs/TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES.md. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S20. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit 589224138 on main ancestry -- git show --stat matches all 3 claimed files (orchStateSchema.ts, devteam-eligibility.jq, devteam-idle-chain-stamp.jq) exactly; commit date 2026-07-29T06:13:34Z consistent with reviewed_at. Independently re-ran: bun tsc --noEmit 0 errors; orchStateSchema.test.ts 104/104 pass; mock-guard.sh PASS on orchStateSchema.ts; DDD/secret greps clean. jq probes reproduced verbatim (bootstrap-absent-key -> bounded1; stamp-writer qa_drain nested write; unrecognized-id no-op) plus own full 5-tick rotation simulation (beyond devs evidence) confirming all 5 consumer ids selected exactly once. PLAN-ONLY constraint held -- git status + commit diff both confirm docs/agents/dev-team/flow/main.md and drain-signals.md untouched. orch-validate.mjs Stage0+1 PASS post-change. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S20 (implementer) + sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-3.md STEP qa-S53 (this verify).",
         "qa_verified_at": "2026-08-06T20:16:34Z",
         "qa_verified_by": "qa"
-      },
-      {
-        "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",
-        "priority": "P2",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-STOCK-vndirect-mapper-tests",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-vndirect-mapper-tests",
-        "promoted_at": "2026-07-24T12:44:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-06T21:01:41Z",
-        "claimed_at": "2026-07-24T12:44:38Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "completed_at": "2026-07-24T12:50:34Z",
-        "completed_by": "dev-stock-price",
-        "review_note": "CLOSEOUT CAVEAT (dispatcher): literal DoD met — mapper_test.go 13/13 green (indep re-verified). BUT scope front-loaded: dev created a NEW primitive apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go (MapPayload/MapItem) — that is the paired FACTORY-STOCK-extract-vndirect-mapper deliverable, not this test-only task. fetchers.go is NOT rewired: its inline *1000/floor mapping still serves the live Price and remains UNTESTED; mapping logic is now DUPLICATED (mapper.go copy vs fetchers.go inline). Tests guard the COPY, not the served path. mapper.go==fetchers.go equivalence is dev-ASSERTED, not test-proven. Served-path coverage + dedup complete ONLY after FACTORY-STOCK-extract-vndirect-mapper rewires fetchers.go->mapper.go (must golden-diff equivalence first).",
-        "review_note_by": "dev-team",
-        "review_note_at": "2026-07-24T12:55:51Z",
-        "secondary_claimed_at": "2026-08-06T20:53:51Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po",
-        "updated_by": "po (review-lane secondary-drain triage)",
-        "verified_at": "2026-08-06T20:59:20Z",
-        "verified_by": "po",
-        "related": [
-          "FACTORY-STOCK-extract-vndirect-mapper",
-          "FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO"
-        ],
-        "verified_note": "[PO] Sign-off 2026-08-06T20:59Z (direct-commit verify, ruling docs/agent-memory/decisions/ruling-20260806T2059Z-vndirect-mapper-tests-po.md). SCOPED DoD MET, RAW-re-derived not banked from the self-report: commit 49bc309a3 ancestor-confirmed on HEAD; tree clean under apps/stock-price/; re-ran `go test ./pkg/primitive/vndirect-quote-mapper/... -count=1` myself -> ok, 13/13 subtests, and every DoD case-class present BY NAME (scale HOSE/HNX/UPCOM, no-scale INDEX x2 + non-VN floor, empty->nil-not-error, malformed x2, null/partial-null/omitted -> nil, zero-change NOT nil). CAVEAT CONFIRMED: grep for MapPayload|MapItem across apps/stock-price returns hits ONLY inside the primitive package -- zero consumers; fetchers.go still carries the inline *1000 twice (Tier1 :106, Tier2 :210). Served path remains uncovered and duplicated. NEW -- EQUIVALENCE IS DISPROVEN, NOT MERELY UNPROVEN (this inverts part of the closeout caveat): mapper.go != fetchers.go. fetchers.go's inline payload struct declares Change/PctChange as NON-pointer float64 (:78-79 Tier1, :182-183 Tier2); JSON null into a non-pointer float is a documented encoding/json no-op, so the field keeps zero, and `change := item.Change; ... Change: &change` takes the address of a local -> STRUCTURALLY NEVER NIL. mapper.go (:30-31) declares them *float64. Measured both shapes on identical input: `\"change\":null` -> SERVED &0 vs PRIMITIVE nil (DIVERGE); field omitted -> &0 vs nil (DIVERGE); `\"change\":0` -> &0 vs &0 (agree). CONSEQUENCE, AND IT IS FAVOURABLE TO THE DEV: the tests do NOT enshrine the copy's arbitrary behaviour -- they encode the DOCUMENTED contract (pkg/domain/models.go:22-23, `Change *float64 // nil = unavailable, 0 = genuine flat day`, invariant DSI-INV-1). The primitive is RIGHT; the SERVED path is WRONG and violates DSI-INV-1 in production today. WHY DONE_VERIFIED RATHER THAN HOLD: orchStateSchema.ts §13 records deps_satisfied() requires ALL deps DONE_VERIFIED fail-CLOSED, and FACTORY-STOCK-extract-vndirect-mapper (P1) depends_on THIS row -- holding it in review[] is exactly what kept that P1 structurally un-dispatchable for 13 days, i.e. blocking the fix for the duplication this caveat complains about. FOLLOW-UPS LANDED THIS TICK: (a) paired task's dispatch_precondition REWRITTEN in backlog-detail.json -- its old text ordered a golden-diff proving mapper.go==fetchers.go EXACTLY, which will now fail and would most likely be 'resolved' by reverting the primitive to the buggy non-pointer shape (enshrining the DSI-INV-1 violation and breaking 3 of the 13 green tests); (b) minted FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO (P1, backlog) for the served-path defect, which exists independently of whether the FACTORY refactor ever runs. DEPLOY GATE: none -- mapper.go has zero importers so it is linked into no binary; rebuild_required:false is correct here. VERDICT: APPROVED / DONE_VERIFIED."
       },
       {
         "id": "FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT",
