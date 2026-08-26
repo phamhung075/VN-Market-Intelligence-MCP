@@ -24258,42 +24258,6 @@
         "status_note": "SIGN-OFF (agent-father, dev-team review-lane secondary-drain, 2026-08-26T15:5xZ) -- 6/7 AC verified PASS; AC-4 STILL FAILS, unchanged since po_review_verdict REWORK on 2026-08-25: the CORRECTION blocks \"at 109-112 fires each these are the two largest type classes in the whole ~100+-type namespace\" clause (triage-signals.md:78) was never edited -- git log confirms no commit has touched this file since 735dfa815 (the original authoring commit) that could have applied the rework. Re-measured today via the blocks own grep -c method across archive/2026-0{6,7,8}.json + hot orch-state.json: signal_feedback=241, narrative_contradiction=148, system-issue=137, microservice_degraded=121, system_issue=115 -- system_issue/system-issue rank 3rd(system-issue)/5th(system_issue) of these 5, not top-2. REWORK SCOPE unchanged from po_review_verdict: replace the \"two largest type classes\" clause with the measured rank or (preferred) no ranking claim at all; do NOT re-touch the count table at lines 73-77, it is correct as-of-then and correctly disclaimed as stale by the surrounding prose. next_agent CONFIRMED agent-father (docs/agents/po/flow/ is in this agents commit_zone) -- the prior review_notes claim that next_agent was corrected to empty string was itself premised on full completion, which is false; this row is not self-verified-complete. Guard run ONCE this pass (per instruction, not re-run): bash scripts/audits/guard-signal-type-coverage.sh --check -> FAIL, but for an UNRELATED type (observability_defect, self-filed by the guard as FIX-SIGNAL-TYPE-ROUTING-GAP-observability-defect on its fail-path mint) -- audit-handoff (AC-6, this rows own scope) remains correctly routed: confirmed structurally that triage-signals.md:115-119 sits inside the guards pipeline_b_section() awk range (## Live ... ### Regression verifier, CORRECTION block explicitly excluded from parsing so it cannot false-pass as a routing table). Signal row tra-20260822T203234 verified untouched: status=READ in docs/data/orch/archive/2026-08.json, not closed, per architect instruction. Terminal shape: row stays in review[] (AC genuinely fails) -- do NOT move to done_verified[], do NOT mark BLOCKED/qa."
       },
       {
-        "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "REVIEW",
-        "size": "M",
-        "zone": "docs/agents/dev-team/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "created_at": "2026-08-14T11:23:11Z",
-        "created_by": "pm",
-        "title": "Incident-Lane Consumer: main.md integration (Session-Gate→Step-1 anchor, unconditional)",
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "depends": [
-          "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS"
-        ],
-        "verification_gate": "incident-lane-consumer-mainflow-v1",
-        "updated_at": "2026-08-26T20:17:40Z",
-        "updated_by": "agent-father",
-        "claimed_at": "2026-08-25T04:18:56Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "agent-father",
-        "completed_at": "2026-08-25T03:01:55Z",
-        "completed_by": "agent-father",
-        "commit": "94716bfe6",
-        "branch": null,
-        "status_note": "\n[agent-father 2026-08-25T03:01:55Z] SHIPPED 94716bfe6 (local commit; NOT pushed -- standing push-disarm in force, com.vn-market.fleet-push untouched, no ack/plist edit made). New Section Incident-Lane Consumer (ILC) - Head-Decoupled Invocation wired into docs/agents/dev-team/flow/main.md at the Session-Gate->Step-1 anchor, FIRST of the three unconditional blocks there (ILC -> SECONDARY-Drain -> QA-Drain Head-Decoupled -> Step 1), per architect brief docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md S4d. Calls the already-shipped scripts/devteam-backlog-claim-incident-lane-consumer.jq (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, DONE_VERIFIED, commit cd0039432) verbatim -- no script logic re-derived or duplicated. INCIDENT_CAP=2 independent budget, batch-claim, BGFAN-1 fan-out, single unconditional site (no rotation gate, no head.status gate). SECONDARY-Drain's own intro sentence updated in place (no longer physically first at this anchor); one new Reusable Scripts bullet; one Invariants clause naming all three independent concurrency budgets (WIP<=2, qa[]<QA_CAP, INCIDENT_CAP); size-justification header appended (+88L, 1279->1367). DEVIATION FLAGGED, NOT SILENTLY RECONCILED: two live-caught defects in the neighbouring Review-Lane SECONDARY-Drain section were deliberately NOT copied into this new section (out of this row's own scope to retrofit that section itself) -- (1) SECONDARY-Drain's own readback queries .task_board.review[] only, but its own claim script's stated candidate set is review[] UNION done[], so a done[]-origin claim silently vanishes from that readback; this section's own readback instead scans EVERY .task_board lane generically. (2) SECONDARY-Drain's own spawn text hardcodes a false 'status=REVIEW, branch:null' premise; this section's own spawn text derives status/lane/claimed_by from the actually-picked row. Both flagged here for a follow-up row against SECONDARY-Drain itself, not fixed in this row. -> qa.\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED: main.md:942+1339 falsely claim wip_in_progress 'excludes'/INCIDENT_CAP 'never competes' with the shared WIP<=2 budget. Live-reproduced false: scripts/lib/devteam-eligibility.jq wip_in_progress (L115-118) has NO claimed_by filter (only incident_wip_in_progress, L158-162, does); WIP/WIP2/WIP3/WIP4 (main.md L622/658/746/805) all call the unfiltered wip_in_progress -- 2 in-flight incident rows can saturate the shared budget and starve BOUNDED-1/SLS/RLC/DRS to zero. Fix: correct L942/L1339 to match the jq file's own documented deliberate-asymmetry note (L153-157) -- incident rows ARE counted by wip_in_progress (conservative direction), not excluded. Full trace: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S205. All other ACs (ILC placement, SECONDARY-Drain intro, Reusable Scripts bullet, shared-instrument 13 ILC assertions all PASS) independently verified true.",
-        "drain_source_lane": "review",
-        "redispatch_count": 1,
-        "qa_changes_requested_at": "2026-08-25T04:27:11Z",
-        "secondary_claimed_at": "2026-08-26T20:17:39Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father"
-      },
-      {
         "id": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
         "type": "FEATURE",
         "title": "Create resolve-task-lane-by-id.jq; implement FR-4 read-guard + FR-5 board-flip write in dev-team/flow/main.md Step 0a-B",
@@ -24639,7 +24603,44 @@
         "router_note_qa_gate_20260826T0817Z": "2026-08-26T08:18:05Z router: qa_not_before set to 2026-08-26T09:30:00Z. This is a TIME PROXY for the real condition, which is blocker OPS-FLEET-REDEPLOY-STOCKPRICE-MACROINDICATORS-CONFIRMED-BINARY-DRIFT reaching a terminal DONE state — that blocker is still ready[]/READY/next_agent=ops, itself gated next_recheck_not_before=2026-08-26T09:00:00Z. PO adjudication 0650Z: qa re-verifies only once the redeploy lands in the running binary. The qa-drain selects on effective_next_agent==qa alone and is blind to blocked_by and to prose, so without a gate key it re-picks this row EVERY tick (observed 07:37Z and 08:07Z, reverted both times). qa_not_before is one of the three keys is_gated_not_before() honors (scripts/lib/devteam-eligibility.jq:684/694) and the qa-drain is the ONE picker that calls it. If the redeploy slips past 09:30Z this row becomes eligible again and must be re-gated or reverted once more — the gate is a churn brake, not a dependency check."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "QA",
+        "size": "M",
+        "zone": "docs/agents/dev-team/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "created_at": "2026-08-14T11:23:11Z",
+        "created_by": "pm",
+        "title": "Incident-Lane Consumer: main.md integration (Session-Gate→Step-1 anchor, unconditional)",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "depends": [
+          "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS"
+        ],
+        "verification_gate": "incident-lane-consumer-mainflow-v1",
+        "updated_at": "2026-08-26T20:27:55Z",
+        "updated_by": "agent-father",
+        "claimed_at": "2026-08-26T20:27:54Z",
+        "claimed_by": "agent-father (rework-return)",
+        "dispatch_lane": "agent-father",
+        "completed_at": "2026-08-25T03:01:55Z",
+        "completed_by": "agent-father",
+        "commit": "f44e4bc04",
+        "branch": null,
+        "status_note": "\n[agent-father 2026-08-25T03:01:55Z] SHIPPED 94716bfe6 (local commit; NOT pushed -- standing push-disarm in force, com.vn-market.fleet-push untouched, no ack/plist edit made). New Section Incident-Lane Consumer (ILC) - Head-Decoupled Invocation wired into docs/agents/dev-team/flow/main.md at the Session-Gate->Step-1 anchor, FIRST of the three unconditional blocks there (ILC -> SECONDARY-Drain -> QA-Drain Head-Decoupled -> Step 1), per architect brief docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md S4d. Calls the already-shipped scripts/devteam-backlog-claim-incident-lane-consumer.jq (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, DONE_VERIFIED, commit cd0039432) verbatim -- no script logic re-derived or duplicated. INCIDENT_CAP=2 independent budget, batch-claim, BGFAN-1 fan-out, single unconditional site (no rotation gate, no head.status gate). SECONDARY-Drain's own intro sentence updated in place (no longer physically first at this anchor); one new Reusable Scripts bullet; one Invariants clause naming all three independent concurrency budgets (WIP<=2, qa[]<QA_CAP, INCIDENT_CAP); size-justification header appended (+88L, 1279->1367). DEVIATION FLAGGED, NOT SILENTLY RECONCILED: two live-caught defects in the neighbouring Review-Lane SECONDARY-Drain section were deliberately NOT copied into this new section (out of this row's own scope to retrofit that section itself) -- (1) SECONDARY-Drain's own readback queries .task_board.review[] only, but its own claim script's stated candidate set is review[] UNION done[], so a done[]-origin claim silently vanishes from that readback; this section's own readback instead scans EVERY .task_board lane generically. (2) SECONDARY-Drain's own spawn text hardcodes a false 'status=REVIEW, branch:null' premise; this section's own spawn text derives status/lane/claimed_by from the actually-picked row. Both flagged here for a follow-up row against SECONDARY-Drain itself, not fixed in this row. -> qa.\n[QA] CHANGES_REQUESTED (direct-commit verify): QA CHANGES_REQUESTED: main.md:942+1339 falsely claim wip_in_progress 'excludes'/INCIDENT_CAP 'never competes' with the shared WIP<=2 budget. Live-reproduced false: scripts/lib/devteam-eligibility.jq wip_in_progress (L115-118) has NO claimed_by filter (only incident_wip_in_progress, L158-162, does); WIP/WIP2/WIP3/WIP4 (main.md L622/658/746/805) all call the unfiltered wip_in_progress -- 2 in-flight incident rows can saturate the shared budget and starve BOUNDED-1/SLS/RLC/DRS to zero. Fix: correct L942/L1339 to match the jq file's own documented deliberate-asymmetry note (L153-157) -- incident rows ARE counted by wip_in_progress (conservative direction), not excluded. Full trace: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S205. All other ACs (ILC placement, SECONDARY-Drain intro, Reusable Scripts bullet, shared-instrument 13 ILC assertions all PASS) independently verified true.\n[agent-father 2026-08-26T20:27:54Z] REWORK COMPLETE (QA CHANGES_REQUESTED remediation), commit f44e4bc04 (local, NOT pushed -- standing push-disarm in force). Corrected 3 false-claim instances in docs/agents/dev-team/flow/main.md (ILC UNCONDITIONAL paragraph, ILC spawn-context string, Invariants INCIDENT_CAP bullet) that claimed INCIDENT_CAP sits outside/never competes with the shared WIP<=2 slot. Live-verified false: scripts/lib/devteam-eligibility.jq wip_in_progress (L115-118) has NO claimed_by filter and DOES count incident rows -- corrected prose now matches the jq file's own documented deliberate-asymmetry note (L153-157) verbatim; scripts/lib/devteam-eligibility.jq itself was NOT touched (out of scope, correct per QA's own remediation instruction). Manually re-queued review[] -> qa[] for re-verification (status REVIEW -> QA, next_agent -> qa) -- NOT via the automated scripts/devteam-review-claim-qa-drain.jq claim script (this is a router-directed direct write, not a dev-team tick), so its own BGFAN-1 claimed_at-correlated auto-dispatch will NOT discover this entry on its own; a router hand-dispatch of qa (verify-committed mode) is the next required action, same mechanism this row's own agent-father dispatch used off SECONDARY-Drain's review[] stamp. .head deliberately left untouched (this lane never writes .head, per explicit instruction).",
+        "drain_source_lane": "review",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-25T04:27:11Z",
+        "secondary_claimed_at": "2026-08-26T20:17:39Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "agent-father"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
