@@ -1,0 +1,59 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T07:36:40Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T07:35:48Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 33,
+    "note": [
+      "Step 4.7 FILE_TICK=07:34 overwrote the 2026-08-25T07:34Z decoy (16659B -> 15958B). THIRD consecutive prospectively-predicted same-key overwrite; mechanism confirmed. Next decoy due: 07:49.",
+      "Snapshot count reconciled: 25 today + 15 of 2026-08-25 vintage + cycle-snapshot-latest = 41 via the *.json glob. A prior tick reported 40 by counting dated files only — bookkeeping inconsistency, not a missing or extra artifact.",
+      "2026-08-25 residue is 15 files (07:49 .. 21:05), not the 3 near-term ones previously tracked. Each dies by EITHER the 24h prune OR a same-key overwrite, whichever lands first.",
+      "Step 5.1 locale-comma: true 1-min load 2,86; spec awk -F comma parse yields 2. 22nd confirmation. Non-binding at threshold 24 (12 cores x factor 2). Defect is in the spec, not the host.",
+      "signal_backlog 33 == independent recount of docs/signals/*.json excluding cowork-team-* (17th consecutive match).",
+      "cycle_snapshot_promoted:false — 57th consecutive. cycle-snapshot-latest.json still tick=00:00 / 2026-08-23T00:07:50Z. Do NOT remedy by rounding the producer filename.",
+      "calendar_status=open — 50th+ consecutive; architect-owned computation defect, unchanged.",
+      "PRIOR-TICK FINDING (07:15Z chef-intraday): unified-agent wrote its synthesis JSON to docs/agents/unified-agent/output/ — a new untracked dir. chef-dish.md:890 mandates docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json; all 5 siblings incl. yesterday same-slot are there. FIX-CHEFDISH-STEP8E-OWNPATHS-EXCLUDES-SYNTHESIS-JSON (backlog P1 agent-father) owns the own_paths half, but its fix adds docs/data/unified-agent-synthesis-*.json and would NOT have caught this file. Recorded on that row; no new row minted.",
+      "PRIOR-TICK FINDING (07:15Z chef-intraday): notebook write left uncommitted despite chef-dish.md:1095-1096 carrying it in own_paths; agent return narrated Notebook-updated with no commit mentioned. 2nd orphaned chef notebook write today (436b2e48a cleaned the 06:13Z one ~1h earlier). Committed as 0621e246d under commit-mutex; misplaced JSON deliberately left untracked to avoid ratifying the path."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T07:36:40Z"
+}
