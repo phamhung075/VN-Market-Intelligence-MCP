@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-26T01:27:36Z",
-    "updated_by": "architect"
+    "status": "in_progress",
+    "active_task_id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
+    "next_agent": "architect",
+    "updated_at": "2026-08-26T01:40:14Z",
+    "updated_by": "router",
+    "resume_attempts": 0
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20417,17 +20418,19 @@
         "depends": [],
         "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "updated_at": "2026-08-26T01:18:34Z",
+        "updated_at": "2026-08-26T01:40:14Z",
         "next_agent": "architect",
         "owner": "architect",
         "status_note": "UNBLOCKED + NARROWED + RE-ROUTED by PO 2026-08-26T01:16Z. Root cause is settled at source: ocr_executor = ProcessPoolExecutor(max_workers=1) at main.py:154 has NO max_tasks_per_child, so its single child is never recycled for the container life, while ocr_worker.py:107/209/222 caches a module-global PaddleOCR(lang=vi) inside that immortal child and BOTH malloc_trim(0) mitigations are wired only into PID1 (pek_run_helper.py:133, routes_extract.py:112) — the executor child has zero mitigation. PRIMARY REMEDY = worker recycling (max_tasks_per_child; Python 3.12.3 verified in-container). Cap raise REJECTED. Call budget DEMOTED to safety-belt. architect: small bounded design call only (dedicated recycled executor vs tuned N, because the same executor also serves tesseract), then hand to dev-pdf-extractor. Burst/extraction VERIFICATION is market-hours gated to >=09:00Z weekdays; design+impl are not. FULL RULING + the four retired/superseded PO fields (po_burst_measurement_20260824T0722Z, po_ac4_bar_ruling_20260824T0850Z incl. the B1-B4 bar definitions, po_goahead_20260808T000430, po_ruling_20260824) are in detail_ref under key po_adjudication_20260826T0116Z — moved to cold store, NOT deleted.",
-        "updated_by": "po (adjudication-20260826T0116Z)",
+        "updated_by": "router",
         "files": [
           "apps/pdf-extractor/main.py",
           "apps/pdf-extractor/infrastructure/ocr_worker.py",
           "apps/pdf-extractor/interface/pek_run_helper.py",
           "apps/pdf-extractor/interface/routes_extract.py"
-        ]
+        ],
+        "dispatch_lane": "architect",
+        "owner_client_session": "036ceaf1-bf34-46cd-92e4-8c6b213ff4bb"
       },
       {
         "id": "FIX-TASKSCHEMA-NEXTAGENT-CONDITIONAL-MANDATORY",
