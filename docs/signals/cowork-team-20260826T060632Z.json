@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-26T06:06:32Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-26T06:00:00Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "1-slot fan-out, clean. (1) Step 0a: 0 NEW rows (72 READ/2 RESOLVED) — nothing to drain or route. (2) signal_backlog 31 matched an independent file recount (docs/signals/*.json excl cowork-team-*) — 11th consecutive match. (3) cycle_snapshot_promoted=false — 51st consecutive; do NOT fix by rounding the producer. (4) calendar_status=open, 43rd+ consecutive; architect-owned computation defect, already filed. (5) Step 5.1 locale-comma: host uptime prints 1,93 and the spec awk -F,  truncates it to 1 — 16th confirmation, still non-binding (both 1 and 1.93 are far below the 24 threshold), deliberately unfiled. (6) dev_head read from canonical top-level .head (idle, updated_by=qa 05:49:03Z); task_board.head is a deprecated stub — recording the source so this envelope is not mistaken for a fabricated server-computed field. (7) last_regime/last_volatility_level passed as unknown after re-confirming by path-scan that cycle-snapshot-latest.json has NO top-level regime_status or volatility_level key (only macro_snapshot.data.signals.carry.regime) — the unknown is honest, not a masked lookup failure. (8) SNAPSHOT-KEY SAMPLE #4, pre-registered before spawn: producer wrote cycle-snapshot-06:04.json, not a 5-multiple, so NO derivation rule predicts a hit and this tick cannot discriminate between them. Its only informative output is which key string the consumer names in its notebook. Prior samples: c274 named 05:22 (nominal was 05:15, and 22 is not a 5-multiple), c276 named 05:45 (nominal). CORRECTION to my own earlier framing: cycle-bootstrap/SKILL.md:57 says round to NEAREST 5-min slot, not floor-to-5, so at 05:53 it predicts 05:55 and not 05:50 — the 05:45Z tick was never discriminating as claimed; what actually settled it was the notebook naming its lookup key verbatim. Both spec copies say current UTC time i.e. the consumer wall clock; NEITHER says nominal tick, so c276 behaviour is off-spec for BOTH copies, not merely caught between them. Corroborates rtr-20260826T0325-markerkeynominaltickderiv (root cause NONDETERMINISTIC, sample repeatedly) and rtr-20260826T0257-snapshotagentconsumerclock. No new row filed. (9) 05:45Z spawn verified from the repo: commit 06b958c22, notebook-only pathspec, 9/9 numstat, c274/c275 appear as context lines only; Step 5.3 detector 0/6 distinct markers = PASS, control-tested against a known-marker string to prove the scan can fire."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-26T06:06:32Z"
+}
