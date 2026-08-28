@@ -17191,23 +17191,6 @@
         "updated_at": "2026-08-28T23:12:03Z"
       },
       {
-        "id": "FIX-PREPUSH-SIZELINT-6-OFFENDERS",
-        "title": "pre-push size-lint gate rejects 6 offender files (apps/mcp-server + apps/pdf-extractor) — blocks ALL fleet pushes (local main 1046 ahead of origin)",
-        "owner": "po",
-        "next_agent": "developer",
-        "zone": "multi",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "apps/mcp-server/src",
-          "apps/pdf-extractor/src"
-        ],
-        "status_note": "From telegram 5210/5211 (commit-mutex push BLOCKED by pre-push size-lint gate) + tnb persisting blocker #5. Offenders: bctcScalarAggregator.ts, ocr_backends (names truncated in report) exceed size-lint; unrelated to commits being pushed. Fleet push blocked since >= 2026-08-26. Related (NOT duplicate): FIX-FLEET-PUSH-THRESHOLD-20-DESIGNS (ops) is the threshold design, not the offenders.",
-        "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
         "id": "HOOK-ENFORCEMENT-BASH-HEURISTIC-GUARD",
         "title": "New PreToolUse Bash heuristic guard for direct-bypass orch-state.json writes (staged observe-only first) — hook-enforcement-plane brief §6.2/§8",
         "owner": "po",
@@ -23887,6 +23870,23 @@
         "secondary_claimed_at": "2026-08-26T20:17:39Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "agent-father"
+      },
+      {
+        "id": "FIX-PREPUSH-SIZELINT-6-OFFENDERS",
+        "title": "pre-push size-lint gate rejects 6 offender files (apps/mcp-server + apps/pdf-extractor) — blocks ALL fleet pushes (local main 1046 ahead of origin)",
+        "owner": "po",
+        "next_agent": "qa",
+        "zone": "multi",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "apps/mcp-server/src",
+          "apps/pdf-extractor/src"
+        ],
+        "status_note": "From telegram 5210/5211 (commit-mutex push BLOCKED by pre-push size-lint gate) + tnb persisting blocker #5. Offenders: bctcScalarAggregator.ts, ocr_backends (names truncated in report) exceed size-lint; unrelated to commits being pushed. Fleet push blocked since >= 2026-08-26. Related (NOT duplicate): FIX-FLEET-PUSH-THRESHOLD-20-DESIGNS (ops) is the threshold design, not the offenders.| [developer 2026-08-28T23:35Z] FIXED: added current size-justification header to each of the 6 size-lint offenders (bctcScalarAggregator.ts 1207L, ocr_backends.py 690L, ocr_orientation.py 235L [new-offender, justified not grandfathered], ocr_worker.py 579L, page_rasterizer.py 251L, pek_engine_adapter.py 1299L). size-lint --check PASS (0 offenders/1457 scanned); gate test 6/6 PASS; tsc clean; py_compile clean x5; task-claim-owner-session-lint + tool-registry-parity PASS. Commit b4e885a64. Fleet push unblocked.",
+        "updated_at": "2026-08-28T23:36:24Z"
       }
     ],
     "qa": [],
