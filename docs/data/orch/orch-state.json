@@ -17263,22 +17263,6 @@
         "status_note": "From cowork-fire 30d983ac note: LOAD_1MIN parse improvised per tick by dispatching LLM; comma-locale (uptime 'load averages: 2,19') + tr -d ',' -> 219 > 2*CORES threshold -> DEGRADED. Fix: scripted gate (scripts/agents-flow/) with comma-safe parse. No board row existed (genuine anomaly per cowork-fire escalation rule).",
         "origin_signal_id": "30d983acb52ce19f892866cd086bfb68b34de4fd2049067168cd3a2d6c45069a",
         "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
-        "id": "FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1",
-        "title": "orch-cold-evict.sh exits 1 on validation ('Validating hot file:') — cold eviction skipped, terminal sprints/done lanes not archived (recurring)",
-        "owner": "po",
-        "next_agent": "developer",
-        "zone": "scripts/",
-        "priority": "P2",
-        "size": "S",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "scripts/orch-cold-evict.sh"
-        ],
-        "status_note": "From telegram 5209 (dev-team board-hygiene): orch-cold-evict.sh failed exit 1 during validation, retry next tick. Blocked terminal-lane eviction. Fix: verify validation predicate + exit path. Dedup: no existing cold-evict row.",
-        "updated_at": "2026-08-28T23:12:03Z"
       }
     ],
     "closed_sprints": [
@@ -24053,6 +24037,23 @@
         "updated_at": "2026-08-28T23:52:12Z",
         "updated_by": "architect",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1",
+        "title": "orch-cold-evict.sh exits 1 on validation ('Validating hot file:') — cold eviction skipped, terminal sprints/done lanes not archived (recurring)",
+        "owner": "po",
+        "next_agent": "qa",
+        "zone": "scripts/",
+        "priority": "P2",
+        "size": "S",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "scripts/orch-cold-evict.sh"
+        ],
+        "status_note": "From telegram 5209 (dev-team board-hygiene): orch-cold-evict.sh failed exit 1 during validation, retry next tick. Blocked terminal-lane eviction. Fix: verify validation predicate + exit path. Dedup: no existing cold-evict row. | Implemented + committed eb4bcecb0 (developer 2026-08-29): CAS-before-conservation reorder in orch-apply.sh + cold-evict dry-run/mktemp fixes; TEST 14 regression green. Lane-move backlog[] -> review[], next_agent=qa.",
+        "updated_at": "2026-08-28T23:58:12Z",
+        "updated_by": "developer"
       }
     ],
     "qa": [],
