@@ -1,6 +1,6 @@
 # Architect — Notebook
 
-**Last updated:** 2026-08-28 23:47 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-28 23:52 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
 
@@ -34,3 +34,10 @@
 - Design decision 3: artifact-delta writeback gate (PO ruling 2) = notebook-mtime > fire-start (filesystem-only, no MCP in firer) + schedule re-read peer-stamp discrimination (silent on dual-plane redundant fire, ONE cooldown-bounded BUG alert per genuine null fire). Amends TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK spec: writeback only on artifact-delta proof, never exit-0.
 - spawn-fanout.md edits surgical (Step 5.2 definition + Step 5.3 negative-control/provenance + header) — disjoint from the two queued P2 rows (Step 2.4 Axis-D, Step 5.1 LOAD_1MIN); ENTRY_PROMPT composition lines kept byte-similar so cowork-spawn-entry-prompt-session-id.test.js TC-1..4 still pass.
 - Brief: docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md | BUILD-STANDARD: not-applicable | lane-move backlog→review next_agent=developer + writeback-row note amend in same orch-apply write.
+
+## 2026-08-28T23:52:00Z — FIX-BCTC-DATA-GAP-FAMILY (P1, dev-team design-track dispatch, zone=multi, files=tools/financial-reports/ + pdf-extractor + infrastructure)
+### Consolidated BCTC data-gap family design (architect-S59, DJ entry in sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-7.md)
+- Live-verified root causes (data/live/market.db + container logs, NOT the stale 14MB host copy): DXG extraction WORKS (465 layout units) but agentic-refine never runs → PUB-1 blocks serve; HPG income-statement zeros pass PUB-8/identity; BID queue row poisoned with governance-report URL + pull predicate excludes owa.hnx.vn → runPipeline null loops; VNM/VEA scale-corruption passes identity guard; **293 deferred_infra NULL-URL + 26 url_not_found rows permanently unreachable** (Arm-2 `attempts<6` excludes the attempts=6 rows it terminalizes).
+- Design: 7 units — U1 queue-liveness (Arm-2 bound + deferred_infra arm + pull predicate/enricher-reroute), U2 governance-report discovery filter, U3 period-mismatch quarantine + recovery, U4 income-broken-with-assets guard (absorb sibling FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG), U5 scale-corruption guard, U6 serve-stage diagnostics (keep "Chưa có dữ liệu" for true-absent), U7 refine-liveness coordination (defer to ops backstop row).
+- Row zone hint "tools/bctc" does NOT exist — actual tools in tools/financial-reports/ (recorded for developer routing). No file collision with size-lint 6-offender sibling (verified).
+- Brief: docs/architecture-briefs/2026-08-28-fix-bctc-data-gap-family.md | BUILD-STANDARD: not-applicable | lane-move backlog→review next_agent=developer in same orch-apply write.

@@ -121,3 +121,14 @@
 - session id: omit vs synthetic namespaced cowork-layerc:<slot>:<epoch> — leaf marker claims hard-require owner_client_session (chef/digest/fb/tnb verified at source); omit = fire fails one step later and the gate is never satisfiable.
 **why-decision:** PO ruling (1) is prerequisite for (2); preamble must be ONE source both planes consume; gate must be filesystem-only (firer has no MCP) and fail-closed on null fire while staying silent on peer-stamped redundancy (cooldown-bounded escalation).
 **why-change:** none from PO ruling; synthetic session-id interpretation flagged in brief §7 R1 for PO awareness (beyond literal wording, structurally required).
+
+### STEP architect-S59 · architect · 2026-08-28T23:52:00Z
+**task-id:** FIX-BCTC-DATA-GAP-FAMILY
+**what-done:** Designed the consolidated BCTC data-gap family (DXG no-data 46th+, HPG operating_profit=0 42nd+, BID period-mismatch/runPipeline null, total_assets=0 write-blocks, VNM/VEA OCR-corruption) as 7 work units (U1-U7) — brief: docs/architecture-briefs/2026-08-28-fix-bctc-data-gap-family.md. Root-caused from LIVE data (data/live/market.db + container logs), not the stale 14MB host copy.
+**what-considered:**
+- serving-only fix (flag DXG "no data") vs queue-liveness-first — liveness first: 293 deferred_infra NULL-URL rows + 26 url_not_found rows are permanently unreachable (Arm-2 `attempts<6` excludes the attempts=6 rows this job itself terminalizes); serving flags alone leave the parked cohort forever absent.
+- BID: URL-prefix widen vs enricher-reroute — reroute preferred (single discovery owner; owa.hnx.vn reachability unverified from container).
+- HPG sibling FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — absorbed by U4 (generalized income-broken-with-assets guard), do-not-land-both.
+- size-lint 6-offender sibling — verified this design touches NONE of its 6 files; bctcIdentityGuard/ZeroExtractBlocklist near 120L cap → keep ≤120L or justify.
+**why-decision:** Live evidence shows extraction often WORKS (DXG 465 layout units) while refine/serve/queue stages stall — so the family is 3-stage (queue enabler → ingest quarantine → serve validation), not one root cause; U1 first because every recovery path rides the enricher arms.
+**why-change:** Row's zone hint "apps/mcp-server/src/interface/mcp/tools/bctc" does not exist — actual tools live in tools/financial-reports/; recorded in brief so developer routes correctly.

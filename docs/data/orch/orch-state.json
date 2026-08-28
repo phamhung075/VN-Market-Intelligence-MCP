@@ -17219,25 +17219,6 @@
         "updated_at": "2026-08-28T23:12:03Z"
       },
       {
-        "id": "FIX-BCTC-DATA-GAP-FAMILY",
-        "title": "BCTC data-gap family: DXG get_bctc_full no-data (46th+ cycle), HPG operating_profit=0 corruption (42nd+ cycle), BID/FRT/KDH/EIB/SHB/GVR/GEX/VJC extraction failures (period mismatch, runPipeline null, total_assets=0 write-blocks)",
-        "owner": "po",
-        "next_agent": "architect",
-        "zone": "multi",
-        "priority": "P1",
-        "size": "L",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/bctc",
-          "apps/pdf-extractor",
-          "apps/mcp-server/src/infrastructure"
-        ],
-        "status_note": "Consolidated from bctc_signal envelopes (DXG/HPG; FPT guard-held esc-deepdive + VCB normal skipped) + telegram 5214-5228. Data-pipeline bugs flagged to dev-team 40+ cycles unresolved. Root cause spans extraction (pdf-extractor runPipeline null) + serving (get_bctc_full Chưa có dữ liệu) + write-guards (total_assets=0 blocks).",
-        "origin_signal_id": "1b46e3e449c739411837efd1f0bfce1c09a5006b21b282ae865b8616482f6b70",
-        "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
         "id": "FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY",
         "title": "cowork dispatch Step 2.4 Axis D age-bound fails to clear structurally-prior-period marker when prior fire ran later-in-day — compare period-key suffix vs publish_date_basis instead of pure claimed_at arithmetic",
         "owner": "po",
@@ -20106,6 +20087,34 @@
             "args": "commit=b4e885a64; files=6 size-justification headers (bctcScalarAggregator.ts + 5 pdf-extractor infrastructure py)",
             "live_value_observed": "ancestor=yes; stat touches 6/6 claimed files; size-lint PASS 0/1457; gate test 6/6; py_compile 5/5; tsc 0 errors; parity 17/17; claim-lint PASS; mock-guard PASS",
             "observed_at": "2026-08-28T23:44:49Z"
+          }
+        }
+      },
+      {
+        "id": "HOOK-ENFORCEMENT-BASH-HEURISTIC-GUARD",
+        "title": "New PreToolUse Bash heuristic guard for direct-bypass orch-state.json writes (staged observe-only first) — hook-enforcement-plane brief §6.2/§8",
+        "owner": "po",
+        "zone": "scripts/agents-flow/",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "files": [
+          "scripts/agents-flow/",
+          ".claude/settings.local.json",
+          "docs/architecture-briefs/2026-08-26-hook-enforcement-plane-mcp-socket.md"
+        ],
+        "status_note": "IMPLEMENTED (developer 2026-08-29, commit 9894c5805): Stage-1 observe-only guard shipped + tested 32/32 GREEN (scripts/agents-flow/orch-bash-direct-write-guard.mjs + .test.mjs); would-block log docs/data/orch-bash-guard-would-block.log git-tracked; kill switch ORCH_BASH_GUARD_DISABLE=1; Stage-2 block exists behind ORCH_BASH_GUARD_MODE=block, PO-gated on both Stage-1 promotion criteria (deliberate-violation fires the log — smoke-verified live; zero FP over >=20 real events) — NOT yet promoted. Settings registration remains user/config-admin (brief §9): matcher entry in .claude/settings*.json NOT applied by this task (config_admin_flag NOT flipped). QA to verify: 32/32 suite green, live-smoke evidence, obfuscation-limit documented, no settings edit performed.\n[QA] Review Record (direct-commit verify): PASS — 9894c5805/00ce8497f/ab45157cf on main; guard suite 32/32; sibling 21/21; tsc 0 err; mock-guard PASS; live smoke: direct > fires would-block log (exit 0 observe), tee fires, orch-apply pipe/git checkout/validate read/non-Bash = 0 lines, kill switch exit 0, Stage-2 block exit 2 gated; log restored schema-comment-only; config_admin_flag NOT flipped, settings untouched",
+        "origin_signal_id": "8f4189e32159332eb360b431de3f4317ac860be1f392a0c4146194958877b0b5",
+        "updated_at": "2026-08-28T23:51:50Z",
+        "updated_by": "developer",
+        "qa_verified_at": "2026-08-28T23:51:49Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + tsc --noEmit + mock-guard + live smoke",
+            "args": "commit=9894c5805(+00ce8497f,ab45157cf); files=scripts/agents-flow/orch-bash-direct-write-guard.mjs,.test.mjs,docs/data/orch-bash-guard-would-block.log,brief,dev-standards.md,WORK.md",
+            "live_value_observed": "ancestor=yes 3/3; stat 6/6 claimed files; guard 32 pass 0 fail; sibling 21 pass 0 fail; tsc 0 errors; mock-guard PASS; smoke: direct> + tee fire (1 line each, exit 0), 4 negative classes 0 lines, kill-switch exit 0, Stage-2 block exit 2 + orch-apply pipe still exit 0",
+            "observed_at": "2026-08-28T23:51:49Z"
           }
         }
       }
@@ -23978,26 +23987,6 @@
         "po_occurrence_20260824T2350Z": "2026-08-24: live recurring-bug fire (envelope 622c03db) routed via to-fallback, gap confirmed still open (grep=0). Detail in po notebook 2026-08-24."
       },
       {
-        "id": "HOOK-ENFORCEMENT-BASH-HEURISTIC-GUARD",
-        "title": "New PreToolUse Bash heuristic guard for direct-bypass orch-state.json writes (staged observe-only first) — hook-enforcement-plane brief §6.2/§8",
-        "owner": "po",
-        "next_agent": "qa",
-        "zone": "scripts/agents-flow/",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "REVIEW",
-        "files": [
-          "scripts/agents-flow/",
-          ".claude/settings.local.json",
-          "docs/architecture-briefs/2026-08-26-hook-enforcement-plane-mcp-socket.md"
-        ],
-        "status_note": "IMPLEMENTED (developer 2026-08-29, commit 9894c5805): Stage-1 observe-only guard shipped + tested 32/32 GREEN (scripts/agents-flow/orch-bash-direct-write-guard.mjs + .test.mjs); would-block log docs/data/orch-bash-guard-would-block.log git-tracked; kill switch ORCH_BASH_GUARD_DISABLE=1; Stage-2 block exists behind ORCH_BASH_GUARD_MODE=block, PO-gated on both Stage-1 promotion criteria (deliberate-violation fires the log — smoke-verified live; zero FP over >=20 real events) — NOT yet promoted. Settings registration remains user/config-admin (brief §9): matcher entry in .claude/settings*.json NOT applied by this task (config_admin_flag NOT flipped). QA to verify: 32/32 suite green, live-smoke evidence, obfuscation-limit documented, no settings edit performed.",
-        "origin_signal_id": "8f4189e32159332eb360b431de3f4317ac860be1f392a0c4146194958877b0b5",
-        "updated_at": "2026-08-28T23:44:29Z",
-        "updated_by": "developer"
-      },
-      {
         "id": "FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE",
         "title": "Layer C guaranteed-slot firer spawns raw claude -p with NO IDENTITY_PREAMBLE + no off-flow detector — exit-0 null fire measured (pid 70235); gate TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK on artifact-delta proof, not exit code",
         "owner": "po",
@@ -24020,6 +24009,30 @@
         "architect_completed_at": "2026-08-28T23:47:00Z",
         "architect_handoff": "docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md",
         "architect_review_note": "DESIGN COMPLETE 2026-08-28T23:47Z -> docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md (8 sections). PO ruling (1): ONE shared preamble source = NEW scripts/agents-flow/cowork-identity-preamble.sh <agent>; spawn-fanout.md Step 5.2 references it (dispatcher has bash at that step per Step 5.1 precedent), firer composes ENTRY_PROMPT = preamble + trigger_prompt + SESSION_ID_LINE (synthetic namespaced cowork-layerc:<slot>:<epoch> — leaf flows hard-require owner_client_session, verified at source) + SCHEDULED_UTC_LINE (slot.scheduled_utc_time already on matcher output). PO ruling (2): writeback gate = notebook mtime > fire-start (filesystem-only; firer has no MCP) + schedule re-read peer-stamp discrimination (silent on dual-plane redundant fire; ONE cooldown-bounded BUG alert per genuine null fire). spawn-fanout.md edits surgical (Step 5.2/5.3 only) — disjoint from queued P2 rows (Step 2.4/5.1); ENTRY_PROMPT composition lines kept byte-similar so cowork-spawn-entry-prompt-session-id.test.js TC-1..4 still pass. BUILD-STANDARD: not-applicable. R1 flagged for PO: synthetic session id is an interpretation beyond literal ruling wording, structurally required."
+      },
+      {
+        "id": "FIX-BCTC-DATA-GAP-FAMILY",
+        "title": "BCTC data-gap family: DXG get_bctc_full no-data (46th+ cycle), HPG operating_profit=0 corruption (42nd+ cycle), BID/FRT/KDH/EIB/SHB/GVR/GEX/VJC extraction failures (period mismatch, runPipeline null, total_assets=0 write-blocks)",
+        "owner": "po",
+        "next_agent": "developer",
+        "zone": "multi",
+        "priority": "P1",
+        "size": "L",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports",
+          "apps/mcp-server/src/application/usecases",
+          "apps/mcp-server/src/scheduler/financial-reports",
+          "apps/mcp-server/src/infrastructure/db",
+          "apps/mcp-server/src/domain/services/financial-reports"
+        ],
+        "status_note": "Consolidated from bctc_signal envelopes (DXG/HPG; FPT guard-held esc-deepdive + VCB normal skipped) + telegram 5214-5228. Data-pipeline bugs flagged to dev-team 40+ cycles unresolved. Root cause spans extraction (pdf-extractor runPipeline null) + serving (get_bctc_full Chưa có dữ liệu) + write-guards (total_assets=0 blocks).",
+        "origin_signal_id": "1b46e3e449c739411837efd1f0bfce1c09a5006b21b282ae865b8616482f6b70",
+        "architect_review_note": "DESIGN COMPLETE — brief: docs/architecture-briefs/2026-08-28-fix-bctc-data-gap-family.md. 7 work units (U1-U7) from LIVE root-cause evidence (data/live/market.db + container logs): U1 queue-liveness (enricher Arm-2 attempts<6 bound excludes the url_not_found rows it terminalizes at attempts=6; 293 deferred_infra NULL-URL rows unreachable by all arms; pull-job URL prefix excludes owa.hnx.vn) — do FIRST; U2 governance-report discovery filter (BID 2025-Q4 queue row poisoned with BaoCaoQuanTri URL); U3 period-mismatch durable quarantine + recovery (BID runPipeline-null loop, live 2026-08-27/28); U4 income-broken-with-assets corrupt guard (HPG OP=0 42nd+; SUPERSEDES sibling FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — do not land both); U5 scale-corruption guard (VNM/VEA assets~1e6x too small pass identity guard); U6 serve-stage diagnostics (keep exact 'Chưa có dữ liệu BCTC' string for true-absent case — bctc-analyst contract); U7 refine-liveness coordination only (defer to ops row FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP, no duplicate trigger). Sequence U1→U6 in order; U7 coordination. No file collision with size-lint sibling FIX-PREPUSH-SIZELINT-6-OFFENDERS (verified: this design touches none of its 6 offender files; bctcIdentityGuard.ts/ZeroExtractBlocklist.ts near 120L cap — keep <=120L or add size-justification header). Zone correction: row files[] hint 'tools/bctc' does not exist — actual tools in tools/financial-reports/. BUILD-STANDARD: not-applicable. NEXT: developer implements U1→U6.",
+        "updated_at": "2026-08-28T23:52:12Z",
+        "updated_by": "architect",
+        "created_by": "po"
       }
     ],
     "qa": [],
