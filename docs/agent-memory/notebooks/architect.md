@@ -1,6 +1,6 @@
 # Architect — Notebook
 
-**Last updated:** 2026-08-28 23:40 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-28 23:47 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
 
@@ -25,3 +25,12 @@
 - Actuator smoke-verified this cycle against a copy of the live 2-section notebook: [notebook-compose] OK sections=3 direction=newest_first — zero script changes.
 - Sibling FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH premise (remove Bash steps) SUPERSEDED — flagged to PO.
 - Brief: docs/architecture-briefs/2026-08-28-fix-bctc-analyst-notebook-compose-actuator.md | BUILD-STANDARD: not-applicable | lane-move backlog→review next_agent=developer in same orch-apply write.
+
+## 2026-08-28T23:47:00Z — FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE (P1, dev-team design-track dispatch, zone=multi, files=scripts/agents-flow/cowork-guaranteed-slot-firer.sh + docs/agents/cowork-team/flow/spawn-fanout.md + signal)
+### Shared preamble + artifact-delta gate design (architect-S58, DJ entry in sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-7.md)
+- Root cause verified at source: Layer C fires raw `claude -p "$trigger_prompt"` (no preamble, no session line, no scheduled_utc) — measured exit-0 null fire pid 70235 (no synthesis/notebook/marker). Matcher already returns `agent`/`scheduled_utc_time`/`last_fired` per slot — zero matcher changes needed.
+- Design decision 1: ONE shared preamble source = NEW `scripts/agents-flow/cowork-identity-preamble.sh <agent>`; spawn-fanout.md Step 5.2 references it (dispatcher has bash at that step), firer calls it. Byte-identical text to the inline block; six OFFFLOW_MARKERS vocabulary preserved.
+- Design decision 2: Layer C composes the SAME ENTRY_PROMPT shape as Step 5.2 (preamble + trigger_prompt + SESSION_ID_LINE + SCHEDULED_UTC_LINE) — leaf flows hard-require owner_client_session for Phase-2 marker claims (chef/digest/fb/tnb verified at source); synthetic namespaced session id `cowork-layerc:<slot>:<epoch>` (flagged §7 R1 for PO).
+- Design decision 3: artifact-delta writeback gate (PO ruling 2) = notebook-mtime > fire-start (filesystem-only, no MCP in firer) + schedule re-read peer-stamp discrimination (silent on dual-plane redundant fire, ONE cooldown-bounded BUG alert per genuine null fire). Amends TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK spec: writeback only on artifact-delta proof, never exit-0.
+- spawn-fanout.md edits surgical (Step 5.2 definition + Step 5.3 negative-control/provenance + header) — disjoint from the two queued P2 rows (Step 2.4 Axis-D, Step 5.1 LOAD_1MIN); ENTRY_PROMPT composition lines kept byte-similar so cowork-spawn-entry-prompt-session-id.test.js TC-1..4 still pass.
+- Brief: docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md | BUILD-STANDARD: not-applicable | lane-move backlog→review next_agent=developer + writeback-row note amend in same orch-apply write.

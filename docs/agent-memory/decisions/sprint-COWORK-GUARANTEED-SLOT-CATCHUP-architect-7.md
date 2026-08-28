@@ -111,3 +111,13 @@
 - sibling FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (premise: remove Bash steps) — SUPERSEDED by this row's ruling (grant scoped Bash); flagged to PO, do not land both.
 **why-decision:** Live-verified root cause (2 sections on disk) + smoke-tested the actuator against a copy of the live notebook ([notebook-compose] OK sections=3 direction=newest_first, zero script changes) — the fix is pure wiring + grant, no new primitives; the commit-message marker makes the verification gate mechanical and git-greppable, not doc-grep-dependent.
 **why-change:** none from task's stated design track (po → architect → developer → qa); zone multi confirmed via files spanning docs/agents/ + .claude/agents/ + scripts/ + docs/data/ → next_agent=developer (Tier-2).
+
+### STEP architect-S58 · architect · 2026-08-28T23:47:00Z
+**task-id:** FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE
+**what-done:** Designed shared identity-preamble source + artifact-delta writeback gate for the Layer C firer (brief: docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md); lane-moved row backlog→review next_agent=developer.
+**what-considered:**
+- preamble home: inline spawn-fanout.md copy vs new scripts/agents-flow/cowork-identity-preamble.sh — script wins: one text + one substitution site, testable; inline copy = the documented 2nd-copy failure mode.
+- writeback gate: exit-0 vs notebook-mtime-delta + peer-stamp discrimination — exit-0 alone is the measured null-fire defect; notebook path derivable from slot.agent (no per-agent table); schedule re-read discriminates dual-plane redundant fire from genuine null fire.
+- session id: omit vs synthetic namespaced cowork-layerc:<slot>:<epoch> — leaf marker claims hard-require owner_client_session (chef/digest/fb/tnb verified at source); omit = fire fails one step later and the gate is never satisfiable.
+**why-decision:** PO ruling (1) is prerequisite for (2); preamble must be ONE source both planes consume; gate must be filesystem-only (firer has no MCP) and fail-closed on null fire while staying silent on peer-stamped redundancy (cooldown-bounded escalation).
+**why-change:** none from PO ruling; synthetic session-id interpretation flagged in brief §7 R1 for PO awareness (beyond literal wording, structurally required).

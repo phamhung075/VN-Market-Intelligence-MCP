@@ -17185,25 +17185,6 @@
         "updated_at": "2026-08-28T23:12:03Z"
       },
       {
-        "id": "FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE",
-        "title": "Layer C guaranteed-slot firer spawns raw claude -p with NO IDENTITY_PREAMBLE + no off-flow detector — exit-0 null fire measured (pid 70235); gate TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK on artifact-delta proof, not exit code",
-        "owner": "po",
-        "next_agent": "architect",
-        "zone": "multi",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh",
-          "docs/agents/cowork-team/flow/spawn-fanout.md",
-          "docs/signals/cowork-layerc-no-identity-preamble-20260826T2010Z.md"
-        ],
-        "status_note": "From cowork-team detector_defect 3f22ec35 + file. Finding: Layer C (launchd firer) composes no IDENTITY_PREAMBLE and has no Step-5.3 off-flow detector; measured exit-0 null fire (no synthesis/notebook/marker) 19:46:38-19:49:35Z. PO ruling: (1) firer composes SAME IDENTITY_PREAMBLE as Step 5.2 from ONE shared source; (2) TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK must gate on artifact-delta proof, not exit-0. (1) is prerequisite for (2).",
-        "origin_signal_id": "3f22ec357557646d41514eb8360bd6c8c7ef48a499bbeadbcc2523514f800f93",
-        "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
         "id": "FIX-CHEF-EVENING-L2L3-SILENT-GAP",
         "title": "chef-evening dish silently omits L2 (US macro PMI/consumer-sentiment/EFFR-IORB) + L3 (CPI/VIRA/FX-reserves) with NO [gap:] token — CONFIRMED via synthesis JSON, 2nd consecutive cycle (tnb c137 #1)",
         "owner": "po",
@@ -21782,11 +21763,12 @@
           "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh"
         ],
         "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
-        "note": "Highest leverage, smallest diff. 4 of 8 guaranteed slots show a Layer-C fire NEWER than last_fired (fb-weekend ran 2026-08-22T13:29Z, not 14.8d stale) - part of the staleness table is an observability artifact. Pure reuse: the writer exists, takes slot ids as argv, and is monotonic forward-only with a parse-back guard, so a flow+firer double-write is safe by construction. FILE CONFLICT with TASK-COWORK-CATCHUP-5.",
+        "note": "Highest leverage, smallest diff. 4 of 8 guaranteed slots show a Layer-C fire NEWER than last_fired (fb-weekend ran 2026-08-22T13:29Z, not 14.8d stale) - part of the staleness table is an observability artifact. Pure reuse: the writer exists, takes slot ids as argv, and is monotonic forward-only with a parse-back guard, so a flow+firer double-write is safe by construction. FILE CONFLICT with TASK-COWORK-CATCHUP-5. | PO-RULING-2026-08-28T23:47Z: gate on ARTIFACT-DELTA proof, NOT exit-0 — call cowork-write-last-fired.js ONLY when the firer's artifact-delta gate passes (notebook mtime > fire start, peer-stamp discriminated) per architect brief docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md §5 (design row FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE, now review[] next_agent=developer). Implement behind the SAME gate this design specifies; never stamp on exit-0 alone.",
         "created_at": "2026-08-23T09:47:24Z",
         "created_by": "pm",
         "handoff": "docs/handoffs/TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK.md",
-        "updated_at": "2026-08-23T09:47:25Z"
+        "updated_at": "2026-08-28T23:48:35Z",
+        "updated_by": "architect"
       },
       {
         "id": "TASK-COWORK-MISSED-FIRE-AUDIT",
@@ -24014,6 +23996,30 @@
         "origin_signal_id": "8f4189e32159332eb360b431de3f4317ac860be1f392a0c4146194958877b0b5",
         "updated_at": "2026-08-28T23:44:29Z",
         "updated_by": "developer"
+      },
+      {
+        "id": "FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE",
+        "title": "Layer C guaranteed-slot firer spawns raw claude -p with NO IDENTITY_PREAMBLE + no off-flow detector — exit-0 null fire measured (pid 70235); gate TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK on artifact-delta proof, not exit code",
+        "owner": "po",
+        "next_agent": "developer",
+        "zone": "multi",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh",
+          "docs/agents/cowork-team/flow/spawn-fanout.md",
+          "docs/signals/cowork-layerc-no-identity-preamble-20260826T2010Z.md"
+        ],
+        "status_note": "From cowork-team detector_defect 3f22ec35 + file. Finding: Layer C (launchd firer) composes no IDENTITY_PREAMBLE and has no Step-5.3 off-flow detector; measured exit-0 null fire (no synthesis/notebook/marker) 19:46:38-19:49:35Z. PO ruling: (1) firer composes SAME IDENTITY_PREAMBLE as Step 5.2 from ONE shared source; (2) TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK must gate on artifact-delta proof, not exit-0. (1) is prerequisite for (2).",
+        "origin_signal_id": "3f22ec357557646d41514eb8360bd6c8c7ef48a499bbeadbcc2523514f800f93",
+        "updated_at": "2026-08-28T23:48:35Z",
+        "updated_by": "architect",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-28T23:47:00Z",
+        "architect_handoff": "docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md",
+        "architect_review_note": "DESIGN COMPLETE 2026-08-28T23:47Z -> docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md (8 sections). PO ruling (1): ONE shared preamble source = NEW scripts/agents-flow/cowork-identity-preamble.sh <agent>; spawn-fanout.md Step 5.2 references it (dispatcher has bash at that step per Step 5.1 precedent), firer composes ENTRY_PROMPT = preamble + trigger_prompt + SESSION_ID_LINE (synthetic namespaced cowork-layerc:<slot>:<epoch> — leaf flows hard-require owner_client_session, verified at source) + SCHEDULED_UTC_LINE (slot.scheduled_utc_time already on matcher output). PO ruling (2): writeback gate = notebook mtime > fire-start (filesystem-only; firer has no MCP) + schedule re-read peer-stamp discrimination (silent on dual-plane redundant fire; ONE cooldown-bounded BUG alert per genuine null fire). spawn-fanout.md edits surgical (Step 5.2/5.3 only) — disjoint from queued P2 rows (Step 2.4/5.1); ENTRY_PROMPT composition lines kept byte-similar so cowork-spawn-entry-prompt-session-id.test.js TC-1..4 still pass. BUILD-STANDARD: not-applicable. R1 flagged for PO: synthetic session id is an interpretation beyond literal ruling wording, structurally required."
       }
     ],
     "qa": [],
