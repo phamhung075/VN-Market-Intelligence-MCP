@@ -1,0 +1,1 @@
+# schema: {"ts","hook","mode","session_id","reason","command"} — one JSONL line per would-block command (Stage-1 observe-only log)
