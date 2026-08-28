@@ -379,9 +379,19 @@ POISON_FIXTURE=$(jq -n --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{
   "head": {"status":"idle","active_task_id":null,"next_agent":null},
   "task_board": {
     "backlog": [], "review": [], "qa": [], "in_progress": [], "ready": [],
+    # FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1 test-repair (2026-08-29): rows must
+    # be DONE_VERIFIED, NOT DONE — FIX-DONELANE (407afb6a4, 2026-08-23) made
+    # `.status == "DONE"` rows in done[] permanently unevictable by design
+    # (they are the unverified rows the Done-Lane Drain exists to reach), so a
+    # DONE-status fixture silently stopped exercising the poison-sort
+    # predicate this regression guards. DONE_VERIFIED is the sole status still
+    # eligible for age/rank eviction from done[] — the sort/age assertions
+    # below are unchanged in intent.
     "done": [
-      {"id":"DONE-POISON","status":"DONE","created_at":"unknown"},
-      {"id":"DONE-RECENT","status":"DONE","created_at":$now}
+      {"id":"DONE-POISON","status":"DONE_VERIFIED","created_at":"unknown",
+       "verification":{"raw_probe":{"tool":"fixture","args":"fixture","live_value_observed":"fixture","observed_at":"2026-06-01T00:00:00Z"}}},
+      {"id":"DONE-RECENT","status":"DONE_VERIFIED","created_at":$now,
+       "verification":{"raw_probe":{"tool":"fixture","args":"fixture","live_value_observed":"fixture","observed_at":"2026-06-01T00:00:00Z"}}}
     ],
     "done_verified": [],
     "active_sprints": []
@@ -1001,6 +1011,151 @@ else
 fi
 
 assert_real_live_unchanged "T13b"
+
+# =============================================================================
+# TEST 14 — FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1 (2026-08-29): a stale
+#   candidate + peer forward lane-moves must abort RETRYABLE (CAS exit 2 →
+#   cold-evict re-reads fresh → run completes), NOT fatally (conservation
+#   lane-placement exit 1 → "cold eviction skipped, retry next tick" forever).
+#
+#   Root cause reproduced live (telegram 5209, 2026-08-26): orch-apply.sh ran
+#   the conservation check (AC-3 lane-placement dimension) BEFORE the CAS
+#   check. The conservation check compares the candidate against the LIVE file
+#   read fresh at ITS OWN invocation — a candidate built from a snapshot that
+#   predates a peer's forward lane-moves (e.g. review[]→qa[] qa_drain rows)
+#   scores those rows as BACKWARD and exits 1 (fatal). The CAS check — the
+#   authoritative stale-candidate detector, exit 2 (retryable) — ran after and
+#   was never reached. Fix: CAS check moved BEFORE the conservation check in
+#   orch-apply.sh.
+#
+#   Fault injection (mirrors TEST 13's PATH-shadowed-mv pattern): a peer write
+#   lands in the residual window after cold-evict's own mid-loop mtime check
+#   (during the cold-archive rename) — moving TWO non-terminal rows FORWARD
+#   (BL-BLOCKED-1 backlog→in_progress, RV-DEGRADED-1 review→qa; both statuses
+#   coherent in their target lanes). Injected ONCE (marker file) so attempt 2's
+#   fresh read includes the moves and the retried run completes.
+#
+#   (a) SELF-HEALS: run exits 0 — the stale candidate aborted via CAS
+#       (retryable), the retry re-read the mutated hot file, and the eviction
+#       completed. Pre-fix, attempt 1 aborted exit 1 at the conservation check
+#       and the run never completed (the regression this test guards).
+#   (b) stderr proves the RETRY mechanism fired ("CAS mismatch") and the fatal
+#       conservation abort did NOT ("orch-apply.sh validation failed (exit 1)"
+#       must be absent).
+#   (c) the PEER's lane moves survive in the final hot file (never clobbered
+#       by the stale candidate) AND the terminal rows were archived (the
+#       eviction this whole backstop exists to perform).
+# =============================================================================
+FAKE_BIN_T14="$FIXTURE_ROOT/fake-bin-t14"
+mkdir -p "$FAKE_BIN_T14"
+cat > "$FAKE_BIN_T14/mv" <<'EOS'
+#!/usr/bin/env bash
+dest="${@: -1}"
+case "$dest" in
+  *"/archive/"*.json)
+    # Perform the REAL cold-archive rename first — cold-side behaviour stays
+    # completely unaffected by this fault injection.
+    /bin/mv "$@" || exit $?
+    # Simulate a peer write landing in the residual gap: ONCE (marker-guarded),
+    # move two non-terminal rows FORWARD to higher pipeline ranks. A stale
+    # candidate built before this write scores both as BACKWARD (candidate lane
+    # rank < live lane rank) — the exact AC-3 lane-placement violation shape.
+    if [ -n "${FAKE_INJECT_HOT_PATH:-}" ] && [ -f "${FAKE_INJECT_HOT_PATH}" ] \
+       && [ ! -f "${FAKE_INJECT_DONE:-}" ]; then
+      _inj_tmp=$(mktemp)
+      jq '
+        (.task_board.backlog[] | select(.id=="BL-BLOCKED-1")) as $b |
+        (.task_board.review[] | select(.id=="RV-DEGRADED-1")) as $r |
+        .task_board.in_progress = (.task_board.in_progress + [$b]) |
+        .task_board.backlog = [.task_board.backlog[] | select(.id != "BL-BLOCKED-1")] |
+        .task_board.qa = (.task_board.qa + [$r]) |
+        .task_board.review = [.task_board.review[] | select(.id != "RV-DEGRADED-1")]
+      ' "${FAKE_INJECT_HOT_PATH}" > "${_inj_tmp}" \
+        && /bin/mv "${_inj_tmp}" "${FAKE_INJECT_HOT_PATH}" \
+        && touch "${FAKE_INJECT_DONE}"
+    fi
+    exit 0
+    ;;
+  *) exec /bin/mv "$@" ;;
+esac
+EOS
+chmod +x "$FAKE_BIN_T14/mv"
+
+# Fixture: terminal rows to evict (BL-DONE-1/BL-CANCELLED-1/RV-DV-1) + the two
+# coherently-forward-movable non-terminal rows the injected peer write moves.
+T14_FIXTURE=$(jq -n '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {
+    "backlog": [
+      {"id":"BL-DONE-1","status":"DONE"},
+      {"id":"BL-CANCELLED-1","status":"CANCELLED"},
+      {"id":"BL-BLOCKED-1","status":"BLOCKED"}
+    ],
+    "review": [
+      {"id":"RV-DV-1","status":"DONE_VERIFIED"},
+      {"id":"RV-DEGRADED-1","status":"DEGRADED","verification":{"honest_gap_reason":"fixture row — survives eviction, needs gate-valid verification shape"}}
+    ],
+    "qa": [],
+    "in_progress": [],
+    "ready": [],
+    "done": [],
+    "done_verified": [],
+    "active_sprints": []
+  },
+  "signal_queue": {"_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture","rows":[]},
+  "sprint_goal": {"entries": []}
+}')
+
+# --- (a)+(b)+(c): single-injection stale candidate self-heals via CAS retry --
+new_fixture "t14-stale-candidate-lane-placement-self-heal" "$T14_FIXTURE"
+EXIT_T14=0
+FAKE_INJECT_HOT_PATH="$HOT_PATH" FAKE_INJECT_DONE="$FIXTURE_ROOT/.t14-injected" \
+  MTIME_CAS_RETRIES=2 PATH="$FAKE_BIN_T14:$PATH" run_cold_evict || EXIT_T14=$?
+
+if [ "$EXIT_T14" -eq 0 ]; then
+  pass "T14a — stale candidate + peer forward moves SELF-HEALS: run exits 0 (retried against fresh read)"
+else
+  fail "T14a — expected exit 0, got $EXIT_T14 — $(tail -6 "$FIXTURE_ROOT/.last-stderr")"
+fi
+
+if grep -q "CAS mismatch" "$FIXTURE_ROOT/.last-stderr"; then
+  pass "T14a — stderr confirms the RETRYABLE CAS check fired (stale candidate rejected via exit 2, not the fatal conservation exit 1)"
+else
+  fail "T14a — expected 'CAS mismatch' in stderr, got: $(tail -6 "$FIXTURE_ROOT/.last-stderr")"
+fi
+
+if grep -q "orch-apply.sh validation failed (exit 1)" "$FIXTURE_ROOT/.last-stderr"; then
+  fail "T14a — FATAL conservation abort still reachable on a stale candidate — reorder did not take effect"
+else
+  pass "T14a — fatal 'orch-apply.sh validation failed (exit 1)' absent (conservation check no longer aborts on stale candidates)"
+fi
+
+# Peer's forward moves survive in the FINAL hot file (stale candidate never applied)
+if jq -e '.task_board.in_progress[] | select(.id=="BL-BLOCKED-1")' "$HOT_PATH" >/dev/null 2>&1 \
+   && jq -e '.task_board.qa[] | select(.id=="RV-DEGRADED-1")' "$HOT_PATH" >/dev/null 2>&1; then
+  pass "T14b — peer's forward lane-moves (BL-BLOCKED-1 → in_progress[], RV-DEGRADED-1 → qa[]) preserved in final hot file"
+else
+  fail "T14b — peer's lane moves missing from final hot file: $(jq -c '{b:.task_board.in_progress[].id,q:.task_board.qa[].id}' "$HOT_PATH" 2>/dev/null || echo unreadable)"
+fi
+
+# Terminal rows STILL archived — the eviction the backstop exists to perform
+if jq -e '[.task_board.backlog[].id] | index("BL-DONE-1") | not' "$HOT_PATH" >/dev/null 2>&1 \
+   && jq -e '[.task_board.backlog[].id] | index("BL-CANCELLED-1") | not' "$HOT_PATH" >/dev/null 2>&1 \
+   && jq -e '[.task_board.review[].id] | index("RV-DV-1") | not' "$HOT_PATH" >/dev/null 2>&1; then
+  pass "T14c — terminal rows (BL-DONE-1/BL-CANCELLED-1/RV-DV-1) evicted from hot despite the concurrent peer write"
+else
+  fail "T14c — terminal rows NOT evicted — hot: $(jq -c '{bl:[.task_board.backlog[].id],rv:[.task_board.review[].id]}' "$HOT_PATH")"
+fi
+
+COLD_T14="$ARCHIVE_PATH/$MONTH.json"
+if [ -f "$COLD_T14" ] && [ "$(jq '[.backlog_detail[].id] | length' "$COLD_T14")" -ge 3 ]; then
+  pass "T14c — cold .backlog_detail[] holds the 3 evicted terminal rows"
+else
+  fail "T14c — cold .backlog_detail[] unexpected: $(jq -c '[.backlog_detail[].id]' "$COLD_T14" 2>/dev/null || echo no-cold-file)"
+fi
+
+assert_real_live_unchanged "T14"
 
 # =============================================================================
 # Summary

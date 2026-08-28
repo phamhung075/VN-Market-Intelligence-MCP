@@ -44,7 +44,13 @@
 #        duplicated here — single SSOT. NO backfill of existing null rows —
 #        see the script's own header for the full diff-unit rationale.
 #     6. CAS guard: baseline captured before stdin-read; re-checked before
-#        rename. Mismatch → ABORT with exit 2 so caller can retry. TWO modes
+#        ANY live-relative gate (FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1,
+#        2026-08-29: runs before the Stage 2 conservation check — a stale
+#        candidate is indistinguishable from a genuine conservation violation
+#        against the fresher live file, so the CAS check must fire first with
+#        its retryable exit 2 instead of letting the conservation check abort
+#        exit 1 fatally on the same staleness). Mismatch → ABORT with exit 2
+#        so caller can retry. TWO modes
 #        (task: FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ):
 #          - CALLER-SUPPLIED (preferred): ORCH_APPLY_CALLER_BASELINE_HASH or
 #            ORCH_APPLY_CALLER_BASELINE_MTIME, captured by the CALLER
@@ -268,6 +274,43 @@ stamp_output=$(bun "${REPO_ROOT}/scripts/orch-stamp-updated-at.mjs" "${LIVE_FILE
 }
 [[ -n "${stamp_output}" ]] && printf '%s\n' "${stamp_output}" >&2
 
+# ─── CAS guard: re-check BEFORE any live-relative gate ───────────────────────
+# FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1 (2026-08-29): this check MUST run before
+# the conservation check (Stage 2) below, not after it. The conservation check
+# compares the candidate against the LIVE file read fresh at ITS OWN
+# invocation — a candidate built from a stale snapshot (the exact condition
+# this CAS guard exists to detect; orch-cold-evict.sh's multi-second
+# computation window is a standing example) is indistinguishable from a
+# genuine violation there, so pre-reorder it aborted with a FATAL exit 1
+# (conservation violation) instead of the retryable exit 2 this guard
+# returns. orch-cold-evict.sh hit this live (telegram 5209, 2026-08-26): a
+# peer's forward lane-moves landing in the residual window between the
+# caller's own mid-loop mtime check and this script's baseline scored as
+# "backward moves" against the newer live file and the whole eviction aborted
+# exit 1 every tick ("cold eviction skipped, retry next tick"). With the CAS
+# check first, the same staleness exits 2 and the caller retries against a
+# fresh read — where the conservation check legitimately passes. A genuinely
+# violating candidate built from a CURRENT read still reaches the conservation
+# check unchanged (CAS passes, conservation exits 1).
+# If the live file's baseline (hash or mtime, matching BASELINE_MODE above)
+# differs now from what was captured/supplied as BASELINE_BEFORE, our
+# candidate is stale relative to that baseline — it may have overwritten
+# interleaved changes, whether they landed during THIS script's own lifetime
+# (self-captured fallback mode) or any time after the caller's own read
+# (caller-supplied mode — this is the gap AC-1 closes). ABORT with a DISTINCT
+# exit code (2) so the caller can retry: re-read the live file → re-apply the
+# filter → pipe into orch-apply.sh again (with a freshly captured baseline).
+if [[ "${BASELINE_MODE}" == "hash" ]]; then
+  BASELINE_AFTER=$(get_hash "${LIVE_FILE}")
+else
+  BASELINE_AFTER=$(get_mtime "${LIVE_FILE}")
+fi
+if [[ "${BASELINE_BEFORE}" != "${BASELINE_AFTER}" ]]; then
+  printf '[orch-apply] ABORTED: CAS %s mismatch (before=%s after=%s) — concurrent write detected (or caller-supplied baseline was already stale relative to live); caller should retry\n' \
+    "${BASELINE_MODE}" "${BASELINE_BEFORE}" "${BASELINE_AFTER}" >&2
+  exit 2
+fi
+
 # ─── Stage 2: Conservation circuit-breaker ───────────────────────────────────
 # REUSE bun scripts/orch-conservation-check.mjs — do NOT duplicate this logic.
 # Compares the candidate's whole-board task_total/signal_total against the
@@ -313,26 +356,6 @@ ceiling_output=$(bun "${REPO_ROOT}/scripts/orch-row-prose-ceiling-check.mjs" "${
   exit 1
 }
 [[ -n "${ceiling_output}" ]] && printf '%s\n' "${ceiling_output}" >&2
-
-# ─── CAS guard: re-check before rename ───────────────────────────────────────
-# If the live file's baseline (hash or mtime, matching BASELINE_MODE above)
-# differs now from what was captured/supplied as BASELINE_BEFORE, our
-# candidate is stale relative to that baseline — it may have overwritten
-# interleaved changes, whether they landed during THIS script's own lifetime
-# (self-captured fallback mode) or any time after the caller's own read
-# (caller-supplied mode — this is the gap AC-1 closes). ABORT with a DISTINCT
-# exit code (2) so the caller can retry: re-read the live file → re-apply the
-# filter → pipe into orch-apply.sh again (with a freshly captured baseline).
-if [[ "${BASELINE_MODE}" == "hash" ]]; then
-  BASELINE_AFTER=$(get_hash "${LIVE_FILE}")
-else
-  BASELINE_AFTER=$(get_mtime "${LIVE_FILE}")
-fi
-if [[ "${BASELINE_BEFORE}" != "${BASELINE_AFTER}" ]]; then
-  printf '[orch-apply] ABORTED: CAS %s mismatch (before=%s after=%s) — concurrent write detected (or caller-supplied baseline was already stale relative to live); caller should retry\n' \
-    "${BASELINE_MODE}" "${BASELINE_BEFORE}" "${BASELINE_AFTER}" >&2
-  exit 2
-fi
 
 # ─── Atomic rename: temp → live file ─────────────────────────────────────────
 # TMP and LIVE_FILE are on the same filesystem (both under docs/data/orch/).

@@ -62,3 +62,13 @@
 **why-change:** no change from plan — one same-file consistency fix: main.md's ESC-DISPATCH block also carried "has NO Bash"/"Write tool only — no Bash" stale claims, reworded to the scoped-grant truth so the grant's own docs don't contradict it.
 **verify:** VG-4 smoke/replay on a COPY of the live 2-section notebook → `[notebook-compose] OK sections=3 dropped=0 direction=newest_first`, post `grep -c '^## c'` = 3. VG-3 `agent-bash-grant-coverage.sh --check` PASS (bctc-analyst grant=demand, both checks OK) + `--update` → baseline count 0 (stale entry dropped) + re-check PASS. `scripts/notebook-compose.test.sh` → 9/9 (comment-only script change). `size-lint-justification.sh --check` PASS.
 **handoff:** Row flips `review[]`→`review[]` (lane-move, same lane) with `status=REVIEW`, `next_agent=qa` in the SAME orch-apply.sh write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE). Commit sha in row `status_note`. VG-5 (live QA) is the separate QA agent's gate — not dispatched from this flip.
+
+### STEP developer-S136 · developer · 2026-08-28T23:57:00Z
+**task-id:** FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1
+**what-done:** Root-caused + fixed the "cold eviction skipped, retry next tick" exit-1 loop (telegram 5209): orch-apply.sh ran the conservation check before the CAS check, so a cold-evict candidate stale by seconds scored a peer's forward lane-moves as AC-3 backward and aborted fatal exit-1; moved the CAS re-check before Stage 2. Also fixed dry-run `/dev/stdout` portability + BSD mktemp literal-name in cold-evict; TEST 14 regression; T7 fixture repaired to DONE_VERIFIED (FIX-DONELANE drift).
+**what-considered:**
+- Reorder CAS before conservation in orch-apply.sh (root cause; class-level, all callers)
+- Declare backward moves from cold-evict (would mask staleness and clobber peer writes)
+- Re-hash + self-retry inside cold-evict only (fixes one caller, not the ordering class)
+**why-decision:** CAS is the authoritative stale-candidate detector — every live-relative gate must run after it; reorder converts the false conservation abort into the documented retryable exit-2, and cold-evict's existing retry loop self-heals against a fresh read (proven end-to-end on the exact 2026-08-26 20:38Z failing state).
+**why-change:** no change from plan; two same-script robustness fixes surfaced during verification (dry-run `/dev/stdout` write fails in restricted envs; `.hot-evict-XXXXXXXX.tmp` mktemp is the BSD literal-name class fixed in orch-apply.sh 5a18d8726).

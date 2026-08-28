@@ -316,6 +316,7 @@ COLD_FILE="${ARCHIVE_DIR}/${MONTH}.json"
 # Temp file handles — populated dynamically; cleaned up on EXIT
 COLD_TEMP=""
 HOT_TEMP=""
+PROJECT_TEMP=""
 
 # ─── cleanup temp files on any exit ──────────────────────────────────────────
 cleanup() {
@@ -323,6 +324,7 @@ cleanup() {
   set +e
   if [[ -n "${COLD_TEMP:-}" && -f "${COLD_TEMP}" ]]; then rm -f "${COLD_TEMP}"; fi
   if [[ -n "${HOT_TEMP:-}"  && -f "${HOT_TEMP}"  ]]; then rm -f "${HOT_TEMP}"; fi
+  if [[ -n "${PROJECT_TEMP:-}" && -f "${PROJECT_TEMP}" ]]; then rm -f "${PROJECT_TEMP}"; fi
 }
 trap cleanup EXIT
 
@@ -1147,8 +1149,18 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   N_NEW=$(echo "${MAPS}"     | jq '.n_new_cold')
   N_RELABEL=$(echo "${MAPS}" | jq '.n_relabel_excluded')
 
-  # Project hot-file size without writing (pipe jq output to wc -c)
-  PROJECTED_SIZE=$(build_hot_temp "${MAPS}" /dev/stdout | wc -c | tr -d ' ')
+  # Project hot-file size without writing — build to a REAL temp file, count
+  # its bytes, then remove it (FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1,
+  # 2026-08-29: the previous `> /dev/stdout` pattern re-opens /dev/stdout for
+  # write, which fails hard ("Operation not permitted") in restricted/
+  # containerized environments — turning EVERY --dry-run, and therefore the
+  # whole dev-team-tick-preflight.sh Step 5.5 board-hygiene trigger, into
+  # exit 1 "cold eviction skipped" instead of a clean preview).
+  PROJECT_TEMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.dryrun-proj-XXXXXXXX")
+  build_hot_temp "${MAPS}" "${PROJECT_TEMP}"
+  PROJECTED_SIZE=$(wc -c < "${PROJECT_TEMP}" | tr -d ' ')
+  rm -f "${PROJECT_TEMP}"
+  PROJECT_TEMP=""
 
   REDUCTION=$((CURRENT_SIZE - PROJECTED_SIZE))
 
@@ -1247,7 +1259,14 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
     || { log "ABORT: cold temp failed symmetry self-check — hot file NOT modified"; exit 1; }
 
   # ── Pass 2b: Build hot temp ───────────────────────────────────────────────
-  HOT_TEMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.hot-evict-XXXXXXXX.tmp")
+  # FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1 (2026-08-29): X-run MUST be the
+  # trailing component — BSD/macOS mktemp does NOT substitute X's when a
+  # literal suffix follows them (creates the literal `.hot-evict-XXXXXXXX.tmp`
+  # name every call; single-run masking via the EXIT trap, but a leftover or
+  # concurrent invocation collides with "mkstemp failed: File exists").
+  # Same defect + fix shape as orch-apply.sh's own FIX-ORCHAPPLY-MKTEMP-SUFFIX-
+  # DEFEATS-RANDOMIZATION-BSD-CONCURRENT-WRITER-COLLISION (5a18d8726).
+  HOT_TEMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.hot-evict-XXXXXXXX")
   build_hot_temp "${MAPS}" "${HOT_TEMP}"
 
   # Validate hot temp sentinel (HSC-5: ._meta required after schema v4)
