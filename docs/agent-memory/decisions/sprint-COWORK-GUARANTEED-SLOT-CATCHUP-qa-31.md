@@ -82,3 +82,26 @@
 - Behavioral-predicate AC — zone="multi" does not start with apps/ → out of scope → passes.
 **why-decision:** No ISSUE; every claimed check reproduced independently with matching numbers; scope clean (6 files, headers only). -> vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S250 · qa · 2026-08-29T00:20Z
+**task-id:** FIX-TRIAGESIGNALS-PIPELINEA-UNROUTED-RECURRINGBUG-AND-SPRINTREGISTRY-DANGLING-IDS
+**what-done:** Direct-commit verify of agent-father umbrella hop. Commit afc06123a on main ancestry, touches exactly the 3 claimed files (triage-signals.md +18/-3, triage-signals-longtail.md +9/-2, agent-father journal +10). Hand-replayed the guard's read-only extractors (guard NEVER run on live — it mints): ROUTED_A=50 / ROUTED_B=33; synthetic fixture holding all 21 previously-unrouted types (15 A-side + 6 B-side) → UNROUTED_A=[] / UNROUTED_B=[]; REAL guard vs /tmp fixture: exit 0 PASS "A: 15 live routed (50 known) | B: 6 live routed (33 known)", and vs afc06123a^ docs the SAME fixture reproduces FAIL exit 1 with exactly 15+6 unrouted (honest green, not input-deletion green). Emitter literals matched char-for-char: `sprint_registry_dangling_ids` at scripts/orch-validate.mjs:862 == routing-row key; `recurring-bug` at dev-team main.md:162 == routing-row key — both with full dispositions (FOLD/CHORE etc.), the false-green trap from the CANCELLED sibling row explicitly documented in the row prose. Scope: no creep (3 files). Board: row resident review[] status=REVIEW next_agent=qa, 0 dup in qa[]/done_verified[]; 14 member rows CANCELLED+archived folded_into this umbrella (verified in archive[]). DJ-GATE-1 (fix side): agent-father-S71 journal entry present with this task-id.
+**what-considered:**
+- Trust the commit message's BEFORE/AFTER numbers vs re-derive — re-derived all (extractor hand-replay + synthetic fixture + real guard on disposable fixture), numbers identical.
+- Run the guard on live orch-state — REJECTED: script mints on live via ORCH_APPLY_LIVE_FILE_OVERRIDE (--check is a no-op alias); used /tmp fixture only, live file untouched (git status clean after).
+- OOM-class Durability Gate — ruled NOT applicable (title/AC/status_note assert nothing about crash/OOM/memory bound; routing-table rows).
+- Behavioral-predicate AC — zone="cross-service/" does not start with apps/ → out of scope → passes.
+**why-decision:** No ISSUE across all 5 verify items, each confirmed with fresh independent evidence rather than prose. -> vc-approved.
+**why-change:** no change from plan.
+
+### STEP qa-S251 · qa · 2026-08-29T00:25Z
+**task-id:** HOOK-ENFORCEMENT-BASH-HEURISTIC-GUARD
+**what-done:** Direct-commit verify of hand-dispatched row (review[]/REVIEW/next_agent=qa; chain contract mandates review[]→done_verified[] in ONE orch-apply write). Step 0d not-before gate: none of qa_not_before/next_recheck_not_before/qa_new_window_earliest_d1_close on row → proceed. Verified 9894c5805/00ce8497f/ab45157cf all on main ancestry; guard commit touches 6 files incl. both deliverables + git-tracked would-block log; brief + dev-standards pointer + WORK.md confirmed. Independently re-ran: guard suite 32/32 PASS, sibling orch-state-hook.test.mjs 21/21 PASS, tsc --noEmit 0 errors (apps/mcp-server), mock-guard PASS. Live smokes against REAL log: direct `jq ... > orch-state.json` → 1 would-block line exit 0 (observe); `tee` → 1 line; legit `orch-apply.sh` pipe / `git checkout` rollback / `orch-validate.mjs` read / non-Bash Write → 0 lines each; kill switch ORCH_BASH_GUARD_DISABLE=1 → exit 0 no log; Stage-2 ORCH_BASH_GUARD_MODE=block → exit 2 {"decision":"block"} while orch-apply pipe still passes → correctly PO-gated. Log restored to schema-comment-only after smoke (git-clean). config_admin_flag NOT flipped: .claude/settings.json + settings.local.json untouched by all 3 commits, no matcher present in settings.local.json. Row uniqueness OK (FIX-BCTC-BANK-SUMMARY-MAPPING "duplicate" is active_sprints[].tasks[] vs ready[] — different arrays, pre-existing at ab45157cf^, not introduced here).
+**what-considered:**
+- Trust developer's 32/32 + smoke claims vs re-run independently — re-ran suite + all 5 smoke classes myself, matching numbers.
+- Would-block log pollution from my own smoke — appended 2 lines, then `git checkout --` restored to schema-comment-only, verified git-clean (same restore discipline as developer's own smoke).
+- Lane-move source: row sits in review[] not qa[] (QA-Drain claim never ran — hand-dispatch) — adapted vc-approved jq per cycle-874 precedent: review[]→done_verified[] same write, del(.next_agent), RC-VERIF raw_probe filled from real commands.
+- OOM-class Durability Gate — ruled NOT applicable (title/AC/status_note assert nothing about crash/OOM/memory bound).
+- Behavioral-predicate AC — zone="scripts/agents-flow/" does not start with apps/ → out of scope → passes.
+**why-decision:** No ISSUE; every claimed check reproduced independently (suite numbers match, all 5 smoke classes fire correctly, kill switch + Stage-2 gating verified live, settings untouched, log clean). -> vc-approved.
+**why-change:** no change from plan.
