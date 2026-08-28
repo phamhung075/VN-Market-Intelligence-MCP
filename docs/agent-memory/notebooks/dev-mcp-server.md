@@ -37,3 +37,21 @@ Zone health: bun test 15486 pass/51 fail (baseline noise, file-set unchanged, ow
 **Evidence:** all commands run this session, no new commit needed (verification-only pass, no code touched). orch-state.json write is the only artifact of this cycle.
 
 Zone health: unchanged by this cycle (verification-only) — bun test 15485 pass/52 fail/1287 files (baseline noise, unrelated files), tsc clean, RC_VERIF_GRANDFATHERED_IDS=50/FU-RAG-DEPLOY-MEMORY absent (confirmed) | HEALTHY.
+
+## 2026-08-28 — FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT (brief §5c behavior_predicate hard-reject) → review[]
+
+**Session:** DSH dispatch (coordination session-123eed97), sprint-task lock held by dev-team dispatcher, not re-claimed/released (INV-GATEWAY-1). Landed the LAST (7/7) of brief §9's file table — the only one in `apps/` (agent-father's commit_zone excludes apps/; mint-side `ee158a9ea` + enforcement-side `900d640ad` already landed doc-side).
+
+**Implemented (orchStateSchema.ts, §8A):** new `hasValidBehaviorPredicate(v)` helper (VerificationSchema.safeParse + `cmd` truthy + `expect !== undefined`) mirroring `hasValidRawProbe`/`hasHonestGapReason`; `BEHAVIOR_PREDICATE_CUTOFF = "2026-08-26T19:57:54Z"` (mint-side landing minus 36s, AC-4); `BEHAVIOR_PREDICATE_PRIORITIES = {'P0','P1','high','HIGH'}` (mixed live convention, AC-3 — measured 317xP1/61xP0/82x'high'/1x'HIGH', a bare `=== 'P0'` check would silently miss 83 rows); reject branch inside the existing DONE_VERIFIED block: `zone startsWith 'apps/'` AND priority in set AND `created_at ?? declared_at >= cutoff` AND no valid predicate → issue at `verification.behavior_predicate` with fix-path message naming PO/BA mint re-author. Grandfather-by-TIME only (never id-list) — the same row passes when created_at < cutoff; RC_VERIF_GRANDFATHERED_IDS exemption carried over from the enclosing block.
+
+**AC-6 unit tests (orchStateSchema.test.ts BP-1..BP-7, 14 new assertions):** P0 apps/ ≥cutoff no predicate → REJECT; same row <cutoff → PASS (grandfather-by-time); P2/scripts rows NEVER reject; valid `{cmd,expect}` → PASS; malformed (empty cmd / missing expect) → REJECT; priority 'high'/'HIGH' → REJECT, 'medium' → PASS; declared_at fallback both directions; HSC-1 (grandfathered) exempt; BP-7-a live-board no-wedge probe (zero live DONE_VERIFIED P0/P1 apps/ rows minted ≥ cutoff without predicate — verified pre-ship via jq too, so the hot file cannot wedge).
+
+**Gates:** `orchStateSchema.test.ts` 136/136 pass; full `bun test` 15502 pass/54 fail/1288 files — failing-set is the documented baseline noise (VPS-proxy-health, get_insider_transactions, get_backtest_runs, logVpsPush, telegram, notebook-protocol, task_heartbeat/task_release Zod schema, plus two 5000ms-timeout class: 1316-pdf-cb-concurrent, 102-job-news-poll — both proven pre-existing via git-stash A/B, fail identically without my change); zero failures touch verification/behavior_predicate/orchStateSchema. `bun tsc --noEmit` clean. `size-lint-justification.sh --check` PASS (header refreshed 1797L→1878L). `bun scripts/orch-validate.mjs` live exit 0. Server boot healthy (`PORT=3099` → `{"status":"ok","toolCount":184}`), tool count 184 / cron count 88 unchanged (Gate 2c/2d). PO gate: `grep hasValidBehaviorPredicate orchStateSchema.ts` → GATE-PRESENT.
+
+**Docs:** header size-justification + §8A GATE comment updated in-file (no external docs touched).
+
+**Board:** `backlog[]` → `review[]` (`status:REVIEW`, `next_agent:qa`) via `orch-apply.sh` — lane-move jq dry-run validated on a scratch copy (orch-validate exit 0) before applying. `.head` was already idle (not pointed at this row) — idle-reset guard correctly no-ops.
+
+**Evidence:** commit `89742b62d` (schema + tests, explicit pathspec), journal `e041ef5dc` (decision journal S96, DJ-GATE-1 satisfied).
+
+Zone health: bun test 15502 pass/54 fail (baseline noise, file-set unchanged, orchStateSchema 136/136), tsc clean, 184 tools / 88 cron intact, size-lint PASS, live orch-validate exit 0, orchStateSchema.ts +68L (behavior_predicate gate + helper + constants) | HEALTHY.
