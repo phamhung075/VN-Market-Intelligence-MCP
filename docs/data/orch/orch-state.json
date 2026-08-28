@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-28T23:43:06Z",
+    "_updated_at": "2026-08-28T23:54:23Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -142,6 +142,18 @@
         "status": "NEW",
         "payload_ref": null,
         "dedup_key": "bctc-analyst-stagelog-superseded-by-actuator"
+      },
+      {
+        "id": "arch-supersede-bctc-hpg-20260828T1",
+        "ts": "2026-08-28T23:54:23Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is SUPERSEDED by FIX-BCTC-DATA-GAP-FAMILY U4 (architect ruling, commit 71b68f342, DJ architect-S59) — the income-broken-with-assets corrupt guard absorbs it. Close/absorb the sibling row, do NOT land both.",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "bctc-hpg-scalar-superseded-by-data-gap-u4"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
