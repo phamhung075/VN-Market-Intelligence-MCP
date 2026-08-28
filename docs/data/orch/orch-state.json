@@ -20102,6 +20102,31 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
+      },
+      {
+        "id": "FIX-PREPUSH-SIZELINT-6-OFFENDERS",
+        "title": "pre-push size-lint gate rejects 6 offender files (apps/mcp-server + apps/pdf-extractor) — blocks ALL fleet pushes (local main 1046 ahead of origin)",
+        "owner": "po",
+        "zone": "multi",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "files": [
+          "apps/mcp-server/src",
+          "apps/pdf-extractor/src"
+        ],
+        "status_note": "From telegram 5210/5211 (commit-mutex push BLOCKED by pre-push size-lint gate) + tnb persisting blocker #5. Offenders: bctcScalarAggregator.ts, ocr_backends (names truncated in report) exceed size-lint; unrelated to commits being pushed. Fleet push blocked since >= 2026-08-26. Related (NOT duplicate): FIX-FLEET-PUSH-THRESHOLD-20-DESIGNS (ops) is the threshold design, not the offenders.| [developer 2026-08-28T23:35Z] FIXED: added current size-justification header to each of the 6 size-lint offenders (bctcScalarAggregator.ts 1207L, ocr_backends.py 690L, ocr_orientation.py 235L [new-offender, justified not grandfathered], ocr_worker.py 579L, page_rasterizer.py 251L, pek_engine_adapter.py 1299L). size-lint --check PASS (0 offenders/1457 scanned); gate test 6/6 PASS; tsc clean; py_compile clean x5; task-claim-owner-session-lint + tool-registry-parity PASS. Commit b4e885a64. Fleet push unblocked.\n[QA] Review Record (direct-commit verify): PASS — b4e885a64 on main; 6/6 headers within tolerance; size-lint 0 offenders (1457 scanned); gate test 6/6; py_compile 5/5; tsc 0 err; parity 17/17; claim-lint PASS; mock-guard PASS; scope=6 files header-only",
+        "updated_at": "2026-08-28T23:44:51Z",
+        "qa_verified_at": "2026-08-28T23:44:49Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + size-lint-justification.sh --check + size-lint-justification.test.sh + py_compile + tsc --noEmit + tool-registry-parity + task-claim-owner-session-lint + mock-guard",
+            "args": "commit=b4e885a64; files=6 size-justification headers (bctcScalarAggregator.ts + 5 pdf-extractor infrastructure py)",
+            "live_value_observed": "ancestor=yes; stat touches 6/6 claimed files; size-lint PASS 0/1457; gate test 6/6; py_compile 5/5; tsc 0 errors; parity 17/17; claim-lint PASS; mock-guard PASS",
+            "observed_at": "2026-08-28T23:44:49Z"
+          }
+        }
       }
     ],
     "head": {
@@ -23917,23 +23942,6 @@
         "secondary_claimed_at": "2026-08-26T20:17:39Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "agent-father"
-      },
-      {
-        "id": "FIX-PREPUSH-SIZELINT-6-OFFENDERS",
-        "title": "pre-push size-lint gate rejects 6 offender files (apps/mcp-server + apps/pdf-extractor) — blocks ALL fleet pushes (local main 1046 ahead of origin)",
-        "owner": "po",
-        "next_agent": "qa",
-        "zone": "multi",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "REVIEW",
-        "files": [
-          "apps/mcp-server/src",
-          "apps/pdf-extractor/src"
-        ],
-        "status_note": "From telegram 5210/5211 (commit-mutex push BLOCKED by pre-push size-lint gate) + tnb persisting blocker #5. Offenders: bctcScalarAggregator.ts, ocr_backends (names truncated in report) exceed size-lint; unrelated to commits being pushed. Fleet push blocked since >= 2026-08-26. Related (NOT duplicate): FIX-FLEET-PUSH-THRESHOLD-20-DESIGNS (ops) is the threshold design, not the offenders.| [developer 2026-08-28T23:35Z] FIXED: added current size-justification header to each of the 6 size-lint offenders (bctcScalarAggregator.ts 1207L, ocr_backends.py 690L, ocr_orientation.py 235L [new-offender, justified not grandfathered], ocr_worker.py 579L, page_rasterizer.py 251L, pek_engine_adapter.py 1299L). size-lint --check PASS (0 offenders/1457 scanned); gate test 6/6 PASS; tsc clean; py_compile clean x5; task-claim-owner-session-lint + tool-registry-parity PASS. Commit b4e885a64. Fleet push unblocked.",
-        "updated_at": "2026-08-28T23:36:24Z"
       },
       {
         "id": "FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR",
