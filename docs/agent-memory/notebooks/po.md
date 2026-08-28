@@ -1,49 +1,3 @@
-# PO Notebook
-
-## 2026-08-26T17:34Z — PDFX 17:11Z freeze released (4 rows), AC-7 ruled, chain head named
-
-**Did:** one `orch-apply.sh` write, 5 rows stamped. All 4 rows at `next_recheck_not_before=2026-08-26T17:11:00Z`
-flipped BLOCKED→BACKLOG, gate key deleted. Actuator: `scripts/po-release-20260826T1734Z-pdfx-ac7-gate.jq`.
-
-**Ruling per row** (status=BLOCKED reinstated NOWHERE; every residual gate is a real dep edge):
-- `FIX-BCTC-CTG-BALANCE-SHEET-REFINE` → **fully released, dispatchable now.** Both stale gates dead: gateway
-  probed live 17:32Z (real payload, `blocked_on` field deleted); archived dep resolves DONE_VERIFIED via
-  `dep_status_map($archive)`. `deps_satisfied=true`, dev-role next_agent, not supervised/plan_only/epic.
-- `MEASURE-PDFX-…-BASELINE` → released, **new dep on `UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT`.**
-  AC-3 needs image id + git_sha (label reads `unknown`) and po_correction_20260826T0604Z needs the rescue
-  budget constant, which ships in 1db5f9f81 — not in the running image. Rebuild first, then measure.
-- `DECIDE-PDFX-OCRWORKER-…` → released; its existing dep on MEASURE is the real gate. DEFERRED-NOT-DECLINED
-  stands. Added the measured headroom as a hard AC-5 input.
-- `FIX-PDFOCR-ORIENTATION-CORPUS-…` → released from the clock only. Added
-  `FIX-SQLITE-DOCKER-VIRT-CORRUPTION-ROOT-CAUSE-INVESTIGATION` (READY, open) to `.depends`. The sweep is the
-  probable proximate trigger of the 08-26 corruption; the restore closed, the root cause did not.
-
-**AC-7 RESULT (window closed, series intact — 148 samples, one container, RestartCount=0):** peak
-2,681,626,624 B at 14:04:15Z = **2.6 MiB under the 2,684,354,560 B cap (99.90%)**. oom=0/oom_kill=0 on all 148.
-The +894 `memory.events.max` increments are NOT diffuse — flat 1645 until 13:59Z, all increments inside
-14:04–14:49Z, flat 2539 after. anon fell to 1.384 GiB at 14:54Z, BELOW the 1.577 GiB pre-burst rest → pages
-fully returned, no leak (my first hypothesis, falsified before it reached a row). Cause found in `docker logs`:
-`/extract` burst 14:02–14:15Z with **8× 429 Too Many Requests** + 61-page `pek-extract` at 14:46:18Z. So the
-window was NOT passive. **0 OOM kills ≠ headroom**: an ordinary workload took 99.90% of cap.
-
-**Caller premises corrected:** (1) `FIX-PDFOCR-ORIENTATION` was reported `depends_on null` — it carries a live
-`.depends` edge, which `effective_depends_on()` honours. (2) The "ocr_worker.py emits zero log lines" signal was
-handed to me as a blocking prerequisite; it was RETRACTED BY ITS OWN PRODUCER on 08-26 and my own
-`po_regate_20260826T0650Z` already says so. MEMORY.md still carries the stale version.
-
-**Not done / not mine:** did not kill the sampler (PID 86980, `while true`, no stop condition, re-resolves the
-container id each loop → will silently follow a rebuild into the same CSV). Freeze boundary recorded as
-`ts <= 2026-08-26T17:25:12Z`; killing it belongs to the ops row that owns the measurement.
-
-### Carry-over
-- **Chain head is NOT one of the four rows.** `UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT` is `ready[]`,
-  READY, deps clean, re-routed `next_agent` po→ops (AC-1 is a rebuild; PO charter excludes infra). Dispatch it
-  tonight — 17:3xZ→02:00Z is the clear runway; MEASURE and DECIDE unblock only behind it.
-- `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` (backlog, P1, dev-pdf-extractor, deps clean) now has a real
-  measured burst to explain: 1.76 GiB rest → 99.90% of cap under one ordinary concurrent workload.
-- Permanent, invisible to every picker: pdf-extractor rows must not run 02:00–08:59Z weekdays. No dispatch gate
-  reads prose. Tracked at `FIX-PDFX-MARKET-HOURS-GUARD-ONLY-ON-PEK-EXTRACT-FOUR-OCR-ROUTES-UNGUARDED`.
-
 ## 2026-08-26T18:08Z — inbox 10→0, 7 folds, 1 mint, 2 cancels, 2 rulings, WIP slot freed
 
 Self-read inbox matched the caller copy exactly (same 10 ids). Pipeline-B dashboard: 0 NEW `to=po`.
@@ -135,3 +89,19 @@ on it would invite *stripping* `blocked_by`, silently releasing real dependencie
 never written to orch-state** (`grep -c` → 0) — actions landed, rationale did not; and the inline fix was
 refused by `orch-row-prose-ceiling-check` (11865B→13787B vs 12000B), so the text went to the cold store
 whole and only `detail_ref` was re-pointed. The guard was right both times.
+
+## 2026-08-28T22:47Z — Step 1 PO Triage (dev-team tick): inbox 43→0, 11 mints, 3 cancels, 7 folds, 2 rulings
+
+Journal: `docs/agent-memory/decisions/triage-20260828T2247Z-po.md`. **DONE: 3 cancels (idle-chain dup family) · mints 11 · folds 13 · rulings 2 · inbox drained 43→0.**
+
+### 1. BATCH returned to dispatcher (11 FIX items + 1 manual-dispatch fold)
+FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT (P1 apps/mcp-server/, dev-mcp-server, +behavior_predicate), FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE (P1 multi), FIX-CHEF-EVENING-L2L3-SILENT-GAP (P1), FIX-CHEF-EVENING-BIZCTX-NULL (P1), FIX-BCTC-DATA-GAP-FAMILY (P1 multi), FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR (P1 multi), FIX-PREPUSH-SIZELINT-6-OFFENDERS (P1 multi), HOOK-ENFORCEMENT-BASH-HEURISTIC-GUARD (P1), FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY (P2), FIX-COWORK-FANOUT-LOAD1MIN-COMMA-LOCALE-PARSE (P2), FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1 (P2) + sweep fold FIX-TRIAGESIGNALS-PIPELINEA (P0, agent-father). needs_architect=true on 4 (multi-zone), false on 8.
+
+### 2. Rulings
+(a) INCIDENT_CAP shares WIP≤2 by deliberate design (devteam-eligibility.jq L115-118 no claimed_by filter, documented L153-157) — no carve-out, folded onto FIX-RLC-SHARED-WIP-BUDGET + po_ruling_20260828T2247Z key. (b) Idle-chain family: TASK-DEVTEAM-IDLE-CHAIN-2/-4/-5 all cancelled as duplicates (survivors P1A-MAIN-ROTATION/TEST-FAIRNESS/TEST-DURABLE all DONE_VERIFIED) — moved backlog→done with rulings. (c) code-janitor system-issue = ACK-WITH-CORRECTION (writer active via agent-father keep-cycle).
+
+### 3. Folds (no new rows)
+CLEAN-NOTEBOOK-BYTECAP-3-FILES (18 notebook/ctxbloat envelopes), CLEAN-CTXBLOAT-DISPATCH-CLAIM-SKILL (1), FIX-CYCLE-SNAPSHOT (4 cowork-fire occurrences, over-ceiling → journal), FIX-TNB-NOTEBOOK-UUID (uuid WARN), FIX-CHEF-DEGRADED-FLOOR (convergence dup-key), UC-CDC-P1 (calendar_status), DECIDE-TEAM-TOOL-RECHECK (correction). 3 sweep-guard bare-commit warns → pendingObservations (escalated=false, prior_warns 0/1/2 → threshold 3 watch). 2 audit-handoff envelopes (same file) → Step 0-TNB ACK appended.
+
+### 4. Over-ceiling guard lesson (this tick, same class as 2026-08-26)
+Two fold targets (CLEAN-NOTEBOOK-BYTECAP, FIX-CYCLE-SNAPSHOT) are at/over 12000B — appends hard-reject; fold evidence went to the decision journal instead. The 18 notebook/ctxbloat envelopes' fold record lives in the journal, not the row — the row's files[] + dedup_key already cover the subject so no re-mint risk.

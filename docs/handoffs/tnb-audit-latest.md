@@ -57,3 +57,10 @@ None this cycle — no flow-file edits needed. c136's `log_agent_work` two-call 
 Finding #3 (EOD empty known_gaps) and #4 (morning schema divergence) held at handoff level — 1st occurrence / observation-only, not yet a pattern. The duplicate `convergence` JSON key (off-canonical intraday file) folded into the existing off-path finding's note above, not a separate BUG. Findings #1 and #2 were sent as fully new BUGs (msg 5767, 5768) after a targeted `po-board-dedup-search.sh` check found no existing row.
 
 ---
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-08-28T23:13:28Z
+- Tasks created: FIX-CHEF-EVENING-L2L3-SILENT-GAP (finding #1, HIGH), FIX-CHEF-EVENING-BIZCTX-NULL (finding #2, HIGH)
+- Skipped findings: #3 (EOD empty known_gaps, MED, 1st occurrence — watching for 2nd per handoff), #4 (morning schema divergence, LOW observation-only); duplicate convergence JSON key folded onto FIX-CHEF-DEGRADED-FLOOR-RECOVERY-WRITES-OFF-CANONICAL-PATHS; push-blocked (blocker #5) folded onto FIX-PREPUSH-SIZELINT-6-OFFENDERS (minted from telegram 5210/5211)
