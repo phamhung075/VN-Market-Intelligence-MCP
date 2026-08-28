@@ -2,14 +2,6 @@
   "_generated_by": "scripts/audits/agent-bash-grant-coverage.sh --update",
   "_note": "Grandfather baseline for scripts/audits/agent-bash-grant-coverage.sh --check. Every entry MUST carry a non-null `owning_task` (the distinct, already-diagnosed, separately-owned board row that owns this mismatch) + a `reason` before --check will treat it as grandfathered (baseline_has() requires owning_task != null) — a freshly --update-minted entry lands with owning_task/reason=null and STILL FAILS --check until hand-curated. This is deliberate: it is NOT an opt-out allowlist of agents exempted from the Bash-grant-vs-demand predicate (AC-2 forbids that); it is a visible, auditable ledger of debt this gate detected but does not itself own the fix for, and it cannot be used to silently launder a new offender. Entries MUST drop on the next --update once the owning row lands (grant/demand no longer mismatched).",
   "_ssot": "docs/data/agent-bash-grant-coverage-baseline.json",
-  "count": 1,
-  "entries": [
-    {
-      "agent": "bctc-analyst",
-      "check": "bash_grant_mismatch",
-      "evidence": "docs/agents/bctc-analyst/flow/stage-log-notify.md:30-34 (commit-mutex git add/commit block)",
-      "owning_task": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH",
-      "reason": "Distinct, already-diagnosed row (BACKLOG as of 2026-08-14) — per FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER's own 'related' field, that row's resolution is a FLOW-DOC REWRITE removing the Bash step from stage-log-notify.md, NOT a Bash grant to bctc-analyst.md — this gate must not pre-empt that decision by granting Bash here. Drop this entry (re-run --update) once FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH lands and the mismatch stops reproducing."
-    }
-  ]
+  "count": 0,
+  "entries": []
 }

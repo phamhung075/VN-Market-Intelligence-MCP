@@ -20,7 +20,10 @@ is the only universally-reachable write path.
 - **Write path:**
   - Bash-grant agents (the overwhelming majority): one-line append —
     `printf '%s agent=%s cycle=%s level=%s msg=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "<agent-id>" "<cycle>" "<level>" "<msg>" >> docs/agent-memory/debug/<agent-id>.log`
-  - Bash-less agents (`bctc-analyst`/`refine_bctc_md` — see `project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`): Read-then-Write append, same pattern those agents already use for their other outputs.
+  - Scoped-Bash agents (`bctc-analyst` — scoped to the notebook compose path ONLY per
+    `docs/agents/tools/package/bctc-analyst.md` § Bash Scope, FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR
+    2026-08-28; and `refine_bctc_md` — no Bash grant): Read-then-Write append, same pattern those
+    agents already use for their other outputs.
 - **NOT git-committed per line.** Per-write commits would recreate the commit-overhead pattern
   already flagged (`2026-08-11-chore-commit-overhead-audit.md`) at debug-log volume. Batch-swept
   on the same cadence as the existing memory-hygiene sweep family (`scripts/agents-flow/notebook-linecap-sweep.sh`,

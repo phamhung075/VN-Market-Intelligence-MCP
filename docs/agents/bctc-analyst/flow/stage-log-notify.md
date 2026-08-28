@@ -5,7 +5,9 @@
 **5. Notebook commit (APPEND class — settled-write invariant)**
 
 > Invariant: timestamp = current UTC, never future, never speculative.
-> **AC-3: compose ≤200L body entirely in memory, then land in ONE Write/Edit. Never append-then-trim.**
+> **AC-3 (settled-write invariant):** ONE settled write per cycle — now performed by the
+> `scripts/notebook-compose.sh` actuator (§5a), never append-then-trim, never a narrated
+> Write/Edit fallback. The model authors ONLY the new section's body.
 
 ### Notebook timestamp guard
 - Before writing `docs/agent-memory/notebooks/bctc-analyst.md`, ALWAYS get current UTC via:
@@ -13,13 +15,62 @@
   date -u +"%Y-%m-%dT%H:%M:%SZ"
   ```
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
-- **No-Bash fallback (this agent has no Bash tool grant, per `project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`):** use the `fetchedAt`/`computedAt` timestamp from the most recent live MCP tool response this cycle (e.g. `get_macro_snapshot`, `get_cycle_bootstrap`) instead of shelling out — established practice across prior cycles, now documented here.
+- (No-Bash fallback REMOVED 2026-08-28 — FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR: Bash is now
+  scoped-granted, `date -u` is primary and authoritative; the MCP-`fetchedAt`/`computedAt`
+  fallback was a workaround for the missing grant and is now false.)
 
-**5a. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-2
-retention target: exactly 3 sections after this write, current+2 prior, NOT 2 — this agent has
-no Bash grant so there is no script actuator enforcing the count, see AC-2's worked example and
-confirmed-live off-by-one, FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT 2026-08-15; AC-3
-settled-write; AC-5 gate)
+**5a. Notebook write** — scripted actuator (FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR, wired
+2026-08-28): AC-1/AC-2/AC-2a/AC-3/AC-5 settled-write via `scripts/notebook-compose.sh` per skill:
+`.claude/skills/notebook-write/SKILL.md`. Replaces the LLM-narrated compose that caused the AC-2
+off-by-one (S51, FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT 2026-08-15 — settled at 2 sections
+instead of 3, falsified 11 days later) — the model authors ONLY the new section's substantive
+body; every retained section's bytes flow from disk to disk via bash the model never touches.
+`c<NNN>` is derived in bash from the file's own headings, NEVER LLM-chosen and never
+session-UUID-derived (FIX-AGENT-NOTEBOOK-UUID-PROVENANCE):
+
+```bash
+NB_PATH="docs/agent-memory/notebooks/bctc-analyst.md"
+LAST_N=$(grep -oE '^## c[0-9]+' "$NB_PATH" | grep -oE '[0-9]+' | sort -n | tail -1)
+NEXT_N=$(( ${LAST_N:-0} + 1 ))
+UTC_STAMP="$(date -u +"%Y-%m-%dT%H:%MZ")"
+```
+
+Model authors ONLY the new section body (≤10L, template below) into a scratch file whose heading
+line is machine-built, never freehand:
+
+```bash
+NEW_SECTION_FILE="$PROJECT_ROOT/docs/agent-memory/.bctc-analyst-newsection.tmp"
+cat > "$NEW_SECTION_FILE" <<EOF
+## c${NEXT_N} · ${UTC_STAMP}
+<... the ≤10L template lines below, filled with THIS cycle's real values — nothing else ...>
+EOF
+```
+
+ONE actuator call (max-sections=3 per AC-2; section-cap=60 per AC-2a — the bctc-analyst ≤10L
+template is ample at 60, do NOT copy system-auditor's 150):
+
+```bash
+COMPOSE_OUT="$(bash scripts/notebook-compose.sh "$NB_PATH" "$NEW_SECTION_FILE" 3 60)"
+COMPOSE_MARKER="$(printf '%s\n' "$COMPOSE_OUT" | grep '^\[notebook-compose\]' | head -1)"
+rm -f "$NEW_SECTION_FILE"
+```
+
+**Verdict handling (branch on `$COMPOSE_MARKER`):**
+- `OK ...` → the script already wrote the notebook. Proceed to **5d Commit** below, embedding
+  `$COMPOSE_MARKER` verbatim in the commit message (this is the Verification Gate's
+  runtime-execution proof — every post-fix commit is `git log --grep='notebook-compose'`-searchable).
+- `WARN ...` (non-blocking: `new-section-trimmed-to-cap` / `direction-defaulted` /
+  `ac2b-subblock-pruned`) → same as OK — an `OK` line always follows on the same run; proceed to
+  **5d Commit**.
+- `ABORT ...` (`single-section-overage` / `internal-invariant-violated`) → **notebook untouched by
+  construction** (the script writes nothing on any ABORT). Send BUG telegram
+  `[bctc-analyst] notebook-compose ABORT — <marker line>`. Log `[NOTEBOOK-GATE-ABORT]` for the
+  next cycle. **Skip the commit** (nothing was staged). Continue the rest of the flow. NEVER fall
+  back to a narrated Write/Edit of the notebook.
+- `ERROR ...` (`bad-usage` / `notebook-not-found` / `new-section-file-not-found` /
+  `new-section-empty` / `new-section-missing-heading` / `new-section-multiple-headings` /
+  `tmpfile-write-failed` / `atomic-mv-failed`) → flow-wiring bug (unreachable if this rewire is
+  implemented correctly). Send BUG telegram; continue the rest of the flow (do NOT abort the cycle).
 
 Section template (≤10L):
 ```
@@ -35,8 +86,15 @@ Section template (≤10L):
 ```bash
 # own_paths: [docs/agent-memory/notebooks/bctc-analyst.md]
 git add docs/agent-memory/notebooks/bctc-analyst.md
-git commit -m "chore(memory/bctc-analyst): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/bctc-analyst.md
+git commit -m "chore(memory/bctc-analyst): notebook YYYY-MM-DD [${COMPOSE_MARKER#\[notebook-compose\] }]" -- docs/agent-memory/notebooks/bctc-analyst.md
 ```
+`[${COMPOSE_MARKER#\[notebook-compose\] }]` embeds this cycle's own `notebook-compose.sh` stdout
+marker (e.g. `[OK sections=3 dropped=1 lines=... bytes=... direction=newest_first]`) as a
+bracketed commit-message suffix — this is the Verification Gate's runtime-execution proof
+(`git log --grep='notebook-compose' -- docs/agent-memory/notebooks/bctc-analyst.md` returns every
+post-fix commit), NOT a doc-grep on this file. Runs ONLY on the §5a `OK`/`WARN` path — on the
+`ABORT` path the commit is skipped entirely (§5a), so a marker-bearing commit can only exist when
+the actuator actually ran and wrote.
 
 **5d-1. Published-marker guard (Phase 2 only — no Phase 1, per skill's own design note: this
 agent's extraction is the core deliverable independent of the WORK-channel notify this marker

@@ -185,8 +185,10 @@
 # splitting / direction derivation — REUSED, not reimplemented, per this
 # task's own AC-2), scripts/orch-apply.sh (mktemp+mv atomic-write style).
 #
-# Owning flow: docs/agents/system-auditor/flow/main.md §Notebook write
-# (rewire pending, agent-father follow-up — out of scope for this task).
+# Owning flow: docs/agents/system-auditor/flow/main.md §Notebook write (wired 2026-08-14,
+# FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED) + docs/agents/bctc-analyst/flow/
+# stage-log-notify.md §5a (wired 2026-08-28, FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR — second
+# wired caller; call shape `3 60`, max-sections=3 per AC-2, section-cap=60 per AC-2a).
 #
 # Shell: bash 3.2+ (macOS system /bin/bash) — NO mapfile, NO associative
 # arrays, NO `local -r`. Only plain indexed arrays (incl. array slicing,

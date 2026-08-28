@@ -2,7 +2,7 @@
 
 **Location:** `docs/agents/tools/package/bctc-analyst.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-29
+**Last Updated:** 2026-08-28 (Bash scope row added — FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR)
 **Supersedes:** `financial-analyst.md` + `report-analyzer.md` (merged per 2026-05-29 architect brief)
 
 Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.
@@ -10,6 +10,26 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 ---
 
 ## Tools — BCTC Analyst
+
+### Bash Scope (scoped grant — FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR, 2026-08-28)
+
+Granted 2026-08-28 (`.claude/agents/bctc-analyst.md` `tools:` line, same commit as the flow
+rewire — CI CHECK 2 of `scripts/audits/agent-bash-grant-coverage.sh` requires the grant and the
+description's declared write set to land atomically). Narrow scope — the grant is for the
+notebook compose path ONLY, nothing else:
+
+- **PERMITTED:**
+  - `date -u +"%Y-%m-%dT%H:%M:%SZ"` / `date -u +"%Y-%m-%dT%H:%MZ"` — notebook timestamp guard + §5a heading (stage-log-notify.md §5a).
+  - `grep`/`sort`/`tail`/`wc` **against the notebook path only** (`docs/agent-memory/notebooks/bctc-analyst.md`) — c<NNN> derivation + AC-5 line-count verification.
+  - `bash scripts/notebook-compose.sh docs/agent-memory/notebooks/bctc-analyst.md <new-section-body-file> 3 60` — the ONE compose actuator (§5a; max-sections=3 per AC-2, section-cap=60 per AC-2a).
+  - `git add`/`git commit` for the notebook path only (§5d, mutex-guarded via commit-mutex skill).
+- **FORBIDDEN:**
+  - docker, network, arbitrary file writes, `rm -rf`.
+  - **Any enumeration/inspection of `docs/signals/`** — the drain-misread class
+    (`FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES`, PO sign-off 2026-08-15)
+    must NOT be reopened by this grant. The main.md "SIGNAL-FILE WRITE VERIFICATION"
+    verification-premise rule (trust the Write tool's own return; never re-Read a prior-cycle
+    signal path) STANDS unchanged.
 
 ### Bootstrap & Diagnostics
 | Tool | Purpose | Key Params |

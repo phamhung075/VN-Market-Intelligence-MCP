@@ -16,8 +16,10 @@ a `docs/signals/*.json` path this agent wrote in an EARLIER cycle to confirm it 
 dev-team's Step 0a drain (`docs/agents/dev-team/flow/drain-signals.md` §0a-1, script
 `scripts/agents-flow/drain-signals.js`) moves every drainable `docs/signals/*.json` file to
 `docs/signals/processed/<name>.json` on (roughly) every dev-team tick — BY DESIGN, not a failure.
-This agent has no Bash/Glob grant (`project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`)
-and cannot enumerate or inspect `docs/signals/processed/`, so a later-cycle `Read` of the ORIGINAL
+This agent's Bash grant is scoped to the notebook compose path ONLY
+(`FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR` 2026-08-28 — see `docs/agents/tools/package/bctc-analyst.md`
+§ Bash Scope; it explicitly FORBIDS any enumeration/inspection of `docs/signals/`), so this agent
+still cannot enumerate or inspect `docs/signals/processed/` — a later-cycle `Read` of the ORIGINAL
 path returning "File does not exist" is the EXPECTED post-drain steady state, not data loss — never
 log it, carry it over, or escalate it as one.
 
@@ -29,8 +31,10 @@ originating `Write` call's own result already answered that question, definitive
 self-invented cross-cycle "PERSISTENCE-PLANE CHECK" — never specified in any flow doc, only carried
 forward via notebook entries — misread 4+ consecutive drains as data loss [c149/c150/c151/c153,
 most recently escalated 2026-08-08T18:15:00Z]; PO confirmed live 2026-08-09T01:35Z the files
-genuinely exist at `docs/signals/processed/`. The correct-scope fix narrows this check — it does
-NOT widen this agent's tool grant with Bash/Glob.)
+genuinely exist at `docs/signals/processed/`. The correct-scope fix narrows this check — and the
+later scoped-Bash grant (FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR 2026-08-28) deliberately
+excludes any `docs/signals/` enumeration, so the verification-premise rule above is UNCHANGED by
+the grant.)
 
 Universal entry. BCTC Analyst has a single sub-flow (`cycle.md`); this dispatcher keeps the entry uniform with the rest of the team.
 
@@ -151,8 +155,10 @@ IF any(esc_flags) == TRUE:
     Append to bctc_signal: { "escalation_status": "GUARD-HELD", "guard_key": guard_key }
 
   ELSE:
-    # 2. Emit esc-deep-dive-request as a signal FILE — bctc-analyst has NO Bash (cannot run
-    # orch-apply.sh, cannot write orch-state.json). Use the Cross-Team Signal Directory pattern
+    # 2. Emit esc-deep-dive-request as a signal FILE — bctc-analyst's scoped Bash grant
+    # (FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR 2026-08-28) is for the notebook compose path
+    # ONLY: it does NOT include orch-apply.sh / orch-state.json writes (arbitrary writes are
+    # forbidden). Use the Cross-Team Signal Directory pattern
     # instead (docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory) — the SAME
     # Write-tool mechanism the analyst already uses for routine bctc_signal_*.json files.
     # SAFE-JSON — structured object, no shell interpolation.
@@ -166,7 +172,7 @@ IF any(esc_flags) == TRUE:
       "severity": context.severity OR "HIGH", "status": "NEW", "payload_ref": null,
       "payload": { trigger_id, ticker, quarter, report_id, guard_key, context, all_esc_fired }
     }
-    Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=signal_row)   # Write tool only — no Bash
+    Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=signal_row)   # Write tool only — Bash scope does not include signal writes
     LOG: "[ESC-DISPATCH] emitted (file) for " + ticker + "/" + quarter + "/" + trigger_id
     # dev-team drain-signals.md §0a-1 picks up the file on next tick → routes to ESC-DISPATCH
     # (drain-esc-dispatch.md), which claims the spawn mutex and dispatches the Opus deep-dive.
