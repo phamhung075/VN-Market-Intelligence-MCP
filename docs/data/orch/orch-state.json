@@ -127,10 +127,23 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-28T22:46:08Z",
+    "_updated_at": "2026-08-28T23:43:06Z",
     "_updated_by": "dev-team",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "arch-supersede-20260828T230",
+        "ts": "2026-08-28T23:43:06Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH is SUPERSEDED by FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR design (architect ruling, commit 38b2c87cc, DJ architect-S57) — close the STAGELOG row, do NOT land both. Actuator design wires bash notebook-compose into bctc-analyst; the remove-Bash-steps premise is falsified.",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "bctc-analyst-stagelog-superseded-by-actuator"
+      }
+    ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
     "last_triaged_by": "po"
   },
