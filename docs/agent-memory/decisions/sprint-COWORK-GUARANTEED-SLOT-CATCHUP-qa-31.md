@@ -71,3 +71,14 @@
 - Score the row APPROVED (scope was "3 instances", all 3 correct) vs. hold for the missed 4th — held: the row's own commit message frames the deliverable as "the" false-claim class in this file, not those 2 specific quoted lines only, and L1526 is the identical class, same file, trivially in-scope.
 **why-decision:** 3 of 3 targeted corrections verified true and accurate, but a genuine 4th same-class false claim (L1526) survives uncorrected in the same file -> vc-changes, routed to owner (agent-father), not a new row (still the "prose must match the code" scope this row already owns).
 **why-change:** Runtime-behavior concern (2 in-flight incident rows can saturate shared WIP<=2 and starve BOUNDED-1/SLS/RLC/DRS) is real but separate per router's binding scope ruling — minted as a new signal row instead of reopening scope here.
+
+### STEP qa-S249 · qa · 2026-08-28T23:43Z
+**task-id:** FIX-PREPUSH-SIZELINT-6-OFFENDERS
+**what-done:** Direct-commit verify of hand-dispatched row (sits in `review[]` status=REVIEW next_agent=qa; chain contract mandates the flip review[]→done_verified[] in one write). Commit b4e885a64 on main ancestry, touches EXACTLY the 6 claimed files, +1 header line each (git show diff = 6 comment-only insertions, zero behavior change). Independently re-ran: size-lint --check PASS 0/1457; header tolerance re-derived per-file (declared vs actual: 1200/1207, 690/690, 230/235, 580/579, 250/251, 1300/1299 — all within +10%/min-5L); gate test 6/6 PASS; py_compile clean x5; tsc --noEmit exit 0; tool-registry-parity 17/17 PASS; task-claim-owner-session-lint PASS; mock-guard PASS; pre-push.test.sh 4/4 PASS. Pre-push hook wiring confirmed (run_doc_shaped_checks runs all 3 checks on EVERY push — the exact gate that was blocking fleet pushes).
+**what-considered:**
+- Trust developer's per-file counts vs re-derive from live wc -l — re-derived all 6, all within tolerance.
+- Full pytest in deployed image vs py_compile — change is 6 comment lines, zero code path altered; py_compile (syntax) is the proportionate check, image-pytest exercises nothing new.
+- OOM-class Durability Gate — ruled NOT applicable (title/AC/status_note assert nothing about crash/OOM/memory bound).
+- Behavioral-predicate AC — zone="multi" does not start with apps/ → out of scope → passes.
+**why-decision:** No ISSUE; every claimed check reproduced independently with matching numbers; scope clean (6 files, headers only). -> vc-approved.
+**why-change:** no change from plan.
