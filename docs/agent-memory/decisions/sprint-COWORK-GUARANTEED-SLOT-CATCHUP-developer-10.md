@@ -29,3 +29,13 @@
 **why-change:** No change to task scope/shape; regex fix is a bug found+closed during implementation, documented in the row's status_note and the CANONICAL pointer, not silently absorbed.
 **verify:** `bash scripts/git-hooks/commit-msg-notebook-compose-marker.test.sh` → 5/5 PASS (verbatim case names: marker-all-4-shapes / no-marker-warn / no-marker-reject / escape-hatch-under-reject / non-notebook-noop). `bash scripts/git-hooks/pre-commit.test.sh` → 15/15 unchanged (no regression). `install.sh` re-run → 4 symlinks confirmed (`pre-push pre-commit post-commit commit-msg`) via `ls .git/hooks/`.
 **handoff:** Row moved `in_progress[]`→`review[]`, `status=REVIEW`, `next_agent=qa`, `.head` reset idle, same orch-apply write (62da86b34). AC-2 (live WARN on next real notebook commit) explicitly flagged NOT YET OBSERVED in status_note — no commit touched `system-auditor.md` since hook install; most recent one (`56f41ab1c`) predates it. Do not mark this AC satisfied without a real post-install observation.
+
+### STEP developer-S133 · developer · 2026-08-28T23:35:00Z
+**task-id:** FIX-PREPUSH-SIZELINT-6-OFFENDERS
+**what-done:** Added a current size-justification header to each of the 6 pre-push size-lint offenders (bctcScalarAggregator.ts 1207L, ocr_backends.py 690L, ocr_orientation.py 235L, ocr_worker.py 579L, page_rasterizer.py 251L, pek_engine_adapter.py 1299L) — commit b4e885a64, +6L net; size-lint --check PASS (0 offenders, 1457 scanned).
+**what-considered:**
+- Re-baseline all 6 via `--update` (precedent 5944172e0 for one file)
+- Refactor/split the 6 files under the 120L threshold
+- Add current size-justification headers (the gate's "carries a valid header → PASS" rule)
+**why-decision:** Per-file commit history proved the growth is legitimate reviewed feature work, not bloat; headers are the gate's sanctioned documented-debt mechanism, precedented in both zones (financialFiguresRules.ts, ordinal_grid.py 1210L), durable (survive --update), and do not ratchet the baseline or silently grandfather the NEW offender (ocr_orientation.py) the way --update would.
+**why-change:** no change from plan
