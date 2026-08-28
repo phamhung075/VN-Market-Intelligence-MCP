@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-28T20:56:14Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 13 staged file(s) not necessarily this actor's own: .claude/skills/dispatch-claim/CARD.md .claude/skills/dispatch-claim/SKILL.md apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts docs/agent-memory/modules/tool-usage-stats.json docs/agent-memory/notebooks/system-auditor.md docs/agent-memory/sessions/cowork-guaranteed-slot-firer-alert-state docs/data/auditor-tier1-last-healthy.json docs/data/auditor-tier1-last-trigger.json docs/data/code-janitor-tick-preflight-last-verdict.json docs/data/dev-team-idle-widen-state.json docs/incidents/data/pdf-extractor-ac7-sampler.csv docs/incidents/data/rag-durability-2026-08-25T1318Z-16c59b5e929f-window.csv. actor=report-analyzer mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid26867:/usr/local/bin/git -c core.fsmonitor=false -c log.showSignature=false --no-optional-locks --no-pager commit --quiet -m deepseek switch --cleanup=strip ]<-[pid113:/Applications/Zed.app/Contents/MacOS/zed ]",
+  "_processed": {
+    "fingerprint": "c6a070caea817ccb841957f0b33046be7029b860ea4a9e43d5638e8d33341654",
+    "processedAt": "2026-08-28T22:46:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

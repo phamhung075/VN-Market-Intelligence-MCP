@@ -42,5 +42,11 @@
     },
     "orch_sentinel_recommendation_not_a_row": "brief §7 names two cheap live primitives (VALIDATOR_PATH existence boolean + degradation-log most-recent-entry) for a future darkness check; deliberately not specced as a new OH-N.M row here — orch-sentinel's own zone/design call, per brief §4's discipline against duplicating ownership."
   },
-  "createdAt": "2026-08-26T20:29:58Z"
+  "createdAt": "2026-08-26T20:29:58Z",
+  "_processed": {
+    "fingerprint": "8f4189e32159332eb360b431de3f4317ac860be1f392a0c4146194958877b0b5",
+    "processedAt": "2026-08-28T22:46:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

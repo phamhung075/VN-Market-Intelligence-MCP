@@ -45,5 +45,11 @@
     "note": "Single guaranteed slot tnb-audit (cron 13 20 * * *), last_fired was 2026-08-25T20:21:24Z so no Layer-C same-day double-fire. Fanout gate NORMAL (load 5.99/24, headroom 2799MB). cycle_snapshot_promoted=false again: snapshot keyed 20:20 vs nominal 20:15, 44s apart - occurrence 10 of the wallclock-vs-nominal keying defect, freshness cannot be the cause at that margin."
   },
   "priority": "low",
-  "createdAt": "2026-08-26T20:22:03Z"
+  "createdAt": "2026-08-26T20:22:03Z",
+  "_processed": {
+    "fingerprint": "4da129ba5b6465c3c5631420f6ff645d46cf5f0ec177e9137968a24d76cd1500",
+    "processedAt": "2026-08-28T22:46:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

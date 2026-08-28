@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-28T20:57:06Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 8 staged file(s) not necessarily this actor's own: apps/mcp-server/src/__tests__/task-claim-payload-union.test.ts docs/agent-memory/.auditor-cycle-rawverdicts-2026-08-26T06:28:13Z.tmp docs/agent-memory/decisions/sprint-2026-08-26-dev-mcp-server.md docs/signals/commit-sweep-guard-2026-08-26T203301Z-52010.json docs/signals/commit-sweep-guard-2026-08-28T205614Z-26868.json docs/signals/commit-sweep-guard-2026-08-28T205637Z-27171.json docs/signals/context-bloat-docs-agent-memory-notebooks-tran-ngoc-bau-md-2026-08-26T203236Z.json docs/signals/notebook-single-section-breach-docs-agent-memory-notebooks-tran-ngoc-bau-md-2026-08-26T203234Z.json. actor=report-analyzer mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid27391:/usr/local/bin/git -c core.fsmonitor=false -c log.showSignature=false --no-optional-locks --no-pager commit --quiet -m deepseek switch --cleanup=strip ]<-[pid113:/Applications/Zed.app/Contents/MacOS/zed ]",
+  "_processed": {
+    "fingerprint": "0583013464a4542ff3c90b98e9dd8c877599a0e3b66cb7299971e02f46d2c49c",
+    "processedAt": "2026-08-28T22:46:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

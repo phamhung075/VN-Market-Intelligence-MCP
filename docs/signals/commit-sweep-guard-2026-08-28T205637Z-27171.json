@@ -1,8 +1,0 @@
-{
-  "from": "commit-sweep-guard",
-  "to": "po",
-  "type": "bug-escalation",
-  "priority": "high",
-  "createdAt": "2026-08-28T20:56:37Z",
-  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: .DS_Store. actor=report-analyzer mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>. caller_chain=<-[pid27170:/usr/local/bin/git -c core.fsmonitor=false -c log.showSignature=false --no-optional-locks --no-pager commit --quiet -m deepseek switch --cleanup=strip ]<-[pid113:/Applications/Zed.app/Contents/MacOS/zed ]"
-}
