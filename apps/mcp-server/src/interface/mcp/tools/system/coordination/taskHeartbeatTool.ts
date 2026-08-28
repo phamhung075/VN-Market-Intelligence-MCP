@@ -53,12 +53,14 @@ export function registerTaskHeartbeatTool(server: McpServer): void {
             "ttl_seconds column unchanged — fully backward compatible.",
         ),
       payload_patch: z
-        .string()
+        .union([z.string(), z.record(z.unknown())])
         .optional()
         .describe(
-          "FR-1: optional JSON string shallow-merged into the lock's existing payload JSON on this " +
-            "renewal (unpatched fields survive). Malformed or absent existing payload is handled " +
-            "non-fatally (patch alone becomes the new payload). Omit for no payload change.",
+          "FR-1: optional patch shallow-merged into the lock's existing payload JSON on this " +
+            "renewal (unpatched fields survive) — EITHER a JSON string OR a plain object, both " +
+            "accepted (FIX-DISPATCHCLAIM-CARD-PAYLOAD-OBJECT-REJECTED-AND-PHASEA-OMITS-OWNER-AGENT, " +
+            "family consistency with task_claim.payload). Malformed or absent existing payload is " +
+            "handled non-fatally (patch alone becomes the new payload). Omit for no payload change.",
         ),
       owner_agent: z
         .string()
@@ -83,7 +85,11 @@ export function registerTaskHeartbeatTool(server: McpServer): void {
     async ({ task_id, owner_client_session, ttl_seconds, payload_patch, owner_agent, original_owner_client_session }) => {
       const result = heartbeatTask(task_id, owner_client_session, {
         ...(ttl_seconds !== undefined ? { ttl_seconds } : {}),
-        ...(payload_patch !== undefined ? { payload_patch } : {}),
+        // Union accepts a JSON string (status quo) OR a plain object (new) — normalize to the
+        // TEXT-column storage format here, same boundary pattern as task_claim's payload.
+        ...(payload_patch !== undefined
+          ? { payload_patch: typeof payload_patch === "string" ? payload_patch : JSON.stringify(payload_patch) }
+          : {}),
         ...(owner_agent !== undefined ? { owner_agent } : {}),
         ...(original_owner_client_session !== undefined ? { original_owner_client_session } : {}),
       });

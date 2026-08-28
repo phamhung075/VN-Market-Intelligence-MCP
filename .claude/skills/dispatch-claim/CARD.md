@@ -11,10 +11,10 @@ N_MAX = 3
 for s in task_list_held(kind="orphan-signal", owner_agent=<role>):
   if s.payload.redispatch_count >= N_MAX:
     if s.payload.status != "ESCALATED":
-      send_telegram(bug, ...); task_heartbeat(ttl=86400, payload_patch={status:"ESCALATED"})
+      send_telegram(bug, ...); task_heartbeat(ttl_seconds=86400, payload_patch={status:"ESCALATED"})
     continue
   a = task_claim(task_id=s.payload.original_task_id, task_kind=s.payload.original_task_kind,
-                 owner_client_session=$SID, ttl=3600, payload={adopted_from, redispatch_count})
+                 owner_agent=<role>, owner_client_session=$SID, ttl_seconds=3600, payload={adopted_from, redispatch_count})
   if a.claimed: try: spawn(agent, checkpoint=s.payload.last_payload, mode=adopt-resume)
                finally: task_release("orphan-signal:"+original_task_id, $SID)
 ```
@@ -26,7 +26,7 @@ Escalation/resume-contract detail → SKILL.md § Orphan-Adoption Probe.
 ## Phase B — intent PRE-CLAIM (the hard gate)
 ```
 c = task_claim(task_id="intent:<agent>:<key>", task_kind="intent", owner_agent=<role>,
-               owner_client_session=$SID, ttl=600, payload={site:"router", intent:<key>})
+               owner_client_session=$SID, ttl_seconds=600, payload={site:"router", intent:<key>})
 if c.claimed:
   try: spawn(agent)  finally: task_release("intent:<agent>:<key>", $SID)
 elif c.current_holder.owner_client_session == $SID:

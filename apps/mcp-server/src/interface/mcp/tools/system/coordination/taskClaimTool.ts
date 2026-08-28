@@ -89,10 +89,10 @@ export function registerTaskClaimTool(server: McpServer): void {
             "Use 900 for cowork-slot (one scheduler cycle), 3600 for sprint-task.",
         ),
       payload: z
-        .string()
+        .union([z.string(), z.record(z.unknown())])
         .optional()
         .describe(
-          "Optional JSON string with context: {slot_id?, task_title?, row_hash?, notes?}",
+          "Optional context: {slot_id?, task_title?, row_hash?, notes?} — JSON string OR object, both accepted.",
         ),
     },
     async ({ task_id, task_kind, owner_agent, owner_client_session, ttl_seconds, payload }) => {
@@ -103,7 +103,7 @@ export function registerTaskClaimTool(server: McpServer): void {
         owner_agent,
         owner_client_session,              // REQUIRED (P1-FINAL) — Zod validates presence
         ...(ttl_seconds !== undefined ? { ttl_seconds } : {}),
-        payload: payload ?? null,
+        payload: typeof payload === "string" ? payload : payload === undefined ? null : JSON.stringify(payload), // union → TEXT
       });
 
       return {

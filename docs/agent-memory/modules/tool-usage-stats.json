@@ -1,17 +1,11 @@
 {
-  "generatedAt": "2026-08-26T00:00:01.681Z",
-  "uniqueTools": 11,
+  "generatedAt": "2026-08-28T16:00:01.743Z",
+  "uniqueTools": 5,
   "toolCounts": {
-    "get_alerts": 46,
-    "get_macro_snapshot": 51,
-    "get_agent_signals": 47,
-    "get_market_snapshot": 74,
-    "get_portfolio_conviction": 77,
-    "task_heartbeat": 8,
-    "task_claim": 17,
-    "task_list_held": 8,
-    "task_release": 15,
-    "claim_due_scheduled_tasks": 3,
-    "emit_pressure_state": 3
+    "get_agent_signals": 1492,
+    "get_alerts": 1809,
+    "get_macro_snapshot": 1871,
+    "get_portfolio_conviction": 2506,
+    "get_market_snapshot": 2293
   }
 }

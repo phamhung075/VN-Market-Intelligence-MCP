@@ -281,7 +281,11 @@ outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
   owner_agent:          "<dispatcher-role>",              # role label, NOT ownership key
   owner_client_session: $CLAUDE_CODE_SESSION_ID,          # REQUIRED — authoritative key
   ttl_seconds:          600,
-  payload:              '{"site":"router","intent":"<intent-key>"}'
+  payload:              {"site": "router", "intent": "<intent-key>"}   # object literal — normalized
+                                                                        # to match every other call
+                                                                        # site in this skill (was the
+                                                                        # one string-form outlier;
+                                                                        # payload now accepts either)
 })
 
 if outer_claim.claimed == true:
