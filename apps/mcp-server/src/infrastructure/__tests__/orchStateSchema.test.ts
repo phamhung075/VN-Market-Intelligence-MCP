@@ -1144,6 +1144,203 @@ describe("RCV-9 — grandfather exemption no longer covers never-certified FU-RA
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BP-1..BP-7 — behavior_predicate hard-reject on DONE_VERIFIED
+// (FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT, brief §5c)
+//
+// New conditional in checkVerificationGate(): a DONE_VERIFIED row whose zone
+// starts with 'apps/' AND priority ∈ {P0,P1,high,HIGH} AND minted (created_at,
+// fallback declared_at) at/after BEHAVIOR_PREDICATE_CUTOFF must carry a mint-time
+// verification.behavior_predicate{cmd,expect} — "a row may not reach DONE_VERIFIED
+// on diff-reading alone" enforced for the population where it matters.
+//
+// AC-6 (grandfather-by-time, NOT by id-list): the SAME row passes when created_at
+// < cutoff, and P2/scripts rows never reject regardless of predicate presence.
+// AC-3 (mixed priority convention): live board measures 317xP1/61xP0/82x'high'/
+// 1x'HIGH' — the gate must match the full set, never a bare === 'P0' check.
+// All reject-path fixtures carry a VALID raw_probe so the observed issue is the
+// behavior_predicate one alone (raw_probe gating is RCV-1/2's job, above).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("BP — behavior_predicate hard-reject on DONE_VERIFIED (brief §5c)", () => {
+  // BEHAVIOR_PREDICATE_CUTOFF = "2026-08-26T19:57:54Z" (AC-4 — see schema § 8A).
+  const AFTER_CUTOFF = "2026-08-27T00:00:00Z"; // >= cutoff
+  const BEFORE_CUTOFF = "2026-08-26T00:00:00Z"; // < cutoff
+
+  function bpRow(over: Record<string, unknown>): Record<string, unknown> {
+    return {
+      id: "BP-ROW",
+      status: "DONE_VERIFIED",
+      zone: "apps/mcp-server/",
+      priority: "P0",
+      created_at: AFTER_CUTOFF,
+      verification: { raw_probe: makeValidRawProbe() },
+      ...over,
+    };
+  }
+
+  it("BP-1-a: P0 apps/ row minted AFTER cutoff, no behavior_predicate → REJECTED (fix path named)", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({})] });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(
+        i => i.code === "custom" && i.path.join(".") === "task_board.done_verified.0.verification.behavior_predicate",
+      );
+      expect(issue).toBeDefined();
+      expect(issue?.message).toContain("BP-ROW");
+      expect(issue?.message).toContain("behavior_predicate{cmd,expect}");
+      expect(issue?.message).toContain("PO/BA re-author the predicate at mint");
+    }
+  });
+
+  it("BP-1-b: the SAME row minted BEFORE cutoff → PASSES (grandfather-by-time, not by id-list)", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({ created_at: BEFORE_CUTOFF })] });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-1-b FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-2-a: P2 apps/ row minted AFTER cutoff, no behavior_predicate → NEVER rejected", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({ id: "BP-P2", priority: "P2" })] });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-2-a FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-2-b: P0 scripts/ row (zone NOT apps/), minted AFTER cutoff, no behavior_predicate → NEVER rejected", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({ id: "BP-SCRIPTS", zone: "scripts/" })] });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-2-b FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-3-a: P0 apps/ row WITH valid behavior_predicate{cmd,expect} → PASSES", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [bpRow({
+        id: "BP-WITH-PRED",
+        verification: {
+          raw_probe: makeValidRawProbe(),
+          behavior_predicate: { cmd: "grep -q X file && echo GATE-PRESENT", expect: "GATE-PRESENT" },
+        },
+      })],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-3-a FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-3-b: malformed behavior_predicate (empty cmd) → REJECTED", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [bpRow({
+        id: "BP-BADCMD",
+        verification: { raw_probe: makeValidRawProbe(), behavior_predicate: { cmd: "", expect: "GATE-PRESENT" } },
+      })],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+  });
+
+  it("BP-3-c: behavior_predicate missing expect → REJECTED", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [bpRow({
+        id: "BP-NOEXPECT",
+        verification: { raw_probe: makeValidRawProbe(), behavior_predicate: { cmd: "grep -q X file" } },
+      })],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+  });
+
+  it("BP-4-a: priority 'high' (lowercase) matches the P0/P1 set → REJECTED (AC-3)", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({ id: "BP-HIGH", priority: "high" })] });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+  });
+
+  it("BP-4-b: priority 'HIGH' (uppercase) matches the P0/P1 set → REJECTED (AC-3)", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({ id: "BP-HIGH-U", priority: "HIGH" })] });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+  });
+
+  it("BP-4-c: priority 'medium' does NOT match → PASSES (scoped to P0/P1-equivalent only)", () => {
+    const state = makeNullHeadState({ backlog: [], done_verified: [bpRow({ id: "BP-MED", priority: "medium" })] });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-4-c FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-5-a: declared_at fallback — no created_at but declared_at AFTER cutoff → REJECTED", () => {
+    const row = bpRow({ id: "BP-DECLARED" });
+    delete row["created_at"];
+    row["declared_at"] = AFTER_CUTOFF;
+    const state = makeNullHeadState({ backlog: [], done_verified: [row] });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+  });
+
+  it("BP-5-b: declared_at fallback — declared_at BEFORE cutoff → PASSES", () => {
+    const row = bpRow({ id: "BP-DECLARED-BEFORE" });
+    delete row["created_at"];
+    row["declared_at"] = BEFORE_CUTOFF;
+    const state = makeNullHeadState({ backlog: [], done_verified: [row] });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-5-b FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-6-a: RC_VERIF_GRANDFATHERED_IDS id exempted from the new gate too (AC-2 reject condition includes the grandfather exemption)", () => {
+    // HSC-1 is frozen into RC_VERIF_GRANDFATHERED_IDS (§ 8A) — the behavior gate
+    // mirrors the raw-probe gate's grandfather exemption, so the same frozen id
+    // stays exempt here even minted post-cutoff without a predicate.
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [{ id: "HSC-1", status: "DONE_VERIFIED", zone: "apps/mcp-server/", priority: "P0", created_at: AFTER_CUTOFF }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] BP-6-a FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+
+  it("BP-7-a: live-board safety — zero live DONE_VERIFIED P0/P1 apps/ rows minted >= cutoff without a predicate (AC-4 no-wedge mandate)", () => {
+    const raw = loadLiveOrchState();
+    if (!raw) {
+      console.log("[test] orch-state.json not found — skipping live BP-7 check");
+      return;
+    }
+    const tb = (raw as { task_board?: Record<string, unknown> }).task_board ?? {};
+    const rows: Record<string, unknown>[] = [];
+    for (const lane of ["backlog", "done", "done_verified", "in_progress", "qa", "ready", "review"]) {
+      const arr = tb[lane];
+      if (Array.isArray(arr)) rows.push(...(arr as Record<string, unknown>[]));
+    }
+    for (const spr of [...((tb.active_sprints as unknown[]) ?? []), ...((tb.closed_sprints as unknown[]) ?? [])]) {
+      const tasks = (spr as { tasks?: unknown[] }).tasks;
+      if (Array.isArray(tasks)) rows.push(...(tasks as Record<string, unknown>[]));
+    }
+    const offenders = rows.filter((r) => {
+      const id = String(r["id"] ?? r["task_id"] ?? "");
+      const zone = String(r["zone"] ?? "");
+      const priority = String(r["priority"] ?? "");
+      const minted = String(r["created_at"] ?? r["declared_at"] ?? "");
+      const bp = r["verification"] as { behavior_predicate?: { cmd?: unknown; expect?: unknown } } | undefined;
+      const hasValidPred = Boolean(bp?.behavior_predicate?.cmd) && bp?.behavior_predicate?.expect !== undefined;
+      return (
+        r["status"] === "DONE_VERIFIED" &&
+        zone.startsWith("apps/") &&
+        ["P0", "P1", "high", "HIGH"].includes(priority) &&
+        minted >= "2026-08-26T19:57:54Z" &&
+        !hasValidPred
+      );
+    });
+    expect(offenders.map((o) => o["id"])).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // QA-3 — Unknown key under .strict() object rejected with unrecognized_keys
 //
 // SSOT-W1-ZOD-SCHEMA-MODEL acceptance gate.

@@ -1,6 +1,6 @@
 /**
  * orchStateSchema.ts — Nested Zod SSOT schema for docs/data/orch/orch-state.json
- * size-justification: ~1797L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
+ * size-justification: ~1878L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
  *   SignalQueue/Head/Meta/TaskBoard/OrchState) plus 6 co-located write-time
  *   validation guards (§9-14) that scripts/orch-validate.mjs imports BY NAME
  *   from this exact file path. A physical split (even via re-export barrel)
@@ -46,6 +46,15 @@
  *   UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES,
  *   a fleet-wide pre-push size-lint false-block — refreshed here, no code
  *   change).
+ *   FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT 2026-08-28 (last of
+ *   brief §9's 7 files, land 7/7): §8A checkVerificationGate() gains the
+ *   behavior_predicate hard-reject (brief §5c) — DONE_VERIFIED P0/P1-equivalent
+ *   apps/ rows minted at/after BEHAVIOR_PREDICATE_CUTOFF need a mint-time
+ *   verification.behavior_predicate{cmd,expect}; grandfather-by-time (never
+ *   by id-list), priority set ['P0','P1','high','HIGH'] (mixed-convention,
+ *   AC-3). Same one-file-per-guard co-location precedent as §8A's original
+ *   raw_probe gate; helper hasValidBehaviorPredicate() co-located in §8A
+ *   (+50L).
  *
  * Sprint: SSOT-INTEGRITY-PERIMETER  Task: SSOT-W1-ZOD-SCHEMA-MODEL
  *
@@ -517,6 +526,14 @@ export type OrchState = z.infer<typeof OrchStateSchema>;
 // rows that predate this gate; backfilling raw_probe on already-completed work
 // would itself be fabrication — see brief §2.5). Any row with status DEGRADED
 // must carry verification.honest_gap_reason.
+// ADDITION (FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT, brief §5c,
+// 2026-08-28 — land 7/7 of brief §9's files): P0/P1-equivalent apps/ rows minted
+// at/after BEHAVIOR_PREDICATE_CUTOFF must ALSO carry a mint-time
+// verification.behavior_predicate{cmd,expect} — the literal enforcement of "a
+// row may not reach DONE_VERIFIED on diff-reading alone" for the population
+// where it matters (apps/ rows ship inside rebuilt Docker images). Grandfathered
+// BY TIME (created_at/declared_at < cutoff), never by id-list — every pre-cutoff
+// row predates behavior_predicate as a mint-time field (AC-4 no-wedge mandate).
 //
 // RC_VERIF_GRANDFATHERED_IDS is FROZEN and CLOSED — it must NEVER grow. Derived
 // ONCE, live, immediately before this implementation (SYSREMAKE-P2-T1-GRANDFATHER-
@@ -618,6 +635,34 @@ function hasHonestGapReason(v: unknown): boolean {
   return parsed.success && Boolean(parsed.data.honest_gap_reason);
 }
 
+// ── Behavior-predicate gate constants (FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT,
+// brief §5c) ────────────────────────────────────────────────────────────────────
+// BEHAVIOR_PREDICATE_CUTOFF: exact commit-landing timestamp of the mint-side
+// capability (docs/agents/po/flow/main.md commit ee158a9ea, 2026-08-26T19:58:30Z)
+// minus 36s — deliberately conservative so mint-side is never behind enforcement
+// (AC-4). Rows minted BEFORE this cutoff are grandfathered BY TIME (AC-6), never
+// by id-list: every P0/P1 apps/ row already on the board predates behavior_predicate
+// as a mint-time field and cannot fix it by doing the work right.
+// BEHAVIOR_PREDICATE_PRIORITIES: live board measures 317xP1/61xP0/82x'high'/
+// 1x'HIGH' (2026-08-26) — match the full P0/P1-equivalent set, never a bare
+// === 'P0' || === 'P1' string check (AC-3).
+const BEHAVIOR_PREDICATE_CUTOFF = "2026-08-26T19:57:54Z";
+const BEHAVIOR_PREDICATE_PRIORITIES: ReadonlySet<string> = new Set(["P0", "P1", "high", "HIGH"]);
+
+/**
+ * Valid mint-time behavioral predicate: verification.behavior_predicate{cmd,expect}
+ * with a non-empty cmd and an expect that is defined (brief §5c). Mirrors the
+ * hasValidRawProbe/hasHonestGapReason pattern — safeParse()s VerificationSchema
+ * (which .passthrough()s, so behavior_predicate is schema-legal today with zero
+ * migration) and reads the nested field.
+ */
+function hasValidBehaviorPredicate(v: unknown): boolean {
+  const parsed = VerificationSchema.safeParse(v);
+  if (!parsed.success) return false;
+  const bp = (parsed.data as { behavior_predicate?: { cmd?: unknown; expect?: unknown } }).behavior_predicate;
+  return Boolean(bp?.cmd) && bp?.expect !== undefined;
+}
+
 /**
  * Iterates ALL 9 task-bearing lanes ("by construction", same lane set as
  * collectAllTaskIds) — DONE_VERIFIED/DEGRADED can appear in any of them per
@@ -638,6 +683,28 @@ function checkVerificationGate(tb: z.infer<typeof TaskBoardSchema>, ctx: z.Refin
             `task "${id}" set to DONE_VERIFIED without verification.raw_probe{tool,args,` +
             `live_value_observed,observed_at}. fix: attach a live independent re-probe, ` +
             `or set status to DONE pending verification.`,
+        });
+      }
+      // ── Behavior-predicate hard-reject (FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT,
+      // brief §5c) — the literal enforcement of "a row may not reach DONE_VERIFIED on
+      // diff-reading alone" for the population where it matters: P0/P1-equivalent apps/
+      // rows minted at/after BEHAVIOR_PREDICATE_CUTOFF must carry a mint-time
+      // verification.behavior_predicate{cmd,expect}. Grandfathered by TIME (created_at
+      // < cutoff), never by id-list; grandfather-list exemption mirrors the raw_probe gate.
+      const mintedAt = String(row["created_at"] ?? row["declared_at"] ?? "");
+      if (
+        String(row["zone"] ?? "").startsWith("apps/") &&
+        BEHAVIOR_PREDICATE_PRIORITIES.has(String(row["priority"] ?? "")) &&
+        mintedAt >= BEHAVIOR_PREDICATE_CUTOFF &&
+        !hasValidBehaviorPredicate(row["verification"])
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [...path, "verification", "behavior_predicate"],
+          message:
+            `task "${id}" (P0/P1 apps/, minted ${mintedAt}) set to DONE_VERIFIED without ` +
+            `verification.behavior_predicate{cmd,expect}. fix: PO/BA re-author the predicate ` +
+            `at mint (docs/agents/po/flow/main.md), or set status to DONE pending verification.`,
         });
       }
     }
