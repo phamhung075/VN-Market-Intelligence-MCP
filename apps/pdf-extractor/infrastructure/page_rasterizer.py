@@ -1,3 +1,4 @@
+# size-justification: ~250L — page rasterizer (PyMuPDF): rasterize_page / rasterize_report + orientation-aware _save_upright helper, with load-bearing docstrings (idempotency, force-invalidation AC-6 lever, orientation fail-closed contract, /Rotate=0 sideways-page rationale). Cohesive single-purpose module — the docstrings document cross-site contracts (get_bctc_page_image, OCR paths) that lose their anchor if split out.
 """
 infrastructure/page_rasterizer.py — AR-PDF FR-1
 

@@ -1,3 +1,4 @@
+// size-justification: 1200L — single cohesive DDD aggregation unit (pure function, zero I/O) mapping bctc_table_rows → financial_reports scalar columns with balance-identity enforcement + bilingual section detection; legitimately grew via reviewed fixes (HPG general-bucket scalar fallback + PARTIAL reflow eligibility 28f8509fc, bank-form guards FIX-BCTC-BANK-SUMMARY-MAPPING, charter-capital/investment scalars). Splitting would scatter the million-VND unit convention + balance-violation reasoning across files for no lint benefit — same-dir financialFiguresRules.ts carries the same header convention.
 /**
  * bctcScalarAggregator.ts — Aggregate bctc_table_rows into financial_reports scalar columns
  *

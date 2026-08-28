@@ -1,3 +1,4 @@
+# size-justification: ~1300L — PEK layout+table extraction engine wrapper: model loading, bbox→zone mapping, cell row-banding, SemaphoreContendedError, fail-loud/degraded tagging, PekEngineAdapter; legitimately grew via reviewed fixes (orientation integration 905e32be1, semaphore wait bound 3db7a8dc8, confidence honesty fdb424178, fail-loud + quarantine b52f55930). Cohesive engine adapter — splitting would fragment the PEK hard-constraint contract (never import pdf_extract_kit.tasks.*) across files.
 """
 infrastructure/pek_engine_adapter.py — PEK-INTEGRATE
 

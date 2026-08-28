@@ -1,3 +1,4 @@
+# size-justification: ~580L — ProcessPoolExecutor worker module: 4 module-level picklable worker functions (detect_low_text_density, rasterize+OCR, balance-sheet locator, ocr_pages) + shared helpers; legitimately grew via reviewed fixes (executor recycle + per-doc PaddleOCR rescue budget 1db5f9f81, orientation integration 905e32be1, wide-scan + PaddleOCR fallback 734ab5d51). The picklable-module-level contract (ProcessPoolExecutor.submit) makes class extraction a rework, not a cleanup.
 """
 infrastructure/ocr_worker.py — PDFX-SINGLE-WORKER-BLOCKING + FIX-BCTC-BANK-PDF-OCR-RASTERIZE
 

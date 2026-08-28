@@ -1,3 +1,4 @@
+# size-justification: ~230L — NEW module (FIX-PDFX-OCR-ORIENTATION-UNDETECTED-ROTATED-BCTC-PAGES-READ-UPSIDE-DOWN): 3 pure rotation functions (detect/rotate/correct) + load-bearing measured-evidence module docstring (AC cost, false-positive rate on 89 pages, fail-closed reasoning) shared by every rasterize→OCR site. The docstring IS the AC evidence trail; splitting would fragment the fail-closed contract from its evidence.
 """
 infrastructure/ocr_orientation.py — FIX-PDFX-OCR-ORIENTATION-UNDETECTED-ROTATED-BCTC-PAGES-READ-UPSIDE-DOWN
 

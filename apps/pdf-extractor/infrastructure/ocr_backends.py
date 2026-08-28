@@ -1,3 +1,4 @@
+# size-justification: ~690L — OcrBackendPort adapter module: 3 concrete backends (TesseractVie / PaddleOCR / AutoFallback) + selector factory + recall-aware confidence helpers (Otsu ink coverage, polygon→box); legitimately grew via reviewed fixes (OCR concurrency gateway dispatch FIX-PDFX-TESSERACT-CONCURRENCY, recall-aware confidence FIX-PDFX-TESSERACT-CONFIDENCE-MEAN-OVER-NONEMPTY-MASKS-TOTAL-PAGE-MISS with its measured-evidence block). Cohesive single-purpose module — splitting would fragment the shared ink/recall basis all three backends must agree on.
 """
 infrastructure/ocr_backends.py — PEK-IMPL-OCR (REQ-PEK-12 candidate)
 
