@@ -88,10 +88,10 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-08-29T03:17:11Z",
+    "updated_by": "dev-mcp-server",
     "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-26T19:51:51Z",
-    "updated_by": "pm"
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8078,36 +8078,6 @@
         "claimed_at": "2026-07-29T13:19:09Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "architect"
-      },
-      {
-        "id": "FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD",
-        "title": "monthlySignalQualityAuditJob (cron 0 0 1 * *) has now missed TWO consecutive fires — 2026-07-01 and 2026-08-01 — with zero recovery and zero alert; recoverMissedExecutions:false (schedulerJobTable.ts:229) is the opt-out, but flipping it alone is a PROVEN no-op",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "created_by": "dev-mcp-server",
-        "created_at": "2026-07-30T06:05:12Z",
-        "updated_at": "2026-08-25T16:20:45Z",
-        "root_cause": "schedulerJobTable.ts:227-233 registers monthlySignalQualityAuditJob with options:{timezone:\"UTC\", recoverMissedExecutions:false} — an explicit opt-out documented in the adjacent code comment as deferred pending a T4 dedup guard (\"recovery is opt-out here until a T4 dedup guard is added to runMonthlySignalQualityJob() in a future sprint\"). If the mcp-server process is down/restarting at exactly the 1st-of-month 00:00 UTC fire instant, that month's audit is permanently skipped with no backfill and no distinguishing signal from a normal quiet month.",
-        "evidence": "CONFIRMED AT SOURCE 2026-07-30 (task FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H investigation, AC-2/AC-3): queried the live named-volume market.db cron_job_runs table via an EXACT job_name match against idx_cron_job_runs_job_started (working around this DB's known page-corruption on full-table-scan queries — see FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730, same root DB, unrelated defect). Result: exactly 2 rows total for monthlySignalQualityAuditJob, started_at=2026-05-01T00:00:00 (status=success) and 2026-06-01T00:00:00 (status=success) — NO row for 2026-07-01. The July fire genuinely did not happen; recoverMissedExecutions:false meant no backfill occurred and nothing alerted on the gap.",
-        "not_the_signal_quality_audit_defect": "IMPORTANT — this missed cron run is NOT the cause of the separate signal_quality_audit SLA-breach defect fixed by FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H. Traced at source: runMonthlySignalQualityJob() (scheduler/audits/monthlySignalQualityJob.ts) only queries signal_rejections and sends a Telegram WORK report — it never writes to the signal_quality_audit table. That table's only writer is insertSignalQualityAudit() called from post_agent_signal (price_confirmation/urgent_news + confidence field only), an entirely separate event-driven path. Do not conflate the two when scoping this fix.",
-        "recommended_action": "Add the deferred T4 dedup guard to runMonthlySignalQualityJob() (idempotency check against the target audit month before sending the Telegram report — e.g. skip if a report for that month/year was already sent, so recoverMissedExecutions can be safely flipped to true without risking a duplicate Telegram report on a scheduler restart/replay), THEN flip schedulerJobTable.ts:229 recoverMissedExecutions:false -> true. Given the intrinsic idempotency of \"prior month\" resolution (any fire within a calendar month resolves to the SAME prior-month target, so a same-day backfill is safe even without the guard), also consider a low-risk immediate backfill of the missed June audit specifically if this row is picked up before 2026-08-01 (after which the natural cadence moves on to auditing July and the June gap becomes unrecoverable without a manual historical query).",
-        "not_blocking": "P3, observability/completeness gap only, no data loss (signal_rejections source table is untouched, a backfill remains possible for the July report specifically until it ages out of relevance) — same class as feedback_passive_health_masks_dead_data but lower severity than the P2 SLA-breach row that surfaced it.",
-        "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H",
-        "escalation_20260809": "SECOND CONSECUTIVE MISS VERIFIED LIVE 2026-08-09T02:45Z via GET /api/cron-status: monthlySignalQualityAudit cron_expr='0 0 1 * *', expected_last_fire=2026-08-01T00:00:00Z, last_fire=2026-06-01 00:00:00, status=MISSED — delta -5,270,400s (61 days). The row previously recorded only the 2026-07-01 miss; August is now also gone. This is the ONLY genuine cron gap among the 24 non-healthy rows in that snapshot (the other 23 are detector false positives — see FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL). Repriced P3 -> P2 on recurrence, not on blast radius: a monthly audit that silently skips two months running is no longer a one-off completeness gap.",
-        "mechanism_correction": "The row's recommended_action (add a T4 dedup guard, then flip recoverMissedExecutions:false -> true) is NECESSARY BUT NOT SUFFICIENT and must not be shipped alone. Confirmed at source in node-cron@3.0.3 src/scheduler.js: Scheduler.start() sets lastExecution = timeMatcher.apply(new Date()) and lastCheck = process.hrtime() at start time, and the recovery loop only walks back Math.floor(elapsedMs/1000) seconds since the previous in-process 1s tick. Therefore recoverMissedExecutions:true recovers ONLY event-loop stalls inside a living process — it can NEVER replay a fire that fell during a process restart or downtime window. Any restart spanning 1st-of-month 00:00 UTC still loses the audit with the flag set to true. Real fix must be a startup catch-up: apps/mcp-server/src/scheduler/startupHelpers.ts already ships shouldRunCatchup() (task 1430) with a DB-backed 'already ran today' guard, weekdayOnly / requiredUtcDay / utcHour window gating, and fail-safe-on-DB-error semantics. Scope this row as: generalise that helper's dedup window from per-day to per-cadence-period (per-month for this job), enrol monthlySignalQualityAuditJob in it, THEN flip the flag as defence-in-depth.",
-        "stale_action_note": "recommended_action's June-backfill escape hatch has EXPIRED — it was conditioned on pickup before 2026-08-01. Both the July and August target months are now unrecoverable through natural cadence; if the two reports are wanted they need an explicit one-shot historical query over signal_rejections, which should be an AC on this row rather than an implicit assumption.",
-        "escalation_source": "PO escalation triage 2026-08-09 (router session 165f4245). Note for whoever picks this up: the 'Aug-7 23-cron simultaneous stop' incident that escalated this row is NOT corroborating evidence for it — that incident was refuted (no container crash; 23/23 of those jobs fired exactly on their own schedules). Do not widen this row's scope on the strength of it.",
-        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD. Telegram 4716 / signal_queue row sys-20260812T022124-5d56: `monthlySignalQualityAudit MISSED (1730h overdue, expired schedule)` (A-29, WARN). 1730h = ~72 days = the two consecutive missed fires this row already records (2026-07-01 and 2026-08-01), now compounded and re-reported as an 'expired schedule'. No new information beyond confirming the miss has not self-healed and the recover-guard this row specifies still does not exist. Note the companion row FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H (REVIEW) covers the SEPARATE defect that sla-monitor grades this monthly cron against a 48h event-driven SLA — that one makes the alert noisy, this one is the actual missed execution. Fix both or the signal stays untrustworthy in either direction.",
-        "po_fold_20260814T1841Z": "CORROBORATED LIVE (3rd-party confirmation of this row's own premise, no new row minted). system-auditor Tier-2 c99 signal sys-20260814T160005-a29-6 flagged it MISSED 1794.5h overdue; PO verified independently against GET /api/cron-status 18:39Z: cron_expr=`0 0 1 * *`, last_fire=2026-06-01 00:00:00, last_status=success, status=MISSED. Exactly the two consecutive missed fires (2026-07-01, 2026-08-01) this row already describes — still true, still unfixed, now 3 fires from a third miss on 2026-09-01. This is one of only 3 findings that survived PO's premise check of the 8 CRITICALs in that batch (5 were Layer-A false positives).",
-        "note": "\n\n[PO CORROBORATION 2026-08-23T08:16Z] THIRD consecutive missed fire confirmed. Live GET /api/cron-status: monthlySignalQualityAudit cron_expr \"0 0 1 * *\", last_fire 2026-06-01 00:00:00, last_status success, overdue 2000.1h. Missed 2026-07-01 AND 2026-08-01. CRITICALLY — this is NOT explainable by the 2026-08-18..2026-08-22 host suspension: PO measured cron_job_runs directly and 2026-08-13/08-14 ran 3146/3147 jobs-runs per day, i.e. the scheduler was fully alive on and around both missed fire dates. This is a genuinely dead cron and it was very nearly masked this tick by an auditor cycle that attributed the whole 6-MISSED/23-STALE batch to \"post-recovery backlog / recovering normally\". Raising visibility, not re-minting.",
-        "updated_by": "po (triage-20260825T1612Z)",
-        "po_expedite_20260824T0737Z": "P2->P1 2026-08-24T07:37Z. Third consecutive month now lost (2026-06-01 last real fire; 07-01, 08-01 missed) and re-confirmed live this tick: get_cron_health 7-day window lists 84 jobs and contains NEITHER monthlySignalQualityAudit NOR monthlySignalQualityAuditJob. This row is also the standing source of the ONLY CRITICAL in signal_queue (sys-20260814T064300-a29m, open 10 days, triaged to this row this tick) — leaving it at P2 keeps re-raising a CRITICAL the fleet then has to re-triage. The title's 'flipping recoverMissedExecutions alone is a PROVEN no-op' caveat is retained and unchallenged: expedited for scheduling, not re-scoped.",
-        "po_fold_20260824T2258Z": "FOLD, 4th corroboration, no re-mint. signal_queue sys-20260824T223523-72ea (CRITICAL, 22:35:23Z): 'monthlySignalQualityAudit MISSED 2038.6h'. Same two missed fires this row already owns (2026-07-01, 2026-08-01; last real fire 2026-06-01), now ~85 days. Six days from a FOURTH miss on 2026-09-01. Nothing new — recorded so the standing CRITICAL is not re-triaged as unowned a fifth time.",
-        "po_occ_20260825T1612": "OCCURRENCE FOLD: system-auditor cron_fire_gap 2026-08-25T14:38:51Z — monthlySignalQualityAudit MISSED, 2054h overdue against a 1080h threshold. Folded, not re-minted. Also folded onto FIX-CRONS-FIVE-STALE-NEVER-FIRING-RAGFTSREBUILD-35-DAYS which owns the same job as one of its five; these two rows overlap on this job and whoever takes either should reconcile them rather than fix it twice."
       },
       {
         "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
@@ -23777,6 +23747,44 @@
         "secondary_claimed_at": "2026-08-26T20:17:39Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "agent-father"
+      },
+      {
+        "id": "FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD",
+        "title": "monthlySignalQualityAuditJob (cron 0 0 1 * *) has now missed TWO consecutive fires — 2026-07-01 and 2026-08-01 — with zero recovery and zero alert; recoverMissedExecutions:false (schedulerJobTable.ts:229) is the opt-out, but flipping it alone is a PROVEN no-op",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "created_by": "dev-mcp-server",
+        "created_at": "2026-07-30T06:05:12Z",
+        "updated_at": "2026-08-29T03:17:11Z",
+        "root_cause": "schedulerJobTable.ts:227-233 registers monthlySignalQualityAuditJob with options:{timezone:\"UTC\", recoverMissedExecutions:false} — an explicit opt-out documented in the adjacent code comment as deferred pending a T4 dedup guard (\"recovery is opt-out here until a T4 dedup guard is added to runMonthlySignalQualityJob() in a future sprint\"). If the mcp-server process is down/restarting at exactly the 1st-of-month 00:00 UTC fire instant, that month's audit is permanently skipped with no backfill and no distinguishing signal from a normal quiet month.",
+        "evidence": "CONFIRMED AT SOURCE 2026-07-30 (task FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H investigation, AC-2/AC-3): queried the live named-volume market.db cron_job_runs table via an EXACT job_name match against idx_cron_job_runs_job_started (working around this DB's known page-corruption on full-table-scan queries — see FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730, same root DB, unrelated defect). Result: exactly 2 rows total for monthlySignalQualityAuditJob, started_at=2026-05-01T00:00:00 (status=success) and 2026-06-01T00:00:00 (status=success) — NO row for 2026-07-01. The July fire genuinely did not happen; recoverMissedExecutions:false meant no backfill occurred and nothing alerted on the gap.",
+        "not_the_signal_quality_audit_defect": "IMPORTANT — this missed cron run is NOT the cause of the separate signal_quality_audit SLA-breach defect fixed by FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H. Traced at source: runMonthlySignalQualityJob() (scheduler/audits/monthlySignalQualityJob.ts) only queries signal_rejections and sends a Telegram WORK report — it never writes to the signal_quality_audit table. That table's only writer is insertSignalQualityAudit() called from post_agent_signal (price_confirmation/urgent_news + confidence field only), an entirely separate event-driven path. Do not conflate the two when scoping this fix.",
+        "recommended_action": "Add the deferred T4 dedup guard to runMonthlySignalQualityJob() (idempotency check against the target audit month before sending the Telegram report — e.g. skip if a report for that month/year was already sent, so recoverMissedExecutions can be safely flipped to true without risking a duplicate Telegram report on a scheduler restart/replay), THEN flip schedulerJobTable.ts:229 recoverMissedExecutions:false -> true. Given the intrinsic idempotency of \"prior month\" resolution (any fire within a calendar month resolves to the SAME prior-month target, so a same-day backfill is safe even without the guard), also consider a low-risk immediate backfill of the missed June audit specifically if this row is picked up before 2026-08-01 (after which the natural cadence moves on to auditing July and the June gap becomes unrecoverable without a manual historical query).",
+        "not_blocking": "P3, observability/completeness gap only, no data loss (signal_rejections source table is untouched, a backfill remains possible for the July report specifically until it ages out of relevance) — same class as feedback_passive_health_masks_dead_data but lower severity than the P2 SLA-breach row that surfaced it.",
+        "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H",
+        "escalation_20260809": "SECOND CONSECUTIVE MISS VERIFIED LIVE 2026-08-09T02:45Z via GET /api/cron-status: monthlySignalQualityAudit cron_expr='0 0 1 * *', expected_last_fire=2026-08-01T00:00:00Z, last_fire=2026-06-01 00:00:00, status=MISSED — delta -5,270,400s (61 days). The row previously recorded only the 2026-07-01 miss; August is now also gone. This is the ONLY genuine cron gap among the 24 non-healthy rows in that snapshot (the other 23 are detector false positives — see FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL). Repriced P3 -> P2 on recurrence, not on blast radius: a monthly audit that silently skips two months running is no longer a one-off completeness gap.",
+        "mechanism_correction": "The row's recommended_action (add a T4 dedup guard, then flip recoverMissedExecutions:false -> true) is NECESSARY BUT NOT SUFFICIENT and must not be shipped alone. Confirmed at source in node-cron@3.0.3 src/scheduler.js: Scheduler.start() sets lastExecution = timeMatcher.apply(new Date()) and lastCheck = process.hrtime() at start time, and the recovery loop only walks back Math.floor(elapsedMs/1000) seconds since the previous in-process 1s tick. Therefore recoverMissedExecutions:true recovers ONLY event-loop stalls inside a living process — it can NEVER replay a fire that fell during a process restart or downtime window. Any restart spanning 1st-of-month 00:00 UTC still loses the audit with the flag set to true. Real fix must be a startup catch-up: apps/mcp-server/src/scheduler/startupHelpers.ts already ships shouldRunCatchup() (task 1430) with a DB-backed 'already ran today' guard, weekdayOnly / requiredUtcDay / utcHour window gating, and fail-safe-on-DB-error semantics. Scope this row as: generalise that helper's dedup window from per-day to per-cadence-period (per-month for this job), enrol monthlySignalQualityAuditJob in it, THEN flip the flag as defence-in-depth.",
+        "stale_action_note": "recommended_action's June-backfill escape hatch has EXPIRED — it was conditioned on pickup before 2026-08-01. Both the July and August target months are now unrecoverable through natural cadence; if the two reports are wanted they need an explicit one-shot historical query over signal_rejections, which should be an AC on this row rather than an implicit assumption.",
+        "escalation_source": "PO escalation triage 2026-08-09 (router session 165f4245). Note for whoever picks this up: the 'Aug-7 23-cron simultaneous stop' incident that escalated this row is NOT corroborating evidence for it — that incident was refuted (no container crash; 23/23 of those jobs fired exactly on their own schedules). Do not widen this row's scope on the strength of it.",
+        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD. Telegram 4716 / signal_queue row sys-20260812T022124-5d56: `monthlySignalQualityAudit MISSED (1730h overdue, expired schedule)` (A-29, WARN). 1730h = ~72 days = the two consecutive missed fires this row already records (2026-07-01 and 2026-08-01), now compounded and re-reported as an 'expired schedule'. No new information beyond confirming the miss has not self-healed and the recover-guard this row specifies still does not exist. Note the companion row FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H (REVIEW) covers the SEPARATE defect that sla-monitor grades this monthly cron against a 48h event-driven SLA — that one makes the alert noisy, this one is the actual missed execution. Fix both or the signal stays untrustworthy in either direction.",
+        "po_fold_20260814T1841Z": "CORROBORATED LIVE (3rd-party confirmation of this row's own premise, no new row minted). system-auditor Tier-2 c99 signal sys-20260814T160005-a29-6 flagged it MISSED 1794.5h overdue; PO verified independently against GET /api/cron-status 18:39Z: cron_expr=`0 0 1 * *`, last_fire=2026-06-01 00:00:00, last_status=success, status=MISSED. Exactly the two consecutive missed fires (2026-07-01, 2026-08-01) this row already describes — still true, still unfixed, now 3 fires from a third miss on 2026-09-01. This is one of only 3 findings that survived PO's premise check of the 8 CRITICALs in that batch (5 were Layer-A false positives).",
+        "note": "\n\n[PO CORROBORATION 2026-08-23T08:16Z] THIRD consecutive missed fire confirmed. Live GET /api/cron-status: monthlySignalQualityAudit cron_expr \"0 0 1 * *\", last_fire 2026-06-01 00:00:00, last_status success, overdue 2000.1h. Missed 2026-07-01 AND 2026-08-01. CRITICALLY — this is NOT explainable by the 2026-08-18..2026-08-22 host suspension: PO measured cron_job_runs directly and 2026-08-13/08-14 ran 3146/3147 jobs-runs per day, i.e. the scheduler was fully alive on and around both missed fire dates. This is a genuinely dead cron and it was very nearly masked this tick by an auditor cycle that attributed the whole 6-MISSED/23-STALE batch to \"post-recovery backlog / recovering normally\". Raising visibility, not re-minting.",
+        "updated_by": "dev-mcp-server",
+        "po_expedite_20260824T0737Z": "P2->P1 2026-08-24T07:37Z. Third consecutive month now lost (2026-06-01 last real fire; 07-01, 08-01 missed) and re-confirmed live this tick: get_cron_health 7-day window lists 84 jobs and contains NEITHER monthlySignalQualityAudit NOR monthlySignalQualityAuditJob. This row is also the standing source of the ONLY CRITICAL in signal_queue (sys-20260814T064300-a29m, open 10 days, triaged to this row this tick) — leaving it at P2 keeps re-raising a CRITICAL the fleet then has to re-triage. The title's 'flipping recoverMissedExecutions alone is a PROVEN no-op' caveat is retained and unchallenged: expedited for scheduling, not re-scoped.",
+        "po_fold_20260824T2258Z": "FOLD, 4th corroboration, no re-mint. signal_queue sys-20260824T223523-72ea (CRITICAL, 22:35:23Z): 'monthlySignalQualityAudit MISSED 2038.6h'. Same two missed fires this row already owns (2026-07-01, 2026-08-01; last real fire 2026-06-01), now ~85 days. Six days from a FOURTH miss on 2026-09-01. Nothing new — recorded so the standing CRITICAL is not re-triaged as unowned a fifth time.",
+        "po_occ_20260825T1612": "OCCURRENCE FOLD: system-auditor cron_fire_gap 2026-08-25T14:38:51Z — monthlySignalQualityAudit MISSED, 2054h overdue against a 1080h threshold. Folded, not re-minted. Also folded onto FIX-CRONS-FIVE-STALE-NEVER-FIRING-RAGFTSREBUILD-35-DAYS which owns the same job as one of its five; these two rows overlap on this job and whoever takes either should reconcile them rather than fix it twice.",
+        "promoted_at": "2026-08-29T02:46:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-29T02:46:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "6fdadc81dc3c47a53d370da8f6be9a908721d3af",
+        "entered_review_at": "2026-08-29T03:17:10Z",
+        "review_note": "[Developer] Implementation Record (direct-commit verify path, no handoff file — FIX task, BOUNDED-1 pickup): root cause = recoverMissedExecutions:false opt-out + node-cron recovery is restart-blind (Scheduler.start() re-seeds lastExecution at boot) — missed 2026-07-01 AND 2026-08-01 fires (last real success 2026-06-01, RAW-verified). Fix: shouldRunCatchup cadence='month' (per-cadence-period, success-only dedup) + startup catch-up probe in startScheduler.ts (recovers most-recent missed month on next boot) + shouldSkipMonthlyReplay T4 guard in runMonthlySignalQualityJob + registration recoverMissedExecutions false->true (defence-in-depth, no double WORK send). One-shot backfill scripts/migrations/backfill-monthly-signal-quality-audit.ts — June 2026 report SENT live (69 rej/52 sig, 132.69% ALERT, marker idempotent); July 2026 left to post-deploy catch-up (avoids duplicate). Tests: guard 17/17 + script 14/14, FACTORY-SCHEDULER/ARCH-CRON updated, related battery 143/143, full suite 15554 pass/57 fail (documented baseline noise, 0 in touched surface), tsc clean, toolCount 184 / cronJobCount 88, boot+health OK. Commits 6fdadc81d (code+docs) + e1f494772 (memory)."
       }
     ],
     "qa": [],
@@ -23796,8 +23804,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-26T19:44:15Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-29T02:46:38Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
@@ -23812,7 +23820,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-26T18:13:08Z"
+        "last_served_tick": "2026-08-29T02:46:38Z"
       },
       "sls": {
         "last_served_tick": "2026-08-26T18:45:13Z"
@@ -23830,7 +23838,7 @@
         "last_served_tick": "2026-08-28T22:47:47Z"
       }
     },
-    "_updated_at": "2026-08-29T02:46:02Z",
+    "_updated_at": "2026-08-29T02:46:38Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
