@@ -202,12 +202,16 @@ describe("FIX-BCTC-ENRICHER-STUCK-BACKLOG (b) — enrich_failed grace-period ret
     expect(row?.source_url).toBeNull();
   });
 
-  it("enrich_failed row with attempts >= 6 is NOT selected (cap prevents infinite churn)", async () => {
+  // FIX-BCTC-DATA-GAP-FAMILY U1 (2026-08-29): Arm-2 bound widened from
+  // `attempts < 6` to `attempts <= MAX_ENRICH_ATTEMPTS + 1` (i.e. < 7) — a row
+  // at attempts=6 (the value markUrlNotFoundStmt itself terminalizes at) is now
+  // re-eligible past the 7-day grace. The churn cap now excludes attempts >= 7.
+  it("enrich_failed row with attempts >= 7 is NOT selected (cap prevents infinite churn)", async () => {
     const db = makeMinimalDb();
 
     db.prepare(
       `INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, attempts, last_attempt)
-       VALUES ('VCB', 2024, 'Q4', 'enrich_failed', 6, datetime('now', '-30 days'))`,
+       VALUES ('VCB', 2024, 'Q4', 'enrich_failed', 7, datetime('now', '-30 days'))`,
     ).run();
 
     const result = await runBctcQueueEnricherJob({

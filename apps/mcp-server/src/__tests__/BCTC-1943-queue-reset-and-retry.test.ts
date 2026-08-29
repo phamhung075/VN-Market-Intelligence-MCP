@@ -437,13 +437,17 @@ describe("TASK-1943a AC-4 — grace-period auto-retry policy", () => {
     expect(row?.status).toBe("url_not_found");
   });
 
-  it("grace-period only retries rows with attempts < 6 (cap prevents infinite churn)", async () => {
+  // FIX-BCTC-DATA-GAP-FAMILY U1 (2026-08-29): Arm-2 bound widened from
+  // `attempts < 6` to `attempts <= MAX_ENRICH_ATTEMPTS + 1` (i.e. < 7) — a row
+  // at attempts=6 (the value markUrlNotFoundStmt itself terminalizes at) is now
+  // re-eligible past the 7-day grace. The churn cap now excludes attempts >= 7.
+  it("grace-period only retries rows with attempts < 7 (cap prevents infinite churn)", async () => {
     const db = makeMinimalDb();
 
-    // Row with attempts = 6 — at or over cap, should NOT be selected
+    // Row with attempts = 7 — at or over cap, should NOT be selected
     db.prepare(
       `INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, attempts, last_attempt)
-       VALUES ('CTG', 2026, 'Q1', 'url_not_found', 6, datetime('now', '-10 days'))`,
+       VALUES ('CTG', 2026, 'Q1', 'url_not_found', 7, datetime('now', '-10 days'))`,
     ).run();
 
     const result = await runBctcQueueEnricherJob({
@@ -457,7 +461,7 @@ describe("TASK-1943a AC-4 — grace-period auto-retry policy", () => {
       },
     });
 
-    // attempts=6 is at cap — not selected
+    // attempts=7 is at cap — not selected
     expect(result.itemsProcessed).toBe(0);
   });
 });

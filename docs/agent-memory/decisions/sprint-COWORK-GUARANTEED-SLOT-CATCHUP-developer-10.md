@@ -111,3 +111,13 @@
 - LC_ALL=C pinning: rejected (po-triage remedy note: pinning + any comma-splitting parse = concatenation garbage); token-normalize is locale-neutral by construction.
 **why-decision:** The defect class is "parse improvised per tick" — only a scripted, fixture-tested probe removes the improvisation surface, and it is the row's own stated fix direction.
 **why-change:** no change — surface confirmed as spawn-fanout.md Step 5.1 (dispatch-claim/SKILL.md has NO load parse; its Step 2.4 is the unrelated Axis D period-key guard owned by the AXISD task — untouched). files[] extended with the 2 new scripts on the lane-move (AXISD files[]-correction precedent).
+
+### STEP developer-S141 · developer · 2026-08-29T02:10:00Z
+**task-id:** FIX-BCTC-DATA-GAP-FAMILY
+**what-done:** fix_round 1 (redispatch, qa vc-changes): updated the 2 stale Arm-2 assertions to the U1 contract (attempts>=6 NOT selected -> attempts>=7 NOT selected, attempts=6 re-eligible past grace) in FIX-BCTC-ENRICHER-STUCK-BACKLOG.test.ts:205 + BCTC-1943-queue-reset-and-retry.test.ts:440; enricher/queue/240-bctc-full + full bctc battery green; tsc + size-lint clean.
+**what-considered:**
+- Keep stale assertions + document drift: rejected — they test the OLD bound the code no longer implements; RED on main (QA vc-changes).
+- Move the negative-cap fixture to attempts=7 (CHOSEN): preserves the "cap prevents churn" intent at the new contract boundary (attempts <= MAX_ENRICH_ATTEMPTS+1), mirrors the 240-bctc-full same-class update in 34c3a66ac.
+- Add a fresh positive attempts=6 test: already covered by FIX-BCTC-DATA-GAP-FAMILY-queue-liveness.test.ts U1.1 — no duplicate.
+**why-decision:** QA verdict: code matches architect brief (NO source change); the fix is exactly the 2 stale assertions — moved both to the new cap boundary so each keeps its original negative intent.
+**why-change:** no change from plan. Also root-caused 5 additional full-battery REDs (reparse/zeroextract files) as PRE-EXISTING sticky pollution: 1975-bootstrap-enum opens real data/market.db (no :memory:), caching the shared getDb singleton; later files then write test rows into the real DB across runs (parent fbad14ced fails identically on 2nd run). Cleaned the polluted rows; real dev data + data/live untouched. Flagged for ops/QA — out of this narrow fix scope.
