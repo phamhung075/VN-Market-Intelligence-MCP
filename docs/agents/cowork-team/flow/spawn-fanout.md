@@ -196,7 +196,15 @@ else:
 
   # LOAD / CORES — dispatcher-level bash (proven available: scripts/agents-flow/
   # cowork-tick-preflight.sh already runs bash+jq+curl at this same dispatch step).
-  LOAD_1MIN = bash: `uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,"",$1); print $1}'`
+  # LOAD_1MIN — ONE scripted comma-safe probe (FIX-COWORK-FANOUT-LOAD1MIN-COMMA-
+  # LOCALE-PARSE, cowork-fire 30d983ac). The old inline `awk -F','` parse truncated
+  # comma-locale uptime to its integer part ("2,19" -> "2"; live: "4,22" -> "4") and
+  # per-tick improvisations with `tr -d ','` produced "219" > 2*CORES, silently
+  # inverting NORMAL -> DEGRADED. The probe emits the dot-decimal 1-min load in BOTH
+  # locales ("2,19" -> "2.19"); exit!=0 / empty output = probe failed (fail-loud —
+  # treat load as unknown, fail-safe per NFR-P1-3). Edit the script, never a second
+  # copy of the parse here.
+  LOAD_1MIN = bash: `bash scripts/agents-flow/cowork-load-probe.sh`
   CORES     = bash: `sysctl -n hw.ncpu 2>/dev/null || nproc`   # macOS dev host; nproc fallback for Linux containers
 
   DEGRADED = (HEADROOM_MB == null) OR (HEADROOM_MB < FANOUT_POLICY.headroom_floor_mb) \
