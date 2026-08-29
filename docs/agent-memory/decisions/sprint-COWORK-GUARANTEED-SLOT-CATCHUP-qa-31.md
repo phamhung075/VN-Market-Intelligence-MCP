@@ -152,3 +152,12 @@
 - reject: nothing — only cosmetic observation: `$(...)` strips preamble's trailing \n\n so Layer C prompt lacks Step 5.2's blank line before trigger_prompt; no contract depends on it (brief §3 test-impact = exactly what T29 asserts)
 **why-decision:** No ISSUE; all four PO-ruling mechanisms verified. -> vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S257 · qa · 2026-08-29T00:5xZ
+**task-id:** FIX-CHEF-EVENING-BIZCTX-NULL
+**what-done:** Direct-commit verify (review[]/REVIEW, branch:null): Step 0d clean (no not-before keys); commit fbad14ced on main ancestry touching EXACTLY the 2 claimed files (chef-dish.md +162/-20, agent-father journal +10, zero creep); no L2L3 reversion (git log dd482d697..HEAD on chef-dish.md = fbad14ced only; Step 3 $MACRO_GAP_TOKENS floor present at L71/74/204/767); doc's EXACT Step 7.6 jq (verbatim L1198-1239 incl. bizctx_floor) reproduced — 08-26 evening SCHEMA_FAIL top_keys,meta_keys,verdict,tnb_keys,l2_floor,l3_floor,bizctx_floor exit 1, 08-23 honest baseline SCHEMA_OK exit 0; corpus recalibration 37/42 -> 32/47 over 79 files, 5 net-new failures exactly the claimed 5 (07-22-intraday, 07-24-intraday, 08-05-morning, 08-12-eod, 08-26-intraday), all silent-null class (null citations + 0 business-context tokens); 08-24 l2/l3 pass, val_gate failure pre-existing FR-8 (present pre-fix, not net-new); Step 4 State-A/B/C floor + $BIZ_CTX_GAP_TOKENS + Step 7.5 (d) per-ticker retarget read in source; DJ-GATE-1 agent-father-S73 present; review[]->done_verified[] flip via orch-apply.
+**what-considered:**
+- approve: every claimed check independently reproduced from live evidence, not prose; per-ticker floor + per-ticker gate + persist jq close all three root-cause parts; honest baseline still passes; 5 net-new corpus failures are exactly the silent-null class the fix targets
+- reject: nothing — bizctx_floor is deliberately coarse at file level (per-ticker precision lives in Step 7.5 where $BIZ_CTX_SIGNALS is visible), documented tradeoff, not a defect
+**why-decision:** No ISSUE; silent-bizctx-null mechanism closed at composition + gate + persist, verified end-to-end. -> vc-approved.
+**why-change:** no change from plan.
