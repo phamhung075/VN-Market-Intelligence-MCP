@@ -249,3 +249,20 @@ task was scoped to. Recommend the dispatcher/PM open a **new fix task** (e.g.
 This is flagged as a **recurring bug class** (2nd known occurrence, same mechanism as
 the PPC Q4-2025 one-shot patch) — per standing policy this should be prioritized
 rather than hand-patched a third time.
+
+---
+
+## 2026-08-29 update — FIX-BCTC-DATA-GAP-FAMILY U1 (developer)
+
+The Arm-2 grace bound quoted in §3 above (`AND attempts < 6`) has been widened to
+`AND attempts <= MAX_ENRICH_ATTEMPTS + 1` (i.e. `<= 6`, `< 7`) in
+`bctcQueueEnricherJob.ts`. Rationale: `markUrlNotFoundStmt` sets `attempts=attempts+1`
+when `item.attempts >= MAX_ENRICH_ATTEMPTS(5)`, so every `url_not_found` row landed at
+`attempts=6` and the old `< 6` bound permanently excluded exactly the rows this job
+itself terminalizes from the 7-day-grace re-discovery pass the 2026-07-02 fix intended.
+A row at `attempts=6` past grace is now re-eligible; the `last_attempt < -7 days` gate
+still bounds churn. Additionally a new `deferred_infra` NULL-URL recycle arm reopens
+rows parked with `source_url IS NULL` (293 live rows were unreachable by all three
+arms), and `bctcPdfPullJob.ts` reroutes non-pull-eligible http(s) `pending` URLs back
+to the enricher (single discovery owner). See the architect brief
+`docs/architecture-briefs/2026-08-28-fix-bctc-data-gap-family.md` U1.

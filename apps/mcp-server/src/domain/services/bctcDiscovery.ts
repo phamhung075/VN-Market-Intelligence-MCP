@@ -323,6 +323,37 @@ async function tryFetchVpsPlaywright(
 // Public API
 // ---------------------------------------------------------------------------
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX-BCTC-DATA-GAP-FAMILY U2 — wrong-document-class URL filter
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The enricher occasionally discovers a NON-financial-statement PDF for a
+// financial-report queue slot — live case: BID 2025-Q4's source_url became an
+// owa.hnx.vn corporate-governance report (Báo cáo quản trị), which is
+// structurally unpullable AND occupies the slot so the real filing can never
+// be discovered. Rule: drop any URL carrying a governance-report indicator
+// before it is ever written to source_url; when every URL is filtered out,
+// discovery behaves as "0 URLs found" → attempt-counting → honest
+// `url_not_found`. Generic — keyed on the URL text only, never a ticker list.
+const GOVERNANCE_REPORT_URL_RE =
+  /baocaoquantri|bao[-\s]*cao[-\s]*quan[-\s]*tri|bctc[^/]*quan[-\s]*tri|quan[-\s]*tri/i;
+
+/**
+ * True when `url` is a corporate-governance report (Báo cáo quản trị), not a
+ * financial statement. Pure, zero-I/O, case-insensitive.
+ */
+export function isGovernanceReportUrl(url: string): boolean {
+  return GOVERNANCE_REPORT_URL_RE.test(url);
+}
+
+/**
+ * Filter a discovered URL list down to financial-statement candidates only.
+ * Governance-report URLs (Báo cáo quản trị) are dropped. Pure, zero-I/O.
+ */
+export function filterNonFinancialStatementUrls(urls: string[]): string[] {
+  return urls.filter((u) => !isGovernanceReportUrl(u));
+}
+
 /**
  * Discover BCTC PDF URLs for a HOSE-listed ticker.
  *
@@ -367,7 +398,12 @@ export async function discoverHosePdfUrls(
   // Only runs when _fetchHsx is supplied in options.
   // HOSE-only: HNX/UPCOM tickers return [] (not an error), falls through to strategy 1.
   // FIX-CTG-1: quarter forwarded so fetcher filters to correct-quarter PDF.
-  const hsxUrls = await tryFetchHsx(ticker, year, timeout, fetchHsx, quarter);
+  // FIX-BCTC-DATA-GAP-FAMILY U2: governance-report URLs (Báo cáo quản trị)
+  // filtered out before the length check — a governance-only result behaves
+  // as "0 URLs found" → attempt-counting → honest url_not_found.
+  const hsxUrls = filterNonFinancialStatementUrls(
+    await tryFetchHsx(ticker, year, timeout, fetchHsx, quarter),
+  );
   if (hsxUrls.length > 0) {
     return {
       urls: hsxUrls,
@@ -380,8 +416,12 @@ export async function discoverHosePdfUrls(
   // Strategy 1: VPS Playwright endpoint
   // Only runs when BCTC_DISCOVER_URL is configured AND a fetch function is supplied.
   // Runs discover-bctc-urls-browser.py on the VPS as a subprocess.
+  // FIX-BCTC-DATA-GAP-FAMILY U2: same governance-report filter as Strategy 0
+  // (the BID 2025-Q4 poisoning came through the VPS path).
   const vpsUrls = fetchVpsPlaywright
-    ? await tryFetchVpsPlaywright(ticker, year, quarter, timeout, fetchVpsPlaywright)
+    ? filterNonFinancialStatementUrls(
+        await tryFetchVpsPlaywright(ticker, year, quarter, timeout, fetchVpsPlaywright),
+      )
     : [];
   if (vpsUrls.length > 0) {
     return {

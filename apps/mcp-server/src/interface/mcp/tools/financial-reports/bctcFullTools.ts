@@ -556,6 +556,17 @@ function buildSentimentSection(db: Database, code: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX-BCTC-DATA-GAP-FAMILY U3.3 / U6 — stage-granular no-data diagnostics
+// (implemented in bctcNoDataDiagnostics.ts — extracted here to keep this file
+// within its size-lint baseline tolerance).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  buildBctcNoDataDiagnostic,
+  type BctcNoDataDiagnostic,
+} from "./bctcNoDataDiagnostics.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PUB-1..4 Publishability Guard
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1049,6 +1060,22 @@ export function registerBctcFullTools(
               ],
             };
           }
+          // FIX-BCTC-DATA-GAP-FAMILY U3.3/U6: before falling back to the flat
+          // no-data string, try a stage-granular diagnostic — a PENDING row
+          // (refine never ran), a period-mismatch quarantine, or a write-block
+          // record. The EXACT legacy string below is preserved byte-identical
+          // for the true-absent case (bctc-analyst contract).
+          const noDataDiag = buildBctcNoDataDiagnostic(db, upperCode);
+          if (noDataDiag.kind !== "absent" && noDataDiag.text) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: noDataDiag.text,
+                },
+              ],
+            };
+          }
           return {
             content: [
               {
@@ -1067,10 +1094,16 @@ export function registerBctcFullTools(
         // regardless of what the publishability heuristics or recompute would do.
         // Shared with get_financial_summary / compare_financials — see
         // domain/services/financial-reports/bctcIdentityGuard.ts.
+        // FIX-BCTC-DATA-GAP-FAMILY U4/U5: income scalars passed so the
+        // income-broken-with-assets (HPG) and scale-corruption (VEA) predicates
+        // fire on this serve path too.
         {
           const identityGuard = checkBctcIdentityGuard({
             totalAssets: latestRow.total_assets,
             equityTotal: latestRow.equity_total,
+            netRevenue: latestRow.net_revenue,
+            operatingProfit: latestRow.operating_profit,
+            netProfit: latestRow.net_profit,
           });
           if (identityGuard.corrupt) {
             return {
@@ -1263,6 +1296,23 @@ export function registerBctcFullTools(
         // latestRow is passed to avoid a second DB query for PUB-5/6/8 scalar checks.
         const pubCheck = checkPublishability(db, latestRow.id, bankForm, latestRow);
         if (!pubCheck.publishable) {
+          // FIX-BCTC-DATA-GAP-FAMILY U6: when the rejection is the flat PUB-1
+          // "Chưa có dữ liệu BCTC" (refine never ran — DXG class) or the row is
+          // otherwise unpublishable, upgrade to a stage-granular reason when one
+          // exists: exact-pair quarantine (period-mismatch U3.3 / write-blocked
+          // U6b) or refine-pending (U6a). Preserve the exact PUB-* reason string
+          // when no diagnostic applies.
+          const noDataDiag = buildBctcNoDataDiagnostic(db, upperCode, latestRow.sort_key);
+          if (noDataDiag.kind !== "absent" && noDataDiag.text) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: noDataDiag.text,
+                },
+              ],
+            };
+          }
           return {
             content: [
               {

@@ -1,13 +1,16 @@
 /**
  * Task 048 — SSC Fetch → Parse → Store Pipeline
  * Task 293 — OCR cache fallback wiring
- * size-justification: 168L — FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-
+ * size-justification: 217L — FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-
  * LATEST (2026-08-12) added the Step 1 quarter-aware selection call +
  * fail-loud debounced-Telegram error branch (~35L) inline at the one call
  * site the architect brief scoped the fix to (selection logic itself lives
  * in the new bctc/selectSscDocument.ts sibling, kept small); further
  * extraction would split one already-small Step 1 block across two files
- * for no readability gain.
+ * for no readability gain. +46L: FIX-BCTC-DATA-GAP-FAMILY U3.2 (2026-08-29)
+ * added the period-mismatch queue-recovery path (markQueueRowUrlNotFound
+ * helper + catch-branch wiring) — a cohesive ~40L recovery block that must
+ * stay adjacent to the parseBctcReport catch site it guards.
  *
  * Application use case: orchestrates the full BCTC fetch-parse-store pipeline.
  *
@@ -36,6 +39,7 @@ import { resolvePdfText, normaliseFilename } from "./bctc/resolvePdfText.js";
 import { buildFiscalPeriod } from "./bctc/newsChainFallback.js";
 import { insertBctcAnalysis } from "./bctc/insertBctcAnalysis.js";
 import { selectSscDocumentForPeriod, SscDocumentPeriodNotFoundError } from "./bctc/selectSscDocument.js";
+import { BctcPeriodContentMismatchError } from "../../domain/services/financial-reports/periodContentExtractor.js";
 import {
   isBctcSignalDebounced,
   recordBctcSignalSent,
@@ -48,6 +52,34 @@ import type { FetchParseAndStoreBctcParams } from "./bctc/types.js";
 
 export { normaliseFilename };
 export type { QuarterString, InsertAnalysisFn, FetchParseAndStoreBctcParams } from "./bctc/types.js";
+
+/**
+ * FIX-BCTC-DATA-GAP-FAMILY U3.2: park the matching bctc_vps_queue row at
+ * 'url_not_found' so the enricher's Arm-2 grace re-discovery (U1) can re-fire
+ * discovery after the 7-day grace instead of leaving the row 'pending'
+ * forever (the runPipeline-null loop on manual re-push, live BID 2025-Q4).
+ * Non-fatal: the queue table may be absent in some test harnesses.
+ */
+function markQueueRowUrlNotFound(
+  db: ReturnType<typeof getDb>,
+  actionCode: string,
+  year: number,
+  periodType: string | null,
+): void {
+  if (!periodType) return;
+  try {
+    db.prepare(
+      `UPDATE bctc_vps_queue
+       SET status = 'url_not_found', attempts = attempts + 1, last_attempt = datetime('now')
+       WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+    ).run(actionCode, year, periodType);
+    logger.warn(`[fetchParseAndStoreBctc] ${actionCode} ${year}-${periodType} queue row parked at url_not_found (period-mismatch) — enricher Arm-2 will re-discover after grace`);
+  } catch (err) {
+    logger.warn("[fetchParseAndStoreBctc] queue-row url_not_found marking failed (non-fatal)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 /**
  * Full BCTC pipeline: SSC portal scrape → PDF download + parse → SQLite + LanceDB store.
@@ -150,6 +182,12 @@ export async function fetchParseAndStoreBctc(
     report = await parseBctcReport({ rawText, actionCode, period, publishedAt: doc.publishedAt ?? null });
   } catch (err) {
     logger.error(`${tag} parseBctcReport failed`, { error: err instanceof Error ? err.message : String(err) });
+    // FIX-BCTC-DATA-GAP-FAMILY U3.2: when the period-content guard fired, do
+    // NOT leave the queue row 'pending' — park it at 'url_not_found' for
+    // enricher re-discovery (see markQueueRowUrlNotFound doc).
+    if (err instanceof BctcPeriodContentMismatchError) {
+      markQueueRowUrlNotFound(getDb(), actionCode, year, period.periodType);
+    }
     return null;
   }
 

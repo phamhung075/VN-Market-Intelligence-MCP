@@ -374,10 +374,16 @@ export function registerReportTools(
         // ── Balance-sheet identity guard (FIX-BCTC-BANK-SUMMARY-MAPPING W1) ────
         // Shared with get_bctc_full / compare_financials — see bctcIdentityGuard.ts.
         // Third occurrence: VNM → VEA → CTG — guard at serve layer, not per-ticker patch.
+        // FIX-BCTC-DATA-GAP-FAMILY U4/U5: income scalars passed so the
+        // income-broken-with-assets (HPG) and scale-corruption (VEA) predicates
+        // fire on this serve path too.
         {
           const identityGuard = checkBctcIdentityGuard({
             totalAssets: row.total_assets,
             equityTotal: row.equity_total,
+            netRevenue: row.net_revenue,
+            operatingProfit: row.operating_profit,
+            netProfit: row.net_profit,
           });
           if (identityGuard.corrupt) {
             return {
@@ -523,14 +529,22 @@ export function registerReportTools(
         // NO guard call — never-fired scope gap. Check BOTH periods: a delta
         // computed against a corrupt period is meaningless regardless of which
         // side (period1/period2) is corrupt.
+        // FIX-BCTC-DATA-GAP-FAMILY U4/U5: income scalars passed (see
+        // get_financial_summary guard above for the rationale).
         {
           const guard1 = checkBctcIdentityGuard({
             totalAssets: row1.total_assets,
             equityTotal: row1.equity_total,
+            netRevenue: row1.net_revenue,
+            operatingProfit: row1.operating_profit,
+            netProfit: row1.net_profit,
           });
           const guard2 = checkBctcIdentityGuard({
             totalAssets: row2.total_assets,
             equityTotal: row2.equity_total,
+            netRevenue: row2.net_revenue,
+            operatingProfit: row2.operating_profit,
+            netProfit: row2.net_profit,
           });
           const failedGuard = guard1.corrupt ? guard1 : guard2.corrupt ? guard2 : null;
           const failedRow = guard1.corrupt ? row1 : row2;

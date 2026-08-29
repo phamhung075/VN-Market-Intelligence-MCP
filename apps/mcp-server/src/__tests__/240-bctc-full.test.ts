@@ -1209,7 +1209,7 @@ describe("FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE — fallback to
     expect(text).toContain("2026-Q2");
   });
 
-  it("negative control: explicit {year:2026, quarter:Q2} must NOT fall back — still returns the PUB-1 rejection for Q2 specifically", async () => {
+  it("negative control: explicit {year:2026, quarter:Q2} must NOT fall back — returns the per-period refine-pending reason for Q2 specifically", async () => {
     insertFinancialRow(db, {
       action_code: "FPT",
       period_year: 2026,
@@ -1238,11 +1238,17 @@ describe("FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE — fallback to
     const server = makeServer(db);
     const text = await callTool(server, "get_bctc_full", { code: "FPT", year: 2026, quarter: "Q2" });
 
-    expect(text).toBe("Chưa có dữ liệu BCTC");
+    // FIX-BCTC-DATA-GAP-FAMILY U6: a PENDING shell now returns the stage reason
+    // ("extracted, refine pending (N layout units, M refined)") instead of the
+    // flat "Chưa có dữ liệu BCTC" — the DXG 46th-cycle envelope fix. The
+    // negative-control intent is preserved: the answer is still per-period
+    // honest (names 2026-Q2, never substitutes 2026-Q1).
+    expect(text).toContain("refine pending");
+    expect(text).toContain("2026-Q2");
     expect(text).not.toContain("2026-Q1");
   });
 
-  it("no usable period in window — unchanged failure behavior when only a PENDING shell exists", async () => {
+  it("no usable period in window — only a PENDING shell exists → stage reason, not flat no-data (FIX-BCTC-DATA-GAP-FAMILY U6)", async () => {
     insertFinancialRow(db, {
       action_code: "HPG",
       period_year: 2026,
@@ -1256,7 +1262,9 @@ describe("FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE — fallback to
     const server = makeServer(db);
     const text = await callTool(server, "get_bctc_full", { code: "HPG" });
 
-    expect(text).toBe("Chưa có dữ liệu BCTC");
+    // U6: PENDING row → stage-granular reason (the true-absent case keeps the
+    // exact legacy string — asserted by the XYZ test below).
+    expect(text).toContain("extracted, refine pending");
   });
 
   it("multi-period skip: DONE (2025-Q4) → FAILED (2026-Q1) → PENDING shell (2026-Q2) — skips both unusable periods, serves 2025-Q4", async () => {

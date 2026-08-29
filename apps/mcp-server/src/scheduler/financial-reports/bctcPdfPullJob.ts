@@ -221,6 +221,15 @@ export interface BctcPdfPullResult {
    */
   deferred: number;
   /**
+   * FIX-BCTC-DATA-GAP-FAMILY U1.3: rows at status='pending' with a real
+   * http(s) source_url that is NOT pull-eligible (not VPS_BCTC_BASE_URL / not
+   * HSX_STATICFILE_BASE_URL) whose source_url was reset to NULL so
+   * bctcQueueEnricherJob's Arm-1 re-discovers them (enricher-reroute — the
+   * enricher is the single discovery owner). Absent (undefined) when the arm
+   * found nothing to reroute.
+   */
+  reroutedToDiscovery?: number;
+  /**
    * FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD: set to 'already_running' when this
    * invocation early-returned because a previous invocation was still
    * in-flight (module-level `_isRunning` guard). All counts above are 0 in
@@ -391,6 +400,57 @@ export async function runBctcPdfPullJob(opts: {
       failed: 0,
       deferred: 0,
     };
+
+    // ── 0. Enricher-reroute arm (FIX-BCTC-DATA-GAP-FAMILY U1.3) ─────────────
+    // Rows at status='pending' with a real http(s) source_url that is NOT
+    // pull-eligible (not VPS_BCTC_BASE_URL / not HSX_STATICFILE_BASE_URL) are
+    // structurally unpullable forever: this job's SELECT below never matches
+    // them, and the enricher never re-discovers because source_url is non-NULL
+    // (Arm-1 only selects NULL/placeholder values). Live case: BID 2025-Q4
+    // poisoned with an owa.hnx.vn corporate-governance URL stayed `pending`
+    // with attempts=0 forever (telegram 5214-5228).
+    //
+    // Route them back to the enricher instead of widening the pull predicate:
+    // the enricher is the single discovery owner, and owa.hnx.vn reachability
+    // from the mcp-server container is unverified (architect brief 2026-08-28
+    // U1.3). source_url is reset to NULL (status stays 'pending'), so Arm-1
+    // re-discovers on the next enricher cycle. Bounded (LIMIT 50); non-fatal
+    // on schema errors (e.g. missing last_attempt in simplified fixtures).
+    {
+      let rerouteRows: Array<{ id: number }> = [];
+      try {
+        rerouteRows = db
+          .query<{ id: number }, [string, string, number]>(
+            `SELECT id FROM bctc_vps_queue
+             WHERE status = 'pending'
+               AND source_url IS NOT NULL
+               AND source_url LIKE 'http%'
+               AND source_url NOT LIKE ?
+               AND source_url NOT LIKE ?
+             ORDER BY created_at ASC
+             LIMIT ?`,
+          )
+          .all(`${VPS_BCTC_BASE_URL}%`, `${HSX_STATICFILE_BASE_URL}%`, 50);
+      } catch (err) {
+        logger.debug("[bctcPdfPull] enricher-reroute arm query failed (non-fatal)", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        rerouteRows = [];
+      }
+
+      if (rerouteRows.length > 0) {
+        const rerouteStmt = db.prepare<void, [number]>(
+          `UPDATE bctc_vps_queue SET source_url = NULL, attempts = 0, last_attempt = datetime('now') WHERE id = ?`,
+        );
+        for (const row of rerouteRows) {
+          rerouteStmt.run(row.id);
+        }
+        result.reroutedToDiscovery = rerouteRows.length;
+        logger.warn("[bctcPdfPull] non-pull-eligible pending URLs rerouted to enricher for re-discovery", {
+          rerouted: rerouteRows.length,
+        });
+      }
+    }
 
     // ── 1. Query pending pull-eligible rows ──────────────────────────────────
     // B3-SPACE-URLS-FIX (2026-06-07): widened from VPS-only filter to include

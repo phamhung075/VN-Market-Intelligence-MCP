@@ -289,7 +289,15 @@ export async function runBctcQueueEnricherJob(opts: {
   //     previously, or failed PDF parse/enrichment downstream)
   //   - last_attempt IS NOT NULL AND last_attempt < datetime('now', '-7 days')
   //     (grace period expired — SSC may have published late filings)
-  //   - attempts < 6 (MAX_ENRICH_ATTEMPTS + 1 cap prevents infinite churn)
+  //   - attempts <= MAX_ENRICH_ATTEMPTS + 1 (FIX-BCTC-DATA-GAP-FAMILY U1: the
+  //     old `attempts < 6` bound excluded the attempts=6 rows THIS job itself
+  //     terminalizes — markUrlNotFoundStmt sets attempts=attempts+1 when
+  //     item.attempts >= MAX_ENRICH_ATTEMPTS(5), so every url_not_found row
+  //     landed at attempts=6 and was permanently excluded from the 7-day-grace
+  //     re-discovery the FIX-BCTC-ENRICHER-STUCK-BACKLOG comment below intends
+  //     ("after 7 days one more discovery pass"). Live: 26 url_not_found rows
+  //     parked at attempts 6-7. A row at attempts=6 is now re-eligible; the
+  //     last_attempt < -7 days gate still prevents unbounded churn.)
   //
   // Effect: rows permanently parked at url_not_found/enrich_failed after 7+
   // days get one more discovery pass. If still no URL → re-marked
@@ -354,7 +362,7 @@ export async function runBctcQueueEnricherJob(opts: {
         status IN ('url_not_found', 'enrich_failed')
         AND last_attempt IS NOT NULL
         AND last_attempt < datetime('now', '-7 days')
-        AND attempts < 6
+        AND attempts <= ${MAX_ENRICH_ATTEMPTS + 1}
       )
     )
     ORDER BY created_at ASC
@@ -454,6 +462,64 @@ export async function runBctcQueueEnricherJob(opts: {
       }
       logger.info("[bctcQueueEnricher] orphan-re-sync arm complete", {
         orphansResynced: result.orphansResynced,
+      });
+    }
+  }
+
+  // ── FIX-BCTC-DATA-GAP-FAMILY U1: deferred_infra NULL-URL arm ───────────────
+  //
+  // Rows parked at status='deferred_infra' by bctcPdfPullJob's
+  // MAX_404_ATTEMPTS cap with source_url=NULL are structurally unreachable by
+  // EVERY existing arm: Arm-1 requires status='pending', Arm-2 requires
+  // status IN ('url_not_found','enrich_failed'), and the orphan-re-sync arm
+  // above requires source_url LIKE '<VPS_BASE>%'. Live 2026-08-28: 293 of 328
+  // deferred_infra rows have NULL source_url — a permanent dead-end for the
+  // BID/FRT/KDH/EIB/SHB/GVR/GEX/VJC extraction-failure class.
+  //
+  // Recycle them past the SAME 7-day grace bound as Arm-2: reset to
+  // status='pending' (source_url already NULL) so Arm-1 re-discovers on the
+  // next cycle. `attempts` is reset to 0 on recycle (mirrors the
+  // FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS pattern). `last_attempt IS NULL` is
+  // accepted (a row never attempted is trivially past any grace).
+  {
+    const DEFERRED_NULL_URL_SQL = `
+      SELECT id, action_code, period_year, period_quarter
+      FROM bctc_vps_queue
+      WHERE status = 'deferred_infra'
+        AND source_url IS NULL
+        AND (last_attempt IS NULL OR last_attempt < datetime('now', '-7 days'))
+      LIMIT 50`;
+
+    let deferredNullRows: Array<{ id: number; action_code: string; period_year: number; period_quarter: string }> = [];
+    try {
+      deferredNullRows = db
+        .query<{ id: number; action_code: string; period_year: number; period_quarter: string }, []>(
+          DEFERRED_NULL_URL_SQL,
+        )
+        .all();
+    } catch (deferredErr) {
+      // Non-fatal — arm is best-effort; log and continue to the main arms.
+      logger.debug("[bctcQueueEnricher] deferred_infra NULL-URL arm query failed (non-fatal)", {
+        error: deferredErr instanceof Error ? deferredErr.message : String(deferredErr),
+      });
+      deferredNullRows = [];
+    }
+
+    if (deferredNullRows.length > 0) {
+      const resetDeferredStmt = db.prepare<void, [number]>(
+        `UPDATE bctc_vps_queue SET status = 'pending', attempts = 0, last_attempt = datetime('now') WHERE id = ?`,
+      );
+      for (const row of deferredNullRows) {
+        resetDeferredStmt.run(row.id);
+        result.orphansResynced++;
+        logger.info("[bctcQueueEnricher] deferred_infra NULL-URL row recycled for re-discovery", {
+          ticker: row.action_code,
+          year: row.period_year,
+          quarter: row.period_quarter,
+        });
+      }
+      logger.info("[bctcQueueEnricher] deferred_infra NULL-URL arm complete", {
+        recycled: deferredNullRows.length,
       });
     }
   }

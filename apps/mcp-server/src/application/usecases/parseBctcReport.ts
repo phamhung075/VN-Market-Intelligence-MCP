@@ -422,6 +422,50 @@ async function storeReport(
     return; // NO WRITE — either the existing good row is untouched, or no row is created at all.
   }
 
+  // FIX-BCTC-DATA-GAP-FAMILY U4: income-broken-with-assets write-side guard.
+  // Mirrors the serve-side predicate in bctcIdentityGuard.ts — when the
+  // balance sheet survived (totalAssets > 0) but the ENTIRE income statement
+  // extracted as zeros (netRevenue=0 AND operatingProfit=0 AND netProfit=0),
+  // the extraction is corrupt (HPG 2026-Q1/2025-Q4 fingerprint: OP=0, NR≈0,
+  // NP≈0, TA>0 — PUB-8's parent-only heuristic does NOT fire because NP is
+  // also 0). Refuse the INSERT/overwrite so the corrupt row never becomes a
+  // servable PARTIAL, and record the block durably (same bctc_zero_extract_blocks
+  // dead-letter semantics as the totalAssets guard above).
+  if (
+    report.balanceSheet.totalAssets > 0 &&
+    report.incomeStatement.netRevenue === 0 &&
+    report.incomeStatement.operatingProfit === 0 &&
+    report.incomeStatement.netProfit === 0
+  ) {
+    const blockReason =
+      `income-broken-with-assets: total_assets=${report.balanceSheet.totalAssets} with ` +
+      `net_revenue=0, operating_profit=0, net_profit=0 (income statement absent while ` +
+      `balance sheet present — partial OCR)`;
+    const blockResult = recordZeroExtractBlock(db, report.actionCode, report.period.sortKey, blockReason);
+    const reviewClause = !blockResult.recorded
+      ? `NOT flagged for manual review — the failure-record write itself failed (see server logs); this attempt is UNRECORDED.`
+      : blockResult.deadLettered
+        ? `flagged for manual review — DEAD-LETTERED after ${blockResult.attemptCount} blocked attempts (threshold=${BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS}); no further automatic re-extraction for this pair.`
+        : `flagged for manual review (blocked attempt ${blockResult.attemptCount}/${BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS}).`;
+    const blockMsg =
+      `[BCTC] Write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
+      `income statement extracted as all-zeros while balance sheet is present ` +
+      `(total_assets=${report.balanceSheet.totalAssets}) — refusing to persist a corrupt ` +
+      `income-broken row. ${reviewClause}`;
+    logger.warn(blockMsg, {
+      attemptCount: blockResult.attemptCount,
+      deadLettered: blockResult.deadLettered,
+      recorded: blockResult.recorded,
+    });
+    if (telegramBugFn) {
+      await telegramBugFn(blockMsg).catch(() => {});
+    } else {
+      const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
+      await sendTelegramBug(blockMsg).catch(() => {});
+    }
+    return; // NO WRITE — the corrupt income-broken row is never persisted.
+  }
+
   const stmt = db.prepare(`
     INSERT INTO financial_reports (
       id, action_code, company_name, exchange, domain,
@@ -653,6 +697,24 @@ export async function parseBctcReport(
   if (!periodCheck.consistent && periodCheck.contentSignal) {
     const mismatchErr = new BctcPeriodContentMismatchError(actionCode, period.sortKey, periodCheck.contentSignal);
     logger.error(mismatchErr.message);
+
+    // FIX-BCTC-DATA-GAP-FAMILY U3.1: durable quarantine record. The mismatch
+    // was previously ONLY a debounced Telegram line — no durable record
+    // anywhere, so the serve path returned flat "Chưa có dữ liệu BCTC" and
+    // enqueuers kept re-attempting the same doomed pair (BID 2025-Q4:
+    // runPipeline-null loop, live 2026-08-27/28). Reuse the
+    // bctc_zero_extract_blocks table (same dead-letter semantics as the
+    // totalAssets write-block family) with a 'period-mismatch:' reason carrying
+    // the content-derived period so an analyst can see WHY the slot is empty.
+    const contentSignal = periodCheck.contentSignal;
+    recordZeroExtractBlock(
+      getDb(),
+      actionCode,
+      period.sortKey,
+      `period-mismatch: content=${contentSignal.year}-Q${contentSignal.quarter} ` +
+        `(supplied ${period.sortKey}, ${contentSignal.matchCount} content matches vs ` +
+        `${contentSignal.runnerUpCount} runner-up)`,
+    );
 
     const debounceKey = `${period.sortKey}:period-mismatch`;
     const debounceDb = getDb();
