@@ -60,7 +60,26 @@
      inconsistency. Flagged NOT fixed (needs its own row, changes the on-disk naming contract every
      consumer globs): chef.md Step 0.5 and .claude/agents/unified-agent.md define FILEPATH's SLOT_ID as
      `chef-evening` while this file defines it as `evening`; both forms exist on disk for the same
-     slot on the same day. -->
+     slot on the same day.
+      FIX-CHEF-EVENING-L2L3-SILENT-GAP (tnb c137 finding #1 HIGH, 2nd consecutive confirmed evening
+      2026-08-25/26, agent-father 2026-08-29): +108L (1128→1236, incl. this header note) — closes
+      the silent-gap mechanism where the evening dish's L2 (US macro: PMI/consumer-sentiment/
+      EFFR-IORB) and L3 (CPI/VIRA/FX-reserves) were absent from the synthesis JSON with NO [gap:]
+      token (live: unified-agent-synthesis-2026-08-26-chef-evening.json, us_macro_layer=carry+gold+
+      oil only, vn_macro_layer=USD/VND+valuation only, known_gaps=2 L6 entries only). Three
+      coordinated changes: (1) Step 3 gains a MANDATORY per-element presence-or-gap-token floor for
+      every US/VN stack element, collecting $MACRO_GAP_TOKENS — a partial macro read can no longer
+      be composed as a "walked" layer; (2) Step 7.5 sub-check (a) L2_OK's geopolitical clause is
+      tightened so a bare gold/oil "risk-off" price-level sentence can no longer self-certify as the
+      4th US-stack element (event citation required), the ASSEMBLY unions $MACRO_GAP_TOKENS into
+      $KNOWN_GAPS_SO_FAR, and a negative-control example replays the exact 2026-08-26 evening text
+      through sub-checks (a)/(c) proving both fire; (3) Step 7.6's post-write jq gains
+      l2_floor/l3_floor CONTENT clauses (in addition to shape clauses) so a persisted file that
+      silently omits L2/L3 fails the command's exit code even if its shape is canonical — re-
+      calibrated over the live 79-file corpus: 37 pass / 42 fail (shape-only pre-fix: 55/24 over the
+      same corpus; honest self-flag baseline 08-23/24 evenings still pass both new clauses). No
+      schema change, no new section; in-place growth on Steps 3/7.5/7.6, same pattern as every
+      prior dated entry in this header. -->
 > Parent: [./chef.md](./chef.md)
 
 # Unified Agent — Chef Dish Body (Steps 1.5-8, TNB 6-Layer Recipe)
@@ -138,6 +157,33 @@ cheaper than explaining why you cannot continue.
 - **Foreign-room context (P0 indicator):** When available, `get_foreign_room()` provides per-ticker foreign-room utilization. Derive room exhaustion from high room_utilization_pct across watchlist. Use to refine FII flow thesis: high utilization (>80%) + rising rates → severe carry unwind risk; normal utilization → standard carry analysis applies.
 - **Market sentiment context (P0 indicator):** `get_market_sentiment_index()` provides market-wide sentiment z-score (news_sentiment_z). When FII thesis involves sentiment-driven inflow/outflow, correlate against this metric: sentiment_z > +2.0 while FII net-selling = divergence signal (profession vs retail).
 - **T-39 / BOP walk:** For any dish touching FX, banking, or trade: walk Current Account + Financial Account + E&O. The E&O line is the swing factor (FDI offshore parking). Source: `trade-fx-pressure-decomp` TRADE_FX.fx_incidence if available this cycle.
+
+**Per-element presence-or-gap-token floor (MANDATORY — FIX-CHEF-EVENING-L2L3-SILENT-GAP; closes the
+silent-gap mechanism where a partial macro read shipped as a "walked" L2/L3 with NO `[gap:]` token —
+2nd consecutive confirmed evening occurrence 2026-08-25/26, tnb c136/c137 finding #1):** every
+required element of the US stack (PMI, consumer sentiment, Fed rate + EFFR-IORB spread) and of the
+VN stack (USD/VND, CPI, VIRA/FX-reserves) MUST appear in the composed layer text EITHER as a cited
+live value from THIS cycle's tool calls OR as an explicit per-element `[gap:<element>_unavailable]`
+token. A layer that cites only a subset (e.g. carry-spread + gold + oil with no PMI, or USD/VND +
+valuation with no CPI/VIRA — the exact 2026-08-26 evening shape) is a FLOW VIOLATION: it must NEVER
+be composed as if the layer were walked, and it must NEVER pass through Step 7.5/7.6 untokened. This
+is the same reusable rule Step 5 already states for L5's data source, applied to every L2/L3 element:
+
+```
+MANDATORY TOKENS (one per element, ONLY when that element has no live value this cycle):
+  US stack: [gap:PMI_unavailable] [gap:consumer_sentiment_unavailable] [gap:EFFR_IORB_unavailable]
+  VN stack: [gap:USDVND_unavailable] [gap:CPI_unavailable] [gap:VIRA_unavailable] [gap:FX_reserves_unavailable]
+  (the geopolitical element's own [gap:geopolitical_event_absent] fallback already exists above —
+  keep it; the gap token MAY combine with the element tokens, e.g. "[gap:US_macro_unavailable]" as a
+  shorthand for all three US tokens, but ONLY if the narrative then says WHICH elements are absent)
+```
+
+Collect every such token emitted this step into `$MACRO_GAP_TOKENS` (a list in session state, empty
+list if all elements were cited with live values). This list is carried to Step 7.5's ASSEMBLY and
+unioned into `$KNOWN_GAPS_SO_FAR` (see Step 7.5 sub-check (e) + Step 7.6 known_gaps[]), so the L2_OK
+and L3_OK sub-checks see the tokens and the persisted JSON carries them. A silently-omitted element
+is NEVER acceptable — the floor is an honest, tokened gap, identical in spirit to the Step 1
+degraded-dish floor and the Step 5 `$L5_GAP_TOKEN` floor.
 
 **Thesis mapping:** US → VN via carry/FII flow chain. If US tightening → FII net-sell pressure on VN → document the transmission. Enrich with foreign-room utilization and market sentiment divergence signals if available.
 
@@ -659,9 +705,11 @@ $CONVICTION_CALLS     = [ { ticker, conviction_level, direction, pillars_aligned
                         business_context_cited = $BIZ_CTX_CITED[ticker] (Step 4) verbatim or null,
                         valuation_gate = $VALUATION_GATE[ticker] (Step 4, FR-8) verbatim or null.
                         This is the EXACT array Step 7.6 writes as conviction_calls[].
-$KNOWN_GAPS_SO_FAR    = union of $L6_GAP_TOKENS (Step 6) + $L5_GAP_TOKEN (Step 5, if set) — the same
-                        union rule Step 7.6 documents for known_gaps[], computed here so this gate can
-                        see it before scoring sub-check (e).
+$KNOWN_GAPS_SO_FAR    = union of $L6_GAP_TOKENS (Step 6) + $L5_GAP_TOKEN (Step 5, if set)
+                        + $MACRO_GAP_TOKENS (Step 3, if set — FIX-CHEF-EVENING-L2L3-SILENT-GAP: the
+                        per-element US/VN stack tokens, so sub-checks (a)/(c) below can see them) —
+                        the same union rule Step 7.6 documents for known_gaps[], computed here so
+                        this gate can see it before scoring sub-check (e).
 ```
 
 ```
@@ -671,11 +719,17 @@ $KNOWN_GAPS_SO_FAR    = union of $L6_GAP_TOKENS (Step 6) + $L5_GAP_TOKEN (Step 5
 # derived proxy of the US/VN rate differential and does NOT represent a US macro stack walk.
 L2_OK = ($US_MACRO_LAYER_TEXT contains "PMI" with an adjacent numeric value)
         OR ($US_MACRO_LAYER_TEXT contains "EFFR" AND "IORB" with an adjacent numeric spread)
-        OR ($US_MACRO_LAYER_TEXT cites a geopolitical/risk-sentiment event with a direction/confidence
-            clause — the 4th US-stack element per docs/architecture-briefs/2026-07-21-global-
-            geopolitical-signal-coverage.md §2 A4)
+        OR ($US_MACRO_LAYER_TEXT cites a genuine geopolitical/risk-sentiment EVENT — a named
+            chain_catalyst event (e.g. "US-Iran escalation", "China trade tensions") with a
+            direction/confidence clause, per docs/architecture-briefs/2026-07-21-global-
+            geopolitical-signal-coverage.md §2 A4. A bare gold/oil price-level sentence such as
+            "Gold at $4646 USD exceeds risk-off threshold" is NOT an event citation — it is a
+            price level, and it does NOT satisfy this clause (FIX-CHEF-EVENING-L2L3-SILENT-GAP:
+            the 2026-08-26 evening dish's entire L2 was exactly this shape and self-certified))
         OR ($US_MACRO_LAYER_TEXT or $KNOWN_GAPS_SO_FAR literally contains an L2 gap token, e.g.
-            [gap:macro_health_missing], [gap:US_macro_unavailable], or [gap:geopolitical_event_absent])
+            [gap:macro_health_missing], [gap:US_macro_unavailable], [gap:geopolitical_event_absent],
+            or any of Step 3's per-element US tokens: [gap:PMI_unavailable],
+            [gap:consumer_sentiment_unavailable], [gap:EFFR_IORB_unavailable])
 If $US_MACRO_LAYER_TEXT is empty or unset, L2_OK is FALSE unless the 4th clause's gap token is present.
 
 # Sub-check (b) — all 4 valuation pillars named (L4) — literal scan of $VALUATION_LAYER_TEXT +
@@ -819,6 +873,24 @@ other layer's state. Contrast with the pre-fix mechanism: a narrative "was PMI c
 self-grade has no mechanical tie to `$US_MACRO_LAYER_TEXT`'s actual content — exactly how 07-21/07-31/
 08-14 certified "full"/passed BIZ_CTX_OK with absent or Fed-funds-only L2 content and a genuinely
 non-empty `$BIZ_CTX_SIGNALS`.
+
+**Illustrative negative-control example (L2L3-SILENT-GAP — proves sub-checks (a)/(c) fire on the
+EXACT live 2026-08-26 evening shape tnb c137 finding #1 confirmed, closing the "gold risk-off
+passes for L2" loophole):** `$US_MACRO_LAYER_TEXT = "Fed carry spread 1.37pp maintains moderate
+premium with no immediate tightening signal. Gold at $4646 USD exceeds risk-off threshold. Oil
+neutral at $86.69 USD."` (no PMI, no consumer sentiment, no EFFR-IORB) and `$VN_MACRO_LAYER_TEXT =
+"USD/VND at 25920 exceeds 25000 threshold (BEARISH), creating import cost pressure. Valuation
+FAIRLY_VALUED with earnings yield 6.70% exceeding deposit rate 5.00%."` (no CPI, no VIRA), with
+`$KNOWN_GAPS_SO_FAR` = the 2 L6 entries the real file carried (single-pillar + gold regime-drift,
+NEITHER covering L2/L3). Scoring: sub-check (a) — `"PMI"`+numeric not found, `"EFFR"`/`"IORB"` not
+found, no named geopolitical EVENT (the gold sentence is a price level, NOT an event citation per
+the tightened clause), no L2 gap token → `L2_OK = FALSE` → `[gap:L2_US_macro_absent_no_gap_token]`.
+Sub-check (c) — USD/VND level present BUT `"CPI"` absent AND `$KNOWN_GAPS_SO_FAR` carries no
+`[gap:CPI_unavailable]`, `"VIRA"`/`"FX reserves"` absent AND no `[gap:VIRA_unavailable]`/
+`[gap:FX_reserves_unavailable]` → `L3_OK = FALSE` → `[gap:L3_VN_macro_incomplete]`. Both tokens land
+in `$FAILED_CHECKS` → `known_gaps[]` (Step 7.6 union) and `$LAYERS_WALKED_SUMMARY` — the exact
+output the real 2026-08-26 evening dish lacked. This is a mechanical substring-absence result on
+the real persisted text, not a judgement call.
 
 **Illustrative negative-control example (FR-8 — proves sub-check (h) actually fires on the exact live
 instance PO cited):** live 2026-08-14 evening dish, DXG. `$BIZ_CTX_SIGNALS["DXG"].valuation.verdict =
@@ -1032,7 +1104,26 @@ jq -r --arg qv "<Step 7.5's $QUALITY_VERDICT verbatim>" '
     val_gate:  (all(($d.conviction_calls // [])[]; . as $c
                  | ($c.valuation_gate == null) or ($c.valuation_gate.verdict != "AVOID")
                    or (($c.direction != "BUY") and ($c.valuation_gate.override_engaged == true)
-                       and (($c.valuation_gate.override_rationale // "") != ""))))
+                       and (($c.valuation_gate.override_rationale // "") != "")))),
+    l2_floor:  (($d.tnb_synthesis.us_macro_layer // "") as $u
+               | ($d.known_gaps // []) as $g
+               | (($u | test("PMI\\s*:?\\s*[0-9]"))
+                  or (($u | test("EFFR"; "i")) and ($u | test("IORB"; "i"))
+                      and ($u | test("[0-9]\\s*(bp|pp|basis)")))
+                  or (($u | test("chain_catalyst|geopolitic|trade war|escalat|military strike|tension"; "i"))
+                      and ($u | test("risk|confidence|direction|premium|active|tension|escalat"; "i")))
+                  or (any($g[]; . as $t | ($t | contains("[gap:"))
+                       and ($t | test("L2|US_macro|macro_health|geopolit|PMI|EFFR|consumer_sentiment"; "i")))))),
+    l3_floor:  (($d.tnb_synthesis.vn_macro_layer // "") as $v
+               | ($d.known_gaps // []) as $g
+               | (($v | test("USD/VND|USD-VND|USD VND"; "i"))
+                  and (($v | test("CPI"; "i"))
+                       or (any($g[]; . == "[gap:CPI_unavailable]"
+                            or . == "[gap:L3_VN_macro_incomplete]")))
+                  and (($v | test("VIRA|FX reserves|foreign reserves"; "i"))
+                       or (any($g[]; . == "[gap:VIRA_unavailable]"
+                            or . == "[gap:FX_reserves_unavailable]"
+                            or . == "[gap:L3_VN_macro_incomplete]")))))
   }
   | (to_entries | map(select(.value == false) | .key)) as $failed
   | if ($failed | length) == 0 then "SCHEMA_OK"
@@ -1043,7 +1134,17 @@ jq -r --arg qv "<Step 7.5's $QUALITY_VERDICT verbatim>" '
 Clause → meaning: `top_keys`/`meta_keys`/`tnb_keys` = exact key-set conformance (extras fail too, not
 just omissions); `dish_type` = the enum, via the slot mapping table above; `verdict` =
 `metadata.quality_verdict` equals what Step 7.5 actually computed; `cc_array` = `conviction_calls` is
-a top-level array; `dir_enum` = sub-check (g); `val_gate` = sub-check (h).
+a top-level array; `dir_enum` = sub-check (g); `val_gate` = sub-check (h). `l2_floor`/`l3_floor`
+(FIX-CHEF-EVENING-L2L3-SILENT-GAP) = the persisted Layer-2 US-stack / Layer-3 VN-stack CONTENT floors,
+mirroring Step 7.5 sub-checks (a)/(c): `l2_floor` requires `us_macro_layer` to carry a numeric PMI,
+an EFFR+IORB spread, or a genuine geopolitical event citation (event keyword + risk/direction
+vocabulary — a bare "gold exceeds risk-off threshold" price level does NOT count), or a matching L2
+gap token in `known_gaps[]`; `l3_floor` requires `vn_macro_layer` to carry a USD/VND level AND (CPI
+or `[gap:CPI_unavailable]`) AND (VIRA/FX-reserves or `[gap:VIRA_unavailable]`/
+`[gap:FX_reserves_unavailable]`). A file that silently omits L2/L3 content without the gap tokens
+fails here even if every shape clause passes — the 2026-08-26 evening file is the live calibration
+instance (it fails top_keys for schema divergence AND l2_floor/l3_floor for content absence on the
+old-schema write, and would fail l2_floor/l3_floor on a canonical-schema write of the same content).
 
 Non-zero exit (or any `SCHEMA_FAIL:` line) → re-Write ONCE with the listed clauses corrected, then run
 the SAME command again. If the second run also fails, treat as `tool-error` per `chef-telemetry.md`'s
@@ -1056,7 +1157,14 @@ including `unified-agent-synthesis-2026-08-22-chef-evening.json`, written after 
 landed, which shipped 9 top-level keys and a reshaped `metadata` with no
 `[gap:schema_nonconformant_corrected]` token. Re-running the command above over that whole corpus
 reproduces every one of those 19 failures and passes the other 50 — so the clauses are calibrated
-against real data, not invented.
+against real data, not invented. (FIX-CHEF-EVENING-L2L3-SILENT-GAP, 2026-08-29: `l2_floor`/
+`l3_floor` were added to the same command so the CONTENT floors are enforced at persist time, not
+just at Step 7.5 — re-calibrated over the live 79-file corpus: the shape-only command (pre-fix)
+scores 55 pass / 24 fail; with the two content clauses added it scores 37 pass / 42 fail. All 18
+additional failures are the silent-L2/L3 class — files that pass every shape clause but carry no
+US/VN stack content or gap tokens (e.g. 2026-08-26 evening, which the audit confirmed, plus the
+08-26 EOD the same audit scored E✗ "VIRA absent, undeclared" on). The 2026-08-23/24 evening files
+— the honest self-flag baseline c134/c136 praised — pass both new clauses.)
 
 **Intraday silent-exit exception:**
 If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.6 entirely — no JSON file is written for silent cycles. The exit in Step 1 already returned early before reaching Step 7.

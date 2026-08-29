@@ -87,3 +87,13 @@
 - Verify by running the guard — REJECTED: it mints live; verified by hand-replaying its two read-only extractors + one guarded fixture run (ORCH_APPLY_LIVE_FILE_OVERRIDE→/tmp).
 **why-decision:** BEFORE (HEAD docs + synthetic fixture) reproduces UNROUTED_A=15/UNROUTED_B=6; AFTER is clean on both, and the real guard script exits 0 PASS against the disposable fixture, exit 1 on HEAD docs — honest green, not input-deletion green.
 **why-change:** Envelope 31b7f837's hold-back (SYSTEMISSUE member AC-3) is stale — PO's 2026-08-26 secondary-drain cleared the inbox to zero before this hop; the fix stands on the table rows alone, and the empty live inbox (vacuous-green trap) is covered by the synthetic-fixture verification.
+
+### STEP agent-father-S72 · agent-father · 2026-08-29T00:40:00Z
+**task-id:** FIX-CHEF-EVENING-L2L3-SILENT-GAP
+**what-done:** Diagnosed the evening L2/L3 silent-gap mechanism in chef-dish.md (live 08-26 evening JSON: carry+gold+oil US layer, USD/VND+valuation VN layer, 2 L6-only known_gaps; old-schema write bypassed the Step 7.6 jq) and fixed all three layers: Step 3 mandatory per-element presence-or-gap-token floor ($MACRO_GAP_TOKENS), Step 7.5 L2_OK geopolitical-clause loophole closed (bare gold/oil "risk-off" price level no longer self-certifies) + ASSEMBLY unions $MACRO_GAP_TOKENS + negative-control example, Step 7.6 jq gains l2_floor/l3_floor content clauses (re-calibrated: 37/42 over 79 files vs shape-only 55/24; honest 08-23/24 baseline still passes).
+**what-considered:**
+- Fix only Step 7.5 (gate narration) — REJECTED: the live write bypassed Step 7.5/7.6 entirely via an old-schema file, so gate-only prose cannot guarantee-fire.
+- Fix only Step 7.6 jq — REJECTED: without the Step 3 composition floor + L2_OK tightening, the model can still compose and pass a partial stack.
+- All three in one edit — ADOPTED: composition floor (Step 3), gate semantics (Step 7.5), persist-time machine check (Step 7.6) close the gap at every point a silent omission could slip.
+**why-decision:** Fail-loud or guaranteed-fire demands enforcement at composition AND persist; the persist jq's exit code is the only check the divergent old-schema path cannot skip once the write lands.
+**why-change:** No change. Sibling FIX-CHEF-EVENING-BIZCTX-NULL targets the same file — left chef-dish.md fully consistent and committed so the queued row edits a clean tree.
