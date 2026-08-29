@@ -34,7 +34,18 @@
      Axis C (stale-owner, reuses the Phase A.5 `roster` read already in scope, closes AC-3) per
      architect ruling docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-
      mismatch-design.md §3. MARKER_TTL constants and the prefix-match shape itself are UNCHANGED
-     (PO's rejected exact-match recommendation stays rejected); only the staleness test is new. -->
+     (PO's rejected exact-match recommendation stays rejected); only the staleness test is new.
+     FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY 2026-08-29: the 08-26 Axis D staleness test
+     (AGE_SEC = now - claimed_at >= CADENCE_SEC) is pure claimed_at arithmetic and only tracks the
+     period boundary if every fire claims at a non-decreasing time-of-day — live 2026-08-26T19:47:35Z:
+     held published:chef-evening:2026-08-25 (period key = YESTERDAY) had claimed_at 2026-08-25T19:53:25Z,
+     AGE_SEC=86050 < 86400, so the age-bound took the CURRENT-PERIOD branch and did NOT `continue`
+     (5m50s band; recurs weekly-scale too). PO ruling (detector_defect 5d1ca94e): compare the
+     period-key SUFFIX embedded in the task_id (e.g. "2026-08-25") against the slot's CURRENT period
+     key derived from its own publish_date_basis as guard on claimed_at arithmetic — the string is
+     unambiguous where the age is not. Age arithmetic retained ONLY as a defensive fallback when the
+     suffix/current-key comparison is unavailable (malformed key, derivation failure) — never weaker
+     than the 08-26 revision. -->
 
 **Trigger:** router (or any dispatcher) about to spawn an agent for sprint-task, intent, or cowork-slot work
 
@@ -46,19 +57,24 @@
 
 ## OWNERSHIP KEY — Authoritative
 
-`owner_client_session = $CLAUDE_CODE_SESSION_ID` is the **sole** authoritative ownership key for
+`owner_client_session = <coordination session id>` is the **sole** authoritative ownership key for
 every claim, heartbeat, and release at the router scope. `owner_agent` is a human-readable role
 label only (for logs and dashboards); it MUST NOT be used as the ownership discriminator.
 
 Two sessions running the same role (two dev teams, two analysis teams) share `owner_agent`. The
-per-session UUID (`CLAUDE_CODE_SESSION_ID`) is the only field that distinguishes them.
+per-session coordination id is the only field that distinguishes them.
 
-If `$CLAUDE_CODE_SESSION_ID` is unset, mint a stable fallback and log a warning:
+**Resolving the coordination session id (two substrates — DSH-TWO-TEAM-REMAKE 2026-08-28):**
+DSH session → `$DSH_SESSION_ID`; Claude Code session (legacy) → `$CLAUDE_CODE_SESSION_ID`. Shell
+scripts resolve via `scripts/agents-flow/lib/session-id.sh` → `orch_session_id()` (DSH first, Claude
+fallback, empty = fail-closed). An LLM agent resolves whichever of the two is set in its environment.
+
+If **neither** is set (unexpected, both substrates export exactly one), mint a stable fallback and
+log a warning — but prefer failing closed (the preflight scripts emit ERROR, they do not mint):
 
 ```bash
-if [ -z "$CLAUDE_CODE_SESSION_ID" ]; then
-  CLAUDE_CODE_SESSION_ID="host-$(hostname)-pid-$$-ts-$(date +%s)"
-  echo "[router-warn] CLAUDE_CODE_SESSION_ID unset, minting fallback: $CLAUDE_CODE_SESSION_ID"
+if [ -z "$(orch_session_id 2>/dev/null)" ] && [ -z "${DSH_SESSION_ID:-}" ] && [ -z "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+  echo "[router-warn] coordination session id unset (neither DSH_SESSION_ID nor CLAUDE_CODE_SESSION_ID)"
 fi
 ```
 
@@ -648,7 +664,7 @@ else:
                                    # check every slot this agent owns (cost asymmetry: one skipped
                                    # manual spawn is cheaper than a reproduced double-dispatch)
 
-# --- FR-3: cadence-bounded prefix probe — Axis D (age-bound) + Axis C (stale-owner), landed
+# --- FR-3: cadence-bounded prefix probe — Axis D (period-key guard) + Axis C (stale-owner), landed
 # together per architect ruling (docs/architecture-briefs/2026-08-23-fix-cowork-published-
 # marker-ttl-cadence-mismatch-design.md §3, FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-
 # DAILY-CADENCE). Root cause this closes: a bare prefix match has no notion of "which period" —
@@ -662,10 +678,37 @@ else:
 # axis D alone does not cover. Neither axis alone satisfies the full AC set (brief §3). The
 # MATCH shape (prefix, not exact period-key) is UNCHANGED — PO's rejected exact-match
 # recommendation (po_rescope_note, telegram report 4861) stays rejected; only the staleness
-# test is new.
+# test changed.
+# FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY 2026-08-29 (PO ruling, detector_defect 5d1ca94e):
+# the 08-26 staleness test (AGE_SEC >= CADENCE_SEC) is claimed_at arithmetic and misreads a
+# structurally-prior-period marker as current when the prior fire ran later-in-day than the
+# current dispatch (live 2026-08-26T19:47:35Z: held published:chef-evening:2026-08-25 — period
+# key = YESTERDAY — had claimed_at 2026-08-25T19:53:25Z, AGE_SEC=86050 < CADENCE_SEC=86400, so
+# Axis D took the CURRENT-PERIOD branch and did NOT `continue`, opening a 5m50s false-block
+# band that also inverts to a false-clear when the current fire runs later). Fix per PO ruling:
+# compare the period-key SUFFIX embedded in the task_id (e.g. "2026-08-25") against the CURRENT
+# period key derived from the slot's own publish_date_basis — the string is unambiguous where
+# the age is not. Age arithmetic is kept ONLY as a fallback when the suffix comparison is
+# indeterminate (malformed key / derivation failure) — never weaker than the 08-26 revision.
 CADENCE_SEC_BY_BASIS = {
   "utc_date": 86400, "vn_date": 86400,
   "iso_week_period": 604800, "vn_date_saturday_anchor": 604800
+}
+
+# CURRENT_PERIOD_KEY_BY_BASIS — the period-key string the CURRENT dispatch for this slot would
+# claim, derived from `now` + publish_date_basis (same source each flow's own Phase-1 gate uses;
+# zero date-basis duplication, EC-4 — the router never re-derives per-flow logic, only maps the
+# already-returned `now` through the slot's own declared basis):
+CURRENT_PERIOD_KEY_BY_BASIS = {
+  "utc_date":                bash `date -u +%Y-%m-%d`,                          # e.g. "2026-08-29"
+  "vn_date":                 bash `TZ=Asia/Ho_Chi_Minh date +%Y-%m-%d`,          # UTC+7 date
+  "iso_week_period":         bash `MON=$(date -u -v-Mon +%Y-%m-%d); SUN=$(date -u -v-Mon -v+6d +%Y-%m-%d); echo "$MON/$SUN"`,
+                             # current ISO week Mon–Sun range, same periodKey shape digest-predict
+                             # uses ("2026-08-24/2026-08-30"); BSD `date -v` (macOS dev host),
+                             # GNU equivalent `date -u -d 'last monday' ... +6 days`
+  "vn_date_saturday_anchor": bash `if [ "$(TZ=Asia/Ho_Chi_Minh date +%w)" = "0" ]; then TZ=Asia/Ho_Chi_Minh date -v-1d +%Y-%m-%d; else TZ=Asia/Ho_Chi_Minh date +%Y-%m-%d; fi`
+                             # PERIOD_SAT — the Saturday date of the current VN weekend, same
+                             # rule fb-market-poster/flow/weekly-recap.md:47 uses
 }
 
 held = call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "cowork-slot", expired: false })
@@ -683,7 +726,8 @@ roster_session_ids = [row.owner_client_session for row in roster]   # `roster` =
 collision = null
 for slot_id in TARGET_SLOTS:
   SLOT_RECORD = jq --arg s "$slot_id" '.slots[] | select(.slot_id==$s)' docs/data/cowork-schedule.json
-  CADENCE_SEC = CADENCE_SEC_BY_BASIS[SLOT_RECORD.publish_date_basis]   # null if basis absent/unmapped
+  CADENCE_SEC = CADENCE_SEC_BY_BASIS[SLOT_RECORD.publish_date_basis]      # null if basis absent/unmapped
+  CURRENT_PERIOD_KEY = CURRENT_PERIOD_KEY_BY_BASIS[SLOT_RECORD.publish_date_basis]   # null if absent/unmapped
 
   for row in held:
     if row.task_id == "cowork-slot:" + slot_id: collision = row; break
@@ -696,14 +740,27 @@ for slot_id in TARGET_SLOTS:
         # row's evidence covers; do not silently relax slots never analyzed for this defect.
         collision = row; break
 
-      AGE_SEC = now - row.claimed_at
-      if AGE_SEC >= CADENCE_SEC:
-        continue   # AXIS D — prior-period marker; structurally cannot describe the CURRENT
-                   # window (AC-1/AC-6). No date/timezone/period-string computed — pure
-                   # arithmetic on an already-returned field. Keep scanning: a genuinely
-                   # current-period marker for this same slot, if one exists, must still block.
+      # AXIS D (period-key) — FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY. The period-key
+      # SUFFIX embedded in the task_id (e.g. "2026-08-25") is the unambiguous "which period"
+      # signal; compare it against the CURRENT period key derived from the slot's own
+      # publish_date_basis. A mismatch means the marker is structurally prior- (or future-)
+      # period — it cannot describe the CURRENT window regardless of claimed_at (AC-1/AC-6).
+      PERIOD_KEY = <suffix of row.task_id after "published:" + slot_id + ":">   # e.g. "2026-08-25"
+      if CURRENT_PERIOD_KEY != null and PERIOD_KEY != CURRENT_PERIOD_KEY:
+        continue   # AXIS D — prior/future-period marker; the embedded suffix string is
+                   # unambiguous where claimed_at age arithmetic is not. Keep scanning: a
+                   # genuinely current-period marker for this same slot, if one exists,
+                   # must still block.
 
-      # AGE_SEC < CADENCE_SEC — marker IS within the current period (AC-2, no regression).
+      # Suffix comparison indeterminate (current key derivation failed, or PERIOD_KEY empty/
+      # malformed) — fall back to the 08-26 claimed_at arithmetic (never weaker than pre-fix):
+      if CURRENT_PERIOD_KEY == null or PERIOD_KEY == "" or PERIOD_KEY not parseable:
+        AGE_SEC = now - row.claimed_at
+        if AGE_SEC >= CADENCE_SEC:
+          continue   # AXIS D (age fallback) — prior-period marker by age (pre-fix behavior)
+
+      # PERIOD_KEY == CURRENT_PERIOD_KEY (or age fallback said current) — marker IS within the
+      # current period (AC-2, no regression).
       if row.owner_client_session not in roster_session_ids:
         continue   # AXIS C / AC-3 — current-period marker, but the claiming dispatcher
                    # session is absent from the presence roster already read this cycle
@@ -712,7 +769,7 @@ for slot_id in TARGET_SLOTS:
       collision = row; break
   if collision: break
     # Prefix match itself retained deliberately (07-29 ruling) — cadence-agnostic, zero
-    # date-basis duplication (EC-4). Only the STALENESS test changed.
+    # date-basis duplication (EC-4). Only the STALENESS test changed (age → period-key suffix).
 
 # --- FR-4: symmetric response — reuse the EXACT Phase B peer-collision text, same lock class ---
 if collision != null:
