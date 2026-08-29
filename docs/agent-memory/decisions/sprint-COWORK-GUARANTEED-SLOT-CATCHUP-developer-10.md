@@ -101,3 +101,13 @@
 - Exact task_id match: still rejected (PO's earlier exact-match rejection stands — would reintroduce per-flow date-basis computation in the router).
 **why-decision:** The period-key suffix is unambiguous where age is not — it names the period directly, so a prior-period marker can never be misread as current (false-block) and a current-period marker can never be false-cleared, daily AND weekly, regardless of fire-time jitter. Age arithmetic retained only as a defensive fallback, never weaker than the 08-26 revision.
 **why-change:** no change from plan — board row's `files[]` pointed at spawn-fanout.md but the Axis D logic actually lives in dispatch-claim/SKILL.md (confirmed by 2026-08-23 brief §5 table + 2026-08-28 LAYERC brief "touches Step 2.4 Axis D"); fixed the real file and corrected files[] on the lane-move write.
+
+### STEP developer-S140 · developer · 2026-08-29T01:25:00Z
+**task-id:** FIX-COWORK-FANOUT-LOAD1MIN-COMMA-LOCALE-PARSE
+**what-done:** Replaced spawn-fanout.md Step 5.1's inline comma-splitting LOAD_1MIN awk with ONE scripted comma-safe probe (scripts/agents-flow/cowork-load-probe.sh + .test.sh): extracts the first token after "load average(s):", normalizes only the DECIMAL comma → dot; live-verified on this comma-locale host ("4,22 4,75 5,27" → 4.22 == LC_ALL=C ground truth) + fixture-verified for the exact cowork-fire case "2,19" → "2.19" never "219" (20/20 PASS). Fail-loud exit 2/3, empty stdout on unparseable (caller treats load as unknown, NFR-P1-3).
+**what-considered:**
+- Inline-only awk fix: correct parse but keeps per-tick LLM improvisation surface (the 219 class WAS an improvised `tr -d ','`).
+- Scripted probe (CHOSEN): one shared source, zero improvisation, fixture-tested — mirrors FIX-COWORK-LAYERC's cowork-identity-preamble.sh precedent; row status_note explicitly directs "scripted gate (scripts/agents-flow/)".
+- LC_ALL=C pinning: rejected (po-triage remedy note: pinning + any comma-splitting parse = concatenation garbage); token-normalize is locale-neutral by construction.
+**why-decision:** The defect class is "parse improvised per tick" — only a scripted, fixture-tested probe removes the improvisation surface, and it is the row's own stated fix direction.
+**why-change:** no change — surface confirmed as spawn-fanout.md Step 5.1 (dispatch-claim/SKILL.md has NO load parse; its Step 2.4 is the unrelated Axis D period-key guard owned by the AXISD task — untouched). files[] extended with the 2 new scripts on the lane-move (AXISD files[]-correction precedent).
