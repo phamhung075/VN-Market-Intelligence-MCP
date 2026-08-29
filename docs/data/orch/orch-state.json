@@ -19981,6 +19981,33 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
+      },
+      {
+        "id": "FIX-CHEF-EVENING-BIZCTX-NULL",
+        "title": "chef-evening conviction_calls business_context_cited ALL null despite consuming bctc_signal_* files EOD's same-day dish cited successfully — wiring divergence vs EOD (tnb c137 #2)",
+        "owner": "po",
+        "zone": "docs/agents/unified-agent/",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "files": [
+          "docs/agents/unified-agent/flow/chef-dish.md"
+        ],
+        "status_note": "tnb c137 finding #2 HIGH: evening's 3 calls (FPT/VCB/HPG) all business_context_cited:null with same files in signals_consumed.bctc_signal that EOD cited (field=ops). Distinct from FIX-CHEF-EOD-BIZCTXOK-GATE-NARRATED-NOT-EVALUATED (that=EOD narrated-absent-but-present; this=evening actually-absent-and-not-narrated). BUG msg 5768. | [agent-father 2026-08-29T00:42:22Z] FIX COMPLETE commit fbad14ced453e1fb01f15239dbcc40f095421efc — chef-dish.md Step 4 per-ticker business-context presence-or-gap floor (State A cite / B unusable / C absent, $BIZ_CTX_GAP_TOKENS) + Step 7.5 sub-check (d) retargeted dish-level to per-ticker (every entry cited OR per-ticker gap token; dish-level token only for literal-empty-dict) + negative-control example replaying exact 08-26 evening shape + Step 7.6 jq bizctx_floor content clause (calibrated 32/47 over 79-file corpus vs 37/42 pre-fix; 5 net-new silent-null-class failures; honest 08-23 baseline passes). DJ-GATE-1: agent-father-S73.\n[QA] Review Record (direct-commit verify): 3-layer silent-bizctx-null fix verified: Step 4 per-ticker State-A/B/C floor + $BIZ_CTX_GAP_TOKENS; Step 7.5 sub-check (d) retargeted per-ticker; Step 7.6 jq bizctx_floor clause. Exact doc jq re-run: 08-26 evening SCHEMA_FAIL incl. bizctx_floor exit 1; 08-23 honest baseline SCHEMA_OK exit 0; 79-file corpus 32/47 vs 37/42 pre-fix, 5 net-new all silent-null class. No L2L3 reversion (dd482d697 Step 3 floor intact). DJ-GATE-1 agent-father-S73 + qa-S257.",
+        "origin_signal_id": "58b6e9decc7fc227301bf7c71fc629238d9087b94493b8b4bbb9f4eb54a6dd37",
+        "updated_at": "2026-08-29T00:49:36Z",
+        "commit_sha": "fbad14ced453e1fb01f15239dbcc40f095421efc",
+        "updated_by": "agent-father",
+        "qa_verified_at": "2026-08-29T00:49:35Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + doc's exact Step 7.6 jq (chef-dish.md L1198-1239) run live over 79-file corpus",
+            "args": "commit=fbad14ced453e1fb01f15239dbcc40f095421efc; files=docs/agents/unified-agent/flow/chef-dish.md",
+            "live_value_observed": "ancestor=yes; stat touches 2/2 claimed files (chef-dish.md +162/-20, agent-father journal +10); 08-26 evening SCHEMA_FAIL top_keys,meta_keys,verdict,tnb_keys,l2_floor,l3_floor,bizctx_floor exit 1; 08-23 baseline SCHEMA_OK exit 0; corpus 37/42 pre-fix -> 32/47 with bizctx_floor, 5 net-new silent-null (07-22-intraday, 07-24-intraday, 08-05-morning, 08-12-eod, 08-26-intraday); Step 3 MACRO_GAP_TOKENS floor intact",
+            "observed_at": "2026-08-29T00:49:35Z"
+          }
+        }
       }
     ],
     "head": {
@@ -23823,25 +23850,6 @@
         "updated_at": "2026-08-29T00:42:47Z",
         "updated_by": "developer",
         "created_by": "po"
-      },
-      {
-        "id": "FIX-CHEF-EVENING-BIZCTX-NULL",
-        "title": "chef-evening conviction_calls business_context_cited ALL null despite consuming bctc_signal_* files EOD's same-day dish cited successfully — wiring divergence vs EOD (tnb c137 #2)",
-        "owner": "po",
-        "next_agent": "qa",
-        "zone": "docs/agents/unified-agent/",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "REVIEW",
-        "files": [
-          "docs/agents/unified-agent/flow/chef-dish.md"
-        ],
-        "status_note": "tnb c137 finding #2 HIGH: evening's 3 calls (FPT/VCB/HPG) all business_context_cited:null with same files in signals_consumed.bctc_signal that EOD cited (field=ops). Distinct from FIX-CHEF-EOD-BIZCTXOK-GATE-NARRATED-NOT-EVALUATED (that=EOD narrated-absent-but-present; this=evening actually-absent-and-not-narrated). BUG msg 5768. | [agent-father 2026-08-29T00:42:22Z] FIX COMPLETE commit fbad14ced453e1fb01f15239dbcc40f095421efc — chef-dish.md Step 4 per-ticker business-context presence-or-gap floor (State A cite / B unusable / C absent, $BIZ_CTX_GAP_TOKENS) + Step 7.5 sub-check (d) retargeted dish-level to per-ticker (every entry cited OR per-ticker gap token; dish-level token only for literal-empty-dict) + negative-control example replaying exact 08-26 evening shape + Step 7.6 jq bizctx_floor content clause (calibrated 32/47 over 79-file corpus vs 37/42 pre-fix; 5 net-new silent-null-class failures; honest 08-23 baseline passes). DJ-GATE-1: agent-father-S73.",
-        "origin_signal_id": "58b6e9decc7fc227301bf7c71fc629238d9087b94493b8b4bbb9f4eb54a6dd37",
-        "updated_at": "2026-08-29T00:43:24Z",
-        "commit_sha": "fbad14ced453e1fb01f15239dbcc40f095421efc",
-        "updated_by": "agent-father"
       }
     ],
     "qa": [],
