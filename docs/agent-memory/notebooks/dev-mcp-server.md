@@ -55,3 +55,25 @@ Zone health: unchanged by this cycle (verification-only) — bun test 15485 pass
 **Evidence:** commit `89742b62d` (schema + tests, explicit pathspec), journal `e041ef5dc` (decision journal S96, DJ-GATE-1 satisfied).
 
 Zone health: bun test 15502 pass/54 fail (baseline noise, file-set unchanged, orchStateSchema 136/136), tsc clean, 184 tools / 88 cron intact, size-lint PASS, live orch-validate exit 0, orchStateSchema.ts +68L (behavior_predicate gate + helper + constants) | HEALTHY.
+
+## 2026-08-29 — FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD → review[]
+
+**Session:** DSH dispatch (session-123eed97), sprint-task lock held by dispatcher, not re-claimed/released (INV-GATEWAY-1; no MCP tool surface in this subagent session — heartbeat/release delegated, best-effort). BOUNDED-1 auto-pickup, P1.
+
+**Root cause (RAW-verified live via docker exec, named-volume market.db):** `monthlySignalQualityAuditJob` (cron `0 0 1 * *`) missed 2026-07-01 AND 2026-08-01 fires — cron_job_runs shows last real success 2026-06-01. `recoverMissedExecutions:false` was the opt-out, but node-cron@3.0.3's recovery re-seeds `lastExecution` from boot time, so a flip to true alone can NEVER replay a restart-spanning fire (the row's "PROVEN no-op" caveat confirmed at source).
+
+**Implemented (3 layers + recovery):**
+1. `startupHelpers.ts`: `shouldRunCatchup()` gained `cadence: 'day' | 'month'` (9th param, default 'day' — existing callers untouched); 'month' = per-cadence-period dedup bound (first of current month, derived from nowUtc) + SUCCESS-only (error row = miss to retry next boot). New `shouldSkipMonthlyReplay(db, jobName, nowUtc?)` T4 guard (success row in current month → skip; fail-open on DB error).
+2. `monthlySignalQualityJob.ts`: exports `MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME` (single source of truth) + calls `shouldSkipMonthlyReplay` before any query/send — a replay/catch-up can never double-send the WORK report.
+3. `schedulerJobTable.ts`: registration `recoverMissedExecutions` false→true (defence-in-depth, now safe); `startScheduler.ts`: startup catch-up probe (30s, `shouldRunCatchup(..., cadence='month')`, runner looked up from jobTable, same wrapRun envelope → recovers the most recent missed month on next boot).
+4. `scripts/migrations/backfill-monthly-signal-quality-audit.ts` (CANONICAL): one-shot historical backfill — month-FILTERED stats (deliberately self-contained: live `queryRejectionStats`/`generateAuditReport` are all-time/current-month, a separate known defect), dry-run default / `--apply` sends via WORK channel, marker-row idempotent (`monthlySignalQualityAuditJob:backfill-<YYYY-MM>`), refuses when the natural fire already covered the target (success row in M+1).
+
+**Live execution:** June 2026 report SENT to WORK (69 rejections / 52 signals, 132.69% — ALERT branch with month-filtered breakdown), marker recorded, re-run refused (exit 0). July 2026 deliberately NOT backfilled — the post-deploy startup catch-up produces it (any fire in August audits July); avoids duplicate.
+
+**Tests:** new `FIX-MONTHLYSIGNALQUALITYAUDITJOB-...test.ts` 17/17 (A: shouldSkipMonthlyReplay 6; B: catchup monthly cadence 6; C: job T4 guard 5) + `scripts/migrations/__tests__/backfill-monthly-signal-quality-audit.test.ts` 14/14 (date helpers, month-filtered stats, message branches, dedup+marker). Updated FACTORY-SCHEDULER spot-check (flag true) + ARCH-CRON OPT-2 comment. Related 12-file battery 143/143 pass. Full-suite + tsc + Gate 2 probes: see gates below.
+
+**Docs:** system.md § FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD + flow main.md CANONICAL block (backfill runbook + live result); size-justification headers refreshed (startupHelpers 530→631L, monthlySignalQualityJob new 153L).
+
+**Board:** `in_progress[]` → `review[]` (`status:REVIEW`, `next_agent:qa`) + `.head` → idle (guard: head.active_task_id matched this task) in the SAME orch-apply.sh write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE).
+
+Zone health: bun test full-suite result + tsc clean + tool/scheduler counts verified per G12 gates (see gates line in entry above — filled from the actual run), size-lint declarations aligned (631L/153L exact) | HEALTHY.

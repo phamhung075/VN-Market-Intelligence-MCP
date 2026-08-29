@@ -17,3 +17,13 @@
 - Enforce pre-cutoff (no cutoff constant) — rejected outright: every P0/P1 apps/ row on the board predates the mint-time field; bare hard-reject would brick the hot file on next write (the exact deploy-ordering hazard this cycle exists to close).
 **why-decision:** the ACs (agent-father flow_actuator_fix 3cf9b17b) are copy-executable and the brief §5c is the design SSOT — mirrored the proven hasValidRawProbe pattern, used the AC's exact priority set and cutoff, and verified zero live-board impact (jq probe: no DONE_VERIFIED P0/P1 apps/ row minted >= cutoff) before shipping so the gate cannot wedge the hot file.
 **why-change:** none from plan — 136/136 orchStateSchema tests pass (incl. 14 new BP assertions), tsc clean, size-lint PASS, live orch-validate exit 0, server boot healthy (toolCount 184), PO gate `grep hasValidBehaviorPredicate` → GATE-PRESENT.
+
+### STEP dev-mcp-server-S97 · dev-mcp-server · 2026-08-29T03:05:00Z
+**task-id:** FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD
+**what-done:** Three-layer recover guard shipped: shouldRunCatchup cadence='month' (per-cadence-period, success-only dedup) + startScheduler startup probe + shouldSkipMonthlyReplay T4 guard in runMonthlySignalQualityJob + registration recoverMissedExecutions false→true; one-shot backfill script executed live for June 2026 (SENT).
+**what-considered:**
+- Flip recoverMissedExecutions alone — rejected: node-cron re-seeds lastExecution at boot, can never replay a restart-spanning fire (proven no-op, row's own caveat).
+- shouldSkipRecoveryReplay recency window (90% cadence) — rejected: a success 2 days before the next fire would wrongly skip a NEW target month; only a month-bound success proves the prior-month target sent.
+- Backfill reuse of queryRejectionStats/generateAuditReport — rejected: their queries are all-time/current-month (separate known defect); script computes month-filtered stats itself, marker-row idempotent, no backdated rows.
+**why-decision:** catch-up + per-target-month T4 guard + flag flip is exactly the row's mechanism_correction; any fire in a month resolves to the same prior-month target, so month-bound success-only dedup is both safe (no double WORK send) and complete (recovers the most recent miss).
+**why-change:** June backfill executed during the fix (dry-run first; July deliberately left to the post-deploy catch-up to avoid a duplicate report); row's stale_action_note's two-month backfill expectation split accordingly.
