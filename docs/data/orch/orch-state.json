@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-29T00:39:04Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-29T02:15:59Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -165,6 +165,18 @@
         "status": "NEW",
         "summary": "mcp-call.sh zenmidi.com/vn-market/mcp fallback now stateful — stateless tools/call rejected (session-init); localhost:3000 OK; alert-commander c293 hit it, used stateful bridge",
         "payload_ref": "docs/agent-memory/debug/alert-commander.log"
+      },
+      {
+        "id": "dev-pollution-20260829T023",
+        "ts": "2026-08-29T02:15:59Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "PRE-EXISTING sticky test-pollution defect in bctc battery: 1975-bootstrap-enum-bctc-analyst-guard.test.ts calls getDb() WITHOUT DB_PATH=:memory:, caching the REAL data/market.db as the shared singleton — later battery files in the same bun process write fixture rows to the real DB that persist across runs (5 bctc tests RED in full-battery-on-dirty-DB, green in isolation; proven pre-existing at parent fbad14ced). Recommend a follow-up row to scope 1975-bootstrap or battery-run isolation. Found during FIX-BCTC-DATA-GAP-FAMILY fix_round 1 (developer-S141); polluted rows cleaned, battery green.",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "bctc-battery-1975-bootstrap-db-pollution"
       }
     ],
     "last_triaged_at": "2026-08-26T06:51:40Z",
