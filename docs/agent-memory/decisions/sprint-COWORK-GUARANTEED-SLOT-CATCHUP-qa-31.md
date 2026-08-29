@@ -143,3 +143,12 @@
 - reject: 08-24 evening val_gate failure — proven pre-existing FR-8 sub-check (h) issue (DXG AVOID/HOLD, override not engaged), unrelated to this commit
 **why-decision:** No ISSUE; silent-gap fix verified end-to-end against real corpus data. -> vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S256 · qa · 2026-08-29T00:2xZ
+**task-id:** FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE
+**what-done:** Direct-commit verify (review[]/REVIEW, branch:null): re-ran preamble 19/19, firer 68/68 (T26-T29), session-id 7/7; preamble output byte-identical (1087B) to frozen Step-5.2 text reconstructed from c492f8816; ENTRY_PROMPT shape probed live (preamble+trigger+session+scheduled_utc); spawn-fanout Step 5.1 region byte-identical + Step 2.4 (dispatch-claim SKILL.md) untouched; commit e9df71955 = exactly 6 files.
+**what-considered:**
+- approve: every claimed check reproduced from live evidence, none from prose; PO rulings (1) one shared preamble source (2) artifact-delta writeback gate verified at source + by re-run; P2-row regions disjoint; no scope creep (5 claimed files + WORK.md record append; signal file intentionally untouched per brief §6); DJ-GATE-1 fix-side present (developer-S137)
+- reject: nothing — only cosmetic observation: `$(...)` strips preamble's trailing \n\n so Layer C prompt lacks Step 5.2's blank line before trigger_prompt; no contract depends on it (brief §3 test-impact = exactly what T29 asserts)
+**why-decision:** No ISSUE; all four PO-ruling mechanisms verified. -> vc-approved.
+**why-change:** no change from plan.
