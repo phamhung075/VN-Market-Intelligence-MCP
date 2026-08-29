@@ -134,3 +134,12 @@
 - reject: size-lint 4-offender delta on live tree — proven uncommitted concurrent bctc work; clean HEAD worktree = 0 offenders; not this commit
 **why-decision:** No ISSUE; all checks green from live evidence. -> vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S255 · qa · 2026-08-29T02:20Z
+**task-id:** FIX-CHEF-EVENING-L2L3-SILENT-GAP
+**what-done:** verify-committed: Step 0d gate clean (no not-before keys); commit dd482d697 on main ancestry touching exactly the 2 claimed files (chef-dish.md + agent-father journal, zero creep); doc's exact Step 7.6 jq reproduced — 08-26 evening SCHEMA_FAIL (top_keys,meta_keys,verdict,tnb_keys,l2_floor,l3_floor) exit 1 verbatim, 08-23 honest baseline SCHEMA_OK exit 0, 08-24 l2_floor/l3_floor pass; corpus recalibration 55/24 shape-only -> 37/42 content-floor over 79 files, 18 new failures all silent-L2/L3 class (spot-checked 3); Step 3 floor + Step 7.5 tightening + ASSEMBLY union read in source; DJ-GATE-1 agent-father-S72 present; review[]->done_verified[] flip via orch-apply.
+**what-considered:**
+- approve: every claimed check independently reproduced from live evidence, not prose; fix mechanism closes all three root-cause parts; honest baseline still passes
+- reject: 08-24 evening val_gate failure — proven pre-existing FR-8 sub-check (h) issue (DXG AVOID/HOLD, override not engaged), unrelated to this commit
+**why-decision:** No ISSUE; silent-gap fix verified end-to-end against real corpus data. -> vc-approved.
+**why-change:** no change from plan.
