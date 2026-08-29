@@ -23770,7 +23770,7 @@
         "id": "FIX-BCTC-DATA-GAP-FAMILY",
         "title": "BCTC data-gap family: DXG get_bctc_full no-data (46th+ cycle), HPG operating_profit=0 corruption (42nd+ cycle), BID/FRT/KDH/EIB/SHB/GVR/GEX/VJC extraction failures (period mismatch, runPipeline null, total_assets=0 write-blocks)",
         "owner": "po",
-        "next_agent": "qa",
+        "next_agent": "developer",
         "zone": "multi",
         "priority": "P1",
         "size": "L",
@@ -23783,12 +23783,14 @@
           "apps/mcp-server/src/infrastructure/db",
           "apps/mcp-server/src/domain/services/financial-reports"
         ],
-        "status_note": "Consolidated from bctc_signal envelopes (DXG/HPG; FPT guard-held esc-deepdive + VCB normal skipped) + telegram 5214-5228. Data-pipeline bugs flagged to dev-team 40+ cycles unresolved. Root cause spans extraction (pdf-extractor runPipeline null) + serving (get_bctc_full Chưa có dữ liệu) + write-guards (total_assets=0 blocks).",
+        "status_note": "Consolidated from bctc_signal envelopes (DXG/HPG; FPT guard-held esc-deepdive + VCB normal skipped) + telegram 5214-5228. Data-pipeline bugs flagged to dev-team 40+ cycles unresolved. Root cause spans extraction (pdf-extractor runPipeline null) + serving (get_bctc_full Chưa có dữ liệu) + write-guards (total_assets=0 blocks).\n[QA] CHANGES_REQUESTED (direct-commit verify): 2 legacy enricher tests RED on main (were green at parent fbad14ced): FIX-BCTC-ENRICHER-STUCK-BACKLOG.test.ts:205 'attempts >= 6 NOT selected' + BCTC-1943-queue-reset-and-retry.test.ts:440 'attempts < 6 cap' both assert the OLD Arm-2 bound that U1's AC deliberately reverses (attempts=6 re-eligible past grace). Code matches brief; the 2 stale assertions must be updated to the new contract (same class as the 240-bctc-full updates already shipped). Routing next_agent=developer (not .owner=po — PO cannot apply a code commit; chain contract: dispatcher re-spawns DEVELOPER; precedent FIX-ORCHAPPLY-MKTEMP). fix_round 1 via redispatch_count.",
         "origin_signal_id": "1b46e3e449c739411837efd1f0bfce1c09a5006b21b282ae865b8616482f6b70",
         "architect_review_note": "DESIGN COMPLETE — brief: docs/architecture-briefs/2026-08-28-fix-bctc-data-gap-family.md. 7 work units (U1-U7) from LIVE root-cause evidence (data/live/market.db + container logs): U1 queue-liveness (enricher Arm-2 attempts<6 bound excludes the url_not_found rows it terminalizes at attempts=6; 293 deferred_infra NULL-URL rows unreachable by all arms; pull-job URL prefix excludes owa.hnx.vn) — do FIRST; U2 governance-report discovery filter (BID 2025-Q4 queue row poisoned with BaoCaoQuanTri URL); U3 period-mismatch durable quarantine + recovery (BID runPipeline-null loop, live 2026-08-27/28); U4 income-broken-with-assets corrupt guard (HPG OP=0 42nd+; SUPERSEDES sibling FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — do not land both); U5 scale-corruption guard (VNM/VEA assets~1e6x too small pass identity guard); U6 serve-stage diagnostics (keep exact 'Chưa có dữ liệu BCTC' string for true-absent case — bctc-analyst contract); U7 refine-liveness coordination only (defer to ops row FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP, no duplicate trigger). Sequence U1→U6 in order; U7 coordination. No file collision with size-lint sibling FIX-PREPUSH-SIZELINT-6-OFFENDERS (verified: this design touches none of its 6 offender files; bctcIdentityGuard.ts/ZeroExtractBlocklist.ts near 120L cap — keep <=120L or add size-justification header). Zone correction: row files[] hint 'tools/bctc' does not exist — actual tools in tools/financial-reports/. BUILD-STANDARD: not-applicable. NEXT: developer implements U1→U6.",
-        "updated_at": "2026-08-29T00:42:47Z",
+        "updated_at": "2026-08-29T01:15:30Z",
         "updated_by": "developer",
-        "created_by": "po"
+        "created_by": "po",
+        "redispatch_count": 1,
+        "qa_changes_requested_at": "2026-08-29T01:15:29Z"
       }
     ],
     "qa": [],
