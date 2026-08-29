@@ -40,7 +40,7 @@ import { runIntelligenceCycle } from './news-analysis/intelligenceCycleJob.js'
 import { runAlertDigest } from './alerts/alertDigestJob.js'
 import { runRestartCadenceAlertJob } from './system/restartCadenceAlertJob.js'
 import { runPatternWatch } from './news-analysis/patternWatchJob.js'
-import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
+import { runMonthlySignalQualityJob, MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME } from './audits/monthlySignalQualityJob.js'
 import { runDailyAudit } from './news-analysis/dataAuditJob.js'
 import { runPredictionMarketPoll } from './macro/predictionMarketJob.js'
 import { runBctcQueueEnricherJob } from './financial-reports/bctcQueueEnricherJob.js'
@@ -218,15 +218,29 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
 
     // 1st of month 00:00 UTC — Monthly signal quality audit — task 1295c
     // Queries signal_rejections from prior month and generates audit report. Alerts to
-    // WORK channel if rejection rate exceeds 2%. recoverMissedExecutions: false (OPT-OUT,
-    // T2-ARCH-CRON-RECOVER-JITTER): sends Telegram WORK alert; lacks a
-    // shouldSkipRecoveryReplay() guard; monthly cadence makes collision risk low but
-    // recovery is opt-out here until a T4 dedup guard is added to
-    // runMonthlySignalQualityJob() in a future sprint.
+    // WORK channel if rejection rate exceeds 2%. FIX-MONTHLYSIGNALQUALITYAUDITJOB-
+    // MISSED-JULY-RECOVER-GUARD (2026-08-29): recoverMissedExecutions flipped
+    // false → true as defence-in-depth ONLY — node-cron's recovery replays in-process
+    // event-loop stalls only and can NEVER bridge a restart/downtime spanning the fire
+    // instant (Scheduler.start() re-seeds lastExecution from boot time); the REAL
+    // recovery is the startup catch-up probe in startScheduler.ts (shouldRunCatchup
+    // cadence='month', success-only per-current-month dedup). The flip is safe because
+    // runMonthlySignalQualityJob() now carries a T4 per-target-month dedup guard
+    // (shouldSkipMonthlyReplay) — a replay or catch-up can no longer double-send the
+    // Telegram WORK report. RAW-verified live before this fix: the job missed both the
+    // 2026-07-01 and 2026-08-01 fires with zero recovery (last real fire 2026-06-01).
     {
+      // NOTE: this registration keeps the plain string job-name literal on purpose —
+      // the Gate-2d cronJobCount generator (scripts/gen-project-stats.ts) counts
+      // table-driven jobs by matching quoted job-name fields inside buildJobTable();
+      // a constant reference (like JOB_NAME_BREADTH_PERSISTER) silently drops the
+      // count and drifts docs/data/project-stats.json. The single-source constant
+      // MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME still drives the T4 guard inside
+      // runMonthlySignalQualityJob() and the startup catch-up probe in
+      // startScheduler.ts — only this registration keeps the literal.
       name: 'monthlySignalQualityAuditJob',
       cron: CRONS.monthlySignalQualityAudit,
-      options: { timezone: 'UTC', recoverMissedExecutions: false },
+      options: { timezone: 'UTC', recoverMissedExecutions: true },
       runner: async () => {
         await runMonthlySignalQualityJob()
       },

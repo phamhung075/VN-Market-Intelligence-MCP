@@ -1,7 +1,10 @@
-// size-justification: 530L — startup helper module bundling scheduler logger,
-// report-quality/catch-up guards, T4 idempotency dedup guard, and 6 testable
-// DB-backed cron-callback wrappers sharing the recordJobRun/shouldSkipRecoveryReplay
-// contract; splitting would fragment tightly-coupled callback+guard pairs.
+// size-justification: 631L — startup helper module bundling scheduler logger,
+// report-quality/catch-up guards, T4 idempotency dedup guard, per-cadence-period
+// monthly dedup guard (shouldSkipMonthlyReplay, FIX-MONTHLYSIGNALQUALITYAUDITJOB-
+// MISSED-JULY-RECOVER-GUARD 2026-08-29: +45L cadence param + guard; 530→631 measured),
+// and 6 testable DB-backed cron-callback wrappers sharing the recordJobRun/
+// shouldSkipRecoveryReplay contract; splitting would fragment tightly-coupled
+// callback+guard pairs.
 /**
  * startupHelpers.ts — startup helper functions and DB-backed job wrappers (task 1406e)
  *
@@ -10,6 +13,8 @@
  *   - eveningReportIsValid()          report-quality guard (task 1408)
  *   - shouldRunCatchup()              startup catch-up decision helper (task 1430)
  *   - shouldSkipRecoveryReplay()      T4 idempotency dedup guard (T1-ARCH-CRON-T4-DEDUP-GUARDS)
+ *   - shouldSkipMonthlyReplay()       per-cadence-period T4 guard for monthly jobs
+ *                                     (FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD)
  *   - scheduleCron()                  Lever-B single-source wrapper (T2-ARCH-CRON-RECOVER-JITTER)
  *   - scheduleForeignFlowCbReset()    CB startup reset (task 1404)
  *   - run*WithDb()                    six testable cron-callback wrappers (task 1420)
@@ -94,7 +99,20 @@ export function eveningReportIsValid(
 //
 // Returns true when:
 //   (a) nowUtc is at or past the window threshold (windowUtcHour:windowUtcMin), AND
-//   (b) cron_job_runs has no row for jobName with started_at >= date('now').
+//   (b) cron_job_runs has no blocking row for jobName since the dedup bound.
+//
+// The dedup bound is cadence-aware (FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-
+// JULY-RECOVER-GUARD, 2026-08-29 — generalised per-day → per-cadence-period):
+//   - cadence 'day' (default, unchanged): `started_at >= date('now')`, ANY status —
+//     a row today of any status blocks today's catch-up (the next scheduled fire
+//     retries a failed job within 24h).
+//   - cadence 'month': bound = first day of the CURRENT calendar month (derived
+//     from nowUtc), AND only a status='success' row blocks. Rationale: any fire
+//     within a calendar month resolves to the SAME prior-month target (a monthly
+//     job's next natural chance is a month away), so (i) a success anywhere in the
+//     current month proves the current target is already audited — catch-up skips;
+//     (ii) an 'error' row is a MISS that must be retried on the next boot, never
+//     skipped for a month.
 //
 // On any DB error returns false (fail-safe — do not fire the job).
 // nowUtc defaults to new Date() in production; inject a fixed Date in tests.
@@ -108,6 +126,7 @@ export function shouldRunCatchup(
   weekdayOnly: boolean = false,
   reportCheckFn?: () => boolean,
   requiredUtcDay?: number,
+  cadence: 'day' | 'month' = 'day',
 ): boolean {
   if (weekdayOnly) {
     const day = nowUtc.getUTCDay()
@@ -142,6 +161,31 @@ export function shouldRunCatchup(
   if (!windowReached) {
     log(`[startup-catchup] ${jobName}: window not reached (utcHour=${utcHour})`)
     return false
+  }
+
+  if (cadence === 'month') {
+    // Per-cadence-period dedup (FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD):
+    // success row started anywhere in the current calendar month ⇒ the current
+    // prior-month target is already audited → skip. Success-only: an error row is a
+    // miss that must be retried on the next boot (the next natural fire is a month
+    // away). Bound derives from nowUtc so tests can pin the month deterministically.
+    const monthStartIso = `${nowUtc.getUTCFullYear()}-${String(nowUtc.getUTCMonth() + 1).padStart(2, '0')}-01`
+    try {
+      const row = db
+        .prepare<{ cnt: number }, [string, string]>(
+          `SELECT COUNT(*) AS cnt FROM cron_job_runs
+           WHERE job_name = ? AND status = 'success' AND started_at >= ?`,
+        )
+        .get(jobName, monthStartIso)
+      if ((row?.cnt ?? 0) > 0) {
+        log(`[startup-catchup] ${jobName}: already ran this month — skipping`)
+        return false
+      }
+    } catch {
+      log(`[startup-catchup] ${jobName}: DB error — skipping (fail-safe)`)
+      return false
+    }
+    return true
   }
 
   try {
@@ -225,6 +269,55 @@ export function shouldSkipRecoveryReplay(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// shouldSkipMonthlyReplay — per-cadence-period T4 dedup guard
+// (FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD, 2026-08-29)
+//
+// Returns true when a SUCCESS run for `jobName` exists in cron_job_runs whose
+// started_at falls in the CURRENT calendar month (UTC, bound derived from
+// nowUtc). For a 1st-of-month 00:00 UTC job, any fire within a calendar month
+// resolves to the SAME prior-month target — so a success anywhere in the current
+// month proves the current target's report was already sent. Success-only: an
+// 'error' row is a miss that must be retried, never blocked.
+//
+// This is the in-job T4 guard that makes recoverMissedExecutions: true safe on
+// the monthlySignalQualityAuditJob registration (schedulerJobTable.ts): a
+// recovery replay / startup catch-up / manual trigger can no longer double-send
+// the Telegram WORK report for the same target month.
+//
+// On any DB error returns false (fail-open — let the job proceed; the job's own
+// data idempotency is the last line of defence), matching shouldSkipRecoveryReplay.
+// nowUtc is injectable for deterministic unit tests.
+//
+// @idempotency T4 — per-month cron_job_runs recency guard; replay skipped if a success exists in the current month
+// ─────────────────────────────────────────────────────────────────────────────
+export function shouldSkipMonthlyReplay(
+  db: Database,
+  jobName: string,
+  nowUtc: Date = new Date(),
+): boolean {
+  try {
+    const monthStartIso = `${nowUtc.getUTCFullYear()}-${String(nowUtc.getUTCMonth() + 1).padStart(2, '0')}-01`
+    const row = db
+      .prepare<{ cnt: number }, [string, string]>(
+        `SELECT COUNT(*) AS cnt FROM cron_job_runs
+         WHERE job_name = ?
+           AND status = 'success'
+           AND started_at >= ?`,
+      )
+      .get(jobName, monthStartIso)
+
+    if ((row?.cnt ?? 0) > 0) {
+      log(`[${jobName}] already sent report for current target month — skipping (monthly dedup)`)
+      return true
+    }
+    return false
+  } catch {
+    // Table missing or schema mismatch — fail-open (let the job proceed)
+    return false
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // scheduleCron — Lever B single-source wrapper (T2-ARCH-CRON-RECOVER-JITTER)
 //
 // Drop-in replacement for `cron.schedule()` that defaults
@@ -239,9 +332,13 @@ export function shouldSkipRecoveryReplay(
 //     Current opt-outs:
 //       * foreignFlowFetch (*/1 * * * *) — fires every 60s; recovery would
 //         double-fetch within seconds; underlying job has its own freshness guard.
-//       * monthlySignalQualityAudit (0 0 1 * *) — sends Telegram WORK alert;
-//         lacks shouldSkipRecoveryReplay() guard; monthly frequency makes
-//         recovery double-fire extremely low probability but not zero.
+//     NOTE (FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD, 2026-08-29):
+//     monthlySignalQualityAudit is NO LONGER an opt-out — its registration now sets
+//     recoverMissedExecutions: true as defence-in-depth. Safe because
+//     runMonthlySignalQualityJob() carries the shouldSkipMonthlyReplay() T4 guard
+//     (per-target-month dedup — a replay/catch-up can never double-send the WORK
+//     report), and the real recovery for restart-spanning misses is the startup
+//     catch-up probe in startScheduler.ts (shouldRunCatchup cadence='month').
 //
 // Safety gate: every job covered by recoverMissedExecutions: true MUST satisfy
 // at least one idempotency tier (T1/T2/T3/T4) — documented in architect brief §6.

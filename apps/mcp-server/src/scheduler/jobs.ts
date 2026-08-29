@@ -5,6 +5,7 @@ export {
   log,
   eveningReportIsValid,
   shouldRunCatchup,
+  shouldSkipMonthlyReplay,
   scheduleForeignFlowCbReset,
   runWeeklyAuditWithDb,
   runBctcReparseWithDb,

@@ -28,6 +28,7 @@ import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
 import { runFranceSummary } from './briefings/franceSummaryJob.js'
 import { runAlertDigest } from './alerts/alertDigestJob.js'
+import { MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME } from './audits/monthlySignalQualityJob.js'
 import { validateMacroFreshnessOnStartup } from './macro/index.js'
 import { fetchFredEffrIorb } from '../infrastructure/fetchers/fredEffrIorb.js'
 import { fetchFredIsmSubcomponents } from '../infrastructure/fetchers/fredIsmSubcomponents.js'
@@ -367,6 +368,39 @@ export function startScheduler() {
       }
     } catch (err) {
       log(`[startup-catchup] baseRateComputationJob error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, 30_000)
+
+  // FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD (2026-08-29) —
+  // monthlySignalQualityAuditJob (1st of month 00:00 UTC) startup catch-up. Same
+  // restart-timing mechanism as every block above: node-cron's recoverMissedExecutions
+  // re-seeds lastExecution from boot time, so a fire that fell inside a process
+  // restart/downtime window is permanently lost with no replay — the flag (now true on
+  // the registration) only covers in-process event-loop stalls. RAW-verified live:
+  // the job missed BOTH the 2026-07-01 and 2026-08-01 fires (last real cron_job_runs
+  // success 2026-06-01) with zero recovery and zero alert. This probe is the REAL
+  // recovery: once 00:00 UTC of any day in the month has passed, fire the audit on
+  // boot if no SUCCESS row exists for the current calendar month (shouldRunCatchup
+  // cadence='month' — per-cadence-period dedup; any fire within a calendar month
+  // resolves to the SAME prior-month target, so this recovers the most recent missed
+  // month, never more than one). Success-only dedup: an 'error' row is a miss that
+  // must be retried on the next boot, not skipped for a month. Double-send is
+  // impossible — the job's own shouldSkipMonthlyReplay T4 guard gates the send, and
+  // this probe runs through the same jobRunRepo.wrapRun envelope the cron path uses
+  // (identical job_name, no watchdog/health false-negative).
+  setTimeout(async () => {
+    try {
+      if (shouldRunCatchup(db, MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME, 0, 0, new Date(), false, undefined, undefined, 'month')) {
+        const entry = jobTable.find((j) => j.name === MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME)
+        if (!entry) {
+          log(`[startup-catchup] ${MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME}: no matching JOB_TABLE entry found — skipping (registration drift?)`)
+        } else {
+          log(`[startup-catchup] ${MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME}: running monthly catch-up`)
+          await jobRunRepo.wrapRun(entry.name, entry.runner)
+        }
+      }
+    } catch (err) {
+      log(`[startup-catchup] ${MONTHLY_SIGNAL_QUALITY_AUDIT_JOB_NAME} error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
 

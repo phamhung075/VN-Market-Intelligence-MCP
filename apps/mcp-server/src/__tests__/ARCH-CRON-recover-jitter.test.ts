@@ -198,10 +198,13 @@ describe("T2-ARCH-CRON-RECOVER-JITTER — Opt-out job registrations", () => {
     }
   });
 
-  it("OPT-2: monthlySignalQualityAudit schedule is still 0 0 1 * * (unchanged — recovery opt-out pending T4 guard)", () => {
-    // monthlySignalQualityAudit sends Telegram WORK without a shouldSkipRecoveryReplay() guard.
-    // It is opted out of recoverMissedExecutions in startScheduler.ts until a T4 guard
-    // is added to runMonthlySignalQualityJob().
+  it("OPT-2: monthlySignalQualityAudit schedule is still 0 0 1 * * (unchanged — recovery now ENABLED via T4 dedup guard + startup catch-up, FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD)", () => {
+    // monthlySignalQualityAudit now opts IN to recoverMissedExecutions (schedulerJobTable.ts
+    // options.recoverMissedExecutions: true) as defence-in-depth; the registration-level
+    // double-send risk is closed by the shouldSkipMonthlyReplay() T4 guard inside
+    // runMonthlySignalQualityJob() (per-target-month dedup), and restart-spanning misses
+    // are recovered by the shouldRunCatchup(cadence='month') startup probe in
+    // startScheduler.ts. The cron expression itself is deliberately unchanged.
     if (!Bun.env.CRON_MONTHLY_SIGNAL_QUALITY_AUDIT) {
       expect(CRONS.monthlySignalQualityAudit).toBe("0 0 1 * *");
     }

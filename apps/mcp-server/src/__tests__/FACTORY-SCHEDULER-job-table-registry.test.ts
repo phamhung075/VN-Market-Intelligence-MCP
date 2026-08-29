@@ -160,12 +160,12 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group A: buildJobTable() shap
     expect(entry?.runner.toString()).toContain("newsFetched");
   });
 
-  it("spot-check: monthlySignalQualityAuditJob preserves recoverMissedExecutions: false opt-out", async () => {
+  it("spot-check: monthlySignalQualityAuditJob now opts IN to recoverMissedExecutions (T4 dedup guard added — FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD)", async () => {
     const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
     const entry = table.find((j) => j.name === "monthlySignalQualityAuditJob");
-    expect(entry?.options).toEqual({ timezone: "UTC", recoverMissedExecutions: false });
+    expect(entry?.options).toEqual({ timezone: "UTC", recoverMissedExecutions: true });
   });
 
   it("spot-check: reputationComputeJob preserves recoverMissedExecutions: true opt-in", async () => {

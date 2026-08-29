@@ -140,6 +140,27 @@ detection of an already-fired second is skipped, a genuinely new second still
 fires. `recoverMissedExecutions` stays enabled — the missed-fire class above
 is not reverted.
 
+**FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD (2026-08-29) —
+monthly-cadence startup catch-up + T4 dedup guard.** `monthlySignalQualityAuditJob`
+(1st of month 00:00 UTC) missed the 2026-07-01 AND 2026-08-01 fires with zero
+recovery (RAW-verified live: last real `cron_job_runs` success 2026-06-01; both
+`recoverMissedExecutions:false` opt-out and a flip-to-true alone are PROVEN no-ops
+— node-cron's recovery re-seeds `lastExecution` from boot time and can never replay
+a fire that fell inside a process restart/downtime window). Three-layer fix:
+(a) `shouldRunCatchup()` gained a `cadence: 'day' | 'month'` parameter — the
+per-day dedup window generalised to per-cadence-period, with SUCCESS-only dedup for
+monthly cadence (an error row is a miss that must be retried on the next boot, never
+skipped for a month); (b) `startScheduler.ts` gained a startup catch-up probe that
+fires the audit once per month on boot when no success row exists for the current
+calendar month (any fire within a month resolves to the same prior-month target, so
+it recovers the most recent missed month); (c) the registration's
+`recoverMissedExecutions` flipped false→true as defence-in-depth, safe because
+`runMonthlySignalQualityJob()` now carries the `shouldSkipMonthlyReplay()` T4 guard
+(per-target-month dedup — a replay/catch-up can never double-send the WORK report).
+The one-shot historical backfill for months older than the most-recent missed one
+(June 2026) is `scripts/migrations/backfill-monthly-signal-quality-audit.ts`
+(dry-run default, `--apply` sends, month-filtered + marker-row idempotent).
+
 ---
 
 ## VPS Debug-Trigger Tools — SSH Execution Boundary

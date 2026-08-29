@@ -1,4 +1,4 @@
-<!-- size-justification: 170L — zone-specialist flow overlay; G12 DoD Gate (two-gate evidence table, streak rule, tool-suite probe commands), RUN-SOLO/explicit-add/INV-GATEWAY-1 commit discipline, ESLint fence phase note, scheduler/dashboard circular-dep protocol pointers, and implementation record template are all zone-specific mandatory content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07). NOTE: this declared count was already massively stale pre-edit (file measured 511L before this edit) — not re-derived here, out of this task's scope. FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC 2026-08-23 (agent-father): +9L (511→520 measured) — this file delegates to microservice-main.md for BASE steps only, then re-implements its own terminal block, so it never reaches that shared file's SUCCESS-path `.head` idle-reset (FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC); added the same guarded idiom here on its own success path, before RETURN. -->
+<!-- size-justification: 170L — zone-specialist flow overlay; G12 DoD Gate (two-gate evidence table, streak rule, tool-suite probe commands), RUN-SOLO/explicit-add/INV-GATEWAY-1 commit discipline, ESLint fence phase note, scheduler/dashboard circular-dep protocol pointers, and implementation record template are all zone-specific mandatory content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07). NOTE: this declared count was already massively stale pre-edit (file measured 511L before this edit) — not re-derived here, out of this task's scope. FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC 2026-08-23 (agent-father): +9L (511→520 measured) — this file delegates to microservice-main.md for BASE steps only, then re-implements its own terminal block, so it never reaches that shared file's SUCCESS-path `.head` idle-reset (FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC); added the same guarded idiom here on its own success path, before RETURN. FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD 2026-08-29 (dev-mcp-server): +32L (520→552 measured) — new CANONICAL block in Script Persistence for the missed-month recover guard + the one-shot historical backfill script (scripts/migrations/backfill-monthly-signal-quality-audit.ts), incl. live execution result; count re-derived at edit time (this file's declared 170L is a historical marker, not the measured count). -->
 # dev-mcp-server — Main Flow
 
 **Zone:** `apps/mcp-server/`
@@ -474,6 +474,38 @@ PERMANENT data loss; the real fix is the D-NEW4 completeness detector
 (`checkForeignFlowGap`, wired into `dataAuditJob` nightly, see
 `infrastructure.md`) so a future occurrence always escalates instead of
 self-clearing silently the moment the next fetch lands.
+
+**CANONICAL: Monthly signal-quality audit — missed-month recover guard
+(FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD, 2026-08-29)**
+```bash
+# Recover the most recent missed month automatically — NO script needed:
+# deploy the fixed image (docker compose up -d --build mcp-server); on the next
+# boot the startup catch-up (startScheduler.ts, shouldRunCatchup cadence='month')
+# fires the July/prior-month audit once if no SUCCESS cron_job_runs row exists for
+# the current calendar month (T4 shouldSkipMonthlyReplay in runMonthlySignalQualityJob
+# makes double-send impossible).
+#
+# One-shot historical backfill — ONLY for months older than the most-recent missed
+# one (e.g. June 2026, unrecoverable through natural cadence):
+# Dry-run (default — read-only, prints report, no send):
+bun scripts/migrations/backfill-monthly-signal-quality-audit.ts --month 2026-06 --month 2026-07
+
+# Apply (sends via live WORK Telegram channel; marker-row idempotent — a second
+# apply for an already-backfilled month is refused):
+docker cp scripts/migrations/backfill-monthly-signal-quality-audit.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/backfill-monthly-signal-quality-audit.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/backfill-monthly-signal-quality-audit.ts --month 2026-06 --apply
+```
+**LIVE RESULT (2026-08-29T02:57Z, executed):** June 2026 report (69 rejections /
+52 signals, 132.69% rate — ALERT) SENT to WORK channel; marker
+`monthlySignalQualityAuditJob:backfill-2026-06` recorded (re-run refused, exit 0).
+July 2026 is intentionally NOT backfilled — the post-deploy startup catch-up
+produces it (any fire in August audits July), avoiding a duplicate report.
+Root cause: `recoverMissedExecutions:false` opt-out + node-cron's restart-blind
+recovery; the code fix is the three-layer guard described in
+`docs/architecture/microservice/mcp-server/system.md` § FIX-MONTHLYSIGNALQUALITY-
+AUDITJOB-MISSED-JULY-RECOVER-GUARD.
 
 ---
 
