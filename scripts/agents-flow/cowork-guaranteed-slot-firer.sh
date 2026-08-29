@@ -50,6 +50,25 @@
 # the ACTUAL code path exercised in production on this machine is the pure-
 # bash background-process + watchdog fallback — not a theoretical branch.
 #
+# IDENTITY PREAMBLE + ARTIFACT-DELTA WRITEBACK GATE (FIX-COWORK-LAYERC-NO-
+# IDENTITY-PREAMBLE, architect brief 2026-08-28): this plane previously
+# spawned raw `claude -p <trigger_prompt>` with NO identity preamble — the
+# measured exit-0 null fire (pid 70235, 2026-08-26: zero artifacts, the
+# spawned session latched onto the project-root CLAUDE.md router protocol and
+# self-suppressed via its own ps-grep). _fire_one_slot now composes the SAME
+# ENTRY_PROMPT shape as spawn-fanout.md Step 5.2 — shared identity preamble
+# (scripts/agents-flow/cowork-identity-preamble.sh, ONE source for both
+# planes) + slot.trigger_prompt + SESSION_ID_LINE (synthetic namespaced
+# `owner_client_session=cowork-layerc:<slot>:<fire_epoch>`, per-fire unique;
+# the leaf flows hard-require a non-empty session id to claim their published
+# markers) + SCHEDULED_UTC_LINE (slot.scheduled_utc_time, omitted when null).
+# Writeback of last_fired (TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK) is gated
+# on ARTIFACT-DELTA PROOF — notebook mtime > fire start (filesystem-only;
+# this script has no gateway/MCP access) — NEVER on exit-0 alone. No-delta
+# exit-0 is discriminated by re-reading the schedule: a peer-stamped
+# redundant dual-plane fire is silent; a genuinely un-stamped null fire
+# raises ONE cooldown-bounded BUG alert (fingerprint `nullfire:<slot_id>`).
+#
 # USAGE:
 #   bash scripts/agents-flow/cowork-guaranteed-slot-firer.sh [--dry-run]
 #   CLAUDE_BIN=/path/to/claude bash scripts/agents-flow/cowork-guaranteed-slot-firer.sh
@@ -65,6 +84,12 @@
 #   SLOT_MATCHER_CMD       — command producing {slots:[...],drift_min:N} JSON
 #                            (default: node scripts/agents-flow/cowork-match-slots.js)
 #   CLAUDE_BIN              — path to the claude binary
+#   WRITE_LAST_FIRED_CMD    — command performing the last_fired writeback, called
+#                             with the slot_id as sole argument on artifact-delta
+#                             proof only (default: node
+#                             scripts/agents-flow/cowork-write-last-fired.js)
+#   COWORK_SCHED_FILE        — schedule path re-read by the artifact-delta gate
+#                             for peer-stamp discrimination
 #   LOG_FILE_PATH / LOG_ERR_FILE_PATH — log destinations
 #   FIRE_TIMEOUT_SECONDS    — per-slot invocation bound in seconds (default 1800)
 #   CURL_BIN                — curl binary used by the BUG-channel escalation
@@ -113,6 +138,17 @@ CLAUDE_BIN="${CLAUDE_BIN:-/Users/admin/.local/bin/claude}"
 LOG_FILE="${LOG_FILE_PATH:-$ROOT/docs/agent-memory/sessions/cowork-guaranteed-slot-firer.log}"
 LOG_ERR_FILE="${LOG_ERR_FILE_PATH:-$ROOT/docs/agent-memory/sessions/cowork-guaranteed-slot-firer-error.log}"
 FIRE_TIMEOUT_SECONDS="${FIRE_TIMEOUT_SECONDS:-1800}"
+
+# FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE (architect brief
+# docs/architecture-briefs/2026-08-28-fix-cowork-layerc-no-identity-preamble.md §3/§5):
+#   WRITE_LAST_FIRED_CMD — command producing the last_fired writeback. Called with the
+#                          slot_id as its sole argument, ONLY on artifact-delta proof
+#                          (never on exit-0 alone — PO ruling 2).
+#   COWORK_SCHED_FILE    — schedule path re-read by the artifact-delta gate to
+#                          discriminate a peer-stamped redundant fire from a genuine
+#                          null fire.
+WRITE_LAST_FIRED_CMD="${WRITE_LAST_FIRED_CMD:-node \"$ROOT/scripts/agents-flow/cowork-write-last-fired.js\"}"
+COWORK_SCHED_FILE="${COWORK_SCHED_FILE:-$ROOT/docs/data/cowork-schedule.json}"
 
 # ── Failure-escalation seams (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-
 # ESCALATION) — see _escalate_failure() below. ──────────────────────────────
@@ -269,6 +305,115 @@ _bounded_exec() {
   return $rc
 }
 
+# ── _compose_entry_prompt <slot_json> <fire_epoch> — FIX-COWORK-LAYERC-NO-IDENTITY-
+# PREAMBLE §3: composes the SAME ENTRY_PROMPT shape as spawn-fanout.md Step 5.2 —
+# PREAMBLE + slot.trigger_prompt + SESSION_ID_LINE + SCHEDULED_UTC_LINE. Prints the
+# composed prompt to stdout. Returns non-zero on preamble-emission failure (missing/
+# empty agent — fail loud, never invoke claude with a degraded preamble). The
+# synthetic session id `cowork-layerc:<slot_id>:<fire_epoch>` is a namespaced,
+# per-fire-unique identity FOR THE LAYER C PLANE (launchd has no coordination session
+# of its own; the leaf flows hard-require a non-empty owner_client_session to claim
+# their published markers — chef-dish.md / digest-predict / fb-market-poster /
+# tran-ngoc-bau Phase-2 claims, verified at source). R1 in the brief §7 is flagged
+# for PO: this is an interpretation beyond the literal PO wording, structurally
+# required — never a claim of being a real CLI session, never reused across fires
+# (<fire_epoch> guarantees per-fire uniqueness), marker claims are TTL-only by
+# design. ────────────────────────────────────────────────────────────────────────
+_compose_entry_prompt() {
+  local slot_json="$1" fire_epoch="$2"
+  local slot_id agent trigger_prompt scheduled_utc_time
+  local preamble preamble_rc session_id_line scheduled_utc_line
+
+  slot_id=$(printf '%s' "$slot_json" | jq -r '.slot_id // empty' 2>/dev/null)
+  agent=$(printf '%s' "$slot_json" | jq -r '.agent // empty' 2>/dev/null)
+  trigger_prompt=$(printf '%s' "$slot_json" | jq -r '.trigger_prompt // empty' 2>/dev/null)
+
+  if [ -z "$agent" ]; then
+    log_err "ERROR: matched slot missing agent field (slot=$slot_id) — cannot compose identity preamble"
+    return 1
+  fi
+
+  # ONE shared preamble source — the same script spawn-fanout.md Step 5.2 consumes.
+  preamble=$(bash "$ROOT/scripts/agents-flow/cowork-identity-preamble.sh" "$agent")
+  preamble_rc=$?
+  if [ $preamble_rc -ne 0 ]; then
+    log_err "ERROR: identity preamble emission failed (exit=$preamble_rc, slot=$slot_id agent=$agent)"
+    return 1
+  fi
+
+  scheduled_utc_time=$(printf '%s' "$slot_json" | jq -r '.scheduled_utc_time // empty' 2>/dev/null)
+  session_id_line=$'\n\nCoordination: owner_client_session=cowork-layerc:'"$slot_id"':'"$fire_epoch"
+  scheduled_utc_line=""
+  if [ -n "$scheduled_utc_time" ]; then
+    # same rule as Step 5.2 — never emit "scheduled_utc=null" when the producer degrades
+    scheduled_utc_line=$'\nscheduled_utc='"$scheduled_utc_time"
+  fi
+
+  printf '%s' "${preamble}${trigger_prompt}${session_id_line}${scheduled_utc_line}"
+  return 0
+}
+
+# ── _artifact_delta_gate <slot_json> <fire_start_epoch> <exit_code> — PO ruling 2
+# (FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE §5): TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK
+# is gated on ARTIFACT-DELTA PROOF, NEVER exit-0 alone. Proof is filesystem-only (the
+# firer has NO gateway/MCP access, per the header INVARIANTS):
+#   ARTIFACT_DELTA = notebook exists AND (notebook mtime) > FIRE_START_EPOCH
+# where FIRE_START_EPOCH is captured BEFORE the claude invocation and NOTEBOOK is
+# docs/agent-memory/notebooks/<slot.agent>.md — every guaranteed-slot flow writes its
+# agent notebook as a settled terminal step (chef Step 8b, digest-predict P-6,
+# fb-market-poster STEP 8, tran-ngoc-bau notebook), derivable from slot.agent alone
+# (no per-agent hardcoded artifact table). macOS-only `stat -f %m` (BSD form) — the
+# production host is macOS (launchd plist), same host assumption the script already
+# carries for the missing-`timeout` fallback (brief R3).
+#
+# On PROOF -> stamp via cowork-write-last-fired.js (monotonic forward-only; the
+# sibling-fresher-stamp guard inside it makes a peer double-write safe by
+# construction). On NO delta -> re-read the schedule to discriminate the two exit-0
+# shapes: a peer-stamped redundant dual-plane fire (Layer B published the same slot
+# this window) is SILENT; a genuinely un-stamped, artifact-less exit-0 is the measured
+# NULL-FIRE defect class — ONE cooldown-bounded BUG alert (fingerprint
+# `nullfire:<slot_id>`), never a stamp. Non-zero outcomes are left to the existing
+# `slots:<failed_list>` escalation in run_firer(), unchanged. Returns 0 always — the
+# caller's return value stays the claude invocation's exit code. ──────────────────
+_artifact_delta_gate() {
+  local slot_json="$1" fire_start_epoch="$2" exit_code="$3"
+  local slot_id agent notebook pre_last_fired post_last_fired
+  local write_rc
+
+  slot_id=$(printf '%s' "$slot_json" | jq -r '.slot_id // empty' 2>/dev/null)
+  agent=$(printf '%s' "$slot_json" | jq -r '.agent // empty' 2>/dev/null)
+  notebook="$ROOT/docs/agent-memory/notebooks/${agent}.md"
+  pre_last_fired=$(printf '%s' "$slot_json" | jq -r '.last_fired // empty' 2>/dev/null)
+
+  if [ -f "$notebook" ] && [ "$(stat -f %m "$notebook")" -gt "$fire_start_epoch" ]; then
+    # PROOF -> stamp (monotonic, forward-only; sibling-fresher-stamp guard in
+    # cowork-write-last-fired.js makes a peer double-write safe by construction).
+    log "artifact-delta PROOF: notebook mtime > fire start (slot=$slot_id) — stamping last_fired"
+    eval "$WRITE_LAST_FIRED_CMD" "$slot_id"
+    write_rc=$?
+    if [ $write_rc -ne 0 ]; then
+      log_err "ERROR: last_fired writeback failed (exit=$write_rc, slot=$slot_id) — slot stays due, re-fires next tick (AC-P1-7-3 under-suppress posture)"
+    fi
+    return 0
+  fi
+
+  # no notebook delta — discriminate the two exit-0 shapes by re-reading the schedule
+  post_last_fired=$(jq -r --arg s "$slot_id" '.slots[] | select(.slot_id == $s) | .last_fired // empty' "$COWORK_SCHED_FILE" 2>/dev/null)
+  if [ "$exit_code" -eq 0 ] && { [ -z "$pre_last_fired" ] || [ "$post_last_fired" = "$pre_last_fired" ]; }; then
+    # exit-0 null fire on THIS plane (or peer-blocked with NO peer stamp) — the
+    # measured defect class: pid 70235 exited 0 with zero artifacts.
+    log_err "NULL-FIRE: slot=$slot_id exit=$exit_code NO notebook delta — NOT stamping last_fired"
+    _escalate_failure "nullfire:$slot_id" \
+      "[cowork-guaranteed-slot-firer] BUG: slot=$slot_id exited 0 with NO artifact delta (notebook $notebook unchanged) — null fire, last_fired NOT stamped. The spawn either latched onto the router protocol or delivered nothing; it will retry next due tick. See $LOG_ERR_FILE"
+  else
+    # peer stamped meanwhile (redundant dual-plane fire) — peer's stamp stands;
+    # nothing to write, nothing to alert. (Non-zero outcomes fall through here too —
+    # the existing slots: escalation in run_firer() covers them.)
+    log "peer-stamped or non-zero: slot=$slot_id exit=$exit_code no delta — leaving last_fired to the peer"
+  fi
+  return 0
+}
+
 # ── _fire_one_slot: invoke claude headlessly for ONE matched slot JSON
 # object. Returns the invocation's exit code (0 for dry-run/skip). Never
 # aborts the caller's loop — the caller decides what to do with a non-zero
@@ -276,6 +421,7 @@ _bounded_exec() {
 _fire_one_slot() {
   local slot_json="$1" dry_run="$2"
   local slot_id trigger_prompt exit_code
+  local fire_epoch entry_prompt compose_rc
 
   slot_id=$(printf '%s' "$slot_json" | jq -r '.slot_id // empty' 2>/dev/null)
   trigger_prompt=$(printf '%s' "$slot_json" | jq -r '.trigger_prompt // empty' 2>/dev/null)
@@ -287,8 +433,17 @@ _fire_one_slot() {
 
   log "--- guaranteed-slot-firer: slot=$slot_id ---"
 
+  # FIRE_START_EPOCH — captured BEFORE the claude invocation (the artifact-delta
+  # gate compares the notebook mtime against it).
+  fire_epoch=$(date +%s)
+  entry_prompt=$(_compose_entry_prompt "$slot_json" "$fire_epoch")
+  compose_rc=$?
+  if [ $compose_rc -ne 0 ]; then
+    return 1
+  fi
+
   if [ "$dry_run" = "true" ]; then
-    log "DRY-RUN: would invoke: (bounded ${FIRE_TIMEOUT_SECONDS}s) $CLAUDE_BIN --dangerously-skip-permissions -p '$trigger_prompt'"
+    log "DRY-RUN: would invoke: (bounded ${FIRE_TIMEOUT_SECONDS}s) $CLAUDE_BIN --dangerously-skip-permissions -p '$entry_prompt'"
     return 0
   fi
 
@@ -297,16 +452,21 @@ _fire_one_slot() {
     return 1
   fi
 
-  # FOLDED log-fidelity item: this used to print `-p 'slot=$slot_id'` while
-  # line below actually executes `-p "$trigger_prompt"`. The log therefore
-  # reported a prompt that was never sent, reading as though the firer had
-  # dropped the flow path — a plausible and entirely wrong root cause for a
-  # triager to chase. Print what is actually executed.
-  log "invoking (bounded ${FIRE_TIMEOUT_SECONDS}s): $CLAUDE_BIN --dangerously-skip-permissions -p '$trigger_prompt'"
+  # FOLDED log-fidelity item: this used to print `-p 'slot=$slot_id'` while line
+  # below actually executes `-p "$trigger_prompt"`. The log therefore reported a
+  # prompt that was never sent, reading as though the firer had dropped the flow
+  # path — a plausible and entirely wrong root cause for a triager to chase.
+  # Print what is actually executed (now the full composed ENTRY_PROMPT).
+  log "invoking (bounded ${FIRE_TIMEOUT_SECONDS}s): $CLAUDE_BIN --dangerously-skip-permissions -p '$entry_prompt'"
 
-  ( cd "$ROOT" && _bounded_exec "$FIRE_TIMEOUT_SECONDS" "$CLAUDE_BIN" --dangerously-skip-permissions -p "$trigger_prompt" ) >> "$LOG_FILE" 2>> "$LOG_ERR_FILE"
+  ( cd "$ROOT" && _bounded_exec "$FIRE_TIMEOUT_SECONDS" "$CLAUDE_BIN" --dangerously-skip-permissions -p "$entry_prompt" ) >> "$LOG_FILE" 2>> "$LOG_ERR_FILE"
   exit_code=$?
   log "flow exited (slot=$slot_id exit_code=$exit_code)"
+
+  # FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE §5: artifact-delta writeback gate —
+  # NEVER stamp on exit-0 alone.
+  _artifact_delta_gate "$slot_json" "$fire_epoch" "$exit_code"
+
   return $exit_code
 }
 

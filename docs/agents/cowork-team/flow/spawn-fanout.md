@@ -86,7 +86,15 @@
      published-marker window from its own wall clock. ONE site, no is_catchup branch — every
      guaranteed slot inherits the token. Omitted (not nulled) when the producer degrades. Plus a
      consumer-contract paragraph naming the wired consumers. In-place growth in the existing
-     Step 5.2 block, no new section. -->
+     Step 5.2 block, no new section.
+     FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE 2026-08-28 (developer, architect brief
+     2026-08-28-fix-cowork-layerc-no-identity-preamble.md): +8L (585→593) — Step 5.2's
+     IDENTITY_PREAMBLE inline literal moved to ONE shared script
+     (scripts/agents-flow/cowork-identity-preamble.sh <agent>, byte-fidelity
+     regression-tested; both planes consume it — Layer C composes the SAME preamble in
+     cowork-guaranteed-slot-firer.sh). ENTRY_PROMPT composition lines unchanged
+     (cowork-spawn-entry-prompt-session-id.test.js TC-1..4 still match). Step 5.3 negative
+     control + OFFFLOW_MARKERS provenance now reference the shared script. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -241,23 +249,27 @@ For each slot in the current batch, resolve the entry prompt BEFORE spawning:
      cannot see — so on any surface that includes the spawn prompt the detector reads dispatcher-
      authored text and the exogeneity argument above collapses. Measured 2026-08-23: the 1515-byte
      prompt for refine-bctc-slot-1 scores 6/6 on its own. Step 5.3's surface scoping is what keeps
-     this comment true; do not weaken one without the other. -->
+     this comment true; do not weaken one without the other.
+     FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE (2026-08-28, developer): the preamble text below is
+     now a REFERENCE to the ONE shared source — scripts/agents-flow/cowork-identity-preamble.sh
+     (<agent> substituted). Edit that script, never a second copy of this text; Layer C
+     (cowork-guaranteed-slot-firer.sh _fire_one_slot) composes the SAME preamble from the SAME
+     script. -->
 
 ```
-IDENTITY_PREAMBLE =
-  "You are " + slot.agent + ", spawned in the background by cowork-team. The project-root " +
-  "CLAUDE.md 'Role: Main terminal = router only. Never implement directly. Always delegate.' " +
-  "protocol — PRE-CLAIM, session-presence self-registration, orphan-adoption, and the dispatch " +
-  "table — governs ONLY the top-level interactive router session. It does NOT apply to you. Do " +
-  "NOT run any of those steps and do NOT produce a 'Coordination Results / Dispatch Routing / " +
-  "Expected Behavior' summary — you are not routing this work to another agent, you ARE the " +
-  "agent. Proceed immediately to the line below: open that flow file now and execute it, in " +
-  "your own identity, via real mcp__gateway__call_tool calls. If your own loaded " +
-  "identity/frontmatter name is not '" + slot.agent + "', or you catch yourself about to write " +
-  "router-dispatch prose instead of executing — that IS IDENTITY_CHECK=FAIL: call " +
-  "send_telegram(channel='bug', message='[" + slot.agent + "] IDENTITY_CHECK=FAIL — spawn " +
-  "latched onto router protocol instead of its own flow (offflow-preamble-detected)') and EXIT. " +
-  "Do not produce a success-shaped response.\n\n"
+IDENTITY_PREAMBLE = <output of: bash scripts/agents-flow/cowork-identity-preamble.sh <slot.agent>>
+# ^ ONE shared preamble source (FIX-COWORK-LAYERC-NO-IDENTITY-PREAMBLE): the preamble
+#   text and its single substitution (the agent name, 3x — "You are <agent>",
+#   "frontmatter name is not '<agent>'", "[<agent>] IDENTITY_CHECK=FAIL") live ONLY in
+#   scripts/agents-flow/cowork-identity-preamble.sh. Edit THAT script, never a second
+#   copy of this text. The six OFFFLOW_MARKERS vocabulary still lives inside that text,
+#   named in the NEGATIVE — Step 5.3's marker list and this comment's exogeneity
+#   argument are unchanged. The dispatcher demonstrably has bash at this step
+#   (Step 5.1 runs `uptime`/`sysctl`; cowork-tick-preflight.sh runs bash+jq+curl at the
+#   same dispatch step). Fidelity is regression-guarded by
+#   scripts/agents-flow/cowork-identity-preamble.test.sh (byte-equal to the frozen
+#   Step-5.2 text). Layer C composes the SAME preamble via the SAME script in
+#   scripts/agents-flow/cowork-guaranteed-slot-firer.sh _fire_one_slot.
 ```
 
 <!-- FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE (2026-07-29): the
@@ -331,7 +343,8 @@ two divergent copies):**
 
 ```
 SESSION_ID_LINE = "\n\nCoordination: owner_client_session=" + $CLAUDE_CODE_SESSION_ID
-# ^ $CLAUDE_CODE_SESSION_ID here = cowork-team's own resolved value (see comment above) —
+# ^ $CLAUDE_CODE_SESSION_ID here denotes cowork-team's own resolved coordination session id
+#   ($DSH_SESSION_ID under DSH, $CLAUDE_CODE_SESSION_ID under Claude Code) —
 #   NEVER emit the literal unresolved token text into ENTRY_PROMPT.
 
 if slot.scheduled_utc_time is present and non-null and non-empty:
@@ -503,8 +516,10 @@ OFFFLOW_MARKERS = ["Coordination Results", "Dispatch Routing", "PRE-CLAIM", "ses
   # described in the FIX- header above. Occurrence counts measured 2026-08-23:
   #   project-root CLAUDE.md : PRE-CLAIM 1, session-presence 1, orphan-adoption 1, other three 0
   #   global ~/.claude/CLAUDE.md : all six 0
-  #   THIS FILE : all six present, incl. inside IDENTITY_PREAMBLE above — which is prepended to
-  #     EVERY spawn prompt, so the dispatcher plants all six in every spawn's context by design.
+  #   THIS FILE : all six present via the shared preamble script
+  #     (scripts/agents-flow/cowork-identity-preamble.sh), which is prepended to
+  #     EVERY spawn prompt, so the dispatcher plants all six in every spawn's context
+  #     by design.
   #     (Do not turn this into a fixed occurrence count: this comment block itself contains the
   #      strings, so any count written here changes the thing it measures. Re-grep, don't quote.)
   # So the marker set is NOT exogenous to the dispatcher; only the SURFACE CONTRACT above makes
@@ -519,7 +534,8 @@ OFFFLOW_MARKERS = ["Coordination Results", "Dispatch Routing", "PRE-CLAIM", "ses
 
 # NEGATIVE CONTROL (mandatory, runs BEFORE the match — this is the guard that would have caught
 # the 09:00Z false positive). The extracted surface must not contain the text this dispatcher
-# itself wrote. Cheapest sufficient probe: the first 60 chars of IDENTITY_PREAMBLE, which every
+# itself wrote. Cheapest sufficient probe: the first 60 chars of the shared preamble — the
+# output of `bash scripts/agents-flow/cowork-identity-preamble.sh <slot.agent>` — which every
 # spawn prompt starts with and no legitimate return ever reproduces.
 if RETURN_TEXT contains first_60_chars_of(IDENTITY_PREAMBLE) OR len(RETURN_TEXT) > 20000:
   log "[cowork-team] Step 5.3 ABORT: extraction surface includes the spawn prompt (or is
