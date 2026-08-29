@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787957195,
-    "last_linecount": 0
+    "last_mtime": 1787971572,
+    "last_linecount": 4
   },
   "decision_journal": [
     {
@@ -127,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-29T02:15:59Z",
+    "_updated_at": "2026-08-29T02:45:54Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -139,7 +139,7 @@
         "type": "system-issue",
         "summary": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH is SUPERSEDED by FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR design (architect ruling, commit 38b2c87cc, DJ architect-S57) — close the STAGELOG row, do NOT land both. Actuator design wires bash notebook-compose into bctc-analyst; the remove-Bash-steps premise is falsified.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "dedup_key": "bctc-analyst-stagelog-superseded-by-actuator"
       },
@@ -151,7 +151,7 @@
         "type": "system-issue",
         "summary": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is SUPERSEDED by FIX-BCTC-DATA-GAP-FAMILY U4 (architect ruling, commit 71b68f342, DJ architect-S59) — the income-broken-with-assets corrupt guard absorbs it. Close/absorb the sibling row, do NOT land both.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "dedup_key": "bctc-hpg-scalar-superseded-by-data-gap-u4"
       },
@@ -162,7 +162,7 @@
         "to": "po",
         "type": "tooling_defect",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "summary": "mcp-call.sh zenmidi.com/vn-market/mcp fallback now stateful — stateless tools/call rejected (session-init); localhost:3000 OK; alert-commander c293 hit it, used stateful bridge",
         "payload_ref": "docs/agent-memory/debug/alert-commander.log"
       },
@@ -174,7 +174,7 @@
         "type": "system-issue",
         "summary": "PRE-EXISTING sticky test-pollution defect in bctc battery: 1975-bootstrap-enum-bctc-analyst-guard.test.ts calls getDb() WITHOUT DB_PATH=:memory:, caching the REAL data/market.db as the shared singleton — later battery files in the same bun process write fixture rows to the real DB that persist across runs (5 bctc tests RED in full-battery-on-dirty-DB, green in isolation; proven pre-existing at parent fbad14ced). Recommend a follow-up row to scope 1975-bootstrap or battery-run isolation. Found during FIX-BCTC-DATA-GAP-FAMILY fix_round 1 (developer-S141); polluted rows cleaned, battery green.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "dedup_key": "bctc-battery-1975-bootstrap-db-pollution"
       }
@@ -23830,9 +23830,373 @@
         "last_served_tick": "2026-08-28T22:47:47Z"
       }
     },
-    "_updated_at": "2026-08-28T23:13:42Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-29T02:46:02Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "daf09d938b5e3eb62f3a7f637ef670c5b734a10c30faf6c31c27f2408b9e5b6f",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "MED",
+        "payload": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH is SUPERSEDED by FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR design (architect ruling, commit 38b2c87cc, DJ architect-S57) — close the STAGELOG row, do NOT land both. Actuator design wires bash notebook-compose into bctc-analyst; the remove-Bash-steps premise is falsified.",
+        "createdAt": "2026-08-28T23:43:06Z",
+        "drained_at": "2026-08-29T02:45:54Z",
+        "routed_to": "po-step-0-sig"
+      },
+      {
+        "envelope_id": "954609c014d0b0016258dd072d088275f8eb2ef9f258dcf83b2abf1ce35820bb",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "MED",
+        "payload": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is SUPERSEDED by FIX-BCTC-DATA-GAP-FAMILY U4 (architect ruling, commit 71b68f342, DJ architect-S59) — the income-broken-with-assets corrupt guard absorbs it. Close/absorb the sibling row, do NOT land both.",
+        "createdAt": "2026-08-28T23:54:23Z",
+        "drained_at": "2026-08-29T02:45:54Z",
+        "routed_to": "po-step-0-sig"
+      },
+      {
+        "envelope_id": "896b05ed4f731cd8320e6fc8bbb2996d701518df7f94afff20123a07016569e1",
+        "source": "dashboard",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tooling_defect",
+        "priority": "MED",
+        "payload": "mcp-call.sh zenmidi.com/vn-market/mcp fallback now stateful — stateless tools/call rejected (session-init); localhost:3000 OK; alert-commander c293 hit it, used stateful bridge",
+        "createdAt": "2026-08-29T00:39:04Z",
+        "drained_at": "2026-08-29T02:45:54Z",
+        "routed_to": "po-step-0-sig"
+      },
+      {
+        "envelope_id": "6b25a9923e54c724fbb9aa7f6d2b110e95840295ac07388cf805f4647d3e0765",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "MED",
+        "payload": "PRE-EXISTING sticky test-pollution defect in bctc battery: 1975-bootstrap-enum-bctc-analyst-guard.test.ts calls getDb() WITHOUT DB_PATH=:memory:, caching the REAL data/market.db as the shared singleton — later battery files in the same bun process write fixture rows to the real DB that persist across runs (5 bctc tests RED in full-battery-on-dirty-DB, green in isolation; proven pre-existing at parent fbad14ced). Recommend a follow-up row to scope 1975-bootstrap or battery-run isolation. Found during FIX-BCTC-DATA-GAP-FAMILY fix_round 1 (developer-S141); polluted rows cleaned, battery green.",
+        "createdAt": "2026-08-29T02:15:59Z",
+        "drained_at": "2026-08-29T02:45:54Z",
+        "routed_to": "po-step-0-sig"
+      },
+      {
+        "envelope_id": "2b4de948e5be936dbdcf16e4e1ca7e040c8dd0944bb51c38748756135554eb43",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "priority": "HIGH",
+        "payload": {
+          "trigger_id": "ESC-5",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "context": {
+            "low_confidence_unit_ids": [
+              "unit-0008",
+              "unit-0009",
+              "unit-0010",
+              "unit-0011",
+              "unit-0012",
+              "unit-0013",
+              "unit-0014"
+            ],
+            "min_confidence": 0.45
+          },
+          "all_esc_fired": [
+            "ESC-5"
+          ]
+        },
+        "createdAt": "2026-08-29T00:37:54Z",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "ESC-DISPATCH"
+      },
+      {
+        "envelope_id": "ca7cd87ed15d025eb2d22514f68048b320180c1b28bf43eabc39d5733659410c",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development (residential projects, urban land-bank)",
+          "customer": "Homebuyers, institutional JV partners",
+          "ops": "DATA-GAP: get_bctc_full(DXG) returns 'Chưa có dữ liệu' (47th+ consecutive cycle unresolved — cash-flow-anomaly first flagged c162, still pending dev-team pickup). EY_SPREAD -3.50pp (AVOID, PE 66.5x vs sector median 16.1x, +312% premium) computed from get_sector_comparison only, not direct BCTC pull",
+          "mgmt": "ROE 1.9% (sector-comp, well below median 7.3%); foreign flow net -81K shares (weaker than sector, outflow); valuation_verdict=AVOID — per stage-analyze.md rule, NOT posted as bullish",
+          "ey_spread_pp": -3.5,
+          "valuation_verdict": "AVOID",
+          "rate_sensitive_headwind": false,
+          "kd_reading": {
+            "que": "Khue(38)",
+            "trend": "TRUNG TINH",
+            "signal": "GIU",
+            "confidence_pct": 0
+          },
+          "esc_gate": {
+            "esc1": "UNEVALUABLE (no direct BCTC data)",
+            "esc2": "UNEVALUABLE (no direct BCTC data)",
+            "esc3": "UNEVALUABLE (no direct BCTC data)",
+            "esc4": "UNEVALUABLE (no direct BCTC data)",
+            "esc5": "UNEVALUABLE (no direct BCTC data)"
+          },
+          "escalation_status": "NONE",
+          "data_gap": "Chưa có dữ liệu BCTC — 47th+ consecutive cycle",
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL",
+          "max_deposit_rate_pct": 5,
+          "cycle_id": "20260829-0000",
+          "slot": "bctc-analyst-slot-4",
+          "generated_at": "2026-08-29T00:37:54Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ff3991c3c4f27cfbea39039afb767bde7e7ffc7e4f44261b5159de3475aabdce",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore, esp. Japan/Europe/US), SME telecom subscribers, students",
+          "ops": "Gross margin 34.0%, operating margin 22.0%; EY_SPREAD +2.25pp (FAIR, PE 13.8x vs sector median 17.3x, -20% discount); revenue -22.3% unadjusted YoY (FTEL deconsolidation to equity-method from 2026-01-01) but +8.7% on a like-for-like adjusted basis, NPAT +13.8% adjusted",
+          "mgmt": "ROE 28.3% (sector-comp, above median 10.6%) vs 6.2% raw single-quarter ratio (non-annualized); foreign flow net +282K shares (stronger than sector); D/E 0.40x conservative leverage",
+          "ey_spread_pp": 2.25,
+          "valuation_verdict": "FAIR",
+          "kd_reading": {
+            "que": "Phe Hap(21)",
+            "trend": "THUAN LOI",
+            "signal": "THAN TRONG",
+            "confidence_pct": 50
+          },
+          "esc_gate": {
+            "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+            "esc2": "FALSE (imbalance 0.00%)",
+            "esc3": "DATA-COVERAGE-LIMITED (quarters_returned=3/4)",
+            "esc4": "FALSE (non_operating_share 2.00%)",
+            "esc5": "TRUE (7/15 refine units confidence<0.50, min=0.45, unit-0008..0014)"
+          },
+          "escalation_status": "PENDING",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+          "coverage_guard_held": true,
+          "quarters_returned": 3,
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL",
+          "max_deposit_rate_pct": 5,
+          "cycle_id": "20260829-0000",
+          "slot": "bctc-analyst-slot-4",
+          "generated_at": "2026-08-29T00:37:54Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8ca68bbfc35253b32b3d9e4a6ca20e4300a9dedfffe64bdc307086241100e781",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (construction steel, HRC/hot-rolled coil), mining inputs, industrial park infrastructure",
+          "customer": "Construction contractors, industrial fabricators, export markets (steel products)",
+          "ops": "Gross margin 15.8%; EY_SPREAD +2.04pp (FAIR, PE 14.2x vs sector median 32.6x, -57% discount); operating_profit reported as 0 (DATA-QUALITY FLAG — corrupt/OCR extraction gap, 43rd+ consecutive cycle unresolved); validation warning: net profit (9,055.9bn) exceeds gross profit (8,365.1bn), consistent with non-operating income (associate JV gains) inflating NPAT",
+          "mgmt": "ROE 12.7% (sector-comp, above median 2.9%); foreign flow net +187K shares (stronger than sector); operating_profit=0 corruption not attributable to management — data-pipeline gap flagged to dev-team since 41st+ cycle, still pending fix",
+          "ey_spread_pp": 2.04,
+          "valuation_verdict": "FAIR",
+          "kd_reading": {
+            "que": "Tiet(60)",
+            "trend": "TRUNG TINH",
+            "signal": "GIU",
+            "confidence_pct": 37
+          },
+          "esc_gate": {
+            "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+            "esc2": "FALSE (imbalance 0.00%)",
+            "esc3": "DATA-COVERAGE-LIMITED (quarters_returned=3/4)",
+            "esc4": "DISCARDED (operating_profit=0, corrupt input — 43rd+ cycle)",
+            "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+          },
+          "escalation_status": "NONE",
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+          "coverage_guard_held": true,
+          "quarters_returned": 3,
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL",
+          "max_deposit_rate_pct": 5,
+          "cycle_id": "20260829-0000",
+          "slot": "bctc-analyst-slot-4",
+          "generated_at": "2026-08-29T00:37:54Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c91c5810ee5143c9aea688747044c704e631061502a9cfb22e9e973192a79401",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Commercial banking (retail + corporate lending, trade finance, bancassurance)",
+          "customer": "Retail depositors and borrowers, corporate/SME clients, government-linked entities",
+          "ops": "Net interest income 17,421bn; operating margin 80.9%; EY_SPREAD +2.09pp (FAIR, PE 14.1x vs sector median 9.0x, +57% premium); bank-structural: operating profit > pretax profit (no financial-income separation) — ESC-4 N/A by design",
+          "mgmt": "ROE 16.7% (sector-comp, below median 17.6% but above peers BID 19/CTG 21 on asset quality); foreign flow N/A; D/E 0.01x net-debt-to-EBITDA — minimal leverage risk; EPS 15 VND",
+          "ey_spread_pp": 2.09,
+          "valuation_verdict": "FAIR",
+          "kd_reading": {
+            "que": "Phong(55)",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 100
+          },
+          "esc_gate": {
+            "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+            "esc2": "FALSE (imbalance 0.37%)",
+            "esc3": "FALSE (divergence 36.81%, quarters_returned=4/4)",
+            "esc4": "N/A (bank — operating_profit > pretax_profit structurally)",
+            "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+          },
+          "escalation_status": "NONE",
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL",
+          "max_deposit_rate_pct": 5,
+          "cycle_id": "20260829-0000",
+          "slot": "bctc-analyst-slot-4",
+          "generated_at": "2026-08-29T00:37:54Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ec18e8437180218c6a4288fd875d65974a3e8b6eeb5f2c9ef6615423baea53b2",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/developer.md — added heading line embeds a full session/coordination UUID: '## Session 2026-08-29T00:40Z — FIX-BCTC-DATA-GAP-FAMILY (multi-zone apps/mcp-server interface+application+scheduler+domain+infrastructure, developer, P1 L, dev-team Step 3 direct-execute, session-123eed97-8701-47f8-b7ee-90afc862380e)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-29T00:42:16Z",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c7009e173fe85d235f098505f52c064c4da607fed8cd60eba8ba9ecf03e8c6e4",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/developer.md — added heading line embeds a full session/coordination UUID: '## Session 2026-08-29T02:10:00Z — FIX-BCTC-DATA-GAP-FAMILY fix_round 1 (apps/mcp-server enricher/queue tests, developer, P1 L, qa vc-changes redispatch, session-123eed97-8701-47f8-b7ee-90afc862380e)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-29T02:14:29Z",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a33410681821c302df0240b3c0f1452652c629ee813cc94ff43b39773a9befa2",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-29T00:15:51Z",
+          "matched_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md",
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 13,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-4": "cadence",
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-4": 1440,
+            "news-scout-offhours": 480,
+            "market-watcher-offhours": 480,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-29T00:15:51Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "00:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 112,
+          "signal_backlog": 2,
+          "note": "4-slot full dispatch tick 00:00Z: bctc-analyst-slot-4 (daily 1440min), news-scout-offhours + market-watcher-offhours (480min), alert-commander-critical (cron). All 4 claimed, spawned background, last_fired stamped, tokens released. Fan-out gate NORMAL (headroom 2620MB vs floor 1500, load 5.21 vs 24). 2 to=po signals held at NEW per drain convention."
+        },
+        "createdAt": "2026-08-29T00:15:51Z",
+        "drained_at": "2026-08-29T02:46:02Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-26T15:08:05Z",
     "last_po_triage_note": "secondary-drain-signoff-20260826T1500Z: 5 envelopes triaged (1 system-issue fold, 2 context_bloat_breach DEFER, 1 audit_finding fold+3-part ruling, 1 bug-escalation fold), 0 held back, inbox cleared to zero",
     "last_po_triage_consumed": 5,

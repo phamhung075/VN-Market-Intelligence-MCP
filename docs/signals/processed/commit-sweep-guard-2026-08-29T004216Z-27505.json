@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-29T00:42:16Z",
+  "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/developer.md — added heading line embeds a full session/coordination UUID: '## Session 2026-08-29T00:40Z — FIX-BCTC-DATA-GAP-FAMILY (multi-zone apps/mcp-server interface+application+scheduler+domain+infrastructure, developer, P1 L, dev-team Step 3 direct-execute, session-123eed97-8701-47f8-b7ee-90afc862380e)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+  "_processed": {
+    "fingerprint": "ec18e8437180218c6a4288fd875d65974a3e8b6eeb5f2c9ef6615423baea53b2",
+    "processedAt": "2026-08-29T02:46:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

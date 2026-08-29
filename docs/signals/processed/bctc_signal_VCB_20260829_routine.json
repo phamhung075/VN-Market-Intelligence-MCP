@@ -1,0 +1,39 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Commercial banking (retail + corporate lending, trade finance, bancassurance)",
+  "customer": "Retail depositors and borrowers, corporate/SME clients, government-linked entities",
+  "ops": "Net interest income 17,421bn; operating margin 80.9%; EY_SPREAD +2.09pp (FAIR, PE 14.1x vs sector median 9.0x, +57% premium); bank-structural: operating profit > pretax profit (no financial-income separation) — ESC-4 N/A by design",
+  "mgmt": "ROE 16.7% (sector-comp, below median 17.6% but above peers BID 19/CTG 21 on asset quality); foreign flow N/A; D/E 0.01x net-debt-to-EBITDA — minimal leverage risk; EPS 15 VND",
+  "ey_spread_pp": 2.09,
+  "valuation_verdict": "FAIR",
+  "kd_reading": {
+    "que": "Phong(55)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 100
+  },
+  "esc_gate": {
+    "esc1": "UNEVALUABLE (E1 SCOPE-REDUCED, no Bash/Glob/bctc_table_rows tool)",
+    "esc2": "FALSE (imbalance 0.37%)",
+    "esc3": "FALSE (divergence 36.81%, quarters_returned=4/4)",
+    "esc4": "N/A (bank — operating_profit > pretax_profit structurally)",
+    "esc5": "FALSE (report_id=null, refine_status=PARTIAL)"
+  },
+  "escalation_status": "NONE",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "max_deposit_rate_pct": 5,
+  "cycle_id": "20260829-0000",
+  "slot": "bctc-analyst-slot-4",
+  "generated_at": "2026-08-29T00:37:54Z",
+  "_processed": {
+    "fingerprint": "c91c5810ee5143c9aea688747044c704e631061502a9cfb22e9e973192a79401",
+    "processedAt": "2026-08-29T02:46:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "bca-20260829T003754Z",
+  "ts": "2026-08-29T00:37:54Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "2b4de948e5be936dbdcf16e4e1ca7e040c8dd0944bb51c38748756135554eb43",
+    "processedAt": "2026-08-29T02:46:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
