@@ -20003,6 +20003,36 @@
             "observed_at": "2026-08-29T00:57:49Z"
           }
         }
+      },
+      {
+        "id": "FIX-COWORK-FANOUT-LOAD1MIN-COMMA-LOCALE-PARSE",
+        "title": "cowork Step 5.1 fan-out load gate has no scripted implementation — comma-locale host parses '2,19' as 219, silently inverts NORMAL→DEGRADED (max_parallel 4→2)",
+        "owner": "po",
+        "zone": "docs/agents/cowork-team/",
+        "priority": "P2",
+        "size": "S",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "files": [
+          "docs/agents/cowork-team/flow/spawn-fanout.md",
+          "scripts/agents-flow/cowork-load-probe.sh",
+          "scripts/agents-flow/cowork-load-probe.test.sh"
+        ],
+        "status_note": "From cowork-fire 30d983ac note: LOAD_1MIN parse improvised per tick by dispatching LLM; comma-locale (uptime 'load averages: 2,19') + tr -d ',' -> 219 > 2*CORES threshold -> DEGRADED. Fix: scripted gate (scripts/agents-flow/) with comma-safe parse. No board row existed (genuine anomaly per cowork-fire escalation rule). | [developer 2026-08-29T01:03:43Z] IMPLEMENTED (commit cce2be6db): scripted comma-safe LOAD_1MIN probe scripts/agents-flow/cowork-load-probe.sh (+.test.sh 20/20) replaces the inline awk -F\",\" parse in spawn-fanout.md Step 5.1 — \"2,19\" -> 2.19 never 219 (live host \"4,22\" -> 4.22 == LC_ALL=C ground truth); fail-loud exit 2/3, empty stdout on unparseable. files[] extended with the 2 scripts (AXISD precedent). Step 5.2/5.3 and dispatch-claim Step 2.4 untouched (critical-region boundary).\n[QA] Review Record (direct-commit verify): commit cce2be6db verified on main: probe test 20/20 PASS; live probe dot-decimal output matches LC_ALL=C ground truth; incident '2,19'->'2.19' never 219 fixture-covered; commit scope exactly files[] 3/3; Step 5.2/5.3 + dispatch-claim Step 2.4 byte-unchanged",
+        "origin_signal_id": "30d983acb52ce19f892866cd086bfb68b34de4fd2049067168cd3a2d6c45069a",
+        "updated_at": "2026-08-29T01:06:34Z",
+        "updated_by": "developer",
+        "developer_completed_at": "2026-08-29T01:03:43Z",
+        "commit": "cce2be6db",
+        "qa_verified_at": "2026-08-29T01:06:33Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bash scripts/agents-flow/cowork-load-probe.test.sh + bash scripts/agents-flow/cowork-load-probe.sh + LC_ALL=C uptime ground-truth cross-check",
+            "args": "commit=cce2be6db; files=docs/agents/cowork-team/flow/spawn-fanout.md scripts/agents-flow/cowork-load-probe.sh scripts/agents-flow/cowork-load-probe.test.sh",
+            "live_value_observed": "ancestor=yes; stat=3/3 claimed files exact (spawn-fanout.md single hunk @L196, 5.2/5.3+dispatch-claim-2.4 untouched); test=20 pass 0 fail; live probe='6.64' dot-decimal exit 0; LC_ALL=C ground-truth first token=6.64 (match)",
+            "observed_at": "2026-08-29T01:06:33Z"
+          }
+        }
       }
     ],
     "head": {
@@ -23845,28 +23875,6 @@
         "updated_at": "2026-08-29T00:42:47Z",
         "updated_by": "developer",
         "created_by": "po"
-      },
-      {
-        "id": "FIX-COWORK-FANOUT-LOAD1MIN-COMMA-LOCALE-PARSE",
-        "title": "cowork Step 5.1 fan-out load gate has no scripted implementation — comma-locale host parses '2,19' as 219, silently inverts NORMAL→DEGRADED (max_parallel 4→2)",
-        "owner": "po",
-        "next_agent": "qa",
-        "zone": "docs/agents/cowork-team/",
-        "priority": "P2",
-        "size": "S",
-        "type": "FIX",
-        "status": "REVIEW",
-        "files": [
-          "docs/agents/cowork-team/flow/spawn-fanout.md",
-          "scripts/agents-flow/cowork-load-probe.sh",
-          "scripts/agents-flow/cowork-load-probe.test.sh"
-        ],
-        "status_note": "From cowork-fire 30d983ac note: LOAD_1MIN parse improvised per tick by dispatching LLM; comma-locale (uptime 'load averages: 2,19') + tr -d ',' -> 219 > 2*CORES threshold -> DEGRADED. Fix: scripted gate (scripts/agents-flow/) with comma-safe parse. No board row existed (genuine anomaly per cowork-fire escalation rule). | [developer 2026-08-29T01:03:43Z] IMPLEMENTED (commit cce2be6db): scripted comma-safe LOAD_1MIN probe scripts/agents-flow/cowork-load-probe.sh (+.test.sh 20/20) replaces the inline awk -F\",\" parse in spawn-fanout.md Step 5.1 — \"2,19\" -> 2.19 never 219 (live host \"4,22\" -> 4.22 == LC_ALL=C ground truth); fail-loud exit 2/3, empty stdout on unparseable. files[] extended with the 2 scripts (AXISD precedent). Step 5.2/5.3 and dispatch-claim Step 2.4 untouched (critical-region boundary).",
-        "origin_signal_id": "30d983acb52ce19f892866cd086bfb68b34de4fd2049067168cd3a2d6c45069a",
-        "updated_at": "2026-08-29T01:03:44Z",
-        "updated_by": "developer",
-        "developer_completed_at": "2026-08-29T01:03:43Z",
-        "commit": "cce2be6db"
       }
     ],
     "qa": [],
