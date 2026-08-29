@@ -19987,6 +19987,33 @@
             "observed_at": "2026-08-26T10:54:46Z"
           }
         }
+      },
+      {
+        "id": "FIX-CHEF-EVENING-L2L3-SILENT-GAP",
+        "title": "chef-evening dish silently omits L2 (US macro PMI/consumer-sentiment/EFFR-IORB) + L3 (CPI/VIRA/FX-reserves) with NO [gap:] token — CONFIRMED via synthesis JSON, 2nd consecutive cycle (tnb c137 #1)",
+        "owner": "po",
+        "zone": "docs/agents/unified-agent/",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "files": [
+          "docs/agents/unified-agent/flow/chef-dish.md"
+        ],
+        "status_note": "tnb c137 finding #1 HIGH: evening synthesis JSON tnb_synthesis.us_macro_layer/vn_macro_layer + known_gaps[] (2 entries, neither covers L2/L3). Score 2/8 CRITICAL (worse than c136's JSON-less 3/8). Fix: evening template's macro-stack section must declare gaps. BUG msg 5767. | [agent-father 2026-08-29] FIX COMPLETE commit dd482d697847974e876d9c31dadccb8d3bb7b324 — chef-dish.md Step 3 per-element macro-stack presence-or-gap-token floor ($MACRO_GAP_TOKENS) + Step 7.5 L2_OK geopolitical-clause loophole closed + ASSEMBLY union + negative-control example + Step 7.6 jq l2_floor/l3_floor content clauses (calibrated 37/42 over 79-file corpus, honest 08-23/24 baseline passes). DJ-GATE-1: agent-father-S72.\n[QA] Review Record (direct-commit verify): Direct-commit verify of dd482d697847974e876d9c31dadccb8d3bb7b324: Step 0d gate clean; commit on main ancestry touching exactly the 2 claimed files (chef-dish.md + agent-father journal); doc's exact Step 7.6 jq reproduced — 08-26 evening SCHEMA_FAIL (top_keys,meta_keys,verdict,tnb_keys,l2_floor,l3_floor) exit 1 verbatim, 08-23 honest baseline SCHEMA_OK exit 0, 08-24 l2_floor/l3_floor pass (val_gate pre-existing DXG AVOID, not this commit); corpus recalibration 55/24 shape-only -> 37/42 content-floor, 18 new failures all silent-L2/L3 class; DJ-GATE-1 agent-father-S72 present. vc-approved.",
+        "origin_signal_id": "8ce626a54aaecef81457e4f0eb6d785f39163d62b10d06ba6f32743144f84e47",
+        "updated_at": "2026-08-29T00:18:44Z",
+        "commit_sha": "dd482d697847974e876d9c31dadccb8d3bb7b324",
+        "updated_by": "agent-father",
+        "qa_verified_at": "2026-08-29T00:18:43Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + doc-exact Step 7.6 jq (l2_floor/l3_floor clauses) + corpus jq loop",
+            "args": "commit=dd482d697; files=<row .files[]=chef-dish.md>; evidence=docs/data/unified-agent-synthesis-2026-08-26-chef-evening.json, 08-23/08-24-evening.json, 79-file docs/data corpus",
+            "live_value_observed": "ancestor=yes; stat touches 2/2 claimed files; 08-26 SCHEMA_FAIL(top_keys,meta_keys,verdict,tnb_keys,l2_floor,l3_floor) exit 1; 08-23 SCHEMA_OK exit 0; 08-24 l2_floor=true l3_floor=true; corpus 55/24 -> 37/42, 18 new failures silent-L2/L3 class",
+            "observed_at": "2026-08-29T00:18:43Z"
+          }
+        }
       }
     ],
     "head": {
@@ -23858,25 +23885,6 @@
         "updated_at": "2026-08-28T23:52:12Z",
         "updated_by": "architect",
         "created_by": "po"
-      },
-      {
-        "id": "FIX-CHEF-EVENING-L2L3-SILENT-GAP",
-        "title": "chef-evening dish silently omits L2 (US macro PMI/consumer-sentiment/EFFR-IORB) + L3 (CPI/VIRA/FX-reserves) with NO [gap:] token — CONFIRMED via synthesis JSON, 2nd consecutive cycle (tnb c137 #1)",
-        "owner": "po",
-        "next_agent": "qa",
-        "zone": "docs/agents/unified-agent/",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "REVIEW",
-        "files": [
-          "docs/agents/unified-agent/flow/chef-dish.md"
-        ],
-        "status_note": "tnb c137 finding #1 HIGH: evening synthesis JSON tnb_synthesis.us_macro_layer/vn_macro_layer + known_gaps[] (2 entries, neither covers L2/L3). Score 2/8 CRITICAL (worse than c136's JSON-less 3/8). Fix: evening template's macro-stack section must declare gaps. BUG msg 5767. | [agent-father 2026-08-29] FIX COMPLETE commit dd482d697847974e876d9c31dadccb8d3bb7b324 — chef-dish.md Step 3 per-element macro-stack presence-or-gap-token floor ($MACRO_GAP_TOKENS) + Step 7.5 L2_OK geopolitical-clause loophole closed + ASSEMBLY union + negative-control example + Step 7.6 jq l2_floor/l3_floor content clauses (calibrated 37/42 over 79-file corpus, honest 08-23/24 baseline passes). DJ-GATE-1: agent-father-S72.",
-        "origin_signal_id": "8ce626a54aaecef81457e4f0eb6d785f39163d62b10d06ba6f32743144f84e47",
-        "updated_at": "2026-08-29T00:11:43Z",
-        "commit_sha": "dd482d697847974e876d9c31dadccb8d3bb7b324",
-        "updated_by": "agent-father"
       }
     ],
     "qa": [],
