@@ -81,3 +81,13 @@
 - TC-1 breakage found mid-flight: a PRE-EXISTING uncommitted working-tree edit had rewritten SESSION_ID_LINE to "<resolved session id>", breaking `cowork-spawn-entry-prompt-session-id.test.js` TC-1 (regex needs $CLAUDE_CODE_SESSION_ID on the assignment line); restored the assignment line to the committed form (test file is out of scope), kept the improved DSH-aware comment.
 **why-decision:** ONE shared preamble source = one text + one substitution site (PO ruling 1); gate NEVER stamps on exit-0 alone (PO ruling 2); synthetic session id is the only structurally-satisfiable option — leaf flows hard-require owner_client_session (chef/digest/fb/tnb Phase-2 claims).
 **why-change:** no change from plan — one pre-existing TC-1-breaking working-tree edit restored to gate-green (documented above).
+
+### STEP developer-S138 · developer · 2026-08-29T00:40:00Z
+**task-id:** FIX-BCTC-DATA-GAP-FAMILY
+**what-done:** Implemented architect brief U1→U6: enricher Arm-2 bound attempts<=MAX+1 + deferred_infra NULL-URL recycle arm + pull-job enricher-reroute (U1); governance-report URL filter (U2); period-mismatch durable quarantine + queue url_not_found recovery + serve reason (U3); income-broken-with-assets guard serve+write (U4); scale floor/ratio guard (U5); stage-granular no-data diagnostics (U6). 4 new test files (38 assertions), bctc regression suites green, tsc clean, size-lint PASS.
+**what-considered:**
+- guard growth 104L→200L: split module vs size-justification header — header (U4/U5 must share one guard chain; task constraint sanctions header).
+- U6 string: exact legacy "Chưa có dữ liệu BCTC" preserved byte-identical for true-absent (bctc-analyst contract); 2 existing 240-bctc-full assertions updated to the design-mandated PENDING-stage reason.
+- bctcFullTools +174L over baseline: inline vs extraction — extracted to bctcNoDataDiagnostics.ts (monolith stays ≤ baseline tolerance, new file ≤120L).
+**why-decision:** U1 first (all recovery paths ride enricher arms); pull-job reroute over URL-prefix widen (single discovery owner, HNX reachability unverified); quarantine reuses bctc_zero_extract_blocks (existing dead-letter semantics, no new table).
+**why-change:** no change from plan — U7 deferred to ops row FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP; verified get_bctc_pending_refine eligibility (text_status=COMPLETE + refine_status IN PENDING/PARTIAL/FAILED) covers DXG.
