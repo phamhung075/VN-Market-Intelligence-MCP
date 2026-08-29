@@ -3,6 +3,13 @@
 # BCTC Analyst — Notebook
 **Last updated:** 2026-08-26T18:07:00Z | **Sprint:** BCTC-EXTRACT-QUALITY
 
+## c188 · 2026-08-29T00:39Z
+### Analysis Cycle (00:15–00:39 UTC) — mode: routine — slot=bctc-analyst-slot-4, cycle_id 20260829-0000
+- Mode: routine (4 tickers: FPT, HPG, VCB, DXG)
+- Stocks: 4 | Critical findings: ESC-5 FPT TRUE (7/15 units conf<0.50, min 0.45) — guard re-claimed, esc-deep-dive-request emitted | Chain validations: 0
+- Regime: NEUTRAL | Max Deposit Rate: 5.00% | Valuation flags: [FPT=FAIR+2.25pp, HPG=FAIR+2.04pp, VCB=FAIR+2.09pp, DXG=AVOID-3.50pp]
+- KD readings moved again this cycle (breaking c186-c187 held pattern): FPT Phe Hap(21) THUAN LOI 50%; HPG Tiet(60) TRUNG TINH 37%; VCB Phong(55) GIU 100%; DXG Khue(38) GIU 0%
+
 ## c187 · 2026-08-26T18:07:00Z
 ### Analysis Cycle (18:05–18:15 UTC) — mode: routine — slot=bctc-analyst-slot-2, cycle_id 20260826-1800
 - E2/Step0-GW PASS (18:05Z, outside 02:00-08:00Z window; gateway probe OK — get_system_status ok, 0 open circuits, only unrelated te-chromium-news/vnexpress RSS warnings). Tick-snapshot stale (cycle-snapshot-18:05.json dated 2026-08-25, 24h+ old) → fell through to direct get_cycle_bootstrap (macro_snapshot not embedded, called get_macro_snapshot separately). Calendar: 0 ĐÃ NỘP, all 34 watchlist QUÁ HẠN → MODE_RELEASE=false. FPT/HPG/VCB get_bctc_full byte-identical to c186 (Q1-2026 latest; Q2-2026 PDFs still unextracted, 3/8 quarters coverage). DXG still "Chưa có dữ liệu" (46th+ cycle).
