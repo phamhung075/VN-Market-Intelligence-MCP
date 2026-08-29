@@ -365,8 +365,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-28T23:41:39Z",
-    "_updated_by": "architect (FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR design)",
+    "_updated_at": "2026-08-29T00:11:42Z",
+    "_updated_by": "agent-father",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -17172,23 +17172,6 @@
         "updated_at": "2026-08-26T20:35:59Z"
       },
       {
-        "id": "FIX-CHEF-EVENING-L2L3-SILENT-GAP",
-        "title": "chef-evening dish silently omits L2 (US macro PMI/consumer-sentiment/EFFR-IORB) + L3 (CPI/VIRA/FX-reserves) with NO [gap:] token — CONFIRMED via synthesis JSON, 2nd consecutive cycle (tnb c137 #1)",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "zone": "docs/agents/unified-agent/",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "docs/agents/unified-agent/flow/chef-dish.md"
-        ],
-        "status_note": "tnb c137 finding #1 HIGH: evening synthesis JSON tnb_synthesis.us_macro_layer/vn_macro_layer + known_gaps[] (2 entries, neither covers L2/L3). Score 2/8 CRITICAL (worse than c136's JSON-less 3/8). Fix: evening template's macro-stack section must declare gaps. BUG msg 5767.",
-        "origin_signal_id": "8ce626a54aaecef81457e4f0eb6d785f39163d62b10d06ba6f32743144f84e47",
-        "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
         "id": "FIX-CHEF-EVENING-BIZCTX-NULL",
         "title": "chef-evening conviction_calls business_context_cited ALL null despite consuming bctc_signal_* files EOD's same-day dish cited successfully — wiring divergence vs EOD (tnb c137 #2)",
         "owner": "po",
@@ -20215,9 +20198,11 @@
       }
     ],
     "head": {
-      "status": "deprecated",
-      "canonical_moved_to": ".head",
-      "note": "Re-collapsed 3rd time (router, post FIX-SBV-FETCHER-ZERO-VALUE-EMIT verify) — see feedback_orchstate_dual_head_keys_toplevel_authoritative.md. Do not write routing fields here; DeprecatedHeadStubSchema.passthrough() lets them through Zod silently."
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "updated_at": "2026-08-29T00:11:42Z",
+      "updated_by": "agent-father"
     },
     "ready": [
       {
@@ -24076,6 +24061,25 @@
         "updated_at": "2026-08-28T23:52:12Z",
         "updated_by": "architect",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-CHEF-EVENING-L2L3-SILENT-GAP",
+        "title": "chef-evening dish silently omits L2 (US macro PMI/consumer-sentiment/EFFR-IORB) + L3 (CPI/VIRA/FX-reserves) with NO [gap:] token — CONFIRMED via synthesis JSON, 2nd consecutive cycle (tnb c137 #1)",
+        "owner": "po",
+        "next_agent": "qa",
+        "zone": "docs/agents/unified-agent/",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "docs/agents/unified-agent/flow/chef-dish.md"
+        ],
+        "status_note": "tnb c137 finding #1 HIGH: evening synthesis JSON tnb_synthesis.us_macro_layer/vn_macro_layer + known_gaps[] (2 entries, neither covers L2/L3). Score 2/8 CRITICAL (worse than c136's JSON-less 3/8). Fix: evening template's macro-stack section must declare gaps. BUG msg 5767. | [agent-father 2026-08-29] FIX COMPLETE commit dd482d697847974e876d9c31dadccb8d3bb7b324 — chef-dish.md Step 3 per-element macro-stack presence-or-gap-token floor ($MACRO_GAP_TOKENS) + Step 7.5 L2_OK geopolitical-clause loophole closed + ASSEMBLY union + negative-control example + Step 7.6 jq l2_floor/l3_floor content clauses (calibrated 37/42 over 79-file corpus, honest 08-23/24 baseline passes). DJ-GATE-1: agent-father-S72.",
+        "origin_signal_id": "8ce626a54aaecef81457e4f0eb6d785f39163d62b10d06ba6f32743144f84e47",
+        "updated_at": "2026-08-29T00:11:43Z",
+        "commit_sha": "dd482d697847974e876d9c31dadccb8d3bb7b324",
+        "updated_by": "agent-father"
       }
     ],
     "qa": [],
