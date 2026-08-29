@@ -105,3 +105,23 @@
 - Behavioral-predicate AC — zone="scripts/agents-flow/" does not start with apps/ → out of scope → passes.
 **why-decision:** No ISSUE; every claimed check reproduced independently (suite numbers match, all 5 smoke classes fire correctly, kill switch + Stage-2 gating verified live, settings untouched, log clean). -> vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S252 · qa · 2026-08-29T02:05Z
+**task-id:** FIX-ORCH-COLD-EVICT-VALIDATION-EXIT1
+**what-done:** Direct-commit verify of hand-dispatched row (review[]/REVIEW/next_agent=qa, branch:null; chain contract mandates review[]→done_verified[] in ONE orch-apply write). Step 0d not-before gate: none of qa_not_before/next_recheck_not_before/qa_new_window_earliest_d1_close on row → proceed. eb4bcecb0 + 2cdfe1e9f both on main ancestry; fix commit touches EXACTLY the 7 claimed files (no scope creep: WORK.md, developer journal/notebook, dev-standards.md doc-only refs, orch-apply.sh, orch-cold-evict.sh, orch-cold-evict-tests.sh). CAS-recheck-before-Stage-2-conservation reorder present in orch-apply.sh with rationale comment matching (stale candidate → retryable exit 2; genuine violations still exit 1); cold-evict /dev/stdout→real-temp + mktemp trailing-X fixes confirmed in diff. Independently re-ran: `orch-cold-evict.sh --dry-run` exit 0; cold-evict suite 84/84 incl. TEST 14 T14a/b/c all green (cleaner than developer's claimed 83/84 — env flake did not recur); wrapper suite 109/109; mock-guard PASS (bash zone, no apps/ touched). Developer DJ-GATE-1 present (developer-S136, task-id stamped).
+**what-considered:**
+- Trust developer's 83/84 + dry-run prose vs re-run independently — re-ran everything myself; got 84/84 (the claimed env flake did not fire this run).
+- Root-cause correctness: CAS-before-conservation is the class-level fix; TEST 14 reproduces the exact stale-candidate + peer-forward-moves shape and proves exit 2 → self-heal (peer moves preserved, terminal rows archived).
+- Lane-move source: row in review[] not qa[] (hand-dispatch, QA-Drain claim never ran) — adapted vc-approved jq per cycle-874/875/876 precedent: review[]→done_verified[] same write, del(.next_agent), RC-VERIF raw_probe from real commands.
+- OOM-class Durability Gate — NOT applicable (title/AC/status_note assert nothing about crash/OOM/memory). Behavioral-predicate AC — zone="scripts/" does not start with apps/ → out of scope → passes.
+**why-decision:** No ISSUE; every claimed check reproduced independently (dry-run exit 0, 84/84 + 109/109, TEST 14 green, scope exact, reorder + rationale verified in source). -> vc-approved.
+**why-change:** no change from plan.
+
+### STEP qa-S253 · qa · 2026-08-29T02:10Z
+**task-id:** FIX-BCTC-ANALYST-NOTEBOOK-COMPOSE-ACTUATOR
+**what-done:** verify-committed: Step 0d gate clean (no not-before keys); commits 4fae18169+a344cbc00 on main ancestry, fix touches exactly the 7 brief files (incl. all 3 row files[]); re-ran VG-3 (--check PASS, bctc-analyst grant/demand OKx2, baseline count 0, --update re-run content-neutral = no re-mint) + VG-4 (smoke on copy of live 2-section notebook: OK sections=3 dropped=0 direction=newest_first, grep -c '^## c'=3, original untouched; test suite 9/9); §5a marker contract (all 13 marker classes verbatim in script, no narrated-Write fallback, fetchedAt fallback removed, ONE call `3 60` matches AC-2/AC-2a); grant+description same commit with real write set declared; size-lint PASS 0/1457; lane-move review[]->done_verified[].
+**what-considered:**
+- approve: §5a has zero narrated-Write fallback, marker branch OK/WARN/ABORT/ERROR exactly per brief, DJ-S135 present, no stale no-Bash claims in live docs
+- reject: only-if flow retained a fallback path or grant/desc split across commits — neither found
+**why-decision:** No ISSUE; every developer claim independently reproduced from live evidence, not prose. -> vc-approved.
+**why-change:** no change from plan.
