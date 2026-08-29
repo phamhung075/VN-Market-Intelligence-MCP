@@ -125,3 +125,12 @@
 - reject: only-if flow retained a fallback path or grant/desc split across commits — neither found
 **why-decision:** No ISSUE; every developer claim independently reproduced from live evidence, not prose. -> vc-approved.
 **why-change:** no change from plan.
+
+### STEP qa-S254 · qa · 2026-08-29T00:07:58Z
+**task-id:** FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT
+**what-done:** verify-committed: Step 0d gate clean; commit 89742b62d on main ancestry touching exactly 2 files (orchStateSchema.ts + test, zero creep); gate probe GATE-PRESENT; targeted suite 136/0 incl BP-1..7 (14/14); tsc 0; mock-guard PASS; live orch-validate Stage0+1 PASS; reject-branch semantics read-verified (grandfather-by-time, P2/scripts never reject, malformed rejects, priority set, declared_at fallback, id exemption); dev-mcp-server-S96 present.
+**what-considered:**
+- approve: every claimed check independently reproduced; behavioral-predicate AC in scope (apps/ P1) and satisfied — PO-declared predicate already on row, preserved through flip
+- reject: size-lint 4-offender delta on live tree — proven uncommitted concurrent bctc work; clean HEAD worktree = 0 offenders; not this commit
+**why-decision:** No ISSUE; all checks green from live evidence. -> vc-approved.
+**why-change:** no change from plan.
