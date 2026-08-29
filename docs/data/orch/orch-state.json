@@ -376,7 +376,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-29T00:11:42Z",
+    "_updated_at": "2026-08-29T00:42:22Z",
     "_updated_by": "agent-father",
     "active_sprints": [
       {
@@ -17183,23 +17183,6 @@
         "updated_at": "2026-08-26T20:35:59Z"
       },
       {
-        "id": "FIX-CHEF-EVENING-BIZCTX-NULL",
-        "title": "chef-evening conviction_calls business_context_cited ALL null despite consuming bctc_signal_* files EOD's same-day dish cited successfully — wiring divergence vs EOD (tnb c137 #2)",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "zone": "docs/agents/unified-agent/",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "docs/agents/unified-agent/flow/chef-dish.md"
-        ],
-        "status_note": "tnb c137 finding #2 HIGH: evening's 3 calls (FPT/VCB/HPG) all business_context_cited:null with same files in signals_consumed.bctc_signal that EOD cited (field=ops). Distinct from FIX-CHEF-EOD-BIZCTXOK-GATE-NARRATED-NOT-EVALUATED (that=EOD narrated-absent-but-present; this=evening actually-absent-and-not-narrated). BUG msg 5768.",
-        "origin_signal_id": "58b6e9decc7fc227301bf7c71fc629238d9087b94493b8b4bbb9f4eb54a6dd37",
-        "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
         "id": "FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY",
         "title": "cowork dispatch Step 2.4 Axis D age-bound fails to clear structurally-prior-period marker when prior fire ran later-in-day — compare period-key suffix vs publish_date_basis instead of pure claimed_at arithmetic",
         "owner": "po",
@@ -23904,6 +23887,25 @@
         "updated_at": "2026-08-29T00:42:47Z",
         "updated_by": "developer",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-CHEF-EVENING-BIZCTX-NULL",
+        "title": "chef-evening conviction_calls business_context_cited ALL null despite consuming bctc_signal_* files EOD's same-day dish cited successfully — wiring divergence vs EOD (tnb c137 #2)",
+        "owner": "po",
+        "next_agent": "qa",
+        "zone": "docs/agents/unified-agent/",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "docs/agents/unified-agent/flow/chef-dish.md"
+        ],
+        "status_note": "tnb c137 finding #2 HIGH: evening's 3 calls (FPT/VCB/HPG) all business_context_cited:null with same files in signals_consumed.bctc_signal that EOD cited (field=ops). Distinct from FIX-CHEF-EOD-BIZCTXOK-GATE-NARRATED-NOT-EVALUATED (that=EOD narrated-absent-but-present; this=evening actually-absent-and-not-narrated). BUG msg 5768. | [agent-father 2026-08-29T00:42:22Z] FIX COMPLETE commit fbad14ced453e1fb01f15239dbcc40f095421efc — chef-dish.md Step 4 per-ticker business-context presence-or-gap floor (State A cite / B unusable / C absent, $BIZ_CTX_GAP_TOKENS) + Step 7.5 sub-check (d) retargeted dish-level to per-ticker (every entry cited OR per-ticker gap token; dish-level token only for literal-empty-dict) + negative-control example replaying exact 08-26 evening shape + Step 7.6 jq bizctx_floor content clause (calibrated 32/47 over 79-file corpus vs 37/42 pre-fix; 5 net-new silent-null-class failures; honest 08-23 baseline passes). DJ-GATE-1: agent-father-S73.",
+        "origin_signal_id": "58b6e9decc7fc227301bf7c71fc629238d9087b94493b8b4bbb9f4eb54a6dd37",
+        "updated_at": "2026-08-29T00:43:24Z",
+        "commit_sha": "fbad14ced453e1fb01f15239dbcc40f095421efc",
+        "updated_by": "agent-father"
       }
     ],
     "qa": [],
