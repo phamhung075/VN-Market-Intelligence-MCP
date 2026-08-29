@@ -19991,6 +19991,35 @@
             "observed_at": "2026-08-29T00:49:35Z"
           }
         }
+      },
+      {
+        "id": "FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY",
+        "title": "cowork dispatch Step 2.4 Axis D age-bound fails to clear structurally-prior-period marker when prior fire ran later-in-day — compare period-key suffix vs publish_date_basis instead of pure claimed_at arithmetic",
+        "owner": "po",
+        "zone": "docs/agents/cowork-team/",
+        "priority": "P2",
+        "size": "S",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "files": [
+          ".claude/skills/dispatch-claim/SKILL.md",
+          "scripts/agents-flow/cowork-dispatch-collision-probe.test.sh"
+        ],
+        "status_note": "detector_defect 5d1ca94e (router): AGE_SEC=86050 < CADENCE_SEC=86400 band (5m50s) opens when prior claim later-in-day than current dispatch; Axis C cleared via known-bad path (7/7 false-clears). PO ruling: use period-key suffix (e.g. '2026-08-25') embedded in task_id vs slot publish_date_basis as guard on claimed_at arithmetic. Dispatch was suppressed by ps-grep this run, not by Axis D. | [developer 2026-08-29T00:53:20Z] IMPLEMENTED per PO ruling (commit 843ba455b): Axis D staleness test changed from claimed_at age arithmetic (AGE_SEC >= CADENCE_SEC) to a period-key suffix guard — PERIOD_KEY embedded in task_id compared against CURRENT_PERIOD_KEY derived from the slot's own publish_date_basis (utc_date/vn_date -> today; iso_week_period -> current Mon-Sun range; vn_date_saturday_anchor -> PERIOD_SAT). Mismatch -> structurally prior/future-period -> continue regardless of claimed_at; 08-26 age arithmetic kept only as indeterminate-case fallback. NOTE: board files[] was stale (pointed at spawn-fanout.md, which has no Axis D) — corrected to the real change set (dispatch-claim/SKILL.md + test mirror; matches 2026-08-23 brief §5 + 2026-08-28 LAYERC brief 'touches Step 2.4 Axis D'). Lockstep test mirror rewritten: date-relative fixture keys + exact band cases (T1b/T2b/T3b/T7/T8) + 3 negative controls proving pre-fix logic BLOCKS/CLEARS new fixtures — 14/14 PASS. QA next.\n[QA] Review Record (direct-commit verify): Fix 843ba455b verified at HEAD: period-key suffix guard (CURRENT_PERIOD_KEY_BY_BASIS) present in SKILL.md Step 2.4 FR-3, mismatch->continue, age fallback only for indeterminate; lockstep test re-run 14/14 PASS (T1b/T2b/T3b/T7/T8 + 3 negative controls); jq strftime derivations cross-checked vs bash date for all 4 bases; commit touches exactly the 2 claimed files, spawn-fanout.md untouched.",
+        "origin_signal_id": "5d1ca94e3e008ea34f7122093a3eb66580871f7e8ac04056653a0047f1c42f12",
+        "updated_at": "2026-08-29T00:57:50Z",
+        "updated_by": "developer",
+        "developer_completed_at": "2026-08-29T00:53:20Z",
+        "commit": "843ba455b",
+        "qa_verified_at": "2026-08-29T00:57:49Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bash scripts/agents-flow/cowork-dispatch-collision-probe.test.sh + jq strftime vs bash date cross-check",
+            "args": "commit=843ba455b; files=.claude/skills/dispatch-claim/SKILL.md,scripts/agents-flow/cowork-dispatch-collision-probe.test.sh",
+            "live_value_observed": "ancestor=yes; stat=exactly 2/2 claimed files (SKILL.md +95, test +246), spawn-fanout.md 0 lines; test 14 pass 0 fail exit 0; derivations match bash for utc_date/vn_date/iso_week_period/vn_date_saturday_anchor",
+            "observed_at": "2026-08-29T00:57:49Z"
+          }
+        }
       }
     ],
     "head": {
@@ -23833,27 +23862,6 @@
         "updated_at": "2026-08-29T00:42:47Z",
         "updated_by": "developer",
         "created_by": "po"
-      },
-      {
-        "id": "FIX-COWORK-DISPATCH-AXISD-AGEBOUND-PERIODKEY",
-        "title": "cowork dispatch Step 2.4 Axis D age-bound fails to clear structurally-prior-period marker when prior fire ran later-in-day — compare period-key suffix vs publish_date_basis instead of pure claimed_at arithmetic",
-        "owner": "po",
-        "next_agent": "qa",
-        "zone": "docs/agents/cowork-team/",
-        "priority": "P2",
-        "size": "S",
-        "type": "FIX",
-        "status": "REVIEW",
-        "files": [
-          ".claude/skills/dispatch-claim/SKILL.md",
-          "scripts/agents-flow/cowork-dispatch-collision-probe.test.sh"
-        ],
-        "status_note": "detector_defect 5d1ca94e (router): AGE_SEC=86050 < CADENCE_SEC=86400 band (5m50s) opens when prior claim later-in-day than current dispatch; Axis C cleared via known-bad path (7/7 false-clears). PO ruling: use period-key suffix (e.g. '2026-08-25') embedded in task_id vs slot publish_date_basis as guard on claimed_at arithmetic. Dispatch was suppressed by ps-grep this run, not by Axis D. | [developer 2026-08-29T00:53:20Z] IMPLEMENTED per PO ruling (commit 843ba455b): Axis D staleness test changed from claimed_at age arithmetic (AGE_SEC >= CADENCE_SEC) to a period-key suffix guard — PERIOD_KEY embedded in task_id compared against CURRENT_PERIOD_KEY derived from the slot's own publish_date_basis (utc_date/vn_date -> today; iso_week_period -> current Mon-Sun range; vn_date_saturday_anchor -> PERIOD_SAT). Mismatch -> structurally prior/future-period -> continue regardless of claimed_at; 08-26 age arithmetic kept only as indeterminate-case fallback. NOTE: board files[] was stale (pointed at spawn-fanout.md, which has no Axis D) — corrected to the real change set (dispatch-claim/SKILL.md + test mirror; matches 2026-08-23 brief §5 + 2026-08-28 LAYERC brief 'touches Step 2.4 Axis D'). Lockstep test mirror rewritten: date-relative fixture keys + exact band cases (T1b/T2b/T3b/T7/T8) + 3 negative controls proving pre-fix logic BLOCKS/CLEARS new fixtures — 14/14 PASS. QA next.",
-        "origin_signal_id": "5d1ca94e3e008ea34f7122093a3eb66580871f7e8ac04056653a0047f1c42f12",
-        "updated_at": "2026-08-29T00:53:40Z",
-        "updated_by": "developer",
-        "developer_completed_at": "2026-08-29T00:53:20Z",
-        "commit": "843ba455b"
       }
     ],
     "qa": [],
