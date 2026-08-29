@@ -79,7 +79,30 @@
       calibrated over the live 79-file corpus: 37 pass / 42 fail (shape-only pre-fix: 55/24 over the
       same corpus; honest self-flag baseline 08-23/24 evenings still pass both new clauses). No
       schema change, no new section; in-place growth on Steps 3/7.5/7.6, same pattern as every
-      prior dated entry in this header. -->
+      prior dated entry in this header.
+      FIX-CHEF-EVENING-BIZCTX-NULL (tnb c137 finding #2 HIGH, agent-father 2026-08-29): +122L
+      (1236→1358, incl. this header note) — closes the silent-bizctx-null mechanism where the
+      evening dish's conviction_calls[] carried `business_context_cited: null` for EVERY call
+      despite consuming the same-day `bctc_signal_*` files EOD's same-day dish cited successfully
+      (live A/B: unified-agent-synthesis-2026-08-26-chef-evening.json, 3 calls FPT/VCB/HPG all null,
+      signals_consumed.bctc_signal = the 4 files incl. bctc_signal_FPT_20260826_routine.json which
+      EOD's conviction_calls[0] cited field=ops; known_gaps = 2 L6 entries only, no business-context
+      token — the actually-absent-and-not-narrated class, distinct from FIX-CHEF-EOD-BIZCTXOK-GATE-
+      NARRATED-NOT-EVALUATED). Three coordinated changes: (1) Step 4's business-context citation
+      sub-step becomes a per-ticker presence-or-gap floor collecting $BIZ_CTX_GAP_TOKENS (cite
+      verbatim for every qualifying-cluster ticker with a $BIZ_CTX_SIGNALS entry; per-ticker
+      [gap:business_context_absent_<TICKER>]/[gap:business_context_unavailable_<TICKER>] tokens
+      otherwise — a silent null is a FLOW VIOLATION); (2) Step 7.5 sub-check (d) BIZ_CTX_OK is
+      retargeted from the dish-level "≥1 entry cited" reading to per-ticker semantics (every entry
+      must be cited OR carry its own per-ticker gap token; the empty-dict dish-level token remains
+      the only aggregate exemption), with a negative-control example replaying the exact 08-26
+      evening shape proving (d) fires; (3) Step 7.6's post-write jq gains a bizctx_floor CONTENT
+      clause (every null business_context_cited must be accompanied by a business-context gap token
+      in known_gaps[]) — re-calibrated over the live 79-file corpus: 32 pass / 47 fail vs 37/42
+      pre-fix, the 5 net-new failures all silent-null-class files (07-22-intraday, 07-24-intraday,
+      08-05-morning, 08-12-eod, 08-26-intraday); the 08-23 evening honest self-flag baseline
+      (conviction_calls=[]) still passes. No schema change, no new section; in-place growth on
+      Steps 4/7.5/7.6, same pattern as every prior dated entry in this header. -->
 > Parent: [./chef.md](./chef.md)
 
 # Unified Agent — Chef Dish Body (Steps 1.5-8, TNB 6-Layer Recipe)
@@ -226,13 +249,46 @@ earnings-outlook pillar's rationale text for that ticker MUST quote or closely p
 $BIZ_CTX_CITED[<TICKER>] = { field: "product"|"customer"|"ops"|"mgmt", text: "<cited excerpt>",
                               source: "<source_file>" }
 ```
-Do NOT fabricate a citation for a ticker with no `$BIZ_CTX_SIGNALS` entry — cite only where gathered
-data actually exists for that specific ticker this cycle. Do NOT pull in a ticker that is not already
-part of this cycle's qualifying clusters/conviction_calls[] purely to satisfy this requirement (see
-§5 Blocker Q1 for the one open policy question this raises). If `$BIZ_CTX_SIGNALS` is empty for
-EVERY ticker in the dish, `$BIZ_CTX_CITED` stays empty and the Step 7.5 gap-token path applies —
-this is the honest floor, identical in spirit to the Step 1 degraded-dish floor and the Step 5
-`$L5_GAP_TOKEN` floor.
+
+**Per-ticker presence-or-gap floor (MANDATORY — FIX-CHEF-EVENING-BIZCTX-NULL; closes the
+silent-bizctx-null mechanism where a conviction call shipped `business_context_cited: null` while
+the ticker's `bctc_signal_*`/`fundamental_*` file WAS consumed this cycle — live same-day A/B
+2026-08-26: EOD cited FPT (field=ops, source=`bctc_signal_FPT_20260826_routine.json`) while the
+evening's 3 calls (FPT/VCB/HPG) were ALL null with the same files in `signals_consumed.bctc_signal`,
+tnb c137 finding #2):** for EVERY ticker that ends up in a Step-1 qualifying cluster / `$CONVICTION_CALLS`,
+`business_context_cited` is NEVER a silent null — one of exactly three states, each mechanically
+distinct:
+
+```
+State A (cite):    $BIZ_CTX_SIGNALS[<TICKER>] exists AND ≥1 of its
+                   product/customer/ops/mgmt values is non-empty
+                   → $BIZ_CTX_CITED[<TICKER>] MUST be set (quote ≥1 field verbatim, attributed).
+State B (unusable): $BIZ_CTX_SIGNALS[<TICKER>] exists but ALL 4 fields are null/empty
+                   → emit "[gap:business_context_unavailable_<TICKER>: <reason>]" — the file
+                   exists but carries no citable content this cycle.
+State C (absent):  $BIZ_CTX_SIGNALS has NO entry for <TICKER> this cycle
+                   → emit "[gap:business_context_absent_<TICKER>: no bctc_signal_*/fundamental_*
+                   file this cycle]" — nothing was gathered for this ticker, nothing to cite.
+```
+
+Collect every State-B/State-C token into `$BIZ_CTX_GAP_TOKENS` (a list in session state, empty list
+if every ticker was cited under State A). This list is carried to Step 7.5's ASSEMBLY and unioned
+into `$KNOWN_GAPS_SO_FAR` (see Step 7.5 sub-check (d) + Step 7.6 known_gaps[]), so the BIZ_CTX_OK
+sub-check sees the tokens and the persisted JSON carries them. A ticker whose file was consumed
+(State A) MUST be cited — a null there is a FLOW VIOLATION that can never be repaired by a gap
+token, because the citation was possible (Step 7.5 sub-check (d) fails on it regardless of
+`$KNOWN_GAPS_SO_FAR` content). Do NOT fabricate a citation for a ticker with no `$BIZ_CTX_SIGNALS`
+entry (State C is the honest floor for that case — cite only where gathered data actually exists
+for that specific ticker this cycle). Do NOT pull in a ticker that is not already part of this
+cycle's qualifying clusters/conviction_calls[] purely to satisfy this requirement (see §5 Blocker
+Q1 for the one open policy question this raises). If `$BIZ_CTX_SIGNALS` is empty for EVERY ticker
+in the dish (zero `bctc_signal_*`/`fundamental_*` files collected this cycle across BOTH
+`docs/signals/` and `docs/signals/processed/`), `$BIZ_CTX_CITED` stays empty AND a single
+dish-level `[gap:business_context_unavailable]` token (no ticker suffix) is emitted into
+`$BIZ_CTX_GAP_TOKENS` instead of per-ticker State-C tokens — the pre-existing honest floor,
+identical in spirit to the Step 1 degraded-dish floor and the Step 5 `$L5_GAP_TOKEN` floor, and the
+ONLY case where the dish-level token (without a ticker) is legitimate (Step 7.5 sub-check (d)
+enforces exactly this distinction).
 
 **Valuation-gate discipline (mandatory when `$BIZ_CTX_SIGNALS[<TICKER>].valuation.verdict` is set for
 this ticker — FR-8, PO 2026-08-14 scope-widening):**
@@ -702,12 +758,16 @@ $CONVICTION_CALLS     = [ { ticker, conviction_level, direction, pillars_aligned
                         — one entry per ticker in a Step-1 qualifying cluster: conviction_level +
                         pillars_aligned_count from Step 4's per-ticker scoring, direction from the
                         BUY/HOLD/SELL/NEUTRAL vocabulary composed in Step 7 (Step 6.7 AF-2),
-                        business_context_cited = $BIZ_CTX_CITED[ticker] (Step 4) verbatim or null,
+                        business_context_cited = $BIZ_CTX_CITED[ticker] (Step 4) verbatim or null —
+                        a null here is only legitimate alongside that ticker's per-ticker gap token
+                        in $KNOWN_GAPS_SO_FAR (Step 4 State-B/State-C floor; enforced by sub-check (d)),
                         valuation_gate = $VALUATION_GATE[ticker] (Step 4, FR-8) verbatim or null.
                         This is the EXACT array Step 7.6 writes as conviction_calls[].
 $KNOWN_GAPS_SO_FAR    = union of $L6_GAP_TOKENS (Step 6) + $L5_GAP_TOKEN (Step 5, if set)
                         + $MACRO_GAP_TOKENS (Step 3, if set — FIX-CHEF-EVENING-L2L3-SILENT-GAP: the
-                        per-element US/VN stack tokens, so sub-checks (a)/(c) below can see them) —
+                        per-element US/VN stack tokens, so sub-checks (a)/(c) below can see them)
+                        + $BIZ_CTX_GAP_TOKENS (Step 4, if set — FIX-CHEF-EVENING-BIZCTX-NULL: the
+                        per-ticker business-context gap tokens, so sub-check (d) below can see them) —
                         the same union rule Step 7.6 documents for known_gaps[], computed here so
                         this gate can see it before scoring sub-check (e).
 ```
@@ -747,16 +807,35 @@ L3_OK = ($VN_MACRO_LAYER_TEXT contains a USD/VND level)
         AND ($VN_MACRO_LAYER_TEXT contains "VIRA" or "FX reserves" OR $KNOWN_GAPS_SO_FAR contains
              [gap:VIRA_unavailable] or [gap:FX_reserves_unavailable])
 
-# Sub-check (d) — business context presence — literal null-check on $CONVICTION_CALLS[].
+# Sub-check (d) — business context presence — PER-TICKER literal check on $CONVICTION_CALLS[].
 # business_context_cited (NOT a recollection of "did Step 4's sub-step fire" — the array entry
-# itself, the exact value Step 7.6 persists). The gap-token branch requires MECHANICALLY confirming
-# $BIZ_CTX_SIGNALS is a literal empty dict (zero keys) this cycle — not a narrated "no files found";
+# itself, the exact value Step 7.6 persists). FIX-CHEF-EVENING-BIZCTX-NULL (tnb c137 finding #2):
+# the pre-fix dish-level reading "≥1 entry cited" let a dish certify BIZ_CTX_OK while OTHER
+# entries were silently null — the exact 2026-08-26 evening shape (3 calls FPT/VCB/HPG, ALL
+# business_context_cited:null, files consumed per signals_consumed.bctc_signal, EOD cited the
+# same FPT file). The floor is now per-ticker: EVERY entry must be cited OR carry its own
+# per-ticker gap token from Step 4's State-B/State-C floor ($BIZ_CTX_GAP_TOKENS, unioned into
+# $KNOWN_GAPS_SO_FAR above). The dish-level [gap:business_context_unavailable] token (no ticker
+# suffix) is legitimate ONLY in the literal-empty-dict case — mechanically confirming
+# $BIZ_CTX_SIGNALS is a literal empty dict (zero keys) this cycle, not a narrated "no files found";
 # c130 Headline #1 (2026-08-14 evening, DXG) is exactly the failure this closes: the gap-token
 # branch was claimed while $BIZ_CTX_SIGNALS held a genuine, in-window DXG entry.
-BIZ_CTX_OK = (≥1 entry in $CONVICTION_CALLS has business_context_cited != null)
+BIZ_CTX_OK = (every entry E in $CONVICTION_CALLS satisfies at least one of:
+                (1) E.business_context_cited != null
+                (2) $KNOWN_GAPS_SO_FAR literally contains "[gap:business_context_absent_<E.ticker>" —
+                    Step 4 State C: no bctc_signal_*/fundamental_* file existed for this ticker
+                    this cycle (nothing was gathered — honest null, per the never-fabricate rule)
+                (3) $KNOWN_GAPS_SO_FAR literally contains "[gap:business_context_unavailable_<E.ticker>" —
+                    Step 4 State B: the ticker's file existed but all 4 fields were empty/unusable)
              OR ($BIZ_CTX_SIGNALS is a literal empty dict — zero keys — this cycle, checked against
                  the actual dict from chef.md Step 0, AND $KNOWN_GAPS_SO_FAR literally contains
                  [gap:business_context_unavailable])
+# The first OR-branch is per-entry and demands per-ticker evidence (citation or per-ticker token);
+# the second OR-branch is the ONLY dish-level exemption and demands the literal-empty-dict
+# condition — a non-empty $BIZ_CTX_SIGNALS with an uncited ticker can never fall through to it.
+# A null E.business_context_cited for a ticker whose file was consumed (Step 4 State A) is a
+# FLOW VIOLATION: State A makes citation mandatory, so no gap token can repair it — (1)/(2)/(3)
+# all fail and BIZ_CTX_OK = FALSE → $FAILED_CHECKS gets [gap:business_context_absent].
 
 # Sub-check (e) — gap catalogue enumerated if any layer is partial/missing
 ANY_LAYER_PARTIAL = (L2_OK relied on a gap token)
@@ -908,6 +987,26 @@ confirms accumulation despite the AVOID-priced PE, a live catalyst the quarterly
 not capture]`" and `valuation_gate.override_engaged = true`: sub-check (h)'s second clause is TRUE,
 `VALUATION_GATE_OK = TRUE` for that entry, and `direction` ships as composed (still subject to every
 other sub-check independently).
+
+**Illustrative negative-control example (BIZCTX-NULL — proves sub-check (d) actually fires on the
+EXACT live 2026-08-26 evening shape tnb c137 finding #2 confirmed, closing the dish-level "≥1
+entry" loophole):** `$BIZ_CTX_SIGNALS = { FPT: {...}, VCB: {...}, HPG: {...}, DXG: {...} }` — 4
+non-empty keys, one per `bctc_signal_*_20260826_routine.json` the cycle consumed (the file's own
+`signals_consumed.bctc_signal` listed all 4); `$CONVICTION_CALLS` = 3 entries (FPT/VCB/HPG), each
+with `business_context_cited = null`; `$KNOWN_GAPS_SO_FAR` = the 2 L6 entries the real file carried
+(single-pillar + gold regime-drift, NEITHER a business-context token). Scoring sub-check (d):
+entry FPT — (1) `business_context_cited` null → FALSE; (2) no
+`[gap:business_context_absent_FPT...` token → FALSE; (3) no `[gap:business_context_unavailable_FPT...`
+token → FALSE; the same triple-FALSE holds for VCB and HPG, so the per-ticker AND fails; the second
+OR-branch requires `$BIZ_CTX_SIGNALS` to be a literal empty dict — it has 4 keys → FALSE →
+`BIZ_CTX_OK = FALSE` → `[gap:business_context_absent]` lands in `$FAILED_CHECKS` → `known_gaps[]`
+(Step 7.6 union) and `$LAYERS_WALKED_SUMMARY` — the exact output the real 2026-08-26 evening dish
+lacked (it shipped all-null citations with zero business-context tokens and a top-level
+`quality_verdict: "degraded"` narration instead). Contrast with the honest EOD same-day shape:
+FPT cited (`$BIZ_CTX_CITED["FPT"]` set → (1) TRUE) and VIC/DBC had no `$BIZ_CTX_SIGNALS` entries —
+each would satisfy (2) with its own `[gap:business_context_absent_VIC...]`/
+`[gap:business_context_absent_DBC...]` token (Step 4 State C) → `BIZ_CTX_OK = TRUE`. This is a
+mechanical per-entry null-vs-token result on the real persisted text, not a judgement call.
 
 **Enforcement rules (non-negotiable):**
 - `$QUALITY_VERDICT = "full"` requires ALL EIGHT sub-checks to be TRUE. A single FALSE forces `degraded`.
@@ -1063,10 +1162,15 @@ exact two-independent-judgements defect this fix closes):**
 - `tnb_synthesis.us_macro_layer` / `vn_macro_layer` / `valuation_layer` = Step 7.5's
   `$US_MACRO_LAYER_TEXT` / `$VN_MACRO_LAYER_TEXT` / `$VALUATION_LAYER_TEXT` verbatim.
 - `conviction_calls[]` = Step 7.5's `$CONVICTION_CALLS` verbatim — already includes
-  `business_context_cited` (= `$BIZ_CTX_CITED[<ticker>]` verbatim or explicit `null`, never an
-  omitted key), `valuation_gate` (= `$VALUATION_GATE[<ticker>]` verbatim or explicit `null` — FR-8,
-  already asserted against Step 7.5 sub-check (h)), and an already-enum-checked `direction` (Step 7.5
-  sub-checks (g) and (h)). Do not rebuild this array independently from Step 4 here.
+  `business_context_cited` (= `$BIZ_CTX_CITED[<ticker>]` verbatim or explicit `null` — a `null` is
+  only legitimate when paired with that ticker's per-ticker gap token
+  `[gap:business_context_absent_<TICKER>...]` / `[gap:business_context_unavailable_<TICKER>...]` (or
+  the dish-level `[gap:business_context_unavailable]` when `$BIZ_CTX_SIGNALS` was a literal empty
+  dict) in `known_gaps[]`, per Step 4's State-B/State-C floor and Step 7.5 sub-check (d) — never an
+  omitted key, never a silent null without its token), `valuation_gate` (= `$VALUATION_GATE[<ticker>]`
+  verbatim or explicit `null` — FR-8, already asserted against Step 7.5 sub-check (h)), and an
+  already-enum-checked `direction` (Step 7.5 sub-checks (g) and (h)). Do not rebuild this array
+  independently from Step 4 here.
 - `sector_phases[]` = extracted from Step 4 phase/tier declarations + Step 4 pillar evidence
   (unchanged — not part of the assertion mechanism, no live defect found on this field).
 - `regime_state` / `regime_confidence` / `clock_phase` = extracted from Step 3 macro analysis
@@ -1123,7 +1227,10 @@ jq -r --arg qv "<Step 7.5's $QUALITY_VERDICT verbatim>" '
                   and (($v | test("VIRA|FX reserves|foreign reserves"; "i"))
                        or (any($g[]; . == "[gap:VIRA_unavailable]"
                             or . == "[gap:FX_reserves_unavailable]"
-                            or . == "[gap:L3_VN_macro_incomplete]")))))
+                            or . == "[gap:L3_VN_macro_incomplete]"))))),
+    bizctx_floor: (all(($d.conviction_calls // [])[]; . as $c
+                 | ($c.business_context_cited != null)
+                   or (any($d.known_gaps[]; . as $t | ($t | contains("[gap:business_context"))))))
   }
   | (to_entries | map(select(.value == false) | .key)) as $failed
   | if ($failed | length) == 0 then "SCHEMA_OK"
@@ -1145,6 +1252,14 @@ or `[gap:CPI_unavailable]`) AND (VIRA/FX-reserves or `[gap:VIRA_unavailable]`/
 fails here even if every shape clause passes — the 2026-08-26 evening file is the live calibration
 instance (it fails top_keys for schema divergence AND l2_floor/l3_floor for content absence on the
 old-schema write, and would fail l2_floor/l3_floor on a canonical-schema write of the same content).
+`bizctx_floor` (FIX-CHEF-EVENING-BIZCTX-NULL) = the persisted business-context CONTENT floor,
+mirroring Step 7.5 sub-check (d) at the file level (where `$BIZ_CTX_SIGNALS` is not visible, so it
+is intentionally the coarse version of the per-ticker gate): every `conviction_calls[]` entry must
+have `business_context_cited != null` OR `known_gaps[]` must carry ≥1 business-context gap token
+(`[gap:business_context_absent_<TICKER>...]` / `[gap:business_context_unavailable_<TICKER>...]` /
+the dish-level `[gap:business_context_unavailable]`). A canonical-schema file that persists
+all-null citations with zero business-context tokens fails here — the exact 2026-08-26 evening
+shape (all 3 calls null, 2 L6-only `known_gaps`, no business-context token anywhere).
 
 Non-zero exit (or any `SCHEMA_FAIL:` line) → re-Write ONCE with the listed clauses corrected, then run
 the SAME command again. If the second run also fails, treat as `tool-error` per `chef-telemetry.md`'s
@@ -1164,7 +1279,14 @@ scores 55 pass / 24 fail; with the two content clauses added it scores 37 pass /
 additional failures are the silent-L2/L3 class — files that pass every shape clause but carry no
 US/VN stack content or gap tokens (e.g. 2026-08-26 evening, which the audit confirmed, plus the
 08-26 EOD the same audit scored E✗ "VIRA absent, undeclared" on). The 2026-08-23/24 evening files
-— the honest self-flag baseline c134/c136 praised — pass both new clauses.)
+— the honest self-flag baseline c134/c136 praised — pass both new clauses. FIX-CHEF-EVENING-BIZCTX-
+NULL, same date: `bizctx_floor` was added as a 3rd content clause — re-calibrated over the same
+live 79-file corpus: 32 pass / 47 fail (vs 37/42 with l2_floor/l3_floor only). The 5 net-new
+failures are exactly the silent-bizctx-null class — files that pass every other clause but persist
+≥1 `business_context_cited: null` with NO business-context gap token anywhere (07-22-intraday,
+07-24-intraday, 08-05-morning, 08-12-eod, 08-26-intraday); the 08-23 evening honest self-flag
+baseline (conviction_calls=[]) still passes, and the 08-24 evening's VCB citation + L2/L3 tokens
+pass l2_floor/l3_floor unchanged — its pre-existing val_gate failure is FR-8-domain, not this row's.)
 
 **Intraday silent-exit exception:**
 If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.6 entirely — no JSON file is written for silent cycles. The exit in Step 1 already returned early before reaching Step 7.

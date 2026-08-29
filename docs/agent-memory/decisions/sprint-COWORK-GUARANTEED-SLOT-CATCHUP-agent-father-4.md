@@ -97,3 +97,13 @@
 - All three in one edit — ADOPTED: composition floor (Step 3), gate semantics (Step 7.5), persist-time machine check (Step 7.6) close the gap at every point a silent omission could slip.
 **why-decision:** Fail-loud or guaranteed-fire demands enforcement at composition AND persist; the persist jq's exit code is the only check the divergent old-schema path cannot skip once the write lands.
 **why-change:** No change. Sibling FIX-CHEF-EVENING-BIZCTX-NULL targets the same file — left chef-dish.md fully consistent and committed so the queued row edits a clean tree.
+
+### STEP agent-father-S73 · agent-father · 2026-08-29T01:00:00Z
+**task-id:** FIX-CHEF-EVENING-BIZCTX-NULL
+**what-done:** Diagnosed + fixed chef-dish.md silent-bizctx-null (live 08-26 evening: 3 conviction calls FPT/VCB/HPG all business_context_cited:null while signals_consumed listed the same bctc files EOD cited; no business-context token in known_gaps; old-schema write bypassed Step 7.5/7.6). Fix: Step 4 per-ticker State-A/B/C presence-or-gap floor + $BIZ_CTX_GAP_TOKENS; Step 7.5 sub-check (d) per-ticker (citation or per-ticker token; dish-level token only for literal-empty-dict) + negative-control example; Step 7.6 jq bizctx_floor content clause.
+**what-considered:**
+- Gate-only fix (sub-check d wording) — REJECTED: the live write bypassed Step 7.5/7.6 via old-schema file, mirroring the L2L3 sibling's finding.
+- Per-ticker jq token match (token must name ticker) — REJECTED on calibration: 28 net-new fails vs 5; old honest files carry only the dish-level token, so file-level must be coarse; per-ticker precision belongs in Step 7.5 where $BIZ_CTX_SIGNALS is visible.
+- Three-layer fix (Step 4 floor + Step 7.5 per-ticker gate + Step 7.6 coarse bizctx_floor) — ADOPTED: composition, gate, and persist each enforce; jq re-calibrated 32/47 vs 37/42, 5 net-new fails all silent-null class, honest 08-23 baseline still passes.
+**why-decision:** Fail-loud requires enforcement at composition AND gate AND persist; the persist jq's exit code is the only check the divergent old-schema path cannot skip once the write lands (same layering as the L2L3 sibling).
+**why-change:** No change from plan. val_gate jq/prose mismatch observed (pre-existing FR-8-domain, 08-24-evening) — flagged in report, NOT touched (out of this row's zone).
