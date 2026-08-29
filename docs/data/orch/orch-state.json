@@ -17172,31 +17172,6 @@
         "updated_at": "2026-08-26T20:35:59Z"
       },
       {
-        "id": "FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT",
-        "title": "checkVerificationGate() behavior_predicate hard-reject (brief §5c) — orchStateSchema.ts, dev-mcp-server zone, ACs copy-executable",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "size": "M",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "files": [
-          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
-        ],
-        "status_note": "ACs from agent-father flow_actuator_fix 3cf9b17b (brief §5c): add hasValidBehaviorPredicate(v) helper + hard-reject for DONE_VERIFIED P0/P1 apps/ rows created_at>=BEHAVIOR_PREDICATE_CUTOFF('2026-08-26T19:57:54Z') without verification.behavior_predicate{cmd,expect}; priority match set ['P0','P1','high','HIGH']; error msg names fix path; AC-6 unit test (grandfather-by-time). origin: docs/signals/processed/2026-08-26-fix-behavioral-verification-gate-schema-handoff-dev-mcp-server.json. 6/7 §9 files already landed (ee158a9ea, 900d640ad).",
-        "origin_signal_id": "3cf9b17bd952951c0186aa39b5b118c33a60685f202afddaa2245f948e25f707",
-        "verification": {
-          "behavior_predicate": {
-            "cmd": "grep -q \"hasValidBehaviorPredicate\" apps/mcp-server/src/infrastructure/orchStateSchema.ts && echo GATE-PRESENT",
-            "expect": "GATE-PRESENT",
-            "declared_at": "2026-08-28T23:12:02Z",
-            "declared_by": "po"
-          }
-        },
-        "updated_at": "2026-08-28T23:12:03Z"
-      },
-      {
         "id": "FIX-CHEF-EVENING-L2L3-SILENT-GAP",
         "title": "chef-evening dish silently omits L2 (US macro PMI/consumer-sentiment/EFFR-IORB) + L3 (CPI/VIRA/FX-reserves) with NO [gap:] token — CONFIRMED via synthesis JSON, 2nd consecutive cycle (tnb c137 #1)",
         "owner": "po",
@@ -24054,6 +24029,31 @@
         "status_note": "From telegram 5209 (dev-team board-hygiene): orch-cold-evict.sh failed exit 1 during validation, retry next tick. Blocked terminal-lane eviction. Fix: verify validation predicate + exit path. Dedup: no existing cold-evict row. | Implemented + committed eb4bcecb0 (developer 2026-08-29): CAS-before-conservation reorder in orch-apply.sh + cold-evict dry-run/mktemp fixes; TEST 14 regression green. Lane-move backlog[] -> review[], next_agent=qa.",
         "updated_at": "2026-08-28T23:58:12Z",
         "updated_by": "developer"
+      },
+      {
+        "id": "FIX-BEHAVIORAL-VERIFICATION-GATE-SCHEMA-HARD-REJECT",
+        "title": "checkVerificationGate() behavior_predicate hard-reject (brief §5c) — orchStateSchema.ts, dev-mcp-server zone, ACs copy-executable",
+        "owner": "po",
+        "next_agent": "qa",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "size": "M",
+        "type": "FIX",
+        "status": "REVIEW",
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
+        ],
+        "status_note": "ACs from agent-father flow_actuator_fix 3cf9b17b (brief §5c): add hasValidBehaviorPredicate(v) helper + hard-reject for DONE_VERIFIED P0/P1 apps/ rows created_at>=BEHAVIOR_PREDICATE_CUTOFF('2026-08-26T19:57:54Z') without verification.behavior_predicate{cmd,expect}; priority match set ['P0','P1','high','HIGH']; error msg names fix path; AC-6 unit test (grandfather-by-time). origin: docs/signals/processed/2026-08-26-fix-behavioral-verification-gate-schema-handoff-dev-mcp-server.json. 6/7 §9 files already landed (ee158a9ea, 900d640ad).",
+        "origin_signal_id": "3cf9b17bd952951c0186aa39b5b118c33a60685f202afddaa2245f948e25f707",
+        "verification": {
+          "behavior_predicate": {
+            "cmd": "grep -q \"hasValidBehaviorPredicate\" apps/mcp-server/src/infrastructure/orchStateSchema.ts && echo GATE-PRESENT",
+            "expect": "GATE-PRESENT",
+            "declared_at": "2026-08-28T23:12:02Z",
+            "declared_by": "po"
+          }
+        },
+        "updated_at": "2026-08-28T23:59:39Z"
       }
     ],
     "qa": [],
